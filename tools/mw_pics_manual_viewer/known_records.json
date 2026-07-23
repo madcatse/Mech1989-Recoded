@@ -1,0 +1,380 @@
+[
+  {
+    "known_index": 0,
+    "offset": 640,
+    "width": 320,
+    "height": 200,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 160,
+    "pixel_data_offset": 644,
+    "pixel_data_size": 32000,
+    "end_offset": 32644,
+    "span_size": 32004,
+    "category": "scene",
+    "description": "spaceport/moon fullscreen scene",
+    "partial": false,
+    "output_width": 320,
+    "output_height": 200,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_000_00000280_header_320x200.png"
+    ]
+  },
+  {
+    "known_index": 1,
+    "offset": 32649,
+    "width": 320,
+    "height": 200,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 160,
+    "pixel_data_offset": 32653,
+    "pixel_data_size": 32000,
+    "end_offset": 64653,
+    "span_size": 32004,
+    "category": "scene",
+    "description": "city and green hills fullscreen scene",
+    "partial": false,
+    "output_width": 320,
+    "output_height": 200,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_001_00007F89_header_320x200.png"
+    ]
+  },
+  {
+    "known_index": 2,
+    "offset": 64658,
+    "width": 320,
+    "height": 200,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 160,
+    "pixel_data_offset": 64662,
+    "pixel_data_size": 32000,
+    "end_offset": 96662,
+    "span_size": 32004,
+    "category": "scene",
+    "description": "arctic/base fullscreen scene",
+    "partial": false,
+    "output_width": 320,
+    "output_height": 200,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_002_0000FC92_header_320x200.png"
+    ]
+  },
+  {
+    "known_index": 3,
+    "offset": 96667,
+    "width": 320,
+    "height": 200,
+    "has_header": false,
+    "header_size": 0,
+    "row_stride_bytes": 160,
+    "pixel_data_offset": 96667,
+    "pixel_data_size": 32000,
+    "end_offset": 128667,
+    "span_size": 32000,
+    "category": "scene",
+    "description": "laboratory fullscreen scene A, raw/unheaded",
+    "partial": false,
+    "output_width": 320,
+    "output_height": 200,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_003_0001799B_raw_320x200.png"
+    ]
+  },
+  {
+    "known_index": 4,
+    "offset": 128677,
+    "width": 320,
+    "height": 200,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 160,
+    "pixel_data_offset": 128681,
+    "pixel_data_size": 32000,
+    "end_offset": 160681,
+    "span_size": 32004,
+    "category": "scene",
+    "description": "laboratory fullscreen scene B",
+    "partial": false,
+    "output_width": 320,
+    "output_height": 200,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_004_0001F6A5_header_320x200.png"
+    ]
+  },
+  {
+    "known_index": 5,
+    "offset": 160681,
+    "width": 320,
+    "height": 73,
+    "has_header": false,
+    "header_size": 0,
+    "row_stride_bytes": 160,
+    "pixel_data_offset": 160681,
+    "pixel_data_size": 11680,
+    "end_offset": 172361,
+    "span_size": 11680,
+    "category": "strip",
+    "description": "partial landscape strip, raw/unheaded",
+    "partial": true,
+    "output_width": 320,
+    "output_height": 73,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_005_000273A9_raw_320x73_partial.png"
+    ]
+  },
+  {
+    "known_index": 6,
+    "offset": 258325,
+    "width": 68,
+    "height": 68,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 34,
+    "pixel_data_offset": 258329,
+    "pixel_data_size": 2312,
+    "end_offset": 260641,
+    "span_size": 2316,
+    "category": "mech",
+    "description": "mech portrait/sprite",
+    "partial": false,
+    "output_width": 68,
+    "output_height": 68,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_006_0003F115_header_68x68.png"
+    ]
+  },
+  {
+    "known_index": 7,
+    "offset": 260646,
+    "width": 68,
+    "height": 68,
+    "has_header": false,
+    "header_size": 0,
+    "row_stride_bytes": 34,
+    "pixel_data_offset": 260646,
+    "pixel_data_size": 2312,
+    "end_offset": 262958,
+    "span_size": 2312,
+    "category": "mech",
+    "description": "mech portrait/sprite, raw/unheaded",
+    "partial": false,
+    "output_width": 68,
+    "output_height": 68,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_007_0003FA26_raw_68x68.png"
+    ]
+  },
+  {
+    "known_index": 8,
+    "offset": 262968,
+    "width": 68,
+    "height": 68,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 34,
+    "pixel_data_offset": 262972,
+    "pixel_data_size": 2312,
+    "end_offset": 265284,
+    "span_size": 2316,
+    "category": "mech",
+    "description": "mech portrait/sprite",
+    "partial": false,
+    "output_width": 68,
+    "output_height": 68,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_008_00040338_header_68x68.png"
+    ]
+  },
+  {
+    "known_index": 9,
+    "offset": 265289,
+    "width": 68,
+    "height": 68,
+    "has_header": false,
+    "header_size": 0,
+    "row_stride_bytes": 34,
+    "pixel_data_offset": 265289,
+    "pixel_data_size": 2312,
+    "end_offset": 267601,
+    "span_size": 2312,
+    "category": "mech",
+    "description": "mech portrait/sprite, raw/unheaded",
+    "partial": false,
+    "output_width": 68,
+    "output_height": 68,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_009_00040C49_raw_68x68.png"
+    ]
+  },
+  {
+    "known_index": 10,
+    "offset": 267611,
+    "width": 68,
+    "height": 68,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 34,
+    "pixel_data_offset": 267615,
+    "pixel_data_size": 2312,
+    "end_offset": 269927,
+    "span_size": 2316,
+    "category": "mech",
+    "description": "mech portrait/sprite",
+    "partial": false,
+    "output_width": 68,
+    "output_height": 68,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_010_0004155B_header_68x68.png"
+    ]
+  },
+  {
+    "known_index": 11,
+    "offset": 269932,
+    "width": 68,
+    "height": 68,
+    "has_header": false,
+    "header_size": 0,
+    "row_stride_bytes": 34,
+    "pixel_data_offset": 269932,
+    "pixel_data_size": 2312,
+    "end_offset": 272244,
+    "span_size": 2312,
+    "category": "mech",
+    "description": "mech portrait/sprite, raw/unheaded",
+    "partial": false,
+    "output_width": 68,
+    "output_height": 68,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_011_00041E6C_raw_68x68.png"
+    ]
+  },
+  {
+    "known_index": 12,
+    "offset": 272254,
+    "width": 68,
+    "height": 68,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 34,
+    "pixel_data_offset": 272258,
+    "pixel_data_size": 2312,
+    "end_offset": 274570,
+    "span_size": 2316,
+    "category": "mech",
+    "description": "mech portrait/sprite",
+    "partial": false,
+    "output_width": 68,
+    "output_height": 68,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_012_0004277E_header_68x68.png"
+    ]
+  },
+  {
+    "known_index": 13,
+    "offset": 274575,
+    "width": 68,
+    "height": 68,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 34,
+    "pixel_data_offset": 274579,
+    "pixel_data_size": 2312,
+    "end_offset": 276891,
+    "span_size": 2316,
+    "category": "mech",
+    "description": "mech portrait/sprite",
+    "partial": false,
+    "output_width": 68,
+    "output_height": 68,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_013_0004308F_header_68x68.png"
+    ]
+  },
+  {
+    "known_index": 14,
+    "offset": 288643,
+    "width": 60,
+    "height": 55,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 30,
+    "pixel_data_offset": 288647,
+    "pixel_data_size": 1650,
+    "end_offset": 290297,
+    "span_size": 1654,
+    "category": "emblem",
+    "description": "dragon emblem",
+    "partial": false,
+    "output_width": 60,
+    "output_height": 55,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_014_00046783_header_60x55.png"
+    ]
+  },
+  {
+    "known_index": 15,
+    "offset": 290302,
+    "width": 60,
+    "height": 55,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 30,
+    "pixel_data_offset": 290306,
+    "pixel_data_size": 1650,
+    "end_offset": 291956,
+    "span_size": 1654,
+    "category": "emblem",
+    "description": "fist emblem",
+    "partial": false,
+    "output_width": 60,
+    "output_height": 55,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_015_00046DFE_header_60x55.png"
+    ]
+  },
+  {
+    "known_index": 16,
+    "offset": 293621,
+    "width": 60,
+    "height": 55,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 30,
+    "pixel_data_offset": 293625,
+    "pixel_data_size": 1650,
+    "end_offset": 295275,
+    "span_size": 1654,
+    "category": "emblem",
+    "description": "triangular badge emblem",
+    "partial": false,
+    "output_width": 60,
+    "output_height": 55,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_016_00047AF5_header_60x55.png"
+    ]
+  },
+  {
+    "known_index": 17,
+    "offset": 426197,
+    "width": 320,
+    "height": 200,
+    "has_header": true,
+    "header_size": 4,
+    "row_stride_bytes": 160,
+    "pixel_data_offset": 426201,
+    "pixel_data_size": 32000,
+    "end_offset": 458201,
+    "span_size": 32004,
+    "category": "scene",
+    "description": "mech bay fullscreen scene",
+    "partial": false,
+    "output_width": 320,
+    "output_height": 200,
+    "paths": [
+      "/mnt/data/out_fixed/MW_PICS/mw_pics_images/known_017_000680D5_header_320x200.png"
+    ]
+  }
+]

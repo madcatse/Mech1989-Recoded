@@ -1,0 +1,142 @@
+{
+  "decoded_size": 498619,
+  "covered_bytes": 227178,
+  "covered_percent": 45.561441,
+  "unknown_bytes": 271441,
+  "unknown_percent": 54.438559,
+  "unknown_range_count": 18,
+  "unknown_ranges": [
+    {
+      "start": 0,
+      "end": 640,
+      "start_hex": "0x00000000",
+      "end_hex": "0x00000280",
+      "size": 640
+    },
+    {
+      "start": 32644,
+      "end": 32649,
+      "start_hex": "0x00007F84",
+      "end_hex": "0x00007F89",
+      "size": 5
+    },
+    {
+      "start": 64653,
+      "end": 64658,
+      "start_hex": "0x0000FC8D",
+      "end_hex": "0x0000FC92",
+      "size": 5
+    },
+    {
+      "start": 96662,
+      "end": 96667,
+      "start_hex": "0x00017996",
+      "end_hex": "0x0001799B",
+      "size": 5
+    },
+    {
+      "start": 128667,
+      "end": 128677,
+      "start_hex": "0x0001F69B",
+      "end_hex": "0x0001F6A5",
+      "size": 10
+    },
+    {
+      "start": 172361,
+      "end": 258325,
+      "start_hex": "0x0002A149",
+      "end_hex": "0x0003F115",
+      "size": 85964
+    },
+    {
+      "start": 260641,
+      "end": 260646,
+      "start_hex": "0x0003FA21",
+      "end_hex": "0x0003FA26",
+      "size": 5
+    },
+    {
+      "start": 262958,
+      "end": 262968,
+      "start_hex": "0x0004032E",
+      "end_hex": "0x00040338",
+      "size": 10
+    },
+    {
+      "start": 265284,
+      "end": 265289,
+      "start_hex": "0x00040C44",
+      "end_hex": "0x00040C49",
+      "size": 5
+    },
+    {
+      "start": 267601,
+      "end": 267611,
+      "start_hex": "0x00041551",
+      "end_hex": "0x0004155B",
+      "size": 10
+    },
+    {
+      "start": 269927,
+      "end": 269932,
+      "start_hex": "0x00041E67",
+      "end_hex": "0x00041E6C",
+      "size": 5
+    },
+    {
+      "start": 272244,
+      "end": 272254,
+      "start_hex": "0x00042774",
+      "end_hex": "0x0004277E",
+      "size": 10
+    },
+    {
+      "start": 274570,
+      "end": 274575,
+      "start_hex": "0x0004308A",
+      "end_hex": "0x0004308F",
+      "size": 5
+    },
+    {
+      "start": 276891,
+      "end": 288643,
+      "start_hex": "0x0004399B",
+      "end_hex": "0x00046783",
+      "size": 11752
+    },
+    {
+      "start": 290297,
+      "end": 290302,
+      "start_hex": "0x00046DF9",
+      "end_hex": "0x00046DFE",
+      "size": 5
+    },
+    {
+      "start": 291956,
+      "end": 293621,
+      "start_hex": "0x00047474",
+      "end_hex": "0x00047AF5",
+      "size": 1665
+    },
+    {
+      "start": 295275,
+      "end": 426197,
+      "start_hex": "0x0004816B",
+      "end_hex": "0x000680D5",
+      "size": 130922
+    },
+    {
+      "start": 458201,
+      "end": 498619,
+      "start_hex": "0x0006FDD9",
+      "end_hex": "0x00079BBB",
+      "size": 40418
+    }
+  ],
+  "uncovered_raw_candidate_count": 608,
+  "notes": [
+    "Coverage is byte coverage in the decoded stream, not in the compressed source file.",
+    "Unknown ranges are not covered by verified exported images; they may contain tables, scripts, masks, metadata, or non-EGA data.",
+    "uncovered_raw_candidates.csv lists plausible u16 width/u16 height false-positive candidates outside verified image spans for visual audit."
+  ]
+}
