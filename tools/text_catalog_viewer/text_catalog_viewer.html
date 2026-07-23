@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MW_MAIN Text Catalog</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f3ec;
+      --fg: #1d1f24;
+      --muted: #667085;
+      --panel: #fffaf0;
+      --panel-2: #eef4f1;
+      --border: #c9c4b8;
+      --accent: #1f6f78;
+      --accent-2: #8a4f2a;
+      --danger: #a33a3a;
+      --mono: "Cascadia Mono", Consolas, monospace;
+      --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #191a1d;
+        --fg: #ece7dc;
+        --muted: #a7adba;
+        --panel: #252525;
+        --panel-2: #1f2a2b;
+        --border: #424448;
+        --accent: #71c8d0;
+        --accent-2: #d29b6a;
+        --danger: #e27a7a;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+      font-size: 14px;
+    }
+    header {
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      padding: 12px 16px;
+      display: grid;
+      gap: 10px;
+    }
+    h1 {
+      font-size: 18px;
+      font-weight: 500;
+      margin: 0;
+    }
+    button, input, select, textarea {
+      font: inherit;
+    }
+    button {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--fg);
+      border-radius: 6px;
+      min-height: 32px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--accent);
+      color: light-dark(#ffffff, #071012);
+      border-color: transparent;
+    }
+    button.ghost {
+      background: transparent;
+    }
+    button:disabled {
+      opacity: .55;
+      cursor: default;
+    }
+    label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    input[type="text"], input[type="search"], select, textarea {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--fg);
+      border-radius: 6px;
+      min-height: 32px;
+      padding: 5px 8px;
+      width: 100%;
+    }
+    textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+    code, pre {
+      font-family: var(--mono);
+    }
+    .top-row, .filters, .actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 10px;
+    }
+    .file-input {
+      min-width: min(280px, 100%);
+    }
+    .search {
+      flex: 1 1 260px;
+    }
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .stat {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: color-mix(in srgb, var(--panel-2) 70%, transparent);
+    }
+    main {
+      display: grid;
+      grid-template-columns: minmax(340px, 45%) minmax(360px, 1fr);
+      min-height: calc(100vh - 142px);
+    }
+    .list-pane {
+      border-right: 1px solid var(--border);
+      min-width: 0;
+      overflow: auto;
+      max-height: calc(100vh - 142px);
+    }
+    .detail-pane {
+      min-width: 0;
+      overflow: auto;
+      max-height: calc(100vh - 142px);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+    .row {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      border-radius: 0;
+      background: transparent;
+      text-align: left;
+      display: grid;
+      gap: 4px;
+      padding: 10px 12px;
+      min-height: 72px;
+    }
+    .row[aria-selected="true"] {
+      background: color-mix(in srgb, var(--accent) 13%, transparent);
+      border-left: 4px solid var(--accent);
+      padding-left: 8px;
+    }
+    .row-title {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 0;
+    }
+    .row-title strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .badge {
+      color: var(--accent-2);
+      border: 1px solid color-mix(in srgb, var(--accent-2) 55%, var(--border));
+      border-radius: 999px;
+      padding: 1px 7px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .muted {
+      color: var(--muted);
+    }
+    .offset {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .snippet {
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .empty {
+      padding: 24px;
+      color: var(--muted);
+    }
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .fields .wide {
+      grid-column: 1 / -1;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .meta-item {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      background: var(--panel);
+      min-width: 0;
+    }
+    .meta-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 3px;
+    }
+    .meta-item code {
+      overflow-wrap: anywhere;
+    }
+    .text-preview {
+      white-space: pre-wrap;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 6px;
+      padding: 12px;
+      min-height: 180px;
+      max-height: 48vh;
+      overflow: auto;
+      line-height: 1.45;
+    }
+    .detail-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .detail-title h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .status {
+      color: var(--muted);
+      min-height: 20px;
+    }
+    .dirty {
+      color: var(--danger);
+    }
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+      .list-pane {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        max-height: 42vh;
+      }
+      .detail-pane {
+        max-height: none;
+      }
+      .fields, .meta-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="top-row">
+      <h1>MW_MAIN Text Catalog</h1>
+      <div class="stats" id="stats"></div>
+    </div>
+    <div class="filters">
+      <label class="file-input">
+        MW_MAIN.EXE
+        <input id="exeInput" type="file" accept=".exe,.EXE">
+      </label>
+      <label class="file-input">
+        Catalog / annotations JSON
+        <input id="jsonInput" type="file" accept=".json,application/json">
+      </label>
+      <label class="search">
+        Search
+        <input id="searchInput" type="search" placeholder="id, offset, text, title">
+      </label>
+      <label>
+        Category
+        <select id="categoryFilter"></select>
+      </label>
+      <label>
+        Review
+        <select id="reviewFilter">
+          <option value="all">all</option>
+          <option value="assigned">assigned id</option>
+          <option value="unassigned">unassigned</option>
+          <option value="reviewed">reviewed</option>
+          <option value="unreviewed">unreviewed</option>
+        </select>
+      </label>
+    </div>
+    <div class="actions">
+      <button id="exportCatalog" class="primary" type="button" disabled>Export catalog</button>
+      <button id="exportAnnotations" type="button" disabled>Export annotations</button>
+      <button id="fillVisible" type="button" disabled>Fill visible IDs</button>
+      <button id="clearFilters" class="ghost" type="button">Clear filters</button>
+      <span id="status" class="status"></span>
+    </div>
+  </header>
+  <main>
+    <section id="list" class="list-pane" aria-label="Text blocks">
+      <div class="empty">Load MW_MAIN.EXE or an exported catalog.</div>
+    </section>
+    <section class="detail-pane" aria-label="Selected text block">
+      <div class="detail-title">
+        <h2 id="detailHeading">No block selected</h2>
+        <span id="dirtyFlag" class="dirty"></span>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-item"><span>File offset</span><code id="metaFileOffset">-</code></div>
+        <div class="meta-item"><span>Loaded offset</span><code id="metaLoadedOffset">-</code></div>
+        <div class="meta-item"><span>Length</span><code id="metaLength">-</code></div>
+        <div class="meta-item"><span>Lines</span><code id="metaLines">-</code></div>
+      </div>
+      <div class="fields">
+        <label>
+          Assigned ID
+          <input id="assignedId" type="text" autocomplete="off">
+        </label>
+        <label>
+          Suggested ID
+          <input id="suggestedId" type="text" readonly>
+        </label>
+        <label>
+          Category
+          <select id="categoryEdit"></select>
+        </label>
+        <label>
+          Tags
+          <input id="tagsEdit" type="text" autocomplete="off">
+        </label>
+        <label class="wide">
+          Title
+          <input id="titleEdit" type="text" autocomplete="off">
+        </label>
+        <label class="wide">
+          Notes
+          <textarea id="notesEdit"></textarea>
+        </label>
+      </div>
+      <div class="actions">
+        <button id="useSuggested" type="button" disabled>Use suggested ID</button>
+        <button id="markReviewed" type="button" disabled>Mark reviewed</button>
+        <button id="copyId" type="button" disabled>Copy ID</button>
+        <button id="prevBlock" type="button" disabled>Previous</button>
+        <button id="nextBlock" type="button" disabled>Next</button>
+      </div>
+      <pre id="textPreview" class="text-preview"></pre>
+    </section>
+  </main>
+  <script>
+    const CATEGORY_RANGES = [
+      ["loader_prompt", 0x008D10, 0x009C9F, "loader, disk, password, and resource prompts"],
+      ["combat_warning", 0x009CC0, 0x009D30, "pre-combat warning text"],
+      ["intro_text", 0x009F55, 0x00A0FF, "opening setting and betrayal text"],
+      ["mission_result", 0x00A10D, 0x00A8FF, "post-mission outcomes and Dark Wing combat result text"],
+      ["credits_auth", 0x00A937, 0x00AEBF, "credits, copyright, and authorization text"],
+      ["company_status", 0x00AEEB, 0x00B2DF, "company, message, and roster status text"],
+      ["mechlab_ui", 0x00B2E4, 0x00D4FF, "mech complex, repair, ammo, and mech status text"],
+      ["contract_ui", 0x00D54F, 0x00D9FF, "contract request and acceptance UI text"],
+      ["starmap_planet", 0x00E6C4, 0x011756, "house, starmap, planet names, and planet descriptions"],
+      ["mission_name", 0x01176B, 0x011B28, "mission type names"],
+      ["crew_recruitment", 0x011D31, 0x011FFF, "crew recruitment UI and short crew lines"],
+      ["pilot_bio", 0x012001, 0x012938, "hireable pilot names and biography blurbs"],
+      ["ui_save_hire", 0x012939, 0x012E3F, "save, restore, hiring limit, and disk messages"],
+      ["rumor", 0x012F40, 0x013841, "bar rumors and early story leads"],
+      ["main_story", 0x013842, 0x0183C9, "main story scenes and branches"],
+      ["personal_message", 0x0183CA, 0x018C4D, "personal messages and Matabushi memo chain"],
+      ["newsnet", 0x018C4E, 0x01C9C6, "NewsNet and story-adjacent articles"],
+      ["main_story", 0x01C9C7, 0x01DBD7, "late Grig and landing-site story branches"],
+      ["reputation_flavor", 0x01DC5F, 0x01E040, "faction reputation/location flavor"],
+      ["newsnet", 0x01E041, 0x01F82D, "Ander's Moon, Matabushi, and Inner Sphere NewsNet articles"],
+      ["brief_headline", 0x01F82E, 0x020514, "brief dated headlines"],
+      ["newsnet_endgame", 0x020515, 0x020AAA, "endgame Ander's Moon NewsNet articles"],
+      ["endgame", 0x020AAB, 0x020E9F, "Dark Wing base and ending prompts"]
+    ];
+    const PRINTABLE_CONTROLS = new Set([9, 10, 13]);
+    const state = {
+      blocks: [],
+      filtered: [],
+      selectedKey: "",
+      source: null,
+      dirty: false
+    };
+    const els = {
+      exeInput: document.getElementById("exeInput"),
+      jsonInput: document.getElementById("jsonInput"),
+      searchInput: document.getElementById("searchInput"),
+      categoryFilter: document.getElementById("categoryFilter"),
+      reviewFilter: document.getElementById("reviewFilter"),
+      list: document.getElementById("list"),
+      stats: document.getElementById("stats"),
+      status: document.getElementById("status"),
+      exportCatalog: document.getElementById("exportCatalog"),
+      exportAnnotations: document.getElementById("exportAnnotations"),
+      fillVisible: document.getElementById("fillVisible"),
+      clearFilters: document.getElementById("clearFilters"),
+      detailHeading: document.getElementById("detailHeading"),
+      dirtyFlag: document.getElementById("dirtyFlag"),
+      metaFileOffset: document.getElementById("metaFileOffset"),
+      metaLoadedOffset: document.getElementById("metaLoadedOffset"),
+      metaLength: document.getElementById("metaLength"),
+      metaLines: document.getElementById("metaLines"),
+      assignedId: document.getElementById("assignedId"),
+      suggestedId: document.getElementById("suggestedId"),
+      categoryEdit: document.getElementById("categoryEdit"),
+      tagsEdit: document.getElementById("tagsEdit"),
+      titleEdit: document.getElementById("titleEdit"),
+      notesEdit: document.getElementById("notesEdit"),
+      useSuggested: document.getElementById("useSuggested"),
+      markReviewed: document.getElementById("markReviewed"),
+      copyId: document.getElementById("copyId"),
+      prevBlock: document.getElementById("prevBlock"),
+      nextBlock: document.getElementById("nextBlock"),
+      textPreview: document.getElementById("textPreview")
+    };
+
+    function hex(value, width = 6) {
+      return "0x" + value.toString(16).toUpperCase().padStart(width, "0");
+    }
+    function isTextByte(value) {
+      return PRINTABLE_CONTROLS.has(value) || (value >= 32 && value <= 126);
+    }
+    function looksLikeText(text) {
+      const stripped = text.trim();
+      if (stripped.length < 4) return false;
+      let alpha = 0;
+      for (const ch of stripped) if ((ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z")) alpha++;
+      return alpha > 0 && alpha / Math.max(1, stripped.length) >= 0.25;
+    }
+    function inKnownTextRange(offset) {
+      return CATEGORY_RANGES.some(([, start, end]) => offset >= start && offset <= end);
+    }
+    function shouldKeepBlock(offset, text, category) {
+      const stripped = text.trim();
+      let letters = 0;
+      let digits = 0;
+      let safePunct = 0;
+      const punct = " .,;:'\"!?()/-:%$";
+      for (const ch of stripped) {
+        if ((ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z")) letters++;
+        else if (ch >= "0" && ch <= "9") digits++;
+        else if (punct.includes(ch)) safePunct++;
+      }
+      const meaningful = letters + digits + safePunct;
+      if (inKnownTextRange(offset)) {
+        if (stripped.length <= 6) return /^[A-Za-z0-9 .:'"!?()/%$-]+$/.test(stripped) && letters > 0;
+        return letters > 0 && meaningful / Math.max(1, stripped.length) >= 0.65;
+      }
+      if (["mission_contract", "ui", "world_label", "resource_reference"].includes(category)) return true;
+      if (stripped.length < 12) return false;
+      if (!/\s/.test(stripped)) return false;
+      return letters >= 6 && meaningful / Math.max(1, stripped.length) >= 0.80;
+    }
+    function normalizeLines(text) {
+      return text.replace(/\r/g, "\n").replace(/\t/g, " ").split("\n").map(line => line.trimEnd());
+    }
+    function classify(offset, text) {
+      for (const [category, start, end] of CATEGORY_RANGES) {
+        if (offset >= start && offset <= end) return category;
+      }
+      const upper = text.toUpperCase();
+      if (upper.includes("CONTRACT") || upper.includes("MISSION")) return "mission_contract";
+      if (["REPAIR", "SAVE GAME", "RESTORE", "SOUND", "PILOT"].some(word => upper.includes(word))) return "ui";
+      if (["HOUSE ", "PLANET", "ANDER", "VEGA", "DONEGAL"].some(word => upper.includes(word))) return "world_label";
+      if (/\.(EXE|BIN|BMP|PAL|FNT|MUS|SND|DAT|SCR|TBL|GAM)\b/i.test(text)) return "resource_reference";
+      return "other_ascii";
+    }
+    function prefixFor(category) {
+      return {
+        pilot_bio: "pilot",
+        ui_save_hire: "ui",
+        rumor: "rumor",
+        main_story: "story",
+        personal_message: "pm",
+        newsnet: "news",
+        newsnet_endgame: "news",
+        brief_headline: "headline",
+        reputation_flavor: "reputation",
+        endgame: "endgame",
+        mission_contract: "mission",
+        world_label: "world",
+        resource_reference: "resource",
+        ui: "ui",
+        loader_prompt: "loader",
+        combat_warning: "combat",
+        intro_text: "intro",
+        mission_result: "result",
+        credits_auth: "credits",
+        company_status: "company",
+        mechlab_ui: "mechlab",
+        contract_ui: "contract",
+        starmap_planet: "planet",
+        mission_name: "mission",
+        crew_recruitment: "crew"
+      }[category] || "text";
+    }
+    function titleFor(text, category) {
+      const lines = normalizeLines(text).map(line => line.trim()).filter(Boolean);
+      if (!lines.length) return category;
+      const joined = lines.slice(0, 3).join("\n").toUpperCase();
+      if (joined.includes("PERSONAL MESSAGE FROM:")) return "personal message";
+      if (joined.includes("BRIEF HEADLINES")) return "brief headlines";
+      if (joined.includes("SUDDEN DEATH IS A GRIM REALITY")) return "sudden death prompt";
+      if ((category === "newsnet" || category === "newsnet_endgame") && lines.length >= 3) return lines[2].slice(0, 72);
+      if (category === "brief_headline" && lines.length >= 2) return lines[1].slice(0, 72);
+      return lines[0].slice(0, 72);
+    }
+    function mzHeaderSize(bytes) {
+      if (bytes.length < 32 || bytes[0] !== 0x4D || bytes[1] !== 0x5A) return 0;
+      return (bytes[8] | (bytes[9] << 8)) * 16;
+    }
+    function extractBlocks(bytes, sourceName) {
+      const headerSize = mzHeaderSize(bytes);
+      const decoder = new TextDecoder("ascii");
+      const blocks = [];
+      let start = -1;
+      let run = [];
+      function flush(index, terminator) {
+        if (start >= 0 && run.length >= 4) {
+          const text = decoder.decode(new Uint8Array(run));
+          if (looksLikeText(text)) {
+            const category = classify(start, text);
+            if (!shouldKeepBlock(start, text, category)) {
+              start = -1;
+              run = [];
+              return;
+            }
+            const lines = normalizeLines(text);
+            const nonEmpty = lines.map(line => line.trim()).filter(Boolean);
+            const loadedOffset = headerSize && start >= headerSize ? start - headerSize : start;
+            blocks.push({
+              key: `mw_main:${hex(start).slice(2)}:${run.length.toString(16).toUpperCase().padStart(4, "0")}`,
+              suggested_id: `mw_main.${prefixFor(category)}.${start.toString(16).padStart(6, "0")}`,
+              assigned_id: "",
+              source_file: sourceName,
+              file_offset: start,
+              file_offset_hex: hex(start),
+              loaded_offset: loadedOffset,
+              loaded_offset_hex: hex(loadedOffset),
+              length: run.length,
+              category,
+              title: titleFor(text, category),
+              first_line: (nonEmpty[0] || text.trim()).slice(0, 120),
+              line_count: Math.max(1, lines.length),
+              has_cr: text.includes("\r"),
+              has_lf: text.includes("\n"),
+              terminator,
+              text,
+              notes: "",
+              tags: [],
+              reviewed: false
+            });
+          }
+        }
+        start = -1;
+        run = [];
+      }
+      for (let i = 0; i < bytes.length; i++) {
+        const value = bytes[i];
+        if (isTextByte(value)) {
+          if (start < 0) start = i;
+          run.push(value);
+        } else {
+          flush(i, hex(value, 2));
+        }
+      }
+      flush(bytes.length, "EOF");
+      return { blocks, headerSize };
+    }
+    async function sha256(bytes) {
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+    function categories() {
+      return Array.from(new Set(state.blocks.map(block => block.category))).sort();
+    }
+    function fillCategorySelects() {
+      const cats = categories();
+      els.categoryFilter.innerHTML = `<option value="all">all</option>` + cats.map(cat => `<option value="${cat}">${cat}</option>`).join("");
+      els.categoryEdit.innerHTML = cats.map(cat => `<option value="${cat}">${cat}</option>`).join("");
+    }
+    function setStatus(message) {
+      els.status.textContent = message;
+    }
+    function finalId(block) {
+      return block.assigned_id || block.suggested_id;
+    }
+    function markDirty() {
+      state.dirty = true;
+      els.dirtyFlag.textContent = "changed";
+      enableActions();
+    }
+    function enableActions() {
+      const hasBlocks = state.blocks.length > 0;
+      const selected = selectedBlock();
+      els.exportCatalog.disabled = !hasBlocks;
+      els.exportAnnotations.disabled = !hasBlocks;
+      els.fillVisible.disabled = !hasBlocks || state.filtered.length === 0;
+      els.useSuggested.disabled = !selected;
+      els.markReviewed.disabled = !selected;
+      els.copyId.disabled = !selected;
+      els.prevBlock.disabled = !selected || currentFilteredIndex() <= 0;
+      els.nextBlock.disabled = !selected || currentFilteredIndex() >= state.filtered.length - 1;
+    }
+    function updateStats() {
+      const assigned = state.blocks.filter(block => block.assigned_id).length;
+      const reviewed = state.blocks.filter(block => block.reviewed).length;
+      const cats = categories().length;
+      const sourceName = state.source ? state.source.name : "no source";
+      els.stats.innerHTML = [
+        `<span class="stat">${state.blocks.length} blocks</span>`,
+        `<span class="stat">${state.filtered.length} visible</span>`,
+        `<span class="stat">${assigned} assigned</span>`,
+        `<span class="stat">${reviewed} reviewed</span>`,
+        `<span class="stat">${cats} categories</span>`,
+        `<span class="stat">${sourceName}</span>`
+      ].join("");
+    }
+    function applyFilters() {
+      const q = els.searchInput.value.trim().toLowerCase();
+      const cat = els.categoryFilter.value || "all";
+      const review = els.reviewFilter.value || "all";
+      state.filtered = state.blocks.filter(block => {
+        if (cat !== "all" && block.category !== cat) return false;
+        if (review === "assigned" && !block.assigned_id) return false;
+        if (review === "unassigned" && block.assigned_id) return false;
+        if (review === "reviewed" && !block.reviewed) return false;
+        if (review === "unreviewed" && block.reviewed) return false;
+        if (!q) return true;
+        const haystack = [
+          block.key,
+          block.suggested_id,
+          block.assigned_id,
+          block.file_offset_hex,
+          block.loaded_offset_hex,
+          block.category,
+          block.title,
+          block.first_line,
+          block.text,
+          (block.tags || []).join(" "),
+          block.notes || ""
+        ].join("\n").toLowerCase();
+        return haystack.includes(q);
+      });
+      if (!state.filtered.some(block => block.key === state.selectedKey)) {
+        state.selectedKey = state.filtered[0]?.key || "";
+      }
+      renderList();
+      renderDetail();
+      updateStats();
+      enableActions();
+    }
+    function renderList() {
+      if (!state.blocks.length) {
+        els.list.innerHTML = `<div class="empty">Load MW_MAIN.EXE or an exported catalog.</div>`;
+        return;
+      }
+      if (!state.filtered.length) {
+        els.list.innerHTML = `<div class="empty">No matching blocks.</div>`;
+        return;
+      }
+      const frag = document.createDocumentFragment();
+      state.filtered.forEach(block => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "row";
+        row.setAttribute("aria-selected", block.key === state.selectedKey ? "true" : "false");
+        row.dataset.key = block.key;
+        const idText = finalId(block);
+        row.innerHTML = `
+          <div class="row-title">
+            <strong>${escapeHtml(block.title || block.first_line)}</strong>
+            <span class="badge">${escapeHtml(block.category)}</span>
+          </div>
+          <div class="offset">${escapeHtml(block.file_offset_hex)} · ${escapeHtml(idText)}</div>
+          <div class="snippet">${escapeHtml(block.first_line || "")}</div>
+        `;
+        row.addEventListener("click", () => {
+          state.selectedKey = block.key;
+          renderList();
+          renderDetail();
+          enableActions();
+        });
+        frag.appendChild(row);
+      });
+      els.list.replaceChildren(frag);
+    }
+    function selectedBlock() {
+      return state.blocks.find(block => block.key === state.selectedKey) || null;
+    }
+    function currentFilteredIndex() {
+      return state.filtered.findIndex(block => block.key === state.selectedKey);
+    }
+    function renderDetail() {
+      const block = selectedBlock();
+      const disabled = !block;
+      for (const input of [els.assignedId, els.categoryEdit, els.tagsEdit, els.titleEdit, els.notesEdit]) {
+        input.disabled = disabled;
+      }
+      if (!block) {
+        els.detailHeading.textContent = "No block selected";
+        els.metaFileOffset.textContent = "-";
+        els.metaLoadedOffset.textContent = "-";
+        els.metaLength.textContent = "-";
+        els.metaLines.textContent = "-";
+        els.assignedId.value = "";
+        els.suggestedId.value = "";
+        els.categoryEdit.value = "";
+        els.tagsEdit.value = "";
+        els.titleEdit.value = "";
+        els.notesEdit.value = "";
+        els.textPreview.textContent = "";
+        return;
+      }
+      els.detailHeading.textContent = block.title || block.first_line || block.suggested_id;
+      els.metaFileOffset.textContent = block.file_offset_hex;
+      els.metaLoadedOffset.textContent = block.loaded_offset_hex;
+      els.metaLength.textContent = String(block.length);
+      els.metaLines.textContent = String(block.line_count);
+      els.assignedId.value = block.assigned_id || "";
+      els.suggestedId.value = block.suggested_id;
+      if (![...els.categoryEdit.options].some(opt => opt.value === block.category)) {
+        const opt = document.createElement("option");
+        opt.value = block.category;
+        opt.textContent = block.category;
+        els.categoryEdit.appendChild(opt);
+      }
+      els.categoryEdit.value = block.category;
+      els.tagsEdit.value = (block.tags || []).join(", ");
+      els.titleEdit.value = block.title || "";
+      els.notesEdit.value = block.notes || "";
+      els.textPreview.textContent = block.text.replace(/\r/g, "\n");
+    }
+    function updateSelected(mutator) {
+      const block = selectedBlock();
+      if (!block) return;
+      mutator(block);
+      markDirty();
+      applyFilters();
+    }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#039;"
+      }[ch]));
+    }
+    function catalogPayload() {
+      return {
+        schema: "mw1989.text_catalog",
+        schema_version: 1,
+        source: state.source,
+        category_ranges: CATEGORY_RANGES.map(([category, start, end, description]) => ({
+          category, start, end, description
+        })),
+        blocks: state.blocks
+      };
+    }
+    function annotationPayload() {
+      return {
+        schema: "mw1989.text_annotations",
+        schema_version: 1,
+        source: state.source,
+        blocks: state.blocks.map(block => ({
+          key: block.key,
+          file_offset_hex: block.file_offset_hex,
+          suggested_id: block.suggested_id,
+          assigned_id: block.assigned_id,
+          category: block.category,
+          title: block.title,
+          tags: block.tags || [],
+          notes: block.notes || "",
+          reviewed: Boolean(block.reviewed)
+        }))
+      };
+    }
+    function downloadJson(payload, filename) {
+      const blob = new Blob([JSON.stringify(payload, null, 2) + "\n"], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      state.dirty = false;
+      els.dirtyFlag.textContent = "";
+    }
+    function mergeImported(payload) {
+      const rows = Array.isArray(payload) ? payload : (payload.blocks || []);
+      if (!Array.isArray(rows)) throw new Error("JSON has no blocks array.");
+      if (!state.blocks.length && payload.blocks) {
+        state.blocks = payload.blocks.map(row => ({
+          ...row,
+          reviewed: Boolean(row.reviewed),
+          tags: Array.isArray(row.tags) ? row.tags : []
+        }));
+        state.source = payload.source || { name: "imported catalog" };
+        state.selectedKey = state.blocks[0]?.key || "";
+        fillCategorySelects();
+        applyFilters();
+        setStatus(`Loaded ${state.blocks.length} catalog blocks.`);
+        return;
+      }
+      const byKey = new Map(rows.map(row => [row.key, row]));
+      const byOffset = new Map(rows.map(row => [row.file_offset_hex, row]));
+      let merged = 0;
+      for (const block of state.blocks) {
+        const row = byKey.get(block.key) || byOffset.get(block.file_offset_hex);
+        if (!row) continue;
+        block.assigned_id = row.assigned_id || row.id || block.assigned_id || "";
+        block.category = row.category || block.category;
+        block.title = row.title || block.title;
+        block.notes = row.notes || block.notes || "";
+        block.tags = Array.isArray(row.tags) ? row.tags : block.tags || [];
+        block.reviewed = Boolean(row.reviewed);
+        merged++;
+      }
+      fillCategorySelects();
+      applyFilters();
+      setStatus(`Merged ${merged} annotations.`);
+    }
+    async function loadExe(file) {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const extracted = extractBlocks(bytes, file.name);
+      const hash = await sha256(buffer);
+      state.blocks = extracted.blocks;
+      state.source = {
+        path: file.name,
+        name: file.name,
+        size: bytes.length,
+        sha256: hash,
+        mz_header_size: extracted.headerSize
+      };
+      state.selectedKey = state.blocks[0]?.key || "";
+      state.dirty = false;
+      els.dirtyFlag.textContent = "";
+      fillCategorySelects();
+      applyFilters();
+      setStatus(`Loaded ${state.blocks.length} text blocks.`);
+    }
+    function editEvents() {
+      els.assignedId.addEventListener("input", () => updateSelected(block => { block.assigned_id = els.assignedId.value.trim(); }));
+      els.categoryEdit.addEventListener("change", () => updateSelected(block => { block.category = els.categoryEdit.value; }));
+      els.tagsEdit.addEventListener("input", () => updateSelected(block => {
+        block.tags = els.tagsEdit.value.split(",").map(tag => tag.trim()).filter(Boolean);
+      }));
+      els.titleEdit.addEventListener("input", () => updateSelected(block => { block.title = els.titleEdit.value.trim(); }));
+      els.notesEdit.addEventListener("input", () => updateSelected(block => { block.notes = els.notesEdit.value; }));
+    }
+    els.exeInput.addEventListener("change", async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        await loadExe(file);
+      } catch (error) {
+        setStatus(error.message);
+      }
+    });
+    els.jsonInput.addEventListener("change", async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        mergeImported(JSON.parse(await file.text()));
+      } catch (error) {
+        setStatus(error.message);
+      } finally {
+        els.jsonInput.value = "";
+      }
+    });
+    els.searchInput.addEventListener("input", applyFilters);
+    els.categoryFilter.addEventListener("change", applyFilters);
+    els.reviewFilter.addEventListener("change", applyFilters);
+    els.clearFilters.addEventListener("click", () => {
+      els.searchInput.value = "";
+      els.categoryFilter.value = "all";
+      els.reviewFilter.value = "all";
+      applyFilters();
+    });
+    els.exportCatalog.addEventListener("click", () => downloadJson(catalogPayload(), "mw_main_text_catalog.json"));
+    els.exportAnnotations.addEventListener("click", () => downloadJson(annotationPayload(), "mw_main_text_annotations.json"));
+    els.fillVisible.addEventListener("click", () => {
+      for (const block of state.filtered) {
+        if (!block.assigned_id) block.assigned_id = block.suggested_id;
+      }
+      markDirty();
+      applyFilters();
+    });
+    els.useSuggested.addEventListener("click", () => updateSelected(block => { block.assigned_id = block.suggested_id; }));
+    els.markReviewed.addEventListener("click", () => updateSelected(block => { block.reviewed = true; }));
+    els.copyId.addEventListener("click", async () => {
+      const block = selectedBlock();
+      if (!block) return;
+      await navigator.clipboard.writeText(finalId(block));
+      setStatus(`Copied ${finalId(block)}`);
+    });
+    els.prevBlock.addEventListener("click", () => {
+      const index = currentFilteredIndex();
+      if (index > 0) {
+        state.selectedKey = state.filtered[index - 1].key;
+        renderList();
+        renderDetail();
+        enableActions();
+      }
+    });
+    els.nextBlock.addEventListener("click", () => {
+      const index = currentFilteredIndex();
+      if (index >= 0 && index < state.filtered.length - 1) {
+        state.selectedKey = state.filtered[index + 1].key;
+        renderList();
+        renderDetail();
+        enableActions();
+      }
+    });
+    window.addEventListener("beforeunload", event => {
+      if (!state.dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
+    fillCategorySelects();
+    editEvents();
+    updateStats();
+    enableActions();
+  </script>
+</body>
+</html>

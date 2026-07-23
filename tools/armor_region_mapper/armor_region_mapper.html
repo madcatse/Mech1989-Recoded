@@ -1,0 +1,1059 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MW_PICS Armor Region Mapper</title>
+<style>
+:root {
+  --bg: #111317;
+  --panel: #1b1f26;
+  --panel2: #242a34;
+  --text: #f0f2f4;
+  --muted: #aab2bf;
+  --line: #3a424f;
+  --accent: #39a6ff;
+  --ok: #3fc17f;
+  --warn: #f1b642;
+  --danger: #ef6363;
+  --active: #ffd84a;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--bg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+button, select, input {
+  color: var(--text);
+  background: #11161d;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+}
+button {
+  min-height: 34px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+button:hover { border-color: #657284; background: #19212b; }
+button.primary { background: #0c5f9e; border-color: #2188d6; }
+button.good { background: #13683f; border-color: #35a56d; }
+button.warn { background: #704c12; border-color: #ad761e; }
+button.danger { background: #6d2020; border-color: #a53a3a; }
+button:disabled { opacity: .45; cursor: default; }
+select, input { min-height: 34px; padding: 6px 8px; width: 100%; }
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  height: 100vh;
+  min-height: 560px;
+}
+.stage {
+  min-width: 0;
+  overflow: auto;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    #080a0d;
+  background-size: 32px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+.canvas-shell {
+  position: relative;
+  border: 1px solid #58606c;
+  background: #000;
+  box-shadow: 0 10px 32px rgba(0,0,0,.35);
+}
+#imageCanvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  cursor: crosshair;
+}
+.side {
+  border-left: 1px solid var(--line);
+  background: var(--panel);
+  overflow: auto;
+  padding: 14px;
+}
+.block {
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 14px;
+  margin: 0 0 14px;
+}
+.block:last-child { border-bottom: 0; }
+h1 {
+  font-size: 18px;
+  line-height: 1.2;
+  margin: 0 0 6px;
+}
+h2 {
+  font-size: 13px;
+  color: #fff;
+  margin: 0 0 9px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+.meta, .hint, .status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.status { min-height: 18px; color: #d4dae3; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.stack { display: grid; gap: 8px; }
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.section-btn {
+  position: relative;
+  text-align: left;
+  padding: 8px 10px;
+  min-height: 42px;
+}
+.section-btn.active {
+  outline: 2px solid var(--active);
+  background: #2b2a1b;
+}
+.section-btn span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 2px;
+}
+.section-btn strong { font-size: 15px; }
+.section-count {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  color: #111;
+  background: var(--active);
+  min-width: 19px;
+  height: 19px;
+  border-radius: 10px;
+  text-align: center;
+  line-height: 19px;
+  font-size: 11px;
+}
+.swatch {
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255,255,255,.5);
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 6px;
+}
+.rect-list {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+}
+.rect-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 8px;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.rect-item button { min-height: 28px; padding: 4px 8px; }
+.empty { color: var(--muted); font-size: 12px; }
+.coords {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.coords div {
+  background: #10151b;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 7px 8px;
+}
+.kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-bottom-color: #222832;
+  border-radius: 4px;
+  color: #dfe5ec;
+  background: #131820;
+  font-size: 11px;
+}
+.file-loader {
+  display: grid;
+  gap: 8px;
+}
+.zoom-panel {
+  display: grid;
+  gap: 8px;
+}
+.zoom-panel input {
+  text-align: center;
+}
+.stage.zoom-overflow {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.checkline {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: start;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.checkline input {
+  width: 16px;
+  min-height: 16px;
+  margin: 1px 0 0;
+}
+@media (max-width: 920px) {
+  .app { grid-template-columns: 1fr; height: auto; }
+  .stage { min-height: 60vh; align-items: flex-start; }
+  .side { border-left: 0; border-top: 1px solid var(--line); }
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="stage" id="stage">
+    <div class="canvas-shell">
+      <canvas id="imageCanvas"></canvas>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="block">
+      <h1>Armor Region Mapper</h1>
+      <div class="meta">MW_PICS mechbay art: RA, RL, RT, CT, LT, LL, LA. Координаты считаются в исходных пикселях картинки.</div>
+    </div>
+
+    <div class="block stack">
+      <h2>Картинка</h2>
+      <select id="imageSelect"></select>
+      <div class="row">
+        <button id="prevImage">Предыдущая</button>
+        <button id="nextImage">Следующая</button>
+      </div>
+      <div class="zoom-panel">
+        <div class="row3">
+          <button id="zoomOut" type="button">-</button>
+          <input id="zoomInput" type="number" min="1" max="16" step="1" value="1">
+          <button id="zoomIn" type="button">+</button>
+        </div>
+        <button id="zoomFit" type="button">По размеру окна</button>
+      </div>
+      <div class="file-loader">
+        <input id="customImageInput" type="file" accept="image/bmp,image/png,image/*">
+      </div>
+      <div id="imageMeta" class="meta"></div>
+    </div>
+
+    <div class="block stack">
+      <h2>Секция</h2>
+      <div class="section-grid" id="sectionGrid"></div>
+      <div class="row">
+        <button id="addRect" class="good">Добавить в секцию</button>
+        <button id="clearSelection">Сбросить рамку</button>
+      </div>
+      <button id="clearSection" class="warn">Очистить выбранную секцию</button>
+    </div>
+
+    <div class="block stack">
+      <h2>Текущая рамка</h2>
+      <div class="coords">
+        <div id="coordX">x: -</div>
+        <div id="coordY">y: -</div>
+        <div id="coordW">w: -</div>
+        <div id="coordH">h: -</div>
+      </div>
+      <div id="pointerStatus" class="status"></div>
+      <div class="hint">Рамка создаётся протягиванием мыши по изображению. <span class="kbd">Delete</span> удаляет последний прямоугольник выбранной секции.</div>
+    </div>
+
+    <div class="block stack">
+      <h2>Прямоугольники</h2>
+      <div id="rectList" class="rect-list"></div>
+    </div>
+
+    <div class="block stack">
+      <h2>Экспорт</h2>
+      <div class="row">
+        <button id="exportCurrent" class="primary">Экспорт текущей</button>
+        <button id="exportAll" class="primary">Экспорт всех</button>
+      </div>
+      <div class="row">
+        <button id="exportPurplePreview">PNG-превью</button>
+        <button id="exportPurpleMask">PNG-маска</button>
+      </div>
+      <label class="checkline">
+        <input id="purpleOnlyExport" type="checkbox" checked>
+        <span>PNG берёт только исходные фиолетовые пиксели внутри размеченных рамок.</span>
+      </label>
+      <div class="row">
+        <button id="importJson">Импорт JSON</button>
+        <button id="clearAll" class="danger">Очистить текущую</button>
+      </div>
+      <input id="importInput" type="file" accept="application/json,.json" hidden>
+      <div id="saveStatus" class="status"></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+const IMAGE_DIRS = [
+  {
+    label: "corrected palette",
+    path: "../Sorted Original Files/BIN/out/MW_PICS/mw_pics_images_corrected/",
+  },
+  {
+    label: "raw palette fallback",
+    path: "../Sorted Original Files/BIN/out/MW_PICS/mw_pics_images/",
+  },
+];
+const IMAGES = [
+  { known_index: 7, offset_hex: "0x0002A00D", width: 111, height: 182, filename: "known_007_0002A00D_header_phase1_111x182.bmp" },
+  { known_index: 8, offset_hex: "0x0002C7E6", width: 125, height: 165, filename: "known_008_0002C7E6_header_phase1_125x165.bmp" },
+  { known_index: 9, offset_hex: "0x0002F08A", width: 115, height: 183, filename: "known_009_0002F08A_header_phase1_115x183.bmp" },
+  { known_index: 10, offset_hex: "0x00031A09", width: 119, height: 182, filename: "known_010_00031A09_header_phase1_119x182.bmp" },
+  { known_index: 11, offset_hex: "0x000344BB", width: 135, height: 187, filename: "known_011_000344BB_header_135x187.bmp" },
+  { known_index: 12, offset_hex: "0x0003766F", width: 113, height: 178, filename: "known_012_0003766F_header_phase1_113x178.bmp" },
+  { known_index: 13, offset_hex: "0x00039E1A", width: 121, height: 161, filename: "known_013_00039E1A_header_phase1_121x161.bmp" },
+  { known_index: 14, offset_hex: "0x0003C480", width: 125, height: 181, filename: "known_014_0003C480_header_phase1_125x181.bmp" },
+];
+
+const SECTIONS = [
+  { id: "RA", name: "Right arm", color: "#ff4d6d" },
+  { id: "RL", name: "Right leg", color: "#ffb02e" },
+  { id: "RT", name: "Right torso", color: "#55d169" },
+  { id: "CT", name: "Central torso", color: "#43c7ff" },
+  { id: "LT", name: "Left torso", color: "#a78bfa" },
+  { id: "LL", name: "Left leg", color: "#f472b6" },
+  { id: "LA", name: "Left arm", color: "#f5e642" },
+];
+const EXPORT_PURPLE = [205, 0, 205, 255];
+
+const STORAGE_KEY = "mw_pics_armor_region_mapper_v1";
+const canvas = document.getElementById("imageCanvas");
+const ctx = canvas.getContext("2d");
+ctx.imageSmoothingEnabled = false;
+
+let image = new Image();
+let currentIndex = 1;
+let activeSection = "RA";
+let annotations = loadAnnotations();
+let currentSelection = null;
+let dragStart = null;
+let activePointerId = null;
+let scale = 1;
+let fitScale = 1;
+let manualScale = null;
+let currentSource = IMAGES[currentIndex];
+let customObjectUrl = null;
+
+function emptySections() {
+  return Object.fromEntries(SECTIONS.map(section => [section.id, []]));
+}
+
+function sourceKey(source) {
+  return source.filename || source.id || "custom_image";
+}
+
+function ensureRecord(source) {
+  const key = sourceKey(source);
+  if (!annotations.images[key]) {
+    annotations.images[key] = {
+      source: source.filename ? {
+        bin: "MW_PICS.BIN",
+        known_index: source.known_index,
+        offset_hex: source.offset_hex,
+        filename: source.filename,
+        width: source.width,
+        height: source.height,
+      } : {
+        id: source.id,
+        filename: source.filename,
+        width: source.width,
+        height: source.height,
+      },
+      sections: emptySections(),
+    };
+  }
+  if (source.filename && annotations.images[key].source) {
+    annotations.images[key].source.image_dir = source.image_dir || IMAGE_DIRS[0].path;
+    annotations.images[key].source.palette = source.palette || IMAGE_DIRS[0].label;
+  }
+  for (const section of SECTIONS) {
+    annotations.images[key].sections[section.id] ||= [];
+  }
+  return annotations.images[key];
+}
+
+function loadAnnotations() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "");
+    if (saved && saved.images) return saved;
+  } catch {}
+  return {
+    schema: "mw_pics_armor_regions.v1",
+    coordinate_system: defaultCoordinateSystem(),
+    target_pixel_filter: defaultTargetPixelFilter(),
+    sections: SECTIONS.map(({ id, name }) => ({ id, name })),
+    images: {},
+  };
+}
+
+function defaultCoordinateSystem() {
+  return {
+    origin: "top-left",
+    units: "source pixels",
+    rectangles: "x,y,w,h with x2/y2 exclusive",
+    export_area: "only pixels inside each rectangle are counted; visual selection borders are not exported",
+  };
+}
+
+function defaultTargetPixelFilter() {
+  return {
+    name: "purple_source_pixels",
+    rule: "Inside each exported rectangle, armor pixels are source pixels that look purple/magenta.",
+    rgba_heuristic: {
+      r_min: 110,
+      g_max: 85,
+      b_min: 110,
+      max_abs_r_minus_b: 90,
+      alpha_nonzero: true,
+    },
+  };
+}
+
+function saveAnnotations(message = "Сохранено в браузере.") {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(annotations));
+  document.getElementById("saveStatus").textContent = message;
+}
+
+function init() {
+  const select = document.getElementById("imageSelect");
+  select.innerHTML = "";
+  IMAGES.forEach((source, index) => {
+    const option = document.createElement("option");
+    option.value = String(index);
+    option.textContent = `${source.known_index}: ${source.filename}`;
+    select.appendChild(option);
+  });
+  select.value = String(currentIndex);
+  select.addEventListener("change", () => loadImage(Number(select.value)));
+
+  const sectionGrid = document.getElementById("sectionGrid");
+  sectionGrid.innerHTML = "";
+  for (const section of SECTIONS) {
+    const button = document.createElement("button");
+    button.className = "section-btn";
+    button.dataset.section = section.id;
+    button.innerHTML = `<span class="swatch" style="background:${section.color}"></span><strong>${section.id}</strong><span>${section.name}</span><b class="section-count">0</b>`;
+    button.addEventListener("click", () => {
+      activeSection = section.id;
+      currentSelection = null;
+      renderAll();
+    });
+    sectionGrid.appendChild(button);
+  }
+
+  document.getElementById("prevImage").addEventListener("click", () => loadImage((currentIndex + IMAGES.length - 1) % IMAGES.length));
+  document.getElementById("nextImage").addEventListener("click", () => loadImage((currentIndex + 1) % IMAGES.length));
+  document.getElementById("zoomOut").addEventListener("click", () => changeZoom(-1));
+  document.getElementById("zoomIn").addEventListener("click", () => changeZoom(1));
+  document.getElementById("zoomFit").addEventListener("click", fitZoom);
+  document.getElementById("zoomInput").addEventListener("change", event => setZoom(Number(event.target.value)));
+  document.getElementById("addRect").addEventListener("click", addCurrentSelection);
+  document.getElementById("clearSelection").addEventListener("click", () => { currentSelection = null; renderAll(); });
+  document.getElementById("clearSection").addEventListener("click", clearActiveSection);
+  document.getElementById("clearAll").addEventListener("click", clearAllAnnotations);
+  document.getElementById("exportCurrent").addEventListener("click", () => exportJson(false));
+  document.getElementById("exportAll").addEventListener("click", () => exportJson(true));
+  document.getElementById("exportPurplePreview").addEventListener("click", () => exportPurplePng("preview"));
+  document.getElementById("exportPurpleMask").addEventListener("click", () => exportPurplePng("mask"));
+  document.getElementById("importJson").addEventListener("click", () => document.getElementById("importInput").click());
+  document.getElementById("importInput").addEventListener("change", importJson);
+  document.getElementById("customImageInput").addEventListener("change", loadCustomImage);
+  window.addEventListener("resize", () => { updateScale(); renderAll(); });
+  window.addEventListener("keydown", handleKeys);
+
+  canvas.addEventListener("pointerdown", startDrag);
+  canvas.addEventListener("pointermove", moveDrag);
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+  canvas.addEventListener("pointerleave", showPointerOnly);
+  canvas.addEventListener("wheel", handleWheelZoom, { passive: false });
+
+  loadImage(currentIndex);
+}
+
+function loadImage(index) {
+  currentIndex = index;
+  currentSource = { ...IMAGES[index] };
+  document.getElementById("imageSelect").value = String(index);
+  currentSelection = null;
+  dragStart = null;
+  activePointerId = null;
+  manualScale = null;
+  if (customObjectUrl) {
+    URL.revokeObjectURL(customObjectUrl);
+    customObjectUrl = null;
+  }
+  loadImageFromDirs(0);
+}
+
+function loadImageFromDirs(dirIndex) {
+  const dir = IMAGE_DIRS[dirIndex];
+  image = new Image();
+  image.onload = () => {
+    currentSource.width = image.naturalWidth;
+    currentSource.height = image.naturalHeight;
+    currentSource.image_dir = dir.path;
+    currentSource.palette = dir.label;
+    ensureRecord(currentSource);
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    updateScale();
+    renderAll();
+  };
+  image.onerror = () => {
+    if (dirIndex + 1 < IMAGE_DIRS.length) {
+      loadImageFromDirs(dirIndex + 1);
+      return;
+    }
+    document.getElementById("imageMeta").textContent = `Не удалось открыть ${currentSource.filename}. Проверь путь к BMP рядом с проектом.`;
+  };
+  image.src = dir.path + encodeURIComponent(currentSource.filename);
+}
+
+function loadCustomImage(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  if (customObjectUrl) URL.revokeObjectURL(customObjectUrl);
+  customObjectUrl = URL.createObjectURL(file);
+  currentSource = {
+    id: `custom:${file.name}`,
+    filename: file.name,
+    width: 0,
+    height: 0,
+    custom: true,
+  };
+  currentSelection = null;
+  manualScale = null;
+  image = new Image();
+  image.onload = () => {
+    currentSource.width = image.naturalWidth;
+    currentSource.height = image.naturalHeight;
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    ensureRecord(currentSource);
+    updateScale();
+    renderAll();
+  };
+  image.src = customObjectUrl;
+}
+
+function updateScale() {
+  const stage = document.getElementById("stage");
+  const sideWidth = window.innerWidth >= 920 ? 390 : 0;
+  const availableW = Math.max(180, window.innerWidth - sideWidth - 58);
+  const availableH = Math.max(180, stage.clientHeight - 38);
+  const fit = Math.min(availableW / canvas.width, availableH / canvas.height);
+  fitScale = clamp(Math.floor(fit), 1, 16);
+  scale = clamp(manualScale ?? fitScale, 1, 16);
+  canvas.style.width = `${canvas.width * scale}px`;
+  canvas.style.height = `${canvas.height * scale}px`;
+  stage.classList.toggle("zoom-overflow", canvas.width * scale > availableW || canvas.height * scale > availableH);
+  const zoomInput = document.getElementById("zoomInput");
+  if (zoomInput) zoomInput.value = String(scale);
+  const zoomFit = document.getElementById("zoomFit");
+  if (zoomFit) zoomFit.textContent = `По размеру окна (${fitScale}x)`;
+}
+
+function setZoom(nextScale, anchorEvent = null) {
+  if (!canvas.width || !canvas.height) return;
+  const oldScale = scale;
+  const next = clamp(Math.round(nextScale || fitScale), 1, 16);
+  if (next === oldScale && manualScale !== null) return;
+  manualScale = next;
+  const stage = document.getElementById("stage");
+  const anchor = anchorEvent ? {
+    x: anchorEvent.clientX - canvas.getBoundingClientRect().left,
+    y: anchorEvent.clientY - canvas.getBoundingClientRect().top,
+  } : {
+    x: stage.clientWidth / 2,
+    y: stage.clientHeight / 2,
+  };
+  const pixelX = (stage.scrollLeft + anchor.x) / oldScale;
+  const pixelY = (stage.scrollTop + anchor.y) / oldScale;
+  updateScale();
+  stage.scrollLeft = Math.max(0, pixelX * scale - anchor.x);
+  stage.scrollTop = Math.max(0, pixelY * scale - anchor.y);
+  renderAll();
+}
+
+function changeZoom(delta) {
+  setZoom(scale + delta);
+}
+
+function fitZoom() {
+  manualScale = null;
+  updateScale();
+  renderAll();
+}
+
+function handleWheelZoom(event) {
+  if (!event.ctrlKey) return;
+  event.preventDefault();
+  setZoom(scale + (event.deltaY < 0 ? 1 : -1), event);
+}
+
+function renderAll() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = false;
+  if (image.complete && image.naturalWidth) ctx.drawImage(image, 0, 0);
+  drawRegions();
+  if (currentSelection) drawRect(currentSelection, "#ffffff", 2, [4, 3], "selected", { selected: true });
+  updatePanel();
+}
+
+function drawRegions() {
+  const record = ensureRecord(currentSource);
+  for (const section of SECTIONS) {
+    const rects = record.sections[section.id] || [];
+    for (const rect of rects) {
+      const active = section.id === activeSection;
+      fillRect(rect, section.color, active ? 0.17 : 0.09);
+      drawRect(rect, section.color, active ? 2 : 1, active ? [] : [3, 3], section.id, { selected: active });
+    }
+  }
+}
+
+function drawRect(rect, color, lineWidth, dash, label, options = {}) {
+  rect = sanitizeRect(rect);
+  const x = rect.x + 0.5;
+  const y = rect.y + 0.5;
+  const w = Math.max(0, rect.w - 1);
+  const h = Math.max(0, rect.h - 1);
+  const screenDash = dash && dash.length ? dash.map(value => Math.max(1 / scale, value / scale)) : [];
+  ctx.save();
+  ctx.lineJoin = "miter";
+  ctx.lineCap = "square";
+  ctx.strokeStyle = "rgba(0,0,0,.95)";
+  ctx.lineWidth = Math.max(1 / scale, (options.selected ? 7 : 5) / scale);
+  ctx.setLineDash(screenDash);
+  ctx.strokeRect(x, y, w, h);
+  ctx.strokeStyle = "rgba(255,255,255,.95)";
+  ctx.lineWidth = Math.max(1 / scale, (options.selected ? 5 : 3) / scale);
+  ctx.strokeRect(x, y, w, h);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1 / scale, (options.selected ? 3 : Math.max(2, lineWidth)) / scale);
+  ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([]);
+  drawCornerMarks(rect, color, options.selected);
+  if (rect.w >= 10 && rect.h >= 7) {
+    ctx.font = "7px monospace";
+    ctx.textBaseline = "top";
+    ctx.fillStyle = "rgba(0,0,0,.7)";
+    const labelWidth = ctx.measureText(label).width + 4;
+    ctx.fillRect(rect.x, rect.y, labelWidth, 9);
+    ctx.fillStyle = color;
+    ctx.fillText(label, rect.x + 2, rect.y + 1);
+  }
+  ctx.restore();
+}
+
+function drawCornerMarks(rect, color, selected) {
+  const length = Math.min(
+    Math.max(2, Math.floor(Math.min(rect.w, rect.h) / 3)),
+    Math.max(1, rect.w - 1),
+    Math.max(1, rect.h - 1),
+    selected ? 12 : 9
+  );
+  const line = Math.max(1 / scale, (selected ? 4 : 3) / scale);
+  const points = [
+    [rect.x, rect.y, 1, 1],
+    [rect.x2 - 1, rect.y, -1, 1],
+    [rect.x, rect.y2 - 1, 1, -1],
+    [rect.x2 - 1, rect.y2 - 1, -1, -1],
+  ];
+  for (const [x, y, sx, sy] of points) {
+    ctx.strokeStyle = "rgba(0,0,0,.98)";
+    ctx.lineWidth = line + 2 / scale;
+    ctx.beginPath();
+    ctx.moveTo(x + 0.5, y + 0.5);
+    ctx.lineTo(x + 0.5 + sx * length, y + 0.5);
+    ctx.moveTo(x + 0.5, y + 0.5);
+    ctx.lineTo(x + 0.5, y + 0.5 + sy * length);
+    ctx.stroke();
+    ctx.strokeStyle = selected ? "#ffffff" : color;
+    ctx.lineWidth = line;
+    ctx.beginPath();
+    ctx.moveTo(x + 0.5, y + 0.5);
+    ctx.lineTo(x + 0.5 + sx * length, y + 0.5);
+    ctx.moveTo(x + 0.5, y + 0.5);
+    ctx.lineTo(x + 0.5, y + 0.5 + sy * length);
+    ctx.stroke();
+  }
+}
+
+function fillRect(rect, color, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  ctx.restore();
+}
+
+function canvasPoint(event) {
+  const box = canvas.getBoundingClientRect();
+  const x = Math.floor((event.clientX - box.left) * canvas.width / box.width);
+  const y = Math.floor((event.clientY - box.top) * canvas.height / box.height);
+  return {
+    x: clamp(x, 0, canvas.width - 1),
+    y: clamp(y, 0, canvas.height - 1),
+  };
+}
+
+function startDrag(event) {
+  event.preventDefault();
+  activePointerId = event.pointerId;
+  canvas.setPointerCapture(activePointerId);
+  dragStart = canvasPoint(event);
+  currentSelection = { x: dragStart.x, y: dragStart.y, w: 1, h: 1, x2: dragStart.x + 1, y2: dragStart.y + 1 };
+  renderAll();
+}
+
+function moveDrag(event) {
+  const point = canvasPoint(event);
+  document.getElementById("pointerStatus").textContent = `Пиксель под курсором: x=${point.x}, y=${point.y}`;
+  if (activePointerId !== event.pointerId || !dragStart) return;
+  currentSelection = rectFromPoints(dragStart, point);
+  renderAll();
+}
+
+function endDrag(event) {
+  if (activePointerId === event.pointerId && canvas.hasPointerCapture(event.pointerId)) {
+    canvas.releasePointerCapture(event.pointerId);
+  }
+  activePointerId = null;
+  dragStart = null;
+  normalizeSelection();
+  renderAll();
+}
+
+function showPointerOnly(event) {
+  if (dragStart) return;
+  const point = canvasPoint(event);
+  document.getElementById("pointerStatus").textContent = `Пиксель под курсором: x=${point.x}, y=${point.y}`;
+}
+
+function rectFromPoints(a, b) {
+  const x = Math.min(a.x, b.x);
+  const y = Math.min(a.y, b.y);
+  const x2 = Math.max(a.x, b.x) + 1;
+  const y2 = Math.max(a.y, b.y) + 1;
+  return { x, y, w: x2 - x, h: y2 - y, x2, y2 };
+}
+
+function normalizeSelection() {
+  if (!currentSelection) return;
+  currentSelection = sanitizeRect(currentSelection);
+  if (!currentSelection || currentSelection.w <= 0 || currentSelection.h <= 0) currentSelection = null;
+}
+
+function sanitizeRect(rect) {
+  const x = clamp(Math.floor(rect.x), 0, canvas.width - 1);
+  const y = clamp(Math.floor(rect.y), 0, canvas.height - 1);
+  const x2 = clamp(Math.floor(rect.x2 ?? rect.x + rect.w), x + 1, canvas.width);
+  const y2 = clamp(Math.floor(rect.y2 ?? rect.y + rect.h), y + 1, canvas.height);
+  return { x, y, w: x2 - x, h: y2 - y, x2, y2 };
+}
+
+function addCurrentSelection() {
+  if (!currentSelection) {
+    document.getElementById("saveStatus").textContent = "Сначала выдели рамку на картинке.";
+    return;
+  }
+  const record = ensureRecord(currentSource);
+  const rect = sanitizeRect(currentSelection);
+  record.sections[activeSection].push({
+    id: `${activeSection}_${String(record.sections[activeSection].length + 1).padStart(3, "0")}`,
+    ...rect,
+  });
+  currentSelection = null;
+  saveAnnotations(`Добавлено в ${activeSection}.`);
+  renderAll();
+}
+
+function clearActiveSection() {
+  const record = ensureRecord(currentSource);
+  record.sections[activeSection] = [];
+  saveAnnotations(`${activeSection} очищена.`);
+  renderAll();
+}
+
+function clearAllAnnotations() {
+  const record = ensureRecord(currentSource);
+  record.sections = emptySections();
+  saveAnnotations("Очищена текущая картинка.");
+  renderAll();
+}
+
+function handleKeys(event) {
+  if (event.key === "Delete" || event.key === "Backspace") {
+    const record = ensureRecord(currentSource);
+    const rects = record.sections[activeSection];
+    if (rects.length) {
+      rects.pop();
+      saveAnnotations(`Удалён последний прямоугольник ${activeSection}.`);
+      renderAll();
+      event.preventDefault();
+    }
+  }
+  if (event.key === "Escape") {
+    currentSelection = null;
+    renderAll();
+  }
+}
+
+function updatePanel() {
+  const record = ensureRecord(currentSource);
+  const knownLabel = currentSource.known_index !== undefined ? `known_${String(currentSource.known_index).padStart(3, "0")}` : "custom";
+  document.getElementById("imageMeta").innerHTML = [
+    `<strong>${knownLabel}</strong>`,
+    `${currentSource.width}x${currentSource.height}`,
+    currentSource.offset_hex ? `offset ${currentSource.offset_hex}` : "",
+    currentSource.palette ? `palette: ${currentSource.palette}` : "",
+    currentSource.filename,
+  ].filter(Boolean).join("<br>");
+
+  for (const button of document.querySelectorAll(".section-btn")) {
+    const id = button.dataset.section;
+    button.classList.toggle("active", id === activeSection);
+    button.querySelector(".section-count").textContent = String((record.sections[id] || []).length);
+  }
+
+  const selection = currentSelection ? sanitizeRect(currentSelection) : null;
+  document.getElementById("coordX").textContent = `x: ${selection ? selection.x : "-"}`;
+  document.getElementById("coordY").textContent = `y: ${selection ? selection.y : "-"}`;
+  document.getElementById("coordW").textContent = `w: ${selection ? selection.w : "-"}`;
+  document.getElementById("coordH").textContent = `h: ${selection ? selection.h : "-"}`;
+  document.getElementById("addRect").disabled = !selection;
+
+  const list = document.getElementById("rectList");
+  list.innerHTML = "";
+  const rects = record.sections[activeSection] || [];
+  if (!rects.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = `В ${activeSection} пока нет прямоугольников.`;
+    list.appendChild(empty);
+  } else {
+    rects.forEach((rect, index) => {
+      const item = document.createElement("div");
+      item.className = "rect-item";
+      item.innerHTML = `<span>${index + 1}: x=${rect.x}, y=${rect.y}, w=${rect.w}, h=${rect.h}</span>`;
+      const remove = document.createElement("button");
+      remove.className = "danger";
+      remove.textContent = "Удалить";
+      remove.addEventListener("click", () => {
+        rects.splice(index, 1);
+        saveAnnotations(`Удалён прямоугольник ${activeSection}.`);
+        renderAll();
+      });
+      item.appendChild(remove);
+      list.appendChild(item);
+    });
+  }
+}
+
+function exportJson(allImages) {
+  if (allImages) {
+    for (const source of IMAGES) ensureRecord(source);
+  }
+  annotations.coordinate_system ||= defaultCoordinateSystem();
+  annotations.coordinate_system.export_area ||= defaultCoordinateSystem().export_area;
+  annotations.target_pixel_filter ||= defaultTargetPixelFilter();
+  const payload = allImages ? annotations : {
+    schema: annotations.schema,
+    coordinate_system: annotations.coordinate_system,
+    target_pixel_filter: annotations.target_pixel_filter,
+    sections: annotations.sections,
+    images: {
+      [sourceKey(currentSource)]: ensureRecord(currentSource),
+    },
+  };
+  const clean = JSON.parse(JSON.stringify(payload));
+  for (const record of Object.values(clean.images)) {
+    for (const section of SECTIONS) {
+      record.sections[section.id] ||= [];
+      record.sections[section.id] = record.sections[section.id].map((rect, index) => ({
+        id: rect.id || `${section.id}_${String(index + 1).padStart(3, "0")}`,
+        x: rect.x,
+        y: rect.y,
+        w: rect.w,
+        h: rect.h,
+        x2: rect.x2 ?? rect.x + rect.w,
+        y2: rect.y2 ?? rect.y + rect.h,
+      }));
+    }
+  }
+  const namePart = allImages ? "all" : (sourceKey(currentSource).replace(/\.[^.]+$/, ""));
+  downloadJson(clean, `mw_pics_armor_regions_${namePart}.json`);
+  document.getElementById("saveStatus").textContent = allImages ? "Экспортированы все размеченные картинки." : "Экспортирована текущая картинка.";
+}
+
+function downloadJson(payload, filename) {
+  const blob = new Blob([JSON.stringify(payload, null, 2) + "\n"], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportPurplePng(mode) {
+  const record = ensureRecord(currentSource);
+  const rects = collectAllRects(record);
+  if (!rects.length) {
+    document.getElementById("saveStatus").textContent = "Сначала добавь хотя бы одну область в секцию.";
+    return;
+  }
+  const purpleOnly = document.getElementById("purpleOnlyExport").checked;
+  const exportCanvas = buildPurpleExportCanvas(rects, mode, purpleOnly);
+  const base = sourceKey(currentSource).replace(/\.[^.]+$/, "");
+  const suffix = mode === "mask" ? "purple_mask" : "purple_preview";
+  downloadCanvasPng(exportCanvas, `mw_pics_${suffix}_${base}.png`);
+  document.getElementById("saveStatus").textContent =
+    mode === "mask" ? "PNG-маска экспортирована." : "PNG-превью экспортировано.";
+}
+
+function collectAllRects(record) {
+  const rects = [];
+  for (const section of SECTIONS) {
+    for (const rect of record.sections[section.id] || []) {
+      rects.push(sanitizeRect(rect));
+    }
+  }
+  return rects;
+}
+
+function buildPurpleExportCanvas(rects, mode, purpleOnly) {
+  const out = document.createElement("canvas");
+  out.width = canvas.width;
+  out.height = canvas.height;
+  const outCtx = out.getContext("2d");
+  outCtx.imageSmoothingEnabled = false;
+  outCtx.drawImage(image, 0, 0);
+
+  const imageData = outCtx.getImageData(0, 0, out.width, out.height);
+  const data = imageData.data;
+  for (let y = 0; y < out.height; y++) {
+    for (let x = 0; x < out.width; x++) {
+      const index = (y * out.width + x) * 4;
+      const marked = rects.some(rect => isPixelInsideRect(x, y, rect));
+      const purpleSource = isPurpleArmorPixel(data[index], data[index + 1], data[index + 2], data[index + 3]);
+      const target = marked && (!purpleOnly || purpleSource);
+
+      if (target) {
+        data[index] = EXPORT_PURPLE[0];
+        data[index + 1] = EXPORT_PURPLE[1];
+        data[index + 2] = EXPORT_PURPLE[2];
+        data[index + 3] = EXPORT_PURPLE[3];
+      } else if (mode === "mask") {
+        data[index] = 0;
+        data[index + 1] = 0;
+        data[index + 2] = 0;
+        data[index + 3] = 0;
+      } else {
+        data[index] = Math.round(data[index] * 0.45);
+        data[index + 1] = Math.round(data[index + 1] * 0.45);
+        data[index + 2] = Math.round(data[index + 2] * 0.45);
+      }
+    }
+  }
+  outCtx.putImageData(imageData, 0, 0);
+  return out;
+}
+
+function isPixelInsideRect(x, y, rect) {
+  return x >= rect.x && x < rect.x2 && y >= rect.y && y < rect.y2;
+}
+
+function isPurpleArmorPixel(r, g, b, a) {
+  if (a === 0) return false;
+  return r >= 110 && b >= 110 && g <= 85 && Math.abs(r - b) <= 90;
+}
+
+function downloadCanvasPng(sourceCanvas, filename) {
+  sourceCanvas.toBlob(blob => {
+    if (!blob) {
+      document.getElementById("saveStatus").textContent = "Не удалось собрать PNG.";
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, "image/png");
+}
+
+async function importJson(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  try {
+    const imported = JSON.parse(await file.text());
+    if (!imported.images) throw new Error("JSON не содержит images.");
+    annotations = imported;
+    annotations.schema ||= "mw_pics_armor_regions.v1";
+    annotations.coordinate_system ||= {
+      origin: "top-left",
+      units: "source pixels",
+      rectangles: "x,y,w,h with x2/y2 exclusive",
+    };
+    annotations.coordinate_system.export_area ||= defaultCoordinateSystem().export_area;
+    annotations.target_pixel_filter ||= defaultTargetPixelFilter();
+    annotations.sections ||= SECTIONS.map(({ id, name }) => ({ id, name }));
+    saveAnnotations("JSON импортирован.");
+    renderAll();
+  } catch (error) {
+    document.getElementById("saveStatus").textContent = `Ошибка импорта: ${error.message}`;
+  } finally {
+    event.target.value = "";
+  }
+}
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+init();
+</script>
+</body>
+</html>
