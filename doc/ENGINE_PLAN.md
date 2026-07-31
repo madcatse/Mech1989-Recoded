@@ -81,9 +81,11 @@ Implemented:
 - Travel economy/time: confirmed jump, cost, and date-advance formulas are in
   use. Travel advances fixed 60-day displayed months and updates the current
   year/month/day state.
-- NEWS NET first slice: the original GPICS frame is drawn, text is loaded from
-  `MW_MAIN.EXE`, messages unlock by campaign date, only the last seven messages
-  remain visible, and `Previous`/`Next`/`Done` match the observed edge behavior.
+- NEWS NET publication table: the original GPICS frame is drawn, text is loaded
+  from `MW_MAIN.EXE`, the 51 confirmed publication records unlock by the
+  original date-condition model, only the recent tail remains visible, and
+  `Previous`/`Next`/`Done` match the observed edge behavior. Leaving NEWS NET
+  advances the campaign counters by one day per visit.
 - Mechbay economy/status slice: `REVIEW MECHS`, `MECH STATUS`, `SELL`, and
   `BUY MECHS` are implemented for the eight normal playable chassis. The player
   inventory is capped at 12 Mechs, sale returns the Mech to the current planet
@@ -105,12 +107,9 @@ Known stubs and follow-up work:
 - Travel currently does not finish the full economy loop: insufficient funds,
   final wealth deduction, and related warnings still need original-behavior
   validation.
-- NEWS NET currently contains the confirmed early article set through April
-  3025. Personal messages, including birthday messages, are not yet active
-  because their delivery conditions differ from simple article-date unlocks.
-- The full original NEWS NET publication table and gating rules still need to
-  be completed from additional saves/disassembly. Current reverse-engineering
-  notes are in `docs/NEWS_NET_RESEARCH.md`.
+- NEWS NET still needs exact original visible-window start logic. Current
+  behavior uses the confirmed publication order/date table and a recent-tail
+  window; the remaining nuance is documented in `docs/NEWS_NET_RESEARCH.md`.
 - Save/load UI is not wired to `.GAM` round-trip yet, even though save-field
   research exists for date and planet state.
 - Hiring, contracts, rumors, story gates, exact original market generation, and

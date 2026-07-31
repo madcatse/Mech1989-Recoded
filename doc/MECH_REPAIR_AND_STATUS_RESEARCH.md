@@ -129,10 +129,9 @@ The jump jet count may be derived from `jump_cap_m / 30`, which gives:
 | Marauder | 0 |
 | Battlemaster | 0 |
 
-This conflicts with the current screenshot-derived/user hypothesis for Phoenix
-Hawk and Jenner jump-jet counts. Keep the derived count marked as an EXE-table
-hypothesis until the `JUMP JETS: x OF y` rendering routine is traced or a
-controlled screenshot/save confirms the displayed denominator.
+Original-game editor tests confirm that Jenner displays 3 jump jets, not the
+`150 / 30 = 5` derived-table hypothesis. Keep other chassis denominators under
+review until controlled screenshots or save edits confirm them.
 
 ## Repair detail labels
 
@@ -210,6 +209,98 @@ Implementation note from the 2026-07-21 Mechbay pass: a fresh binary dump of
 `28` were wrong for direct runtime use. The current engine code uses the raw
 word values for Jenner component repair pricing.
 
+2026-07-28 controlled starting-Jenner repair chain:
+
+- `DATA6.GAM` starts with `LIFE SUPPORT: LIGHT DAMAGE`, `HEAT SINK: 9 OF 10`,
+  `RA ACTUATOR: LIGHT DAMAGE`, `ARMOR: 66%`, and total displayed repair cost
+  `54,306`.
+- Repairing life support changes `.GAM` `0x0105: 01 -> 00` and costs `23,643`.
+- Repairing RA actuator changes `.GAM` `0x0108: 01 -> 00` and costs `3,663`.
+- Repairing one heat sink changes `.GAM` `0x0106: 01 -> 00` and costs `2,000`.
+- Each armor repair in the chain costs `5,000`.
+- These observed costs sum exactly to the initial `54,306` repair estimate:
+  `23,643 + 3,663 + 2,000 + 5 * 5,000 = 54,306`.
+
+2026-07-28 controlled replacement-Jenner repair chain:
+
+- `DAT0.GAM` starts with a bought damaged Jenner: `CONDITION: FUNCTIONAL`,
+  `SRM 4-PKS: 14`, `SENSORS: LIGHT DAMAGE`, one `M LAS` in `RA` at `JUNK`,
+  and `ARMOR: 74%`.
+- Repairing sensors changes `.GAM` `0x0104: 01 -> 00` and costs `27,306`.
+- Repairing the observed `M LAS RA` while also doing one armor repair changes
+  `.GAM` `0x010E` through the full condition chain
+  `3 -> 2 -> 1 -> 0`, matching `JUNK -> HEAVY DAMAGE -> LIGHT DAMAGE ->
+  FUNCTIONAL`.
+- Each combined weapon+armor step in `DAT1 -> DAT2`, `DAT2 -> DAT3`, and
+  `DAT3 -> DAT4` costs `19,651`. Since each step includes one confirmed
+  `5,000` armor repair, the observed weapon step cost contribution is
+  `14,651` in this context.
+- `DAT2 -> DAT3` also triggers many campaign/world bytes outside the mech
+  repair cluster, likely because enough repair time elapsed to cross a periodic
+  update boundary. Do not assign those broad changes to the weapon/armor repair
+  fields without a separate controlled save.
+
+2026-07-28 replacement-Locust observation:
+
+- `DAT5.GAM` starts after selling the replacement Jenner and buying a damaged
+  Locust. The active chassis byte is `.GAM` `0x00EA = 0`, while the replacement
+  Jenner in `DAT0.GAM` has `0x00EA = 2`; this matches the original chassis
+  order (`0` Locust, `2` Jenner).
+- The same active-mech condition block is reused for Locust in this one-Mech
+  save: `0x0102 = 1` (`ENGINE: LIGHT DAMAGE`), `0x0107 = 3`
+  (`LA ACTUATOR: JUNK`), and `0x010D = 2` (`MG RA: HEAVY DAMAGE`).
+- Locust ammo uses the same active ammo byte: `.GAM` `0x025E = 149`, displayed
+  as `MACH GUN: 149`. Original-game testing confirms the Locust machine-gun
+  ammo maximum is `200`.
+- Locust armor uses the same nine-byte active armor range. `DAT5` has
+  `0x0116..0x011E = 00 00 00 01 00 00 00 00 01`, whose sum `2` gives
+  `floor((27 - 2) * 100 / 27) = 92%`.
+- The observed repair cost is `98,576` C-bills. Keep this as an observed
+  original-game value until weapon/component cost tracing for Locust is
+  tightened.
+
+2026-07-29 owned-mech slot table:
+
+- `MECH1.GAM` has one owned Locust. `MECH2.GAM` is the same campaign state
+  after buying a Phoenix Hawk into slot 2.
+- `.GAM` `0x00E8` is the owned mech count (`1 -> 2`).
+- `.GAM` `0x00EA..0x0101` is a twelve-entry `uint16le` chassis-id list.
+  `MECH2` has slot 1 `0` (`LOCUST`) and slot 2 `3` (`PHOENIX HAWK`); empty
+  slots are `0xFFFF`.
+- `.GAM` `0x0102..0x025D` is a twelve-record owned-mech state table with
+  record stride `0x1D`. Record layout is shared across slots:
+  components at `+0x00..+0x09`, up to ten weapon condition bytes at
+  `+0x0A..+0x13`, and armor damage bytes at `+0x14..+0x1C`.
+- `.GAM` `0x025E..0x0275` is a twelve-entry `uint16le` ammo-count table. In
+  `MECH2`, slot 2 ammo at `0x0260` is `187`, matching Phoenix Hawk
+  `MACH GUN: 187`.
+- Phoenix Hawk slot 2 confirms `record_base = 0x011F`; `0x0125`
+  (`record_base + 0x06`) is `RA ACTUATOR: JUNK`.
+- Phoenix Hawk slot 2 armor bytes are `(0,1,0,0,0,3,0,0,0)`, giving
+  `floor((27 - 4) * 100 / 27) = 85%`. The observed yellow left arm matches
+  `LA = 1`; the heavily damaged torso matches current `CT = 3`.
+- The save editor exposes all ten original chassis ids for preservation and
+  controlled testing. Wasp and Wolverine remain historical/internal for the
+  rebuilt runtime, but their original weapon rows (`M LAS RA`/`SRM2 LT` and
+  `AC/5 RA`/`SRM6 LT`/`M LAS HD`) are now available as editor labels.
+
+2026-07-28 original-game editor round-trip confirmations:
+
+- Player Jenner component condition offsets confirmed:
+  `0x0102` engine, `0x0103` gyros, `0x0104` sensors, `0x0105` life support,
+  `0x0106` heat-sink missing/damaged count, `0x0108` RA actuator,
+  `0x0109` LL actuator, and `0x010A` RL actuator.
+- Player Jenner weapon condition offsets confirmed:
+  `0x010C` `SRM4 CT`, `0x010D` `M LAS RA A`, `0x010E` `M LAS RA B`,
+  `0x010F` `M LAS LA A`, and `0x0110` `M LAS LA B`.
+- Overall Jenner status is derived: `ENGINE`, `GYROS`, `SENSORS`,
+  `LIFE SUPPORT`, `LL ACTUATOR`, or `RL ACTUATOR` at `JUNK` makes the mech
+  display `NONFUNCTIONAL`. Setting the same component to `HEAVY DAMAGE` returns
+  the mech to `FUNCTIONAL` if no other critical component is still `JUNK`.
+  Weapon `JUNK` states do not by themselves make the mech `NONFUNCTIONAL`.
+- `0x0107` LA actuator and `0x010B` jump-jet missing/damaged count remain
+  exposed as editor test fields until isolated controlled saves confirm them.
+
 ## Weapon status table
 
 Weapon rows are stored as ready-to-render strings. A pointer table at file
@@ -274,8 +365,19 @@ Extra ammo / inventory implementation:
 - `EXTRA AMMO` is confirmed at file `0x00B308`.
 - `BUY AMMO`, `AMMO TYPE`, `COST`, `IN HOLD`, and ammo-row UI records are
   present around `0x00CE75..0x00CF67`.
+- Controlled `DATA4.GAM` / `DATA5.GAM` saves confirm that campaign extra ammo
+  in hold is stored in `.GAM` as six little-endian `uint16` counters at
+  `0x02EE..0x02F9`.
+- The save order is `AC 5-PKS`, `LRM 5-PKS`, `SRM 2-PKS`, `SRM 4-PKS`,
+  `SRM 6-PKS`, `MACH GUN`, matching the campaign UI order and the current
+  recomp `kAmmoDefinitions` array.
+- `DATA4.GAM` has all six hold counters at zero. `DATA5.GAM` has values
+  `5, 10, 15, 20, 25, 50` after buying those amounts through `EXTRA AMMO`.
+- `MACH GUN` is bought by tens in the UI, but the save stores the resulting
+  total value directly; the observed stored value is `50`.
 - Current engine implementation keeps six ammo inventory counters with a
-  temporary cap of `9999` each.
+  temporary cap of `9999` each, matching the confirmed save field width for
+  editor purposes but not yet proving the original UI maximum.
 - Manual `MECH STATUS -> RELOAD` still pays C-bills directly and does not
   consume this inventory. The inventory is reserved for later post-mission
   auto-refill behavior.
@@ -290,6 +392,11 @@ Extra ammo / inventory implementation:
 | `SRM 4-PKS` | 1274 | Jenner |
 | `SRM 6-PKS` | 2124 | Warhammer, Battlemaster |
 | `MACH GUN` | 5 | Locust, Phoenix Hawk, Warhammer, Battlemaster |
+
+Price caution: the original-game money field changed from `1,049,915` in
+`DATA4.GAM` to `923,280` in `DATA5.GAM`, a delta of `126,635` C-bills for the
+observed purchase set. The temporary recomp prices above do not yet reproduce
+that total and need a dedicated pricing pass.
 
 ## Mech status art
 
@@ -345,11 +452,9 @@ Confirmed:
 
 Not yet confirmed:
 
-- Exact armor locations and their ordering.
-- Max armor points per location for each chassis.
 - Whether campaign-side `MW_MAIN.EXE` stores full location armor tables or
   mostly reads campaign/combat state returned from `BTECH.EXE`.
-- Exact formula for aggregate percentage and color thresholds.
+- Whether the `BACK` byte has a hidden non-front-art display path.
 
 2026-07-21 follow-up search:
 
@@ -361,53 +466,94 @@ Not yet confirmed:
 - The smaller numeric runs around `0x00BC34` and `0x00BEE0` are mixed with
   ammo strings, pointers, or UI/script parameters and do not currently match a
   plausible armor-location layout.
-- Until a better source is found, the engine should treat `ARMOR` repair as a
-  temporary aggregate percentage pool and keep per-location armor as unresolved.
+Current engine model:
 
-Temporary engine model:
-
-- Playable chassis armor uses the user-provided tabletop-derived layout in this
-  fixed order: `Head`, `Center Torso`, `Left Torso`, `Right Torso`, `Left Arm`,
-  `Right Arm`, `Left Leg`, `Right Leg`, `Center Torso Rear`,
-  `Left Torso Rear`, `Right Torso Rear`.
-
-| chassis | H | CT | LT | RT | LA | RA | LL | RL | CTR | LTR | RTR |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Locust | 8 | 10 | 8 | 8 | 4 | 4 | 8 | 8 | 2 | 2 | 2 |
-| Jenner | 9 | 17 | 13 | 13 | 12 | 12 | 15 | 15 | 4 | 3 | 3 |
-| Phoenix Hawk | 8 | 23 | 18 | 18 | 14 | 14 | 22 | 22 | 5 | 4 | 4 |
-| Shadow Hawk | 9 | 23 | 18 | 18 | 16 | 16 | 16 | 16 | 8 | 6 | 6 |
-| Rifleman | 6 | 22 | 15 | 15 | 15 | 15 | 12 | 12 | 4 | 2 | 2 |
-| Warhammer | 9 | 22 | 17 | 17 | 20 | 20 | 15 | 15 | 9 | 8 | 8 |
-| Marauder | 9 | 35 | 17 | 17 | 22 | 22 | 18 | 18 | 10 | 8 | 8 |
-| Battlemaster | 9 | 40 | 28 | 28 | 24 | 24 | 26 | 26 | 11 | 8 | 8 |
-
-- Total armor is the sum of those section points, mapped to the displayed
-  aggregate percentage.
-- Starting armor damage is distributed front-left first, then across the rest
-  of the chassis.
-- Each armor repair action costs `5000` C-bills and restores up to `5` armor
-  points in the fixed section order above; the last partial repair still costs
-  `5000`, matching the observed original-game behavior.
+- Playable chassis armor now uses the confirmed `.GAM` damage-byte model:
+  nine raw levels in the save/editor order `RA`, `LA`, `RL`, `LL`, `HEAD`,
+  `CT`, `BACK`, `TR`, `TL`.
+- Each raw section stores `0..3`, displayed by the editor as `100%`, `66%`,
+  `33%`, and `0%`.
+- Aggregate armor percent is
+  `floor((27 - sum(armor_damage_bytes)) * 100 / 27)`.
+- Random market/start damage distributes raw damage levels across those nine
+  bytes instead of subtracting tabletop armor points.
+- A manual armor repair action fixes the next damaged section back to raw `0`;
+  the selected action cost is proportional to that section's raw damage level.
 - Status-art recoloring uses hand-authored armor-region rectangles exported in
   `mechs_armor_parts/mw_pics_armor_regions_all.json`.
   Rectangles are only search bounds; the engine recolors purple stencil pixels
   inside them and leaves outlines, highlights, internals, cockpit, and grid
   pixels untouched.
 - Current front-art overlays use the visible sections `RA`, `RL`, `RT`, `CT`,
-  `LT`, `LL`, and `LA`. Rear armor values participate in the armor totals and
-  repair model, but do not have separate front-view overlay sections yet.
+  `LT`, `LL`, and `LA`; the runtime maps those legacy art labels onto GAM
+  keys `RA`, `RL`, `TR`, `CT`, `TL`, `LL`, and `LA`. The `BACK` byte
+  participates in armor percent and repair but has no observed front overlay.
 - The current Warhammer mapping includes the added `LT` rectangle
   `x=91, y=3, w=22, h=20`.
-- The temporary armor color thresholds are still `0..50%` black, `51..75%`
-  yellow, `76..100%` light gray.
+- Armor status-art colors follow the raw damage levels: `0` light gray,
+  `1` yellow, `2` red, `3` black.
 - In these Mech Status art records, the purple armor stencil can occupy source
   color index `0`; unlike many sprite paths it must not be treated as
   transparent before armor recoloring.
 
 Useful save-region candidates from existing notes:
 
-- `.GAM` `0x0500..0x0524`: roster / mech-state candidate.
+- `.GAM` `0x00EA`: confirmed active/current mech chassis id in one-Mech saves;
+  `0` = Locust in `DAT5`, `2` = Jenner in `DAT0`.
+- `.GAM` `0x0105`: confirmed player Jenner life-support condition in the
+  2026-07-28 `DATA6/DATA7` controlled repair saves (`1` = `LIGHT DAMAGE`,
+  `0` = `FUNCTIONAL`).
+- `.GAM` `0x0102`: confirmed active mech engine condition; `DAT5` Locust uses
+  `1` for `LIGHT DAMAGE`.
+- `.GAM` `0x0103`: confirmed player Jenner gyros condition.
+- `.GAM` `0x0104`: confirmed player Jenner sensors condition in the
+  2026-07-28 `DAT0/DAT1` controlled repair saves (`1` = `LIGHT DAMAGE`,
+  `0` = `FUNCTIONAL`).
+- `.GAM` `0x0106`: confirmed player Jenner missing/damaged heat-sink count in
+  the 2026-07-28 `DATA8/DATA9` controlled repair saves (`1` displays as
+  `9 OF 10`, `0` as `10 OF 10`).
+- `.GAM` `0x0108`: confirmed player Jenner RA actuator condition in the
+  2026-07-28 `DATA7/DATA8` controlled repair saves (`1` = `LIGHT DAMAGE`,
+  `0` = `FUNCTIONAL`).
+- `.GAM` `0x0109`: confirmed player Jenner LL actuator condition.
+- `.GAM` `0x010A`: confirmed player Jenner RL actuator condition.
+- `.GAM` `0x010B`: confirmed active mech jump-jet missing/damaged count; the
+  correct Jenner total is 3 jump jets, while Locust has 0.
+- `.GAM` `0x010E`: confirmed observed player Jenner `M LAS` in `RA` weapon
+  condition in the 2026-07-28 `DAT1..DAT4` controlled repair saves
+  (`3` = `JUNK`, `2` = `HEAVY DAMAGE`, `1` = `LIGHT DAMAGE`,
+  `0` = `FUNCTIONAL`).
+- `.GAM` `0x010C..0x0110`: confirmed active mech weapon-condition array.
+  Jenner order: `SRM4 CT`, `M LAS RA A`, `M LAS RA B`, `M LAS LA A`,
+  `M LAS LA B`. Locust order currently confirmed/expected as `M LAS CT`,
+  `MG RA`, `MG LA`.
+- `.GAM` `0x0116..0x011E`: confirmed active mech armor-damage range, modeled
+  as nine `0..3` damage levels.
+- For the observed one-Mech saves, the aggregate repair-menu armor percentage
+  is `floor((27 - sum(confirmed armor-damage bytes)) * 100 / 27)`.
+- Confirmed visible section mappings from the controlled repair chain and
+  editor/original-game round trips: `0x0116` = `RA`, `0x0117` = `LA`,
+  `0x0118` = `RL`, `0x0119` = `LL`, `0x011A` = `HEAD`, `0x011B` = `CT`,
+  `0x011D` = `TR`, and `0x011E` = `TL`.
+- `.GAM` `0x011A` was initially labeled `CT`, but the combined `0x011A = 2`
+  and `0x011B = 1` screenshot shows it overlays the cockpit/head-like top
+  section, so the current working name is `HEAD`.
+- `.GAM` `0x011B` was initially labeled `UNK1`; current tests promote it to
+  the real center torso (`CT`).
+- `.GAM` `0x011C` is labeled `BACK` as a working hypothesis; it affects armor
+  percentage but produced no observed front-art overlay.
+- Armor damage level colors observed on the status art: `1` yellow, `2` red,
+  `3` black. `0` is repaired/gray.
+- A single armor level costs `4,000` C-bills to repair in the current
+  controlled tests, and a single damaged section repairs straight to `100%`.
+- `.GAM` `0x025E`: confirmed active mech ammo count in one-Mech saves. Jenner
+  uses `SRM 4-PKS` (`4` packs damaged/partial, `25` full); Locust uses
+  `MACH GUN` (`149` in `DAT5`, maximum `200`).
+- `.GAM` `0x02EE..0x02F9`: confirmed extra-ammo-in-hold array with six
+  `uint16le` counters in ammo UI order.
+- `.GAM` `0x0500..0x0524`: roster / mech-state candidate. The 2026-07-28
+  armor/reload saves did not change this range, so it is not the aggregate
+  armor/ammo storage for the starting one-Jenner case.
 - `.GAM` `0x0556..0x0560`: six larger values that change between owned mech
   states; likely armor/internal/repair related.
 - `.GAM` `0x057A..0x0584`: six larger values; likely costs, armor, or
