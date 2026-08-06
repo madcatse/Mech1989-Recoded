@@ -11,11 +11,14 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <random>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <system_error>
+#include <cwctype>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -32,6 +35,8 @@ constexpr int kCompactDisplayPixelWidth = 4;
 constexpr int kCompactDisplayPixelHeight = 5;
 constexpr int kDefaultDisplayWidth = kScreenWidth * kCompactDisplayPixelWidth;
 constexpr int kDefaultDisplayHeight = kScreenHeight * kCompactDisplayPixelHeight;
+constexpr std::string_view kBuildDate = __DATE__;
+constexpr std::string_view kBuildTime = __TIME__;
 
 struct Color {
     uint8_t r = 0;
@@ -129,6 +134,9 @@ enum class ScreenState {
     MainMenu,
     StatusMenu,
     NewsNet,
+    ContractMenu,
+    ContractNegotiation,
+    ContractAcceptedMessage,
     MechLabMenu,
     MechExtraAmmo,
     MechReviewList,
@@ -143,10 +151,14 @@ enum class ScreenState {
     MechBuyTooMany,
     BarMenu,
     SystemMenu,
+    SaveGameNameInput,
+    RestoreGameList,
     CrewMenu,
     Starmap,
     TravelRoutePreview,
     TravelAnimation,
+    MissionBattleStub,
+    MissionDebrief,
 };
 
 enum class BarDialogState {
@@ -156,10 +168,35 @@ enum class BarDialogState {
     CrewFull,
 };
 
-enum class CrewInteractionMode {
-    Navigate,
-    AssignMech,
+enum class StarmapMenuMode {
+    None,
+    Houses,
+    HousePlanets,
 };
+
+enum class StoryBackdrop {
+    Campaign,
+    Bar,
+    Contract,
+    MechLab,
+};
+
+enum class PlanetEnvironment {
+    Desert,
+    Tropical,
+    Ice,
+};
+
+    enum class CrewInteractionMode {
+        Navigate,
+        AssignMech,
+    };
+
+    enum class MissionOutcome {
+        Victory,
+        Defeat,
+        Death,
+    };
 
 static const Color kEgaPalette[16] = {
     {0x00, 0x00, 0x00}, {0x00, 0x00, 0xAA}, {0x00, 0xAA, 0x00}, {0x00, 0xAA, 0xAA},
@@ -206,6 +243,10 @@ std::wstring widen(std::string_view text) {
         result.push_back(static_cast<unsigned char>(ch));
     }
     return result;
+}
+
+std::wstring buildTimestampLine() {
+    return L"Build timestamp: " + widen(kBuildDate) + L" " + widen(kBuildTime);
 }
 
 std::vector<uint8_t> readFile(const fs::path& path) {
@@ -797,6 +838,7 @@ public:
         instance_ = instance;
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
         debugTools_.initialize(executableDirectory());
+        debugLog(buildTimestampLine());
         debugLog(L"Application initialize. Resource root: " + resourceRoot_.wstring());
 #endif
         loadResources();
@@ -853,20 +895,64 @@ private:
         Crew,
         RecruitCrew,
         NewsNet,
+        RequestMission,
         SystemMenu,
         ToggleSound,
         Detail,
         Restart,
         Continue,
+        SaveGame,
+        RestoreGame,
         ReviewMechs,
         ExtraAmmo,
         BuyMechs,
         ExitToDos,
     };
 
+    enum class StoryAction {
+        None,
+        GameOver,
+        RestartCampaign,
+        QuitToDos,
+        GrigYes,
+        GrigNo,
+        DustballFirstFight,
+        DustballFirstRun,
+        DustballSecondFight,
+        DustballFightThenRun,
+        DustballRunThenRun,
+        SniperFight,
+        SniperRun,
+        FollowAddress,
+        ForgetAddress,
+        OfficeHide,
+        OfficeFight,
+        OfficeTalk,
+        OfficeHideFight,
+        OfficeHideRun,
+        AcceptBlackWidowStory,
+        ChallengeBlackWidowStory,
+        FollowTasha,
+        StayDown,
+        TrustTasha,
+        TrustKearney,
+        FinalAttack,
+        FinalDelay,
+    };
+
     struct MenuItem {
         std::wstring_view label;
         MenuAction action = MenuAction::None;
+    };
+
+    struct StoryChoice {
+        std::wstring label;
+        StoryAction action = StoryAction::None;
+    };
+
+    struct StoryPage {
+        std::vector<std::wstring> lines;
+        std::vector<StoryChoice> choices;
     };
 
     struct CrewMember {
@@ -877,6 +963,16 @@ private:
         uint32_t wage = 0;
         int portraitEntry = -1;
         int recruitIndex = -1;
+        uint8_t missionExperience = 0;
+    };
+
+    struct MissionParticipant {
+        int crewSlot = -1;
+        int mechIndex = -1;
+        std::wstring name;
+        std::wstring mechName;
+        int armorPercent = 100;
+        bool killed = false;
     };
 
     enum class DamageState {
@@ -888,9 +984,11 @@ private:
 
     enum class ChassisId : size_t {
         Locust,
+        Wasp,
         Jenner,
         PhoenixHawk,
         ShadowHawk,
+        Wolverine,
         Rifleman,
         Warhammer,
         Marauder,
@@ -939,8 +1037,7 @@ private:
         int jumpJetsWorking = 0;
         int jumpJetsTotal = 0;
         int armorPercent = 100;
-        std::array<int, 11> armorMax = {};
-        std::array<int, 11> armorPoints = {};
+        std::array<int, 9> armorDamage = {};
         std::array<int, 6> ammoPacks = {};
         DamageState engine = DamageState::Functional;
         DamageState gyros = DamageState::Functional;
@@ -997,6 +1094,12 @@ private:
         std::vector<MarketMech> mechsForSale;
     };
 
+    struct SaveGameSlot {
+        fs::path path;
+        std::wstring name;
+        bool occupied = false;
+    };
+
     struct AmmoDefinition {
         std::wstring_view label;
         uint32_t tierOneCost = 0;
@@ -1012,6 +1115,45 @@ private:
         int nibblePhase = 0;
     };
 
+    struct ContractImageSpec {
+        uint32_t offset = 0;
+        int width = 0;
+        int height = 0;
+        int nibblePhase = 0;
+    };
+
+    enum class ContractEditableField {
+        None,
+        Price,
+        Salvage,
+        Advance,
+    };
+
+    struct ContractMissionDefinition {
+        std::wstring_view name;
+        std::wstring_view family;
+        bool extended = false;
+    };
+
+    struct ContractOffer {
+        uint8_t employerHouse = 0;
+        uint8_t targetHouse = 0;
+        bool hasHostileTargetHouse = true;
+        std::wstring targetPlanet;
+        std::wstring_view missionName;
+        int heavyCount = 0;
+        int mediumCount = 0;
+        int lightCount = 1;
+        int priceK = 100;
+        int salvagePercent = 0;
+        int advancePercent = 0;
+        int housePriceK = 100;
+        int houseSalvagePercent = 0;
+        int houseAdvancePercent = 0;
+        int negotiationRounds = 0;
+        bool termsModified = false;
+    };
+
     struct MechDefinition {
         ChassisId chassis = ChassisId::Jenner;
         std::wstring_view name;
@@ -1022,7 +1164,6 @@ private:
         int jumpCapMeters = 0;
         int heatSinks = 0;
         int jumpJets = 0;
-        std::array<int, 11> armorMax = {};
         std::array<MechWeaponStatus, 10> weapons = {};
         std::array<uint32_t, 4> buyPrices = {};
         std::array<uint32_t, 4> sellPrices = {};
@@ -1038,10 +1179,50 @@ private:
 
     static constexpr size_t kPlanetStatusIconIndex = 0;
     static constexpr size_t kPlanetMechLabIconIndex = 1;
+    static constexpr size_t kPlanetContractIconIndex = 2;
     static constexpr size_t kPlanetStarmapIconIndex = 3;
     static constexpr size_t kPlanetBarIconIndex = 4;
     static constexpr size_t kPlanetSystemIconIndex = 5;
+    static constexpr size_t kSystemSaveMenuIndex = 0;
+    static constexpr size_t kSystemRestoreMenuIndex = 1;
     static constexpr size_t kSystemContinueMenuIndex = 6;
+    static constexpr size_t kRestoreGameCancelIndex = 12;
+    static constexpr size_t kGamSaveSize = 0x718;
+    static constexpr size_t kGamMaxNameChars = 8;
+    static constexpr size_t kGamVisibleSlotCount = 12;
+    static constexpr size_t kMwMainNewGameTemplateFileOffset = 0x009148;
+    static constexpr size_t kGamOffsetReputation = 0x001D;
+    static constexpr size_t kGamOffsetPlanetIndex = 0x0021;
+    static constexpr size_t kGamOffsetCurrentPlanetHouseId = 0x0025;
+    static constexpr size_t kGamOffsetCurrentPlanetTerrainBand = 0x0027;
+    static constexpr size_t kGamOffsetCurrentPlanetContractAvailable = 0x0029;
+    static constexpr size_t kGamOffsetMapX = 0x002B;
+    static constexpr size_t kGamOffsetMapY = 0x002D;
+    static constexpr size_t kGamOffsetMonthDayCounter = 0x0031;
+    static constexpr size_t kGamOffsetMonth = 0x0033;
+    static constexpr size_t kGamOffsetYear = 0x0035;
+    static constexpr size_t kGamOffsetPeriodic14DayCounter = 0x0037;
+    static constexpr size_t kGamOffsetMoney = 0x0049;
+    static constexpr size_t kGamOffsetFamilyAttitudes = 0x004D;
+    static constexpr size_t kGamOffsetPositiveHouseCounters = 0x0057;
+    static constexpr size_t kGamOffsetNegativeHouseCounters = 0x0061;
+    static constexpr size_t kGamOffsetReputationPoints = 0x006B;
+    static constexpr size_t kGamOffsetCrewCount = 0x006D;
+    static constexpr size_t kGamOffsetCrewPilotIds = 0x006F;
+    static constexpr size_t kGamOffsetReputationTier = 0x00A2;
+    static constexpr size_t kGamOffsetCrewGunnerySkills = 0x00AA;
+    static constexpr size_t kGamOffsetCrewPilotingSkills = 0x00B2;
+    static constexpr size_t kGamOffsetCrewAssignedMechs = 0x00C2;
+    static constexpr size_t kGamOffsetMechCount = 0x00E8;
+    static constexpr size_t kGamOffsetMechChassisList = 0x00EA;
+    static constexpr size_t kGamOffsetMechRecords = 0x0102;
+    static constexpr size_t kGamMechRecordStride = 0x1D;
+    static constexpr size_t kGamOffsetMechAmmo = 0x025E;
+    static constexpr size_t kGamOffsetExtraAmmo = 0x02EE;
+    static constexpr size_t kGamOffsetSoundDisabled = 0x05E2;
+    static constexpr size_t kGamOffsetMessageFlags = 0x0672;
+    static constexpr size_t kGamKnownMessageFlagCount = 0x8C;
+    static constexpr size_t kGamOffsetDetailLevel = 0x070D;
     static constexpr int kCommanderBirthYear = 3006;
     static constexpr int kCommanderBirthMonth = 4;
     static constexpr int kCommanderBirthDay = 8;
@@ -1052,8 +1233,16 @@ private:
     static constexpr int kCampaignDaysPerMonth = 60;
     static constexpr int kCampaignMonthsPerYear = 12;
     static constexpr int kPeriodicCampaignUpdateDays = 14;
+    static constexpr uint32_t kMissionHostileBaseDuration = 82;
+    static constexpr uint32_t kMissionGarrisonBaseDuration = 150;
     static constexpr uint64_t kMaxPlayerWealth = 10000000000ull;
     static constexpr int kMechLabBackgroundEntry = 2;
+    static constexpr int kCampaignDesertEntry = 1;
+    static constexpr int kCampaignTropicalEntry = 2;
+    static constexpr int kCampaignIceEntry = 3;
+    static constexpr int kBarBaseEntry = 2;
+    static constexpr int kBarTropicalOverlayEntry = 5;
+    static constexpr int kBarIceOverlayEntry = 6;
     static constexpr int kMechLabWeldX = 96;
     static constexpr int kMechLabWeldY = 64;
     static constexpr DWORD kMechLabWeldFrameMs = 60;
@@ -1061,7 +1250,7 @@ private:
     static constexpr int kStarmapBackgroundEntry = 1;
     static constexpr int kCrewPlayerPortraitEntry = 22;
     static constexpr int kCrewDecorationEntry = 26;
-    static constexpr size_t kPlayableMechCount = 8;
+    static constexpr size_t kPlayableMechCount = 10;
     static constexpr size_t kMaxMechWeaponRows = 10;
     static constexpr int kMechReviewPanelX = 48;
     static constexpr int kMechReviewPanelY = 43;
@@ -1107,8 +1296,11 @@ private:
     static constexpr uint32_t kMechRepairComponentMultiplier = 333;
     static constexpr uint32_t kMechRepairCountUnitCost = 2000;
     static constexpr uint32_t kMechRepairWeaponLightCost = 2000;
-    static constexpr uint32_t kMechRepairArmorStepCost = 5000;
-    static constexpr int kMechRepairArmorStepPoints = 5;
+    static constexpr uint32_t kMechRepairArmorLevelCost = 4000;
+    static constexpr size_t kArmorSectionCount = 9;
+    static constexpr int kArmorDamageMaxLevel = 3;
+    static constexpr int kArmorDamageDenominator =
+        static_cast<int>(kArmorSectionCount) * kArmorDamageMaxLevel;
     static constexpr int kMechAmmoMaxPacks = 25;
     static constexpr RectI kMechStatusRepairButtonRect{58, 146, 74, 12};
     static constexpr RectI kMechStatusDoneButtonRect{58, 176, 74, 12};
@@ -1144,7 +1336,7 @@ private:
     static constexpr RectI kRecruitCrewFullPanelRect{84, 78, 152, 45};
     static constexpr RectI kRecruitYesButtonRect{93, 102, 46, 10};
     static constexpr RectI kRecruitNoButtonRect{100, 112, 36, 10};
-    static constexpr std::string_view kStartingPlanetName = "OSHIKA";
+    static constexpr std::string_view kFallbackStartingPlanetName = "OSHIKA";
     static constexpr uint64_t kTravelPilotCostPerJump = 2500;
     static constexpr uint64_t kTravelMechBaseCost = 20000;
     static constexpr uint64_t kTravelMechCostPerJump = 25000;
@@ -1157,13 +1349,146 @@ private:
     static constexpr DWORD kTravelEngineDelayMs = 1000;
     static constexpr DWORD kTravelEngineFrameMs = 120;
     static constexpr DWORD kTravelEngineFinalHoldMs = 1000;
+    static constexpr DWORD kContractAcceptedMessageMs = 2500;
+    static constexpr int kMissionLaunchIconEntry = 8;
     static constexpr RectI kStarmapTravelButtonRect{245, 141, 60, 17};
     static constexpr RectI kStarmapPlanetsButtonRect{245, 160, 60, 17};
     static constexpr RectI kStarmapCancelButtonRect{245, 179, 60, 17};
+    static constexpr RectI kStarmapPlanetNameInputRect{7, 5, 119, 13};
+    static constexpr size_t kStarmapNoButtonSelection = std::numeric_limits<size_t>::max();
+    static constexpr size_t kHouseMenuItemCount = 5;
+    static constexpr size_t kStarmapPlanetNameInputMaxChars = 18;
     static constexpr RectI kNewsNetPreviousButtonRect{39, 181, 78, 16};
     static constexpr RectI kNewsNetNextButtonRect{122, 181, 76, 16};
     static constexpr RectI kNewsNetDoneButtonRect{205, 181, 76, 16};
+    static constexpr RectI kContractMenuPanelRect{90, 150, 140, 38};
+    static constexpr RectI kContractMenuRequestButtonRect{90, 160, 140, 10};
+    static constexpr RectI kContractMenuLeaveButtonRect{90, 171, 140, 10};
+    static constexpr RectI kContractPriceValueRect{176, 126, 43, 9};
+    static constexpr RectI kContractSalvageValueRect{84, 134, 27, 9};
+    static constexpr RectI kContractAdvanceValueRect{174, 142, 27, 9};
+    static constexpr RectI kBattleStubWinButtonRect{82, 72, 156, 16};
+    static constexpr RectI kBattleStubLoseButtonRect{82, 96, 156, 16};
+    static constexpr RectI kBattleStubRunButtonRect{82, 120, 156, 16};
+    static constexpr RectI kDeathPlayAgainRect{42, 103, 92, 10};
+    static constexpr RectI kDeathQuitRect{42, 114, 52, 10};
+    static constexpr int kMissionResultDeathImageEntry = 0;
+    static constexpr int kMissionResultVictoryImageEntry = 1;
+    static constexpr int kMissionResultDefeatImageEntry = 2;
+    static constexpr RectI kMissionDebriefTopPanelRect{2, 2, 315, 137};
+    static constexpr RectI kMissionDebriefBottomPanelRect{2, 142, 315, 56};
+    static constexpr int kMissionDebriefEmblemX = 256;
+    static constexpr int kMissionDebriefEmblemY = 143;
+    static constexpr int kMissionDebriefMessageTextWidth = 244;
+    static constexpr int kDebriefFrameUpperLeftEntry = 36;
+    static constexpr int kDebriefFrameUpperRightEntry = 37;
+    static constexpr int kDebriefFrameLowerLeftEntry = 38;
+    static constexpr int kDebriefFrameLowerRightEntry = 39;
+    static constexpr int kDebriefFrameTopEdgeEntry = 40;
+    static constexpr int kDebriefFrameBottomEdgeEntry = 41;
+    static constexpr int kDebriefFrameLeftEdgeEntry = 42;
+    static constexpr int kDebriefFrameRightEdgeEntry = 43;
     static constexpr uint8_t kNewsNetTextColor = 2;
+    static constexpr uint8_t kContractTextColor = 2;
+    static constexpr uint8_t kContractVariableColor = 7;
+    static constexpr uint8_t kContractValueColor = 4;
+    static constexpr uint8_t kContractSelectedValueColor = 14;
+    static constexpr int kContractMaxPriceK = 9990;
+    static constexpr int kContractPriceStepK = 10;
+    static constexpr std::array<ContractImageSpec, 5> kContractHouseNameImages = {{
+        {0x000439A0u, 129, 36, 0},
+        {0x000442CDu, 130, 36, 1},
+        {0x00044BFBu, 129, 36, 0},
+        {0x00045528u, 129, 36, 1},
+        {0x00045E56u, 129, 36, 0},
+    }};
+    static constexpr std::array<ContractImageSpec, 5> kContractHouseEmblemImages = {{
+        {0x000487EBu, 55, 49, 1},
+        {0x00048D50u, 55, 49, 1},
+        {0x000492B6u, 55, 49, 0},
+        {0x0004981Bu, 55, 49, 0},
+        {0x00049D80u, 55, 49, 0},
+    }};
+    static constexpr std::array<size_t, 5> kContractContactPortraitCounts = {{
+        5,
+        5,
+        4,
+        5,
+        5,
+    }};
+    static constexpr std::array<std::array<ContractImageSpec, 5>, 5> kContractContactPortraitImages = {{
+        {{
+            {0x0004A2E5u, 90, 104, 0},
+            {0x0004B536u, 90, 104, 0},
+            {0x0004C787u, 90, 104, 0},
+            {0x0004D9D8u, 90, 104, 1},
+            {0x0004EC29u, 90, 104, 1},
+        }},
+        {{
+            {0x0004FE7Bu, 90, 104, 0},
+            {0x000510CCu, 90, 104, 0},
+            {0x0005231Du, 90, 104, 1},
+            {0x0005356Fu, 90, 104, 0},
+            {0x000547C0u, 90, 104, 0},
+        }},
+        {{
+            {0x00055A11u, 90, 104, 0},
+            {0x00056C62u, 90, 104, 1},
+            {0x00057EB3u, 90, 104, 1},
+            {0x00059104u, 90, 104, 1},
+            {},
+        }},
+        {{
+            {0x0005A361u, 90, 104, 1},
+            {0x0005B5B2u, 90, 104, 1},
+            {0x0005C804u, 90, 104, 0},
+            {0x0005DA55u, 90, 104, 0},
+            {0x0005ECA6u, 90, 104, 0},
+        }},
+        {{
+            {0x0005FEF7u, 90, 104, 0},
+            {0x00061148u, 91, 104, 0},
+            {0x00062401u, 90, 104, 1},
+            {0x00063652u, 91, 104, 1},
+            {0x000648DDu, 91, 104, 1},
+        }},
+    }};
+    static constexpr std::array<ContractMissionDefinition, 34> kContractMissionDefinitions = {{
+        {L"GARRISON DUTY", L"Defense", false},
+        {L"GENERAL SECURITY DUTY", L"Defense", false},
+        {L"DEFENSE OF A WATER FACTORY", L"Defense", false},
+        {L"DEFENSE OF A WEAPONS FACTORY", L"Defense", false},
+        {L"DEFENSE OF A FUEL DUMP", L"Defense", false},
+        {L"DEFENSE OF FIELD COM UNIT", L"Defense", false},
+        {L"DEFENSE OF A SUPPLY DEPOT", L"Defense", false},
+        {L"DEFENSE OF LANDING FACILITIES", L"Defense", false},
+        {L"SUPPRESSION OF REBELLION", L"Deathmatch", false},
+        {L"TEMPORARY RELIEF OF FORCES", L"Sprint", false},
+        {L"RESCUE OF A KIDNAP VICTIM", L"Retrieval", false},
+        {L"RESCUE OF HOSTAGES", L"Retrieval", false},
+        {L"RETRIEVAL OF STOLEN PROPERTY", L"Retrieval", false},
+        {L"RETRIEVAL OF CAPTURED MECHS", L"Retrieval", false},
+        {L"AN EXTENDED OFFENSIVE CAMPAIGN", L"Extended", true},
+        {L"AN EXTENDED DEFENSIVE CAMPAIGN", L"Extended", true},
+        {L"A PLANETARY ASSUALT", L"Deathmatch", false},
+        {L"AN EXTENDED SIEGE CAMPAIGN", L"Extended", true},
+        {L"RELIEF OF ENGAGED FORCES", L"Sprint", false},
+        {L"A RECONNAISSANCE RAID", L"Deathmatch", false},
+        {L"A DIVERSIONARY RAID", L"Deathmatch", false},
+        {L"CONTAINMENT OF SECURITY FORCES", L"Sprint", false},
+        {L"DESTRUCTION OF A WATER FACTORY", L"Assault", false},
+        {L"DISABLING OF A WEAPONS FACTORY", L"Assault", false},
+        {L"DESTRUCTION OF A FUEL DUMP", L"Assault", false},
+        {L"DESTRUCTION OF AN AMMO DUMP", L"Assault", false},
+        {L"DISABLING OF A FIELD COM CENTER", L"Assault", false},
+        {L"ELIMINATION OF GARRISON FORCES", L"Deathmatch", false},
+        {L"DESTROYING STOLEN PROTOTYPES", L"Assault", false},
+        {L"DESTRUCTION OF MECH FACILITIES", L"Assault", false},
+        {L"ELIMINATION OF SECURITY FORCES", L"Deathmatch", false},
+        {L"DESTRUCTION OF PORT FACILITIES", L"Assault", false},
+        {L"CAPTURE OF AMMO AND MECH PARTS", L"Retrieval", false},
+        {L"PARTICIPATING IN HOSTAGE RAID", L"Retrieval", false},
+    }};
     static constexpr MwMainTextRef kCampaignIntroText{
         "mw_main.endgame.020c12",
         0x020C12u,
@@ -1176,28 +1501,487 @@ private:
         26u,
         1u,
     };
+    static constexpr MwMainTextRef kMissionVictoryText{
+        "mw_main.result.00a442",
+        0x00A442u,
+        67u,
+        4u,
+    };
+    static constexpr MwMainTextRef kMissionDefeatText{
+        "mw_main.result.00a29b",
+        0x00A29Bu,
+        144u,
+        6u,
+    };
+    static constexpr MwMainTextRef kMissionDeathPromptText{
+        "mw_main.story.014432",
+        0x014432u,
+        96u,
+        5u,
+    };
+    static constexpr MwMainTextRef kStoryStartingBarClue1{
+        "mw_main.rumor.012f40",
+        0x012F40u,
+        273u,
+        7u,
+    };
+    static constexpr MwMainTextRef kStoryStartingBarClue2{
+        "mw_main.rumor.013055",
+        0x013055u,
+        219u,
+        6u,
+    };
+    static constexpr MwMainTextRef kStoryLandsEndSetup{
+        "mw_main.rumor.013134",
+        0x013134u,
+        250u,
+        7u,
+    };
+    static constexpr MwMainTextRef kStoryLandsEndContact{
+        "mw_main.rumor.013232",
+        0x013232u,
+        425u,
+        11u,
+    };
+    static constexpr MwMainTextRef kStoryOptionalCrestLore{
+        "mw_main.rumor.0133f2",
+        0x0133F2u,
+        534u,
+        14u,
+    };
+    static constexpr MwMainTextRef kStoryGrigEscort{
+        "mw_main.rumor.01360c",
+        0x01360Cu,
+        562u,
+        14u,
+    };
+    static constexpr MwMainTextRef kStoryGrigOffer{
+        "mw_main.story.013842",
+        0x013842u,
+        503u,
+        15u,
+    };
+    static constexpr MwMainTextRef kStoryGrigYes{
+        "mw_main.story.013a3d",
+        0x013A3Du,
+        44u,
+        2u,
+    };
+    static constexpr MwMainTextRef kStoryGrigNo{
+        "mw_main.story.013a6d",
+        0x013A6Du,
+        177u,
+        5u,
+    };
+    static constexpr MwMainTextRef kStoryGaledonLead{
+        "mw_main.story.013b22",
+        0x013B22u,
+        277u,
+        7u,
+    };
+    static constexpr MwMainTextRef kStoryDustballEntry{
+        "mw_main.story.013c3b",
+        0x013C3Bu,
+        287u,
+        8u,
+    };
+    static constexpr MwMainTextRef kStoryDustballPrompt{
+        "mw_main.story.013d5e",
+        0x013D5Eu,
+        537u,
+        16u,
+    };
+    static constexpr MwMainTextRef kStoryDustballFight{
+        "mw_main.story.013f7c",
+        0x013F7Cu,
+        522u,
+        16u,
+    };
+    static constexpr MwMainTextRef kStoryDustballRun{
+        "mw_main.story.01418b",
+        0x01418Bu,
+        371u,
+        12u,
+    };
+    static constexpr MwMainTextRef kStoryDustballDeath{
+        "mw_main.story.014302",
+        0x014302u,
+        300u,
+        8u,
+    };
+    static constexpr MwMainTextRef kStoryDustballRunRun{
+        "mw_main.story.014496",
+        0x014496u,
+        696u,
+        18u,
+    };
+    static constexpr MwMainTextRef kStoryDustballFightRun{
+        "mw_main.story.014750",
+        0x014750u,
+        496u,
+        14u,
+    };
+    static constexpr MwMainTextRef kStoryStoneArrowInquiry{
+        "mw_main.story.014944",
+        0x014944u,
+        201u,
+        5u,
+    };
+    static constexpr MwMainTextRef kStoryStoneArrowResult{
+        "mw_main.story.014a11",
+        0x014A11u,
+        448u,
+        12u,
+    };
+    static constexpr MwMainTextRef kStoryScorpionPilotIntro{
+        "mw_main.story.014be5",
+        0x014BE5u,
+        364u,
+        9u,
+    };
+    static constexpr MwMainTextRef kStoryScorpionPilotLead{
+        "mw_main.story.014d52",
+        0x014D52u,
+        427u,
+        13u,
+    };
+    static constexpr MwMainTextRef kStoryScorpionPilotLeadSuffix{
+        "mw_main.story.014eff",
+        0x014EFFu,
+        40u,
+        2u,
+    };
+    static constexpr MwMainTextRef kStorySniperPrompt{
+        "mw_main.story.014f2c",
+        0x014F2Cu,
+        806u,
+        23u,
+    };
+    static constexpr MwMainTextRef kStorySniperDeath{
+        "mw_main.story.015256",
+        0x015256u,
+        301u,
+        8u,
+    };
+    static constexpr MwMainTextRef kStorySniperRun{
+        "mw_main.story.0153eb",
+        0x0153EBu,
+        443u,
+        11u,
+    };
+    static constexpr MwMainTextRef kStoryKearneyBarLead{
+        "mw_main.story.01574c",
+        0x01574Cu,
+        159u,
+        4u,
+    };
+    static constexpr MwMainTextRef kStoryKearneyMeeting{
+        "mw_main.story.0157ef",
+        0x0157EFu,
+        959u,
+        25u,
+    };
+    static constexpr MwMainTextRef kStoryKearneyAddressPrompt{
+        "mw_main.story.015bb3",
+        0x015BB3u,
+        103u,
+        5u,
+    };
+    static constexpr MwMainTextRef kStoryKearneyOfficePrompt{
+        "mw_main.story.015c1f",
+        0x015C1Fu,
+        688u,
+        21u,
+    };
+    static constexpr MwMainTextRef kStoryKearneyForget{
+        "mw_main.story.015ed3",
+        0x015ED3u,
+        66u,
+        2u,
+    };
+    static constexpr MwMainTextRef kStoryOfficeHide{
+        "mw_main.story.015f18",
+        0x015F18u,
+        285u,
+        11u,
+    };
+    static constexpr MwMainTextRef kStoryOfficeFight{
+        "mw_main.story.016039",
+        0x016039u,
+        649u,
+        16u,
+    };
+    static constexpr MwMainTextRef kStoryOfficeTalk{
+        "mw_main.story.0162c6",
+        0x0162C6u,
+        182u,
+        5u,
+    };
+    static constexpr MwMainTextRef kStoryOfficeHideRun{
+        "mw_main.story.0163e4",
+        0x0163E4u,
+        498u,
+        12u,
+    };
+    static constexpr MwMainTextRef kStoryAlbieroRaidIntro{
+        "mw_main.story.01663f",
+        0x01663Fu,
+        557u,
+        14u,
+    };
+    static constexpr MwMainTextRef kStoryAlbieroMapLead{
+        "mw_main.story.01686f",
+        0x01686Fu,
+        845u,
+        21u,
+    };
+    static constexpr MwMainTextRef kStoryAlbieroLoading{
+        "mw_main.story.016bbf",
+        0x016BBFu,
+        747u,
+        19u,
+    };
+    static constexpr MwMainTextRef kStoryAlbieroFollowPrompt{
+        "mw_main.story.016eae",
+        0x016EAEu,
+        602u,
+        17u,
+    };
+    static constexpr MwMainTextRef kStoryAlbieroStayDown{
+        "mw_main.story.01710c",
+        0x01710Cu,
+        706u,
+        18u,
+    };
+    static constexpr MwMainTextRef kStoryTrustKearneyDeath{
+        "mw_main.story.0173d2",
+        0x0173D2u,
+        474u,
+        12u,
+    };
+    static constexpr MwMainTextRef kStoryTrustTashaSuccess{
+        "mw_main.story.017614",
+        0x017614u,
+        659u,
+        16u,
+    };
+    static constexpr MwMainTextRef kStoryTashaReward{
+        "mw_main.story.0178aa",
+        0x0178AAu,
+        705u,
+        17u,
+    };
+    static constexpr MwMainTextRef kStoryOperationInroadDisk{
+        "mw_main.story.017b6c",
+        0x017B6Cu,
+        514u,
+        14u,
+    };
+    static constexpr MwMainTextRef kStoryAlbieroCargoDoor{
+        "mw_main.story.017d85",
+        0x017D85u,
+        705u,
+        17u,
+    };
+    static constexpr MwMainTextRef kStoryAlbieroTrustPrompt{
+        "mw_main.story.01804a",
+        0x01804Au,
+        892u,
+        24u,
+    };
+    static constexpr MwMainTextRef kStoryQuietBarDrink{
+        "mw_main.endgame.020aab",
+        0x020AABu,
+        53u,
+        2u,
+    };
+    static constexpr MwMainTextRef kStoryFinalBasePrompt{
+        "mw_main.endgame.020ae5",
+        0x020AE5u,
+        110u,
+        6u,
+    };
+    static constexpr MwMainTextRef kStoryAndersMoonArrest{
+        "mw_main.endgame.020d25",
+        0x020D25u,
+        277u,
+        7u,
+    };
+    static constexpr MwMainTextRef kStoryNewsTashaFiles{
+        "mw_main.pm.0183ca",
+        0x0183CAu,
+        376u,
+        15u,
+    };
+    static constexpr MwMainTextRef kStoryNewsMatabushiProposal{
+        "mw_main.pm.018545",
+        0x018545u,
+        406u,
+        11u,
+    };
+    static constexpr MwMainTextRef kStoryNewsMatabushiDarkWingOption{
+        "mw_main.pm.0186de",
+        0x0186DEu,
+        345u,
+        12u,
+    };
+    static constexpr MwMainTextRef kStoryNewsMatabushiPreparations{
+        "mw_main.pm.01883a",
+        0x01883Au,
+        496u,
+        15u,
+    };
+    static constexpr MwMainTextRef kStoryNewsMatabushiProceed{
+        "mw_main.pm.018a2b",
+        0x018A2Bu,
+        219u,
+        9u,
+    };
+    static constexpr MwMainTextRef kStoryNewsJordanAlbieroLead{
+        "mw_main.pm.018b08",
+        0x018B08u,
+        320u,
+        9u,
+    };
+    static constexpr MwMainTextRef kStoryBlackWidowAccept{
+        "mw_main.news.018f57",
+        0x018F57u,
+        168u,
+        5u,
+    };
+    static constexpr MwMainTextRef kStoryBlackWidowFight{
+        "mw_main.news.019003",
+        0x019003u,
+        736u,
+        19u,
+    };
+    static constexpr MwMainTextRef kStoryBlackWidowStandoff{
+        "mw_main.news.0192e6",
+        0x0192E6u,
+        567u,
+        14u,
+    };
+    static constexpr MwMainTextRef kStoryTashaIntro{
+        "mw_main.news.019520",
+        0x019520u,
+        817u,
+        21u,
+    };
+    static constexpr MwMainTextRef kStoryTashaReveal{
+        "mw_main.news.019854",
+        0x019854u,
+        435u,
+        11u,
+    };
+    static constexpr MwMainTextRef kStoryBlackWidowBar{
+        "mw_main.news.019a0c",
+        0x019A0Cu,
+        944u,
+        25u,
+    };
+    static constexpr MwMainTextRef kStoryNewsMarikAmbush{
+        "mw_main.story.0155ac",
+        0x0155ACu,
+        412u,
+        13u,
+    };
+    static constexpr MwMainTextRef kStoryNewsKangarooJackDeath{
+        "mw_main.news.018c4e",
+        0x018C4Eu,
+        773u,
+        21u,
+    };
+    static constexpr MwMainTextRef kStoryNewsBlackWidowLead{
+        "mw_main.news.019dc0",
+        0x019DC0u,
+        205u,
+        7u,
+    };
+    static constexpr MwMainTextRef kStoryNewsBlackWidowLeadSuffix{
+        "mw_main.news.019e8f",
+        0x019E8Fu,
+        145u,
+        5u,
+    };
+
+    struct StoryNewsNetEntry {
+        MwMainTextRef text;
+        uint8_t prerequisiteMessageId = 0;
+        uint8_t messageId = 0;
+    };
 
     struct NewsNetEntry {
         MwMainTextRef text;
         int year = 0;
         int month = 0;
         int day = 0;
+        uint8_t messageId = 0;
     };
 
-    static constexpr std::array<NewsNetEntry, 13> kNewsNetEntries = {{
-        {{"mw_main.news.01c0b4", 0x01C0B4u, 587u, 17u}, 3024, 4, 1},
-        {{"mw_main.news.01c418", 0x01C418u, 494u, 15u}, 3024, 4, 8},
-        {{"mw_main.news.01c60a", 0x01C60Au, 760u, 21u}, 3024, 4, 15},
-        {{"mw_main.news.019f24", 0x019F24u, 618u, 18u}, 3024, 6, 30},
-        {{"mw_main.news.01ad7d", 0x01AD7Du, 596u, 18u}, 3024, 7, 1},
-        {{"mw_main.news.01a192", 0x01A192u, 374u, 12u}, 3024, 8, 25},
-        {{"mw_main.news.01beee", 0x01BEEEu, 450u, 14u}, 3024, 11, 15},
-        {{"mw_main.news.01c906", 0x01C906u, 191u, 6u}, 3025, 2, 14},
-        {{"mw_main.news.01e383", 0x01E383u, 737u, 20u}, 3025, 3, 5},
-        {{"mw_main.news.01e668", 0x01E668u, 647u, 18u}, 3025, 1, 22},
-        {{"mw_main.news.01e8f3", 0x01E8F3u, 421u, 13u}, 3025, 4, 8},
-        {{"mw_main.news.01ea9c", 0x01EA9Cu, 652u, 18u}, 3025, 4, 10},
-        {{"mw_main.news.01f01f", 0x01F01Fu, 623u, 17u}, 3025, 4, 15},
+    static constexpr std::array<NewsNetEntry, 51> kNewsNetEntries = {{
+        {{"mw_main.news.01c0b4", 0x01C0B4u, 587u, 17u}, 3024, 4, 1, 0x01},
+        {{"mw_main.news.01c418", 0x01C418u, 494u, 15u}, 3024, 4, 8, 0x02},
+        {{"mw_main.news.01c303", 0x01C303u, 273u, 8u}, 3024, 4, 15, 0x05},
+        {{"mw_main.news.01c60a", 0x01C60Au, 760u, 21u}, 3024, 5, 1, 0x04},
+        {{"mw_main.news.019f24", 0x019F24u, 618u, 18u}, 3024, 6, 30, 0x2C},
+        {{"mw_main.news.01ad7d", 0x01AD7Du, 596u, 18u}, 3024, 7, 1, 0x1D},
+        {{"mw_main.news.01a192", 0x01A192u, 374u, 12u}, 3024, 8, 25, 0x2A},
+        {{"mw_main.news.01beee", 0x01BEEEu, 450u, 14u}, 3024, 11, 15, 0x10},
+        {{"mw_main.news.01c906", 0x01C906u, 191u, 6u}, 3025, 4, 8, 0x03},
+        {{"mw_main.news.01c906", 0x01C906u, 191u, 6u}, 3026, 4, 8, 0x03},
+        {{"mw_main.news.01afd5", 0x01AFD5u, 571u, 17u}, 3026, 6, 1, 0x16},
+        {{"mw_main.news.01ac1a", 0x01AC1Au, 351u, 12u}, 3026, 8, 15, 0x1E},
+        {{"mw_main.news.01a9f0", 0x01A9F0u, 550u, 17u}, 3026, 9, 5, 0x1F},
+        {{"mw_main.news.01a84d", 0x01A84Du, 415u, 14u}, 3026, 11, 30, 0x20},
+        {{"mw_main.news.01b3c6", 0x01B3C6u, 669u, 19u}, 3027, 3, 15, 0x14},
+        {{"mw_main.news.01a6a6", 0x01A6A6u, 421u, 14u}, 3027, 7, 15, 0x21},
+        {{"mw_main.news.01a4fb", 0x01A4FBu, 423u, 15u}, 3027, 8, 17, 0x22},
+        {{"mw_main.news.01a30c", 0x01A30Cu, 491u, 15u}, 3027, 11, 15, 0x23},
+        {{"mw_main.news.01c906", 0x01C906u, 191u, 6u}, 3027, 4, 8, 0x03},
+        {{"mw_main.news.01b214", 0x01B214u, 430u, 14u}, 3027, 5, 15, 0x15},
+        {{"mw_main.news.01b971", 0x01B971u, 698u, 20u}, 3028, 1, 2, 0x11},
+        {{"mw_main.news.01bc2f", 0x01BC2Fu, 699u, 20u}, 3028, 1, 3, 0x12},
+        {{"mw_main.news.01b667", 0x01B667u, 774u, 21u}, 3028, 1, 14, 0x13},
+        {{"mw_main.news.01c906", 0x01C906u, 191u, 6u}, 3028, 4, 8, 0x03},
+        {{"mw_main.news.01c906", 0x01C906u, 191u, 6u}, 3029, 4, 8, 0x03},
+        {{"mw_main.news.01e383", 0x01E383u, 737u, 20u}, 3025, 1, 22, 0x55},
+        {{"mw_main.news.01e668", 0x01E668u, 647u, 18u}, 3024, 11, 5, 0x56},
+        {{"mw_main.news.01e8f3", 0x01E8F3u, 421u, 13u}, 3025, 3, 5, 0x57},
+        {{"mw_main.news.01ea9c", 0x01EA9Cu, 652u, 18u}, 3025, 4, 10, 0x58},
+        {{"mw_main.news.01ed2c", 0x01ED2Cu, 751u, 21u}, 3025, 9, 15, 0x59},
+        {{"mw_main.news.01f01f", 0x01F01Fu, 623u, 17u}, 3025, 2, 14, 0x5A},
+        {{"mw_main.news.01f292", 0x01F292u, 687u, 19u}, 3026, 8, 28, 0x5C},
+        {{"mw_main.news.01f545", 0x01F545u, 741u, 20u}, 3028, 1, 12, 0x5D},
+        {{"mw_main.headline.01f82e", 0x01F82Eu, 170u, 5u}, 3027, 28, 1, 0x5E},
+        {{"mw_main.headline.01f8dc", 0x01F8DCu, 141u, 4u}, 3027, 10, 2, 0x5F},
+        {{"mw_main.headline.01f96d", 0x01F96Du, 141u, 4u}, 3027, 31, 3, 0x60},
+        {{"mw_main.headline.01f9fe", 0x01F9FEu, 139u, 4u}, 3027, 30, 4, 0x61},
+        {{"mw_main.headline.01fa8d", 0x01FA8Du, 141u, 4u}, 3027, 6, 8, 0x62},
+        {{"mw_main.headline.01fb1e", 0x01FB1Eu, 293u, 11u}, 3027, 10, 31, 0x63},
+        {{"mw_main.headline.01fc47", 0x01FC47u, 175u, 5u}, 3027, 11, 28, 0x70},
+        {{"mw_main.headline.01fcfa", 0x01FCFAu, 133u, 4u}, 3028, 6, 30, 0x65},
+        {{"mw_main.headline.01fd83", 0x01FD83u, 289u, 10u}, 3028, 8, 13, 0x66},
+        {{"mw_main.headline.01fea8", 0x01FEA8u, 268u, 11u}, 3028, 8, 22, 0x67},
+        {{"mw_main.headline.01ffb8", 0x01FFB8u, 406u, 14u}, 3028, 8, 30, 0x68},
+        {{"mw_main.headline.020152", 0x020152u, 124u, 4u}, 3028, 10, 11, 0x69},
+        {{"mw_main.headline.0201d2", 0x0201D2u, 338u, 11u}, 3028, 10, 28, 0x6A},
+        {{"mw_main.headline.020328", 0x020328u, 120u, 4u}, 3028, 11, 23, 0x6B},
+        {{"mw_main.headline.0203a4", 0x0203A4u, 365u, 14u}, 3029, 1, 15, 0x6C},
+        {{"mw_main.news.020515", 0x020515u, 406u, 11u}, 3029, 4, 15, 0x6D},
+        {{"mw_main.news.0206af", 0x0206AFu, 607u, 16u}, 3029, 4, 30, 0x6E},
+        {{"mw_main.news.020912", 0x020912u, 405u, 11u}, 3029, 5, 15, 0x6F},
+    }};
+
+    static constexpr std::array<StoryNewsNetEntry, 9> kStoryNewsNetEntries = {{
+        {kStoryNewsMarikAmbush, 0x29, 0x2B},
+        {kStoryNewsKangarooJackDeath, 0x2E, 0x3A},
+        {kStoryNewsBlackWidowLead, 0x2E, 0x36},
+        {kStoryNewsTashaFiles, 0x39, 0x3B},
+        {kStoryNewsMatabushiProposal, 0x39, 0x3C},
+        {kStoryNewsMatabushiDarkWingOption, 0x39, 0x3D},
+        {kStoryNewsMatabushiPreparations, 0x39, 0x3E},
+        {kStoryNewsMatabushiProceed, 0x39, 0x3F},
+        {kStoryNewsJordanAlbieroLead, 0x38, 0x40},
     }};
 
     static constexpr std::array<PilotTextDefinition, 42> kRecruitPilotDefinitions = {{
@@ -1299,11 +2083,11 @@ private:
     }};
 
     static constexpr std::array<AmmoDefinition, 6> kAmmoDefinitions = {{
-        {L"AC 5-PKS", 285, {L"SHADOW HAWK", L"RIFLEMAN", L"MARAUDER", L""}, 3},
+        {L"AC 5-PKS", 285, {L"SHADOW HAWK", L"WOLVERINE", L"RIFLEMAN", L"MARAUDER"}, 4},
         {L"LRM 5-PKS", 1475, {L"SHADOW HAWK", L"", L"", L""}, 1},
-        {L"SRM 2-PKS", 637, {L"SHADOW HAWK", L"", L"", L""}, 1},
+        {L"SRM 2-PKS", 637, {L"WASP", L"SHADOW HAWK", L"", L""}, 2},
         {L"SRM 4-PKS", 1274, {L"JENNER", L"", L"", L""}, 1},
-        {L"SRM 6-PKS", 2124, {L"WARHAMMER", L"BATTLEMASTER", L"", L""}, 2},
+        {L"SRM 6-PKS", 2124, {L"WOLVERINE", L"WARHAMMER", L"BATTLEMASTER", L""}, 3},
         {L"MACH GUN", 5, {L"LOCUST", L"PHOENIX HAWK", L"WARHAMMER", L"BATTLEMASTER"}, 4},
     }};
 
@@ -1314,8 +2098,8 @@ private:
     }};
 
     static constexpr std::array<MenuItem, 7> kSystemMenuItems = {{
-        {L"SAVE GAME", MenuAction::None},
-        {L"RESTORE GAME", MenuAction::None},
+        {L"SAVE GAME", MenuAction::SaveGame},
+        {L"RESTORE GAME", MenuAction::RestoreGame},
         {L"TURN SOUND OFF", MenuAction::ToggleSound},
         {L"DETAIL: LOW", MenuAction::Detail},
         {L"RESTART GAME", MenuAction::Restart},
@@ -1323,12 +2107,8 @@ private:
         {L"CONTINUE", MenuAction::Continue},
     }};
 
-    static constexpr std::array<size_t, 11> kArmorDamageOrder = {{
-        4, 2, 6, 1, 7, 5, 3, 8, 9, 10, 0,
-    }};
-
-    static constexpr std::array<size_t, 11> kArmorRepairOrder = {{
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    static constexpr std::array<size_t, kArmorSectionCount> kArmorDamageOrder = {{
+        0, 1, 2, 3, 4, 5, 6, 7, 8,
     }};
 
     static constexpr std::array<MechDefinition, kPlayableMechCount> kMechDefinitions = {{
@@ -1338,11 +2118,21 @@ private:
             {15, 0x0003F115u, 68, 68, 0},
             {7, 0x0002A00Du, 111, 182, 1},
             20, 129, 0, 10, 0,
-            {{8, 10, 8, 8, 4, 4, 8, 8, 2, 2, 2}},
             {{{L"M LAS", L"CT", DamageState::Functional}, {L"MG", L"RA", DamageState::Functional}, {L"MG", L"LA", DamageState::Functional}}},
             {{1504000, 1804000, 1955000, 2256000}},
             {{1353000, 1654000, 1804000, 2105000}},
             30,
+        },
+        {
+            ChassisId::Wasp,
+            L"WASP",
+            {15, 0x0003F115u, 68, 68, 0},
+            {7, 0x0002A00Du, 111, 182, 1},
+            20, 95, 180, 10, 6,
+            {{{L"M LAS", L"RA", DamageState::Functional}, {L"SRM2", L"LT", DamageState::Functional}}},
+            {{1504000, 1804000, 1955000, 2256000}},
+            {{1353000, 1654000, 1804000, 2105000}},
+            0,
         },
         {
             ChassisId::Jenner,
@@ -1350,7 +2140,6 @@ private:
             {16, 0x0003FA26u, 68, 68, 1},
             {8, 0x0002C7E6u, 125, 165, 1},
             35, 118, 150, 10, 3,
-            {{9, 17, 13, 13, 12, 12, 15, 15, 4, 3, 3}},
             {{{L"SRM4", L"CT", DamageState::Functional}, {L"M LAS", L"RA", DamageState::Functional}, {L"M LAS", L"RA", DamageState::Functional}, {L"M LAS", L"LA", DamageState::Functional}, {L"M LAS", L"LA", DamageState::Functional}}},
             {{3183000, 3819000, 4137000, 4774000}},
             {{2864000, 3501000, 3819000, 4456000}},
@@ -1362,7 +2151,6 @@ private:
             {17, 0x00040338u, 68, 68, 0},
             {9, 0x0002F08Au, 115, 183, 1},
             45, 97, 180, 10, 6,
-            {{8, 23, 18, 18, 14, 14, 22, 22, 5, 4, 4}},
             {{{L"L LAS", L"RA", DamageState::Functional}, {L"M LAS", L"RA", DamageState::Functional}, {L"M LAS", L"LA", DamageState::Functional}, {L"MG", L"LA", DamageState::Functional}, {L"MG", L"RA", DamageState::Functional}}},
             {{4022000, 4826000, 5228000, 6033000}},
             {{3619000, 4424000, 4826000, 5630000}},
@@ -1374,11 +2162,21 @@ private:
             {18, 0x00040C49u, 68, 68, 1},
             {10, 0x00031A09u, 119, 182, 1},
             55, 86, 90, 12, 3,
-            {{9, 23, 18, 18, 16, 16, 16, 16, 8, 6, 6}},
             {{{L"AC/5", L"LT", DamageState::Functional}, {L"LRM5", L"RT", DamageState::Functional}, {L"SRM2", L"HD", DamageState::Functional}, {L"M LAS", L"RA", DamageState::Functional}}},
             {{4622000, 5546000, 6008000, 6933000}},
             {{4159000, 5084000, 5546000, 6470000}},
             13,
+        },
+        {
+            ChassisId::Wolverine,
+            L"WOLVERINE",
+            {18, 0x00040C49u, 68, 68, 1},
+            {10, 0x00031A09u, 119, 182, 1},
+            55, 86, 150, 12, 5,
+            {{{L"AC/5", L"RA", DamageState::Functional}, {L"SRM6", L"LT", DamageState::Functional}, {L"M LAS", L"HD", DamageState::Functional}}},
+            {{4622000, 5546000, 6008000, 6933000}},
+            {{4159000, 5084000, 5546000, 6470000}},
+            0,
         },
         {
             ChassisId::Rifleman,
@@ -1386,7 +2184,6 @@ private:
             {19, 0x0004155Bu, 68, 68, 0},
             {11, 0x000344BBu, 135, 187, 0},
             60, 64, 0, 10, 0,
-            {{6, 22, 15, 15, 15, 15, 12, 12, 4, 2, 2}},
             {{{L"L LAS", L"RA", DamageState::Functional}, {L"L LAS", L"LA", DamageState::Functional}, {L"AC/5", L"RA", DamageState::Functional}, {L"AC/5", L"LA", DamageState::Functional}, {L"M LAS", L"RT", DamageState::Functional}, {L"M LAS", L"LT", DamageState::Functional}}},
             {{5500000, 6600000, 7150000, 8250000}},
             {{4950000, 6050000, 6600000, 7700000}},
@@ -1398,7 +2195,6 @@ private:
             {20, 0x00041E6Cu, 68, 68, 1},
             {12, 0x0003766Fu, 113, 178, 1},
             70, 64, 0, 18, 0,
-            {{9, 22, 17, 17, 20, 20, 15, 15, 9, 8, 8}},
             {{{L"PPC", L"RA", DamageState::Functional}, {L"PPC", L"LA", DamageState::Functional}, {L"SRM6", L"RT", DamageState::Functional}, {L"M LAS", L"RT", DamageState::Functional}, {L"M LAS", L"LT", DamageState::Functional}, {L"S LAS", L"RT", DamageState::Functional}, {L"S LAS", L"LT", DamageState::Functional}, {L"MG", L"RT", DamageState::Functional}, {L"MG", L"LT", DamageState::Functional}}},
             {{6021000, 7225000, 7827000, 9031000}},
             {{5418000, 6623000, 7225000, 8429000}},
@@ -1410,7 +2206,6 @@ private:
             {21, 0x0004277Eu, 68, 68, 0},
             {13, 0x00039E1Au, 121, 161, 1},
             75, 64, 0, 16, 0,
-            {{9, 35, 17, 17, 22, 22, 18, 18, 10, 8, 8}},
             {{{L"PPC", L"RA", DamageState::Functional}, {L"PPC", L"LA", DamageState::Functional}, {L"M LAS", L"RA", DamageState::Functional}, {L"M LAS", L"LA", DamageState::Functional}, {L"AC/5", L"RT", DamageState::Functional}}},
             {{6729000, 8074000, 8747000, 10093000}},
             {{6056000, 7401000, 8074000, 9420000}},
@@ -1422,7 +2217,6 @@ private:
             {22, 0x0004308Fu, 68, 68, 0},
             {14, 0x0003C480u, 125, 181, 1},
             85, 64, 0, 18, 0,
-            {{9, 40, 28, 28, 24, 24, 26, 26, 11, 8, 8}},
             {{{L"PPC", L"RA", DamageState::Functional}, {L"M LAS", L"RT", DamageState::Functional}, {L"M LAS", L"RT", DamageState::Functional}, {L"M LAS", L"RT", DamageState::Functional}, {L"MG", L"LA", DamageState::Functional}, {L"MG", L"LA", DamageState::Functional}, {L"SRM6", L"LT", DamageState::Functional}, {L"M LAS", L"LT", DamageState::Functional}, {L"M LAS", L"LT", DamageState::Functional}, {L"M LAS", L"LT", DamageState::Functional}}},
             {{8410000, 10092000, 10933000, 12615000}},
             {{7569000, 9251000, 10092000, 11774000}},
@@ -1492,8 +2286,7 @@ private:
         mech.jumpJetsWorking = definition.jumpJets;
         mech.jumpJetsTotal = definition.jumpJets;
         mech.armorPercent = 100;
-        mech.armorMax = definition.armorMax;
-        mech.armorPoints = definition.armorMax;
+        mech.armorDamage = {};
         mech.weapons = definition.weapons;
         const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
         for (size_t i = 0; i < ammoTypes.size(); ++i) {
@@ -1546,6 +2339,7 @@ private:
                 return 0;
             }
 #endif
+            handleChar(wParam);
             return 0;
         case WM_LBUTTONDOWN:
             handleMouseClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), false);
@@ -1589,6 +2383,12 @@ private:
             return L"StatusMenu";
         case ScreenState::NewsNet:
             return L"NewsNet";
+        case ScreenState::ContractMenu:
+            return L"ContractMenu";
+        case ScreenState::ContractNegotiation:
+            return L"ContractNegotiation";
+        case ScreenState::ContractAcceptedMessage:
+            return L"ContractAcceptedMessage";
         case ScreenState::MechLabMenu:
             return L"MechLabMenu";
         case ScreenState::MechExtraAmmo:
@@ -1617,6 +2417,10 @@ private:
             return L"BarMenu";
         case ScreenState::SystemMenu:
             return L"SystemMenu";
+        case ScreenState::SaveGameNameInput:
+            return L"SaveGameNameInput";
+        case ScreenState::RestoreGameList:
+            return L"RestoreGameList";
         case ScreenState::CrewMenu:
             return L"CrewMenu";
         case ScreenState::Starmap:
@@ -1625,6 +2429,10 @@ private:
             return L"TravelRoutePreview";
         case ScreenState::TravelAnimation:
             return L"TravelAnimation";
+        case ScreenState::MissionBattleStub:
+            return L"MissionBattleStub";
+        case ScreenState::MissionDebrief:
+            return L"MissionDebrief";
         }
         return L"Unknown";
     }
@@ -1756,6 +2564,8 @@ private:
             }
             if (state_ == ScreenState::StatusMenu ||
                 state_ == ScreenState::NewsNet ||
+                state_ == ScreenState::ContractMenu ||
+                state_ == ScreenState::ContractNegotiation ||
                 state_ == ScreenState::MechLabMenu ||
                 state_ == ScreenState::MechExtraAmmo ||
                 state_ == ScreenState::MechReviewList ||
@@ -1770,10 +2580,19 @@ private:
                 state_ == ScreenState::MechBuyTooMany ||
                 state_ == ScreenState::BarMenu ||
                 state_ == ScreenState::SystemMenu ||
+                state_ == ScreenState::SaveGameNameInput ||
+                state_ == ScreenState::RestoreGameList ||
                 state_ == ScreenState::CrewMenu ||
-                state_ == ScreenState::Starmap) {
+                state_ == ScreenState::Starmap ||
+                state_ == ScreenState::MissionDebrief) {
                 if (state_ == ScreenState::CrewMenu) {
                     changeState(ScreenState::StatusMenu);
+                } else if (state_ == ScreenState::SaveGameNameInput) {
+                    systemMenuIndex_ = kSystemSaveMenuIndex;
+                    changeState(ScreenState::SystemMenu);
+                } else if (state_ == ScreenState::RestoreGameList) {
+                    systemMenuIndex_ = kSystemRestoreMenuIndex;
+                    changeState(ScreenState::SystemMenu);
                 } else if (state_ == ScreenState::MechExtraAmmo) {
                     changeState(ScreenState::MechLabMenu);
                 } else if (state_ == ScreenState::MechRepairStatus ||
@@ -1792,6 +2611,15 @@ private:
                 } else if (state_ == ScreenState::MechReviewList ||
                            state_ == ScreenState::MechStatus) {
                     changeState(ScreenState::MechLabMenu);
+                } else if (state_ == ScreenState::MissionDebrief && missionDebriefOutcome_ == MissionOutcome::Death) {
+                    return;
+                } else if (state_ == ScreenState::StatusMenu ||
+                           state_ == ScreenState::ContractMenu ||
+                           state_ == ScreenState::MechLabMenu ||
+                           state_ == ScreenState::BarMenu ||
+                           state_ == ScreenState::SystemMenu ||
+                           state_ == ScreenState::Starmap) {
+                    returnToMainMenu();
                 } else {
                     changeState(ScreenState::MainMenu);
                 }
@@ -1809,6 +2637,11 @@ private:
             return;
         }
 
+        if (state_ == ScreenState::CampaignMessage && isStorySceneActive()) {
+            handleStoryClick(screenX, screenY);
+            return;
+        }
+
         if (state_ == ScreenState::Starmap) {
             handleStarmapClick(screenX, screenY);
             return;
@@ -1816,6 +2649,16 @@ private:
 
         if (state_ == ScreenState::NewsNet) {
             handleNewsNetClick(screenX, screenY);
+            return;
+        }
+
+        if (state_ == ScreenState::ContractMenu) {
+            handleContractMenuClick(screenX, screenY);
+            return;
+        }
+
+        if (state_ == ScreenState::ContractNegotiation) {
+            handleContractNegotiationClick(screenX, screenY);
             return;
         }
 
@@ -1894,6 +2737,21 @@ private:
             return;
         }
 
+        if (state_ == ScreenState::RestoreGameList) {
+            handleRestoreGameClick(screenX, screenY);
+            return;
+        }
+
+        if (state_ == ScreenState::MissionBattleStub) {
+            handleBattleStubClick(screenX, screenY);
+            return;
+        }
+
+        if (state_ == ScreenState::MissionDebrief) {
+            handleMissionDebriefClick(screenX, screenY);
+            return;
+        }
+
         if (state_ != ScreenState::MainMenu) {
             return;
         }
@@ -1902,26 +2760,52 @@ private:
         if (iconIndex < 0) {
             return;
         }
+        if (!planetIconAvailable(static_cast<size_t>(iconIndex))) {
+            return;
+        }
         planetMenuIndex_ = static_cast<size_t>(iconIndex);
         activatePlanetIcon(planetMenuIndex_);
     }
 
     void activatePlanetIcon(size_t iconIndex) {
+        if (!planetIconAvailable(iconIndex)) {
+            return;
+        }
         if (iconIndex == kPlanetStatusIconIndex) {
             statusMenuIndex_ = 0;
             changeState(ScreenState::StatusMenu);
         } else if (iconIndex == kPlanetMechLabIconIndex) {
             mechLabMenuIndex_ = 0;
+            if (tryStartMechBayStory()) {
+                return;
+            }
             changeState(ScreenState::MechLabMenu);
+        } else if (iconIndex == kPlanetContractIconIndex) {
+            if (contractAccepted_) {
+                beginMissionLaunch();
+                return;
+            }
+            contractMenuIndex_ = 0;
+            if (tryStartContractStory()) {
+                return;
+            }
+            changeState(ScreenState::ContractMenu);
+        } else if (contractAccepted_) {
+            return;
         } else if (iconIndex == kPlanetStarmapIconIndex) {
             if (!planets_.empty()) {
                 selectedPlanetIndex_ = std::clamp(selectedPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
             }
+            starmapButtonIndex_ = kStarmapNoButtonSelection;
+            closeStarmapMenu();
             changeState(ScreenState::Starmap);
         } else if (iconIndex == kPlanetBarIconIndex) {
+            if (tryStartBarEntryStory()) {
+                return;
+            }
             changeState(ScreenState::BarMenu);
         } else if (iconIndex == kPlanetSystemIconIndex) {
-            systemMenuIndex_ = kSystemContinueMenuIndex;
+            systemMenuIndex_ = kSystemSaveMenuIndex;
             changeState(ScreenState::SystemMenu);
         }
     }
@@ -2108,6 +2992,11 @@ private:
 
         const PlanetMechMarket& market = currentPlanetMechMarket();
         const size_t count = market.mechsForSale.size();
+        if (count == 0) {
+            selectedMarketMechIndex_ = 0;
+            activateMechBuyListSelection();
+            return;
+        }
         for (size_t row = 0; row < visibleMarketRows(count); ++row) {
             const int itemTop = kMechBuyListFirstRowY + static_cast<int>(row) * kMechBuyListLineStep;
             if (screenY >= itemTop && screenY < itemTop + kMechBuyListLineStep) {
@@ -2185,8 +3074,22 @@ private:
     }
 
     void handleStarmapClick(int screenX, int screenY) {
+        if (starmapNameInputActive_) {
+            if (!hitRect(kStarmapPlanetNameInputRect, screenX, screenY)) {
+                finishStarmapNameInput();
+            }
+            return;
+        }
+        if (starmapMenuMode_ != StarmapMenuMode::None) {
+            handleStarmapMenuClick(screenX, screenY);
+            return;
+        }
+        if (hitRect(kStarmapPlanetNameInputRect, screenX, screenY)) {
+            beginStarmapNameInput();
+            return;
+        }
         if (hitRect(kStarmapCancelButtonRect, screenX, screenY)) {
-            changeState(ScreenState::MainMenu);
+            returnToMainMenu();
             return;
         }
         if (hitRect(kStarmapTravelButtonRect, screenX, screenY)) {
@@ -2194,6 +3097,7 @@ private:
             return;
         }
         if (hitRect(kStarmapPlanetsButtonRect, screenX, screenY)) {
+            openStarmapHouseMenu();
             return;
         }
 
@@ -2201,6 +3105,249 @@ private:
         if (planetIndex >= 0) {
             selectedPlanetIndex_ = planetIndex;
         }
+    }
+
+    void handleStarmapMenuClick(int screenX, int screenY) {
+        if (starmapMenuMode_ == StarmapMenuMode::Houses) {
+            const int itemIndex = starmapHouseMenuItemAt(screenX, screenY);
+            if (itemIndex < 0) {
+                return;
+            }
+            starmapHouseSelectionIndex_ = static_cast<size_t>(itemIndex);
+            activateStarmapHouseSelection();
+            return;
+        }
+
+        if (starmapMenuMode_ == StarmapMenuMode::HousePlanets) {
+            const std::vector<int> indexes = starmapPlanetIndexesForSelectedHouse();
+            const int itemIndex = starmapPlanetMenuItemAt(screenX, screenY, indexes.size());
+            if (itemIndex < 0) {
+                return;
+            }
+            starmapPlanetSelectionIndex_ = static_cast<size_t>(itemIndex);
+            activateStarmapPlanetSelection();
+        }
+    }
+
+    void openStarmapHouseMenu() {
+        starmapMenuMode_ = StarmapMenuMode::Houses;
+        starmapHouseSelectionIndex_ = 0;
+        starmapPlanetSelectionIndex_ = 0;
+    }
+
+    void closeStarmapMenu() {
+        starmapMenuMode_ = StarmapMenuMode::None;
+        starmapHouseSelectionIndex_ = 0;
+        starmapPlanetSelectionIndex_ = 0;
+    }
+
+    void beginStarmapNameInput() {
+        if (planets_.empty()) {
+            return;
+        }
+        closeStarmapMenu();
+        starmapButtonIndex_ = kStarmapNoButtonSelection;
+        starmapNameInputActive_ = true;
+        starmapNameInputOriginalPlanetIndex_ = std::clamp(selectedPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+        starmapNameInput_.clear();
+    }
+
+    void cancelStarmapNameInput() {
+        if (starmapNameInputActive_) {
+            selectedPlanetIndex_ = starmapNameInputOriginalPlanetIndex_;
+        }
+        starmapNameInputActive_ = false;
+        starmapNameInput_.clear();
+    }
+
+    void finishStarmapNameInput() {
+        if (!starmapNameInputActive_) {
+            return;
+        }
+
+        const int planetIndex = findPlanetIndexByNameInsensitive(starmapNameInput_);
+        if (planetIndex >= 0) {
+            selectedPlanetIndex_ = planetIndex;
+        } else {
+            selectedPlanetIndex_ = starmapNameInputOriginalPlanetIndex_;
+        }
+        starmapNameInputActive_ = false;
+        starmapNameInput_.clear();
+    }
+
+    void activateStarmapHouseSelection() {
+        if (starmapHouseSelectionIndex_ >= kHouseMenuItemCount) {
+            closeStarmapMenu();
+            return;
+        }
+
+        starmapMenuMode_ = StarmapMenuMode::HousePlanets;
+        starmapPlanetSelectionIndex_ = 0;
+    }
+
+    void activateStarmapPlanetSelection() {
+        const std::vector<int> indexes = starmapPlanetIndexesForSelectedHouse();
+        if (starmapPlanetSelectionIndex_ >= indexes.size()) {
+            openStarmapHouseMenu();
+            return;
+        }
+
+        selectedPlanetIndex_ = indexes[starmapPlanetSelectionIndex_];
+        closeStarmapMenu();
+    }
+
+    void handleStarmapKey(WPARAM key) {
+        if (starmapNameInputActive_) {
+            if (key == VK_RETURN) {
+                finishStarmapNameInput();
+            } else if (key == VK_BACK) {
+                if (!starmapNameInput_.empty()) {
+                    starmapNameInput_.pop_back();
+                }
+            }
+            return;
+        }
+
+        if (starmapMenuMode_ == StarmapMenuMode::Houses) {
+            const size_t count = kHouseMenuItemCount + 1u;
+            if (key == VK_UP || key == VK_LEFT) {
+                starmapHouseSelectionIndex_ = (starmapHouseSelectionIndex_ + count - 1u) % count;
+            } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
+                starmapHouseSelectionIndex_ = (starmapHouseSelectionIndex_ + 1u) % count;
+            } else if (key == VK_RETURN || key == VK_SPACE) {
+                activateStarmapHouseSelection();
+            } else if (key == VK_ESCAPE) {
+                closeStarmapMenu();
+            }
+            return;
+        }
+
+        if (starmapMenuMode_ == StarmapMenuMode::HousePlanets) {
+            const std::vector<int> indexes = starmapPlanetIndexesForSelectedHouse();
+            const size_t count = indexes.size() + 1u;
+            if (count == 0) {
+                openStarmapHouseMenu();
+                return;
+            }
+
+            constexpr size_t kRowsPerColumn = 16;
+            if (key == VK_UP) {
+                starmapPlanetSelectionIndex_ = (starmapPlanetSelectionIndex_ + count - 1u) % count;
+            } else if (key == VK_DOWN || key == VK_TAB) {
+                starmapPlanetSelectionIndex_ = (starmapPlanetSelectionIndex_ + 1u) % count;
+            } else if (key == VK_LEFT && starmapPlanetSelectionIndex_ < indexes.size()) {
+                if (starmapPlanetSelectionIndex_ >= kRowsPerColumn) {
+                    starmapPlanetSelectionIndex_ -= kRowsPerColumn;
+                }
+            } else if (key == VK_RIGHT && starmapPlanetSelectionIndex_ < indexes.size()) {
+                const size_t target = starmapPlanetSelectionIndex_ + kRowsPerColumn;
+                if (target < indexes.size()) {
+                    starmapPlanetSelectionIndex_ = target;
+                }
+            } else if (key == VK_RETURN || key == VK_SPACE) {
+                activateStarmapPlanetSelection();
+            } else if (key == VK_ESCAPE) {
+                openStarmapHouseMenu();
+            }
+            return;
+        }
+
+        if (key == VK_UP || key == VK_LEFT) {
+            starmapButtonIndex_ = starmapButtonIndex_ == kStarmapNoButtonSelection
+                ? 2u
+                : (starmapButtonIndex_ + 2u) % 3u;
+        } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
+            starmapButtonIndex_ = starmapButtonIndex_ == kStarmapNoButtonSelection
+                ? 0u
+                : (starmapButtonIndex_ + 1u) % 3u;
+        } else if (key == VK_RETURN || key == VK_SPACE) {
+            activateStarmapButton();
+        }
+    }
+
+    void activateStarmapButton() {
+        if (starmapButtonIndex_ == kStarmapNoButtonSelection) {
+            return;
+        }
+        if (starmapButtonIndex_ == 0) {
+            beginTravelToSelectedPlanet();
+        } else if (starmapButtonIndex_ == 1) {
+            openStarmapHouseMenu();
+        } else {
+            returnToMainMenu();
+        }
+    }
+
+    int starmapHouseMenuItemAt(int screenX, int screenY) const {
+        const RectI rect = starmapHouseMenuRect();
+        constexpr int kFirstY = 90;
+        constexpr int kLineStep = 8;
+        if (screenX < rect.x || screenX >= rect.x + rect.width || screenY < kFirstY) {
+            return -1;
+        }
+        const int itemIndex = (screenY - kFirstY) / kLineStep;
+        if (itemIndex < 0 || static_cast<size_t>(itemIndex) > kHouseMenuItemCount) {
+            return -1;
+        }
+        return itemIndex;
+    }
+
+    RectI starmapHouseMenuRect() const {
+        return {126, 72, 68, 72};
+    }
+
+    RectI starmapPlanetMenuRect() const {
+        return {51, 31, 218, 165};
+    }
+
+    int starmapPlanetMenuItemAt(int screenX, int screenY, size_t planetCount) const {
+        const RectI rect = starmapPlanetMenuRect();
+        constexpr int kLeftX = 65;
+        constexpr int kRightX = 172;
+        constexpr int kFirstY = 55;
+        constexpr int kLineStep = 8;
+        constexpr int kRowsPerColumn = 16;
+        if (screenY >= 185 && screenY < 193 && screenX >= rect.x && screenX < rect.x + rect.width) {
+            return static_cast<int>(planetCount);
+        }
+        if (screenY < kFirstY || screenY >= kFirstY + kRowsPerColumn * kLineStep) {
+            return -1;
+        }
+        int column = -1;
+        if (screenX >= kLeftX && screenX < kLeftX + 96) {
+            column = 0;
+        } else if (screenX >= kRightX && screenX < kRightX + 96) {
+            column = 1;
+        }
+        if (column < 0) {
+            return -1;
+        }
+
+        const int row = (screenY - kFirstY) / kLineStep;
+        const int itemIndex = row + column * kRowsPerColumn;
+        if (itemIndex < 0 || static_cast<size_t>(itemIndex) >= planetCount) {
+            return -1;
+        }
+        return itemIndex;
+    }
+
+    std::vector<int> starmapPlanetIndexesForSelectedHouse() const {
+        std::vector<int> indexes;
+        const uint8_t houseId = static_cast<uint8_t>(std::min<size_t>(starmapHouseSelectionIndex_, kHouseMenuItemCount - 1u));
+        for (size_t i = 0; i < planets_.size(); ++i) {
+            if (planets_[i].houseId == houseId) {
+                indexes.push_back(static_cast<int>(i));
+            }
+        }
+        std::sort(
+            indexes.begin(),
+            indexes.end(),
+            [this](int left, int right) {
+                const PlanetRecord& leftPlanet = planets_[static_cast<size_t>(left)];
+                const PlanetRecord& rightPlanet = planets_[static_cast<size_t>(right)];
+                return leftPlanet.name < rightPlanet.name;
+            });
+        return indexes;
     }
 
     void handleNewsNetClick(int screenX, int screenY) {
@@ -2214,6 +3361,191 @@ private:
             newsNetButtonIndex_ = 2;
             activateNewsNetButton(newsNetButtonIndex_);
         }
+    }
+
+    void handleContractMenuClick(int screenX, int screenY) {
+        if (hitRect(kContractMenuRequestButtonRect, screenX, screenY)) {
+            contractMenuIndex_ = 0;
+            activateContractMenuItem(contractMenuIndex_);
+        } else if (hitRect(kContractMenuLeaveButtonRect, screenX, screenY)) {
+            contractMenuIndex_ = 1;
+            activateContractMenuItem(contractMenuIndex_);
+        }
+    }
+
+    void activateContractMenuItem(size_t itemIndex) {
+        if (itemIndex == 0) {
+            if (tryStartContractStory()) {
+                return;
+            }
+            openContractNegotiation();
+            return;
+        }
+        returnToMainMenu();
+    }
+
+    void handleContractNegotiationClick(int screenX, int screenY) {
+        if (contractNegotiationTerminated_ || contractNegotiationUnavailable_) {
+            changeState(ScreenState::ContractMenu);
+            return;
+        }
+
+        if (hitRect(kContractPriceValueRect, screenX, screenY)) {
+            beginContractTermEdit(ContractEditableField::Price);
+            return;
+        }
+        if (hitRect(kContractSalvageValueRect, screenX, screenY)) {
+            beginContractTermEdit(ContractEditableField::Salvage);
+            return;
+        }
+        if (hitRect(kContractAdvanceValueRect, screenX, screenY)) {
+            beginContractTermEdit(ContractEditableField::Advance);
+            return;
+        }
+
+        contractEditableField_ = ContractEditableField::None;
+        if (hitRect(kNewsNetPreviousButtonRect, screenX, screenY)) {
+            contractNegotiationButtonIndex_ = 0;
+            activateContractNegotiationButton(contractNegotiationButtonIndex_);
+        } else if (hitRect(kNewsNetNextButtonRect, screenX, screenY)) {
+            contractNegotiationButtonIndex_ = 1;
+            activateContractNegotiationButton(contractNegotiationButtonIndex_);
+        } else if (hitRect(kNewsNetDoneButtonRect, screenX, screenY)) {
+            contractNegotiationButtonIndex_ = 2;
+            activateContractNegotiationButton(contractNegotiationButtonIndex_);
+        }
+    }
+
+    void activateContractNegotiationButton(size_t buttonIndex) {
+        if (buttonIndex == 1) {
+            if (activeContractIndex_ + 1u < activeContracts_.size()) {
+                ++activeContractIndex_;
+                contractEditableField_ = ContractEditableField::None;
+                contractNegotiationButtonIndex_ = 1;
+            } else {
+                changeState(ScreenState::ContractMenu);
+            }
+            return;
+        }
+        if (buttonIndex == 2) {
+            changeState(ScreenState::ContractMenu);
+            return;
+        }
+
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+        debugLog(activeContractOffer() && activeContractOffer()->termsModified
+            ? L"Contract submit selected."
+            : L"Contract accept selected. Accept flow is not implemented yet.");
+#endif
+        ContractOffer* offer = activeContractOffer();
+        if (!offer) {
+            return;
+        }
+        if (offer->termsModified) {
+            submitContractCounterOffer();
+        } else {
+            acceptActiveContract();
+        }
+    }
+
+    void openContractNegotiation() {
+        contractNegotiationTerminated_ = false;
+        contractNegotiationUnavailable_ = false;
+        activeContractIndex_ = 0;
+        contractEditableField_ = ContractEditableField::None;
+        contractNegotiationButtonIndex_ = 1;
+        if (currentPlanetContractsLocked()) {
+            activeContracts_.clear();
+            contractNegotiationUnavailable_ = true;
+            changeState(ScreenState::ContractNegotiation);
+            return;
+        }
+        generateCurrentPlanetContracts();
+        if (activeContracts_.empty()) {
+            changeState(ScreenState::ContractMenu);
+            return;
+        }
+        changeState(ScreenState::ContractNegotiation);
+    }
+
+    void generateCurrentPlanetContracts() {
+        activeContracts_.clear();
+        if (planets_.empty()) {
+            return;
+        }
+
+        const PlanetRecord& currentPlanet =
+            planets_[std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1)];
+        if (currentPlanet.contractAvailableFlag == 0) {
+            return;
+        }
+        if (currentPlanetContractsLocked()) {
+            return;
+        }
+        if (houseNegativeCounters_[std::min<size_t>(currentPlanet.houseId, houseNegativeCounters_.size() - 1u)] > 7) {
+            return;
+        }
+
+        std::mt19937 rng(contractGenerationSeed(currentPlanet));
+        size_t offerCount = 2u + static_cast<size_t>(rng() % 3u);
+        if (currentYear_ == 3028 && currentMonth_ >= 7) {
+            offerCount = 3u + static_cast<size_t>(rng() % 3u);
+        } else if (currentYear_ > 3028) {
+            offerCount = 3u + static_cast<size_t>(rng() % 3u);
+        }
+
+        activeContracts_.reserve(offerCount);
+        for (size_t slot = 0; slot < offerCount; ++slot) {
+            activeContracts_.push_back(generateContractOffer(currentPlanet, slot, rng));
+        }
+    }
+
+    uint32_t contractGenerationSeed(const PlanetRecord& planet) const {
+        uint32_t seed = 0x6D575243u;
+        seed ^= static_cast<uint32_t>(planet.tableOrder) * 0x9E3779B9u;
+        seed ^= static_cast<uint32_t>(planet.planetNumber) * 0x85EBCA6Bu;
+        seed ^= static_cast<uint32_t>(currentYear_) * 0xC2B2AE35u;
+        seed ^= static_cast<uint32_t>(currentMonth_ + 1) * 0x27D4EB2Du;
+        seed ^= static_cast<uint32_t>(currentMonthDayCounter_) * 0x165667B1u;
+        seed ^= static_cast<uint32_t>(currentPlanetVisitSerial_) * 0xD3A2646Cu;
+        return seed;
+    }
+
+    ContractOffer generateContractOffer(const PlanetRecord& currentPlanet, size_t slot, std::mt19937& rng) const {
+        ContractOffer offer;
+        offer.employerHouse = std::min<uint8_t>(currentPlanet.houseId, 4);
+        offer.targetHouse = static_cast<uint8_t>(rng() % 5u);
+        offer.targetPlanet = contractTargetPlanetName(offer.targetHouse, rng);
+
+        const bool lateCampaign = currentYear_ > 3028 || (currentYear_ == 3028 && currentMonth_ >= 7);
+        const bool canUseExtended = lateCampaign && ownedMechs_.size() >= 4;
+        const ContractMissionDefinition& mission = chooseContractMission(canUseExtended, rng);
+        offer.missionName = mission.name;
+        offer.hasHostileTargetHouse = contractMissionHasHostileTargetHouse(mission);
+
+        int score = contractForceScore();
+        if (slot == 1u || slot == 4u) {
+            score = score + score / 2;
+        } else if (slot == 2u || slot == 5u) {
+            score = std::max(1, score / 2);
+        }
+        assignContractEnemyCounts(score, offer, static_cast<uint32_t>(rng()));
+        if (mission.extended) {
+            offer.heavyCount *= 3;
+            offer.mediumCount *= 3;
+            offer.lightCount *= 3;
+        }
+
+        offer.priceK = contractBasePriceK(score, offer.employerHouse, static_cast<uint32_t>(rng()));
+        if (mission.extended) {
+            offer.priceK = std::min(kContractMaxPriceK, offer.priceK * 3);
+        }
+        offer.salvagePercent = contractDefaultSalvagePercent(offer.employerHouse, static_cast<uint32_t>(rng()));
+        offer.advancePercent = contractDefaultAdvancePercent(offer.employerHouse, static_cast<uint32_t>(rng()));
+        offer.housePriceK = offer.priceK;
+        offer.houseSalvagePercent = offer.salvagePercent;
+        offer.houseAdvancePercent = offer.advancePercent;
+        return offer;
     }
 
     void handleCrewMenuClick(int screenX, int screenY) {
@@ -2249,7 +3581,7 @@ private:
         } else if (action == MenuAction::NewsNet) {
             openNewsNet();
         } else if (action == MenuAction::Continue) {
-            changeState(ScreenState::MainMenu);
+            returnToMainMenu();
         }
     }
 
@@ -2264,7 +3596,10 @@ private:
         } else if (action == MenuAction::BuyMechs) {
             openCurrentPlanetMechMarket();
         } else if (action == MenuAction::Continue) {
-            changeState(ScreenState::MainMenu);
+            if (tryStartMechBayExitStory()) {
+                return;
+            }
+            returnToMainMenu();
         }
     }
 
@@ -2527,7 +3862,7 @@ private:
         mech->rightLegActuator = DamageState::Functional;
         mech->heatSinksWorking = mech->heatSinksTotal;
         mech->jumpJetsWorking = mech->jumpJetsTotal;
-        mech->armorPoints = mech->armorMax;
+        mech->armorDamage = {};
         updateArmorPercent(*mech);
         for (MechWeaponStatus& weapon : mech->weapons) {
             weapon.condition = DamageState::Functional;
@@ -2541,10 +3876,18 @@ private:
 
     void activateBarMenuItem(size_t itemIndex) {
         const MenuAction action = kBarMenuItems[itemIndex].action;
-        if (action == MenuAction::RecruitCrew) {
+        if (itemIndex == 0) {
+            if (!tryStartOrderDrinkStory()) {
+                spendStoryCbills(5);
+                beginStory({makeStoryPage(kStoryQuietBarDrink)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+            }
+        } else if (action == MenuAction::RecruitCrew) {
             openRecruitDialog();
         } else if (action == MenuAction::Continue) {
-            changeState(ScreenState::MainMenu);
+            if (tryStartBarExitStory()) {
+                return;
+            }
+            returnToMainMenu();
         }
     }
 
@@ -2608,6 +3951,780 @@ private:
         activeRecruitIndex_ = -1;
         recruitChoiceIndex_ = 0;
         barMenuIndex_ = 1;
+    }
+
+    bool isStorySceneActive() const {
+        return !storyPages_.empty() && currentStoryPageIndex_ < storyPages_.size();
+    }
+
+    bool storyFlag(uint8_t messageId) const {
+        return storyMessageFlags_[messageId] != 0;
+    }
+
+    void setStoryFlag(uint8_t messageId) {
+        storyMessageFlags_[messageId] = 1;
+    }
+
+    bool currentPlanetIs(std::string_view name) const {
+        if (planets_.empty()) {
+            return name == kFallbackStartingPlanetName;
+        }
+        const int index = std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+        return planets_[static_cast<size_t>(index)].name == name;
+    }
+
+    std::string currentPlanetNameAscii() const {
+        if (planets_.empty()) {
+            return std::string(kFallbackStartingPlanetName);
+        }
+        const int index = std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+        return planets_[static_cast<size_t>(index)].name;
+    }
+
+    bool isStartingStoryPlanet() const {
+        const std::string_view name = startingStoryPlanetName_.empty()
+            ? kFallbackStartingPlanetName
+            : std::string_view(startingStoryPlanetName_);
+        return currentPlanetIs(name);
+    }
+
+    int chooseNewGameStartingPlanetIndex() const {
+        std::vector<int> candidates;
+        candidates.reserve(planets_.size());
+        for (size_t i = 0; i < planets_.size(); ++i) {
+            const PlanetRecord& planet = planets_[i];
+            if (planet.contractAvailableFlag != 0 && (planet.houseId == 0 || planet.houseId == 4)) {
+                candidates.push_back(static_cast<int>(i));
+            }
+        }
+        if (candidates.empty()) {
+            for (size_t i = 0; i < planets_.size(); ++i) {
+                if (planets_[i].contractAvailableFlag != 0) {
+                    candidates.push_back(static_cast<int>(i));
+                }
+            }
+        }
+        if (candidates.empty()) {
+            return findPlanetIndexByName(kFallbackStartingPlanetName);
+        }
+
+        std::mt19937 rng(makeRecruitmentSeed() ^ 0x53544152u);
+        std::uniform_int_distribution<size_t> distribution(0, candidates.size() - 1u);
+        return candidates[distribution(rng)];
+    }
+
+    bool isMainStoryComplete() const {
+        return storyFlag(0x6F);
+    }
+
+    void spendStoryCbills(uint64_t amount) {
+        playerWealth_ = playerWealth_ > amount ? playerWealth_ - amount : 0;
+    }
+
+    std::vector<std::wstring> storyLines(const MwMainTextRef& textRef) const {
+        std::vector<std::wstring> lines;
+        if (mwMainData_.empty() || textRef.fileOffset >= mwMainData_.size()) {
+            lines.push_back(widen(textRef.id));
+            return lines;
+        }
+
+        std::wstring line;
+        bool previousWasCr = false;
+        const size_t end = std::min(mwMainData_.size(), textRef.fileOffset + textRef.length);
+        for (size_t offset = textRef.fileOffset; offset < end; ++offset) {
+            const uint8_t value = mwMainData_[offset];
+            if (value == '\r' || value == '\n') {
+                if (value == '\n' && previousWasCr) {
+                    previousWasCr = false;
+                    continue;
+                }
+                trimStoryLine(line);
+                lines.push_back(std::move(line));
+                line.clear();
+                previousWasCr = value == '\r';
+                continue;
+            }
+            previousWasCr = false;
+
+            if (value == 0) {
+                break;
+            }
+            if (value == '\t') {
+                line.push_back(L' ');
+            } else if (value >= 0x20 && value <= 0x7E) {
+                line.push_back(static_cast<wchar_t>(value));
+            }
+        }
+        trimStoryLine(line);
+        lines.push_back(std::move(line));
+
+        lines.erase(
+            std::remove_if(
+                lines.begin(),
+                lines.end(),
+                [](const std::wstring& candidate) {
+                    return candidate == L"0" || candidate == L"/" || candidate == L"-";
+                }),
+            lines.end());
+        return lines;
+    }
+
+    static void trimStoryLine(std::wstring& line) {
+        while (!line.empty() && (line.back() == L' ' || line.back() == L'\t')) {
+            line.pop_back();
+        }
+    }
+
+    static void trimStoryLineStart(std::wstring& line) {
+        while (!line.empty() && (line.front() == L' ' || line.front() == L'\t')) {
+            line.erase(line.begin());
+        }
+    }
+
+    StoryPage makeStoryPage(const MwMainTextRef& textRef, std::vector<StoryChoice> choices = {}) const {
+        StoryPage page;
+        page.lines = storyLines(textRef);
+        page.choices = std::move(choices);
+        return page;
+    }
+
+    StoryPage makeFinalBasePromptPage() const {
+        return makeStoryPage(
+            kStoryFinalBasePrompt,
+            {{L"ATTACK", StoryAction::FinalAttack}, {L"DELAY", StoryAction::FinalDelay}});
+    }
+
+    void appendToLastStoryLine(std::vector<std::wstring>& lines, std::wstring_view suffix) const {
+        if (lines.empty()) {
+            lines.emplace_back(suffix);
+        } else {
+            if (!lines.back().empty() &&
+                !suffix.empty() &&
+                storyTextNeedsJoinSpace(lines.back().back(), suffix.front())) {
+                lines.back().push_back(L' ');
+            }
+            lines.back() += suffix;
+        }
+    }
+
+    static bool storyTextNeedsJoinSpace(wchar_t previous, wchar_t next) {
+        const bool previousIsWord = (previous >= L'0' && previous <= L'9') ||
+            (previous >= L'A' && previous <= L'Z') ||
+            (previous >= L'a' && previous <= L'z');
+        const bool nextIsWord = (next >= L'0' && next <= L'9') ||
+            (next >= L'A' && next <= L'Z') ||
+            (next >= L'a' && next <= L'z');
+        return previousIsWord && nextIsWord;
+    }
+
+    void appendStoryLines(std::vector<std::wstring>& target, std::vector<std::wstring> source) const {
+        target.insert(
+            target.end(),
+            std::make_move_iterator(source.begin()),
+            std::make_move_iterator(source.end()));
+    }
+
+    template <size_t Count>
+    std::wstring chooseStoryPlanet(const std::array<std::string_view, Count>& names, uint32_t salt) const {
+        uint32_t seed = salt;
+        seed ^= static_cast<uint32_t>(currentYear_) * 1103515245u;
+        seed ^= static_cast<uint32_t>(currentMonth_ + 1) * 12345u;
+        seed ^= static_cast<uint32_t>(currentMonthDayCounter_ + 1) * 2654435761u;
+        seed ^= static_cast<uint32_t>(std::max(0, currentPlanetIndex_)) * 2246822519u;
+        const std::string_view name = names[seed % names.size()];
+        return widen(name);
+    }
+
+    const std::wstring& grigDestinationPlanet() {
+        if (grigDestinationPlanet_.empty()) {
+            static constexpr std::array<std::string_view, 3> kKuritaDestinations = {{
+                "NEW SAMARKAND",
+                "TABAYAMA",
+                "DELACRUZ",
+            }};
+            grigDestinationPlanet_ = chooseStoryPlanet(kKuritaDestinations, 0x47524947u);
+        }
+        return grigDestinationPlanet_;
+    }
+
+    const std::wstring& wendallDestinationPlanet() {
+        if (wendallDestinationPlanet_.empty()) {
+            static constexpr std::array<std::string_view, 3> kMarikDestinations = {{
+                "GIBSON",
+                "MOSIRO",
+                "SADURNI",
+            }};
+            wendallDestinationPlanet_ = chooseStoryPlanet(kMarikDestinations, 0x57454E44u);
+        }
+        return wendallDestinationPlanet_;
+    }
+
+    const std::wstring& kearneyDestinationPlanet() {
+        if (kearneyDestinationPlanet_.empty()) {
+            static constexpr std::array<std::string_view, 3> kDavionDestinations = {{
+                "OKEFENOKEE",
+                "TANCREDI IV",
+                "DELACAMBRE",
+            }};
+            kearneyDestinationPlanet_ = chooseStoryPlanet(kDavionDestinations, 0x4B454152u);
+        }
+        return kearneyDestinationPlanet_;
+    }
+
+    const std::wstring& blackWidowDestinationPlanet() {
+        if (blackWidowDestinationPlanet_.empty()) {
+            static constexpr std::array<std::string_view, 2> kBlackWidowDestinations = {{
+                "PROSERPINA",
+                "THESTRIA",
+            }};
+            blackWidowDestinationPlanet_ = chooseStoryPlanet(kBlackWidowDestinations, 0x5749444Fu);
+        }
+        return blackWidowDestinationPlanet_;
+    }
+
+    const std::wstring& darkWingDestinationPlanet() {
+        if (darkWingDestinationPlanet_.empty()) {
+            static constexpr std::array<std::string_view, 2> kDarkWingDestinations = {{
+                "KIRCHBACH",
+                "ALBIERO",
+            }};
+            darkWingDestinationPlanet_ = chooseStoryPlanet(kDarkWingDestinations, 0x4457494Eu);
+        }
+        return darkWingDestinationPlanet_;
+    }
+
+    bool isCurrentPlanetName(const std::wstring& name) const {
+        return currentPlanetName() == name;
+    }
+
+    void beginStory(
+        std::vector<StoryPage> pages,
+        StoryBackdrop backdrop,
+        ScreenState returnState,
+        StoryAction defaultAction = StoryAction::None) {
+        storyPages_ = std::move(pages);
+        currentStoryPageIndex_ = 0;
+        currentStoryChoiceIndex_ = 0;
+        pendingStoryDefaultAction_ = defaultAction;
+        pendingStoryReturnState_ = returnState;
+        storyBackdrop_ = backdrop;
+        changeState(ScreenState::CampaignMessage);
+    }
+
+    bool tryStartOrderDrinkStory() {
+        if (isStartingStoryPlanet()) {
+            if (!storyFlag(0x06)) {
+                setStoryFlag(0x06);
+                spendStoryCbills(5);
+                beginStory({makeStoryPage(kStoryStartingBarClue1)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+                return true;
+            }
+            if (!storyFlag(0x0A)) {
+                setStoryFlag(0x0A);
+                spendStoryCbills(5);
+                beginStory({makeStoryPage(kStoryStartingBarClue2)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+                return true;
+            }
+        }
+
+        if (currentPlanetIs("LAND'S END") && storyFlag(0x08)) {
+            if (!storyFlag(0x0B)) {
+                setStoryFlag(0x0B);
+                spendStoryCbills(15);
+                beginStory({makeStoryPage(kStoryLandsEndSetup)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+                return true;
+            }
+            if (!storyFlag(0x0C)) {
+                setStoryFlag(0x0C);
+                StoryPage page = makeStoryPage(kStoryLandsEndContact);
+                appendToLastStoryLine(page.lines, grigDestinationPlanet() + L".\"");
+                beginStory({std::move(page)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+                return true;
+            }
+        }
+
+        if (currentPlanetIs("DUSTBALL") && (storyFlag(0x1B) || storyFlag(0x1C))) {
+            if (!storyFlag(0x24)) {
+                setStoryFlag(0x24);
+                spendStoryCbills(25);
+                beginStory({makeStoryPage(kStoryStoneArrowInquiry)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+                return true;
+            }
+            if (!storyFlag(0x25)) {
+                setStoryFlag(0x25);
+                spendStoryCbills(75);
+                StoryPage page = makeStoryPage(kStoryStoneArrowResult);
+                appendToLastStoryLine(page.lines, wendallDestinationPlanet() + L".");
+                beginStory({std::move(page)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+                return true;
+            }
+        }
+
+        if (storyFlag(0x29) && isCurrentPlanetName(kearneyDestinationPlanet()) && !storyFlag(0x2D)) {
+            setStoryFlag(0x2D);
+            setStoryFlag(0x2E);
+            beginStory(
+                {
+                    makeStoryPage(kStoryKearneyBarLead),
+                    makeStoryPage(kStoryKearneyMeeting),
+                },
+                StoryBackdrop::Bar,
+                ScreenState::BarMenu);
+            return true;
+        }
+
+        return false;
+    }
+
+    bool tryStartBarEntryStory() {
+        if (storyFlag(0x36) && isCurrentPlanetName(blackWidowDestinationPlanet()) && !storyFlag(0x38) && !storyFlag(0x39)) {
+            setStoryFlag(0x37);
+            beginStory(
+                {makeStoryPage(
+                    kStoryBlackWidowBar,
+                    {
+                        {L"ACCEPT HER STORY", StoryAction::AcceptBlackWidowStory},
+                        {L"CHALLENGE HER STORY", StoryAction::ChallengeBlackWidowStory},
+                    })},
+                StoryBackdrop::Bar,
+                ScreenState::BarMenu);
+            return true;
+        }
+        return false;
+    }
+
+    bool tryStartBarExitStory() {
+        if (storyFlag(0x2E) && !storyFlag(0x2F)) {
+            setStoryFlag(0x2F);
+            beginStory(
+                {makeStoryPage(
+                    kStoryKearneyAddressPrompt,
+                    {{L"FOLLOW ADDRESS", StoryAction::FollowAddress}, {L"FORGET IT", StoryAction::ForgetAddress}})},
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            return true;
+        }
+        return false;
+    }
+
+    bool tryStartContractStory() {
+        if (currentPlanetIs("GALEDON V") && !storyFlag(0x08)) {
+            setStoryFlag(0x08);
+            beginStory({makeStoryPage(kStoryGaledonLead)}, StoryBackdrop::Contract, ScreenState::ContractMenu);
+            return true;
+        }
+        return false;
+    }
+
+    bool tryStartPostTravelStory() {
+        if (currentPlanetIs("ANDER'S MOON") && !isMainStoryComplete()) {
+            beginStory({makeStoryPage(kStoryAndersMoonArrest)}, StoryBackdrop::Campaign, ScreenState::MainMenu, StoryAction::GameOver);
+            return true;
+        }
+
+        if (storyFlag(0x0C) && isCurrentPlanetName(grigDestinationPlanet()) && !storyFlag(0x64)) {
+            setStoryFlag(0x64);
+            beginStory(
+                {
+                    makeStoryPage(kStoryGrigEscort),
+                    makeStoryPage(kStoryGrigOffer, {{L"YES", StoryAction::GrigYes}, {L"NO", StoryAction::GrigNo}}),
+                },
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            return true;
+        }
+
+        if (storyFlag(0x0E) && currentPlanetIs("DUSTBALL") && !storyFlag(0x17)) {
+            setStoryFlag(0x17);
+            beginStory(
+                {
+                    makeStoryPage(kStoryDustballEntry),
+                    makeStoryPage(
+                        kStoryDustballPrompt,
+                        {{L"FIGHT", StoryAction::DustballFirstFight}, {L"RUN", StoryAction::DustballFirstRun}}),
+                },
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            return true;
+        }
+
+        if (storyFlag(0x40) && currentPlanetIs("ALBIERO") && !storyFlag(0x41)) {
+            setStoryFlag(0x41);
+            beginStory(
+                {
+                    makeStoryPage(kStoryAlbieroRaidIntro),
+                    makeStoryPage(kStoryAlbieroMapLead),
+                    makeStoryPage(kStoryAlbieroLoading),
+                    makeStoryPage(
+                        kStoryAlbieroFollowPrompt,
+                        {{L"FOLLOW HER", StoryAction::FollowTasha}, {L"STAY DOWN", StoryAction::StayDown}}),
+                },
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            return true;
+        }
+
+        if (tryStartFinalBasePrompt()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    bool tryStartFinalBasePrompt() {
+        if (storyFlag(0x45) && isCurrentPlanetName(darkWingDestinationPlanet())) {
+            beginStory({makeFinalBasePromptPage()}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            return true;
+        }
+        return false;
+    }
+
+    void returnToMainMenu(bool allowFinalBasePrompt = true) {
+        if (allowFinalBasePrompt && tryStartFinalBasePrompt()) {
+            return;
+        }
+        changeState(ScreenState::MainMenu);
+    }
+
+    bool tryStartMechBayStory() {
+        std::vector<StoryPage> pages;
+        if (storyFlag(0x0A) && !storyFlag(0x07)) {
+            setStoryFlag(0x07);
+            spendStoryCbills(10);
+            pages.push_back(makeStoryPage(kStoryOptionalCrestLore));
+        }
+
+        if (storyFlag(0x25) && isCurrentPlanetName(wendallDestinationPlanet()) && !storyFlag(0x26)) {
+            setStoryFlag(0x26);
+            StoryPage intro = makeStoryPage(kStoryScorpionPilotIntro);
+            if (!intro.lines.empty()) {
+                if (!intro.lines.front().empty() && intro.lines.front().front() == L',') {
+                    intro.lines.front().erase(intro.lines.front().begin());
+                }
+                trimStoryLineStart(intro.lines.front());
+            }
+
+            StoryPage lead = makeStoryPage(kStoryScorpionPilotLead);
+            while (!lead.lines.empty() && lead.lines.back().empty()) {
+                lead.lines.pop_back();
+            }
+
+            std::vector<std::wstring> suffixLines = storyLines(kStoryScorpionPilotLeadSuffix);
+            if (!suffixLines.empty()) {
+                trimStoryLineStart(suffixLines.front());
+                std::wstring destinationLine = kearneyDestinationPlanet();
+                if (!destinationLine.empty() &&
+                    !suffixLines.front().empty() &&
+                    storyTextNeedsJoinSpace(destinationLine.back(), suffixLines.front().front())) {
+                    destinationLine.push_back(L' ');
+                }
+                destinationLine += suffixLines.front();
+                lead.lines.push_back(std::move(destinationLine));
+                suffixLines.erase(suffixLines.begin());
+            } else {
+                lead.lines.push_back(kearneyDestinationPlanet());
+            }
+            appendStoryLines(lead.lines, std::move(suffixLines));
+            pages.push_back(std::move(intro));
+            pages.push_back(std::move(lead));
+        }
+
+        if (!pages.empty()) {
+            beginStory(std::move(pages), StoryBackdrop::MechLab, ScreenState::MechLabMenu);
+            return true;
+        }
+        return false;
+    }
+
+    bool tryStartMechBayExitStory() {
+        if (storyFlag(0x26) && !storyFlag(0x27)) {
+            setStoryFlag(0x27);
+            beginStory(
+                {makeStoryPage(kStorySniperPrompt, {{L"FIGHT", StoryAction::SniperFight}, {L"RUN", StoryAction::SniperRun}})},
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            return true;
+        }
+        return false;
+    }
+
+    void moveStoryChoice(int delta) {
+        if (!isStorySceneActive()) {
+            return;
+        }
+        const StoryPage& page = storyPages_[currentStoryPageIndex_];
+        if (page.choices.empty()) {
+            return;
+        }
+        const size_t count = page.choices.size();
+        if (delta < 0) {
+            currentStoryChoiceIndex_ = (currentStoryChoiceIndex_ + count - 1u) % count;
+        } else {
+            currentStoryChoiceIndex_ = (currentStoryChoiceIndex_ + 1u) % count;
+        }
+    }
+
+    void handleStoryClick(int screenX, int screenY) {
+        (void)screenX;
+        if (!isStorySceneActive()) {
+            return;
+        }
+        StoryPage& page = storyPages_[currentStoryPageIndex_];
+        if (!page.choices.empty()) {
+            const int choiceIndex = storyChoiceIndexAtY(page, screenY);
+            if (choiceIndex >= 0) {
+                currentStoryChoiceIndex_ = static_cast<size_t>(choiceIndex);
+            }
+        }
+        advanceStoryScene();
+    }
+
+    int storyChoiceIndexAtY(const StoryPage& page, int screenY) const {
+        const int firstChoiceLine = firstStoryChoiceLine(page);
+        if (firstChoiceLine < 0) {
+            return -1;
+        }
+        const RectI panel = storyPanelRect(page);
+        const int lineStep = storyLineStep(page);
+        const int textY = panel.y + 10;
+        const int index = (screenY - (textY + firstChoiceLine * lineStep)) / lineStep;
+        if (index < 0 || static_cast<size_t>(index) >= page.choices.size()) {
+            return -1;
+        }
+        return index;
+    }
+
+    int storyLineStep(const StoryPage& page) const {
+        return page.lines.size() > 20 ? 7 : 8;
+    }
+
+    RectI storyPanelRect(const StoryPage& page) const {
+        const int lineStep = storyLineStep(page);
+        const int lineCount = std::max<int>(1, static_cast<int>(page.lines.size()));
+        const int maxPanelHeight = storyBackdrop_ == StoryBackdrop::Contract ? 184 : 192;
+        const int panelHeight = std::clamp(lineCount * lineStep + 20, 38, maxPanelHeight);
+        if (storyBackdrop_ == StoryBackdrop::Contract) {
+            return {22, std::max(10, kScreenHeight - panelHeight - 4), 276, panelHeight};
+        }
+        const int panelY = (kScreenHeight - panelHeight) / 2;
+        return {22, panelY, 276, panelHeight};
+    }
+
+    int firstStoryChoiceLine(const StoryPage& page) const {
+        for (size_t i = 0; i < page.lines.size(); ++i) {
+            std::wstring trimmed = page.lines[i];
+            while (!trimmed.empty() && trimmed.front() == L' ') {
+                trimmed.erase(trimmed.begin());
+            }
+            for (const StoryChoice& choice : page.choices) {
+                if (trimmed == choice.label) {
+                    return static_cast<int>(i);
+                }
+            }
+        }
+        return page.lines.empty() ? 0 : static_cast<int>(page.lines.size());
+    }
+
+    void advanceStoryScene() {
+        if (!isStorySceneActive()) {
+            return;
+        }
+
+        const StoryPage& page = storyPages_[currentStoryPageIndex_];
+        if (!page.choices.empty()) {
+            const size_t index = std::min(currentStoryChoiceIndex_, page.choices.size() - 1u);
+            const StoryAction action = page.choices[index].action;
+            clearStoryScene();
+            executeStoryAction(action);
+            return;
+        }
+
+        if (currentStoryPageIndex_ + 1u < storyPages_.size()) {
+            ++currentStoryPageIndex_;
+            currentStoryChoiceIndex_ = 0;
+            return;
+        }
+
+        const StoryAction defaultAction = pendingStoryDefaultAction_;
+        const ScreenState returnState = pendingStoryReturnState_;
+        clearStoryScene();
+        if (defaultAction == StoryAction::None) {
+            changeState(returnState);
+        } else {
+            executeStoryAction(defaultAction);
+        }
+    }
+
+    void clearStoryScene() {
+        storyPages_.clear();
+        currentStoryPageIndex_ = 0;
+        currentStoryChoiceIndex_ = 0;
+        pendingStoryDefaultAction_ = StoryAction::None;
+    }
+
+    void executeStoryAction(StoryAction action) {
+        switch (action) {
+        case StoryAction::GameOver:
+            beginStory(
+                {makeStoryPage(
+                    kMissionDeathPromptText,
+                    {{L"PLAY AGAIN", StoryAction::RestartCampaign}, {L"QUIT", StoryAction::QuitToDos}})},
+                storyBackdrop_,
+                ScreenState::MainMenu);
+            break;
+        case StoryAction::RestartCampaign:
+            restartCampaign();
+            break;
+        case StoryAction::QuitToDos:
+            DestroyWindow(hwnd_);
+            break;
+        case StoryAction::GrigYes:
+            setStoryFlag(0x0E);
+            beginStory({makeStoryPage(kStoryGrigYes)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::GrigNo:
+            setStoryFlag(0x0F);
+            beginStory({makeStoryPage(kStoryGrigNo)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::DustballFirstFight:
+            setStoryFlag(0x18);
+            beginStory(
+                {makeStoryPage(
+                    kStoryDustballFight,
+                    {{L"FIGHT", StoryAction::DustballSecondFight}, {L"RUN", StoryAction::DustballFightThenRun}})},
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            break;
+        case StoryAction::DustballFirstRun:
+            setStoryFlag(0x19);
+            beginStory(
+                {makeStoryPage(
+                    kStoryDustballRun,
+                    {{L"FIGHT", StoryAction::DustballSecondFight}, {L"RUN", StoryAction::DustballRunThenRun}})},
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            break;
+        case StoryAction::DustballSecondFight:
+            setStoryFlag(0x1A);
+            beginStory({makeStoryPage(kStoryDustballDeath)}, StoryBackdrop::Campaign, ScreenState::MainMenu, StoryAction::GameOver);
+            break;
+        case StoryAction::DustballFightThenRun:
+            setStoryFlag(0x1B);
+            beginStory({makeStoryPage(kStoryDustballFightRun)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::DustballRunThenRun:
+            setStoryFlag(0x1C);
+            beginStory({makeStoryPage(kStoryDustballRunRun)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::SniperFight:
+            setStoryFlag(0x28);
+            beginStory({makeStoryPage(kStorySniperDeath)}, StoryBackdrop::Campaign, ScreenState::MainMenu, StoryAction::GameOver);
+            break;
+        case StoryAction::SniperRun:
+            setStoryFlag(0x29);
+            beginStory({makeStoryPage(kStorySniperRun)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::FollowAddress:
+            setStoryFlag(0x30);
+            beginStory(
+                {makeStoryPage(
+                    kStoryKearneyOfficePrompt,
+                    {
+                        {L"HIDE", StoryAction::OfficeHide},
+                        {L"FIGHT", StoryAction::OfficeFight},
+                        {L"TALK", StoryAction::OfficeTalk},
+                    })},
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            break;
+        case StoryAction::ForgetAddress:
+            setStoryFlag(0x31);
+            beginStory({makeStoryPage(kStoryKearneyForget)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::OfficeHide:
+            setStoryFlag(0x32);
+            beginStory(
+                {makeStoryPage(kStoryOfficeHide, {{L"FIGHT", StoryAction::OfficeHideFight}, {L"RUN", StoryAction::OfficeHideRun}})},
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            break;
+        case StoryAction::OfficeFight:
+        case StoryAction::OfficeHideFight:
+            setStoryFlag(0x33);
+            beginStory({makeStoryPage(kStoryOfficeFight)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::OfficeTalk:
+            setStoryFlag(0x34);
+            beginStory({makeStoryPage(kStoryOfficeTalk)}, StoryBackdrop::Campaign, ScreenState::MainMenu, StoryAction::GameOver);
+            break;
+        case StoryAction::OfficeHideRun:
+            setStoryFlag(0x35);
+            beginStory({makeStoryPage(kStoryOfficeHideRun)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::AcceptBlackWidowStory:
+            setStoryFlag(0x38);
+            beginStory({makeStoryPage(kStoryBlackWidowAccept)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+            break;
+        case StoryAction::ChallengeBlackWidowStory:
+            setStoryFlag(0x39);
+            beginStory(
+                {
+                    makeStoryPage(kStoryBlackWidowFight),
+                    makeStoryPage(kStoryBlackWidowStandoff),
+                    makeStoryPage(kStoryTashaIntro),
+                    makeStoryPage(kStoryTashaReveal),
+                },
+                StoryBackdrop::Bar,
+                ScreenState::BarMenu);
+            break;
+        case StoryAction::FollowTasha:
+            setStoryFlag(0x42);
+            beginStory(
+                {
+                    makeStoryPage(kStoryAlbieroCargoDoor),
+                    makeStoryPage(
+                        kStoryAlbieroTrustPrompt,
+                        {{L"TRUST TASHA", StoryAction::TrustTasha}, {L"TRUST KEARNEY", StoryAction::TrustKearney}}),
+                },
+                StoryBackdrop::Campaign,
+                ScreenState::MainMenu);
+            break;
+        case StoryAction::StayDown:
+            setStoryFlag(0x43);
+            beginStory({makeStoryPage(kStoryAlbieroStayDown)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::TrustKearney:
+            setStoryFlag(0x44);
+            beginStory({makeStoryPage(kStoryTrustKearneyDeath)}, StoryBackdrop::Campaign, ScreenState::MainMenu, StoryAction::GameOver);
+            break;
+        case StoryAction::TrustTasha: {
+            setStoryFlag(0x45);
+            playerWealth_ = std::min<uint64_t>(kMaxPlayerWealth, playerWealth_ + 5000000ull);
+            StoryPage inroad = makeStoryPage(kStoryOperationInroadDisk);
+            appendToLastStoryLine(inroad.lines, darkWingDestinationPlanet() + L".");
+            std::vector<StoryPage> pages;
+            pages.push_back(makeStoryPage(kStoryTrustTashaSuccess));
+            pages.push_back(makeStoryPage(kStoryTashaReward));
+            pages.push_back(std::move(inroad));
+            if (isCurrentPlanetName(darkWingDestinationPlanet())) {
+                pages.push_back(makeFinalBasePromptPage());
+            }
+            beginStory(std::move(pages), StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        }
+        case StoryAction::FinalAttack:
+            finalMissionStubActive_ = true;
+            battleStubButtonIndex_ = 0;
+            changeState(ScreenState::MissionBattleStub);
+            break;
+        case StoryAction::FinalDelay:
+            changeState(ScreenState::MainMenu);
+            break;
+        case StoryAction::None:
+        default:
+            changeState(pendingStoryReturnState_);
+            break;
+        }
     }
 
     void ensureRecruitPoolForCurrentPlanet() {
@@ -2841,7 +4958,7 @@ private:
 
     bool isRecruitAvailableForReputation(const RecruitPilot& pilot) const {
         const uint8_t bestSkill = std::max(pilot.gunnerySkill, pilot.pilotingSkill);
-        const uint8_t allowedSkill = static_cast<uint8_t>(std::min<int>(3, playerReputation_ + 1));
+        const uint8_t allowedSkill = static_cast<uint8_t>(std::min<int>(3, playerReputationTier_ + 1));
         return bestSkill <= allowedSkill;
     }
 
@@ -3057,17 +5174,744 @@ private:
         if (action == MenuAction::ExitToDos) {
             DestroyWindow(hwnd_);
         } else if (action == MenuAction::Continue) {
-            changeState(ScreenState::MainMenu);
+            returnToMainMenu();
+        } else if (action == MenuAction::SaveGame) {
+            openSaveGameNameInput();
+        } else if (action == MenuAction::RestoreGame) {
+            openRestoreGameList();
         } else if (action == MenuAction::Restart) {
             barMenuIndex_ = 0;
             planetMenuIndex_ = kPlanetBarIconIndex;
-            systemMenuIndex_ = kSystemContinueMenuIndex;
+            systemMenuIndex_ = kSystemSaveMenuIndex;
             changeState(ScreenState::ActivisionSplash);
         } else if (action == MenuAction::ToggleSound) {
             soundEnabled_ = !soundEnabled_;
         } else if (action == MenuAction::Detail) {
             detailLevel_ = (detailLevel_ + 1) % 3;
         }
+    }
+
+    void openSaveGameNameInput() {
+        saveGameNameInput_.clear();
+        systemMenuIndex_ = kSystemSaveMenuIndex;
+        changeState(ScreenState::SaveGameNameInput);
+    }
+
+    void confirmSaveGameName() {
+        if (saveGameNameInput_.empty()) {
+            return;
+        }
+
+        const fs::path path = saveGameDirectory() / (widen(saveGameNameInput_) + L".GAM");
+        if (saveCurrentGame(path)) {
+            systemMenuIndex_ = kSystemSaveMenuIndex;
+            changeState(ScreenState::SystemMenu);
+        }
+    }
+
+    void openRestoreGameList() {
+        refreshRestoreGameSlots();
+        restoreGameSelectionIndex_ = 0;
+        systemMenuIndex_ = kSystemRestoreMenuIndex;
+        changeState(ScreenState::RestoreGameList);
+    }
+
+    void handleRestoreGameClick(int screenX, int screenY) {
+        const int itemIndex = restoreGameItemAt(screenX, screenY);
+        if (itemIndex < 0) {
+            return;
+        }
+        const size_t index = static_cast<size_t>(itemIndex);
+        if (restoreGameSelectionIndex_ == index) {
+            activateRestoreGameSelection();
+            return;
+        }
+        restoreGameSelectionIndex_ = index;
+    }
+
+    void activateRestoreGameSelection() {
+        if (restoreGameSelectionIndex_ == kRestoreGameCancelIndex) {
+            systemMenuIndex_ = kSystemRestoreMenuIndex;
+            changeState(ScreenState::SystemMenu);
+            return;
+        }
+
+        if (restoreGameSelectionIndex_ >= restoreGameSlots_.size()) {
+            return;
+        }
+        const SaveGameSlot& slot = restoreGameSlots_[restoreGameSelectionIndex_];
+        if (!slot.occupied) {
+            return;
+        }
+        loadGameFromFile(slot.path);
+    }
+
+    fs::path saveGameDirectory() const {
+        return resourceRoot_;
+    }
+
+    void refreshRestoreGameSlots() {
+        restoreGameSlots_.assign(kGamVisibleSlotCount, {});
+        struct FoundSave {
+            fs::path path;
+            fs::file_time_type modified;
+        };
+        std::vector<FoundSave> found;
+        std::error_code error;
+        for (const fs::directory_entry& entry : fs::directory_iterator(saveGameDirectory(), error)) {
+            if (error) {
+                break;
+            }
+            if (!entry.is_regular_file(error) || error) {
+                error.clear();
+                continue;
+            }
+            fs::path path = entry.path();
+            std::wstring extension = path.extension().wstring();
+            std::transform(extension.begin(), extension.end(), extension.begin(), [](wchar_t ch) {
+                return static_cast<wchar_t>(std::towupper(ch));
+            });
+            if (extension != L".GAM") {
+                continue;
+            }
+            const auto modified = fs::last_write_time(path, error);
+            if (error) {
+                error.clear();
+                continue;
+            }
+            found.push_back({std::move(path), modified});
+        }
+
+        std::sort(found.begin(), found.end(), [](const FoundSave& left, const FoundSave& right) {
+            return left.modified > right.modified;
+        });
+
+        const size_t count = std::min(found.size(), kGamVisibleSlotCount);
+        for (size_t i = 0; i < count; ++i) {
+            SaveGameSlot slot;
+            slot.path = found[i].path;
+            slot.name = slot.path.stem().wstring();
+            if (slot.name.size() > kGamMaxNameChars) {
+                slot.name.resize(kGamMaxNameChars);
+            }
+            slot.occupied = true;
+            restoreGameSlots_[i] = std::move(slot);
+        }
+    }
+
+    int restoreGameItemAt(int screenX, int screenY) const {
+        constexpr int panelX = 52;
+        constexpr int panelW = 216;
+        constexpr int slotX = 118;
+        constexpr int firstSlotY = 47;
+        constexpr int lineStep = 10;
+        constexpr int cancelY = 167;
+        if (screenX < panelX || screenX >= panelX + panelW) {
+            return -1;
+        }
+        if (screenY >= cancelY && screenY < cancelY + lineStep) {
+            return static_cast<int>(kRestoreGameCancelIndex);
+        }
+        if (screenX < slotX - 8 || screenY < firstSlotY) {
+            return -1;
+        }
+        const int row = (screenY - firstSlotY) / lineStep;
+        if (row < 0 || row >= static_cast<int>(kGamVisibleSlotCount)) {
+            return -1;
+        }
+        return row;
+    }
+
+    std::vector<uint8_t> baseGamSaveData() const {
+        if (gamRawStateValid_ && gamRawState_.size() == kGamSaveSize) {
+            return gamRawState_;
+        }
+
+        if (mwMainData_.size() >= kMwMainNewGameTemplateFileOffset + kGamSaveSize) {
+            return std::vector<uint8_t>(
+                mwMainData_.begin() + static_cast<std::ptrdiff_t>(kMwMainNewGameTemplateFileOffset),
+                mwMainData_.begin() + static_cast<std::ptrdiff_t>(kMwMainNewGameTemplateFileOffset + kGamSaveSize));
+        }
+
+        const std::array<fs::path, 3> candidates = {{
+            resourceRoot_ / L"TEST.GAM",
+            fs::current_path() / L"Original" / L"TEST.GAM",
+            fs::current_path() / L"Sorted Original Files" / L"GAM" / L"TEST.GAM",
+        }};
+        for (const fs::path& candidate : candidates) {
+            std::error_code error;
+            if (!fs::exists(candidate, error) || error) {
+                continue;
+            }
+            try {
+                std::vector<uint8_t> data = readFile(candidate);
+                if (data.size() == kGamSaveSize) {
+                    return data;
+                }
+            } catch (const std::exception&) {
+            }
+        }
+
+        std::vector<uint8_t> data(kGamSaveSize, 0);
+        for (size_t i = 0; i < kMaxOwnedMechs; ++i) {
+            writeU16Le(data, kGamOffsetMechChassisList + i * 2u, 0xFFFF);
+        }
+        return data;
+    }
+
+    bool saveCurrentGame(const fs::path& path) {
+        std::vector<uint8_t> data = baseGamSaveData();
+        if (data.size() != kGamSaveSize) {
+            data.assign(kGamSaveSize, 0);
+        }
+        writeRuntimeToGamSave(data);
+
+        std::ofstream output(path, std::ios::binary | std::ios::trunc);
+        if (!output) {
+            status_ = L"Save failed: unable to open " + path.wstring();
+            return false;
+        }
+        output.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+        if (!output) {
+            status_ = L"Save failed: unable to write " + path.wstring();
+            return false;
+        }
+        gamRawState_ = std::move(data);
+        gamRawStateValid_ = true;
+        return true;
+    }
+
+    void loadGameFromFile(const fs::path& path) {
+        try {
+            std::vector<uint8_t> data = readFile(path);
+            if (data.size() != kGamSaveSize) {
+                status_ = L"Load failed: invalid save size";
+                return;
+            }
+            applyGamSaveToRuntime(data);
+            gamRawState_ = std::move(data);
+            gamRawStateValid_ = true;
+            systemMenuIndex_ = kSystemSaveMenuIndex;
+            returnToMainMenu();
+        } catch (const std::exception& error) {
+            status_ = L"Load failed: " + widen(error.what());
+        }
+    }
+
+    void writeRuntimeToGamSave(std::vector<uint8_t>& data) const {
+        const int planetIndex = planets_.empty()
+            ? 0
+            : std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+        if (!planets_.empty()) {
+            const PlanetRecord& planet = planets_[static_cast<size_t>(planetIndex)];
+            data[kGamOffsetPlanetIndex] =
+                static_cast<uint8_t>(planet.planetNumber > 0 ? planet.planetNumber - 1u : 0u);
+            data[kGamOffsetCurrentPlanetHouseId] = planet.houseId;
+            data[kGamOffsetCurrentPlanetTerrainBand] =
+                static_cast<uint8_t>(planet.terrainCode > 0 ? (planet.terrainCode - 1u) / 3u : 0u);
+            data[kGamOffsetCurrentPlanetContractAvailable] = planet.contractAvailableFlag;
+            data[kGamOffsetMapX] = planet.mapX;
+            data[kGamOffsetMapY] = planet.mapY;
+        }
+        data[kGamOffsetReputation] = playerReputationTier_;
+        data[kGamOffsetMonthDayCounter] = static_cast<uint8_t>(std::clamp(currentMonthDayCounter_, 0, 255));
+        data[kGamOffsetMonth] = static_cast<uint8_t>(std::clamp(currentMonth_, 0, 11));
+        writeU16Le(data, kGamOffsetYear, static_cast<uint16_t>(std::clamp(currentYear_, 0, 65535)));
+        data[kGamOffsetPeriodic14DayCounter] =
+            static_cast<uint8_t>(std::clamp(currentPeriodic14DayCounter_, 0, 255));
+        writeU32Le(data, kGamOffsetMoney, static_cast<uint32_t>(std::min<uint64_t>(playerWealth_, 0xFFFFFFFFull)));
+        writeInt16Array(data, kGamOffsetFamilyAttitudes, familyAttitudes_);
+        writeInt16Array(data, kGamOffsetPositiveHouseCounters, housePositiveCounters_);
+        writeInt16Array(data, kGamOffsetNegativeHouseCounters, houseNegativeCounters_);
+        writeU16Le(data, kGamOffsetReputationPoints, playerReputationPoints_);
+        writeU16Le(data, kGamOffsetReputationTier, playerReputationTier_);
+        writeRuntimeCrewRosterToGamSave(data);
+
+        const size_t mechCount = std::min<size_t>(ownedMechs_.size(), kMaxOwnedMechs);
+        writeU16Le(data, kGamOffsetMechCount, static_cast<uint16_t>(mechCount));
+        for (size_t slot = 0; slot < kMaxOwnedMechs; ++slot) {
+            const size_t chassisOffset = kGamOffsetMechChassisList + slot * 2u;
+            const size_t ammoOffset = kGamOffsetMechAmmo + slot * 2u;
+            const size_t recordOffset = kGamOffsetMechRecords + slot * kGamMechRecordStride;
+            if (slot >= mechCount) {
+                writeU16Le(data, chassisOffset, 0xFFFF);
+                writeU16Le(data, ammoOffset, 0);
+                std::fill(data.begin() + static_cast<std::ptrdiff_t>(recordOffset),
+                          data.begin() + static_cast<std::ptrdiff_t>(recordOffset + kGamMechRecordStride),
+                          uint8_t{0});
+                continue;
+            }
+
+            const OwnedMech& mech = ownedMechs_[slot];
+            writeU16Le(data, chassisOffset, gamChassisId(mech.chassis));
+            writeGamMechRecord(data, recordOffset, mech);
+            writeU16Le(data, ammoOffset, static_cast<uint16_t>(std::clamp(gamAmmoCount(mech), 0, 65535)));
+        }
+
+        for (size_t i = 0; i < extraAmmoInHold_.size(); ++i) {
+            writeU16Le(
+                data,
+                kGamOffsetExtraAmmo + i * 2u,
+                static_cast<uint16_t>(std::clamp(extraAmmoInHold_[i], 0, 65535)));
+        }
+
+        data[kGamOffsetSoundDisabled] = soundEnabled_ ? 0 : 1;
+        for (size_t i = 0;
+             i < storyMessageFlags_.size() && i < kGamKnownMessageFlagCount && kGamOffsetMessageFlags + i < data.size();
+             ++i) {
+            data[kGamOffsetMessageFlags + i] = storyMessageFlags_[i];
+        }
+        data[kGamOffsetDetailLevel] = static_cast<uint8_t>(std::clamp(detailLevel_, 0, 2));
+    }
+
+    void applyGamSaveToRuntime(const std::vector<uint8_t>& data) {
+        const uint8_t planetSaveId = data[kGamOffsetPlanetIndex];
+        currentPlanetIndex_ = findPlanetIndexBySaveId(planetSaveId);
+        selectedPlanetIndex_ = currentPlanetIndex_;
+        pendingTravelPlanetIndex_ = currentPlanetIndex_;
+        pendingTravelCost_ = 0;
+        pendingTravelDays_ = 0;
+
+        currentMonthDayCounter_ = data[kGamOffsetMonthDayCounter];
+        currentMonth_ = std::clamp<int>(data[kGamOffsetMonth], 0, 11);
+        currentYear_ = readGamU16Le(data, kGamOffsetYear);
+        currentPeriodic14DayCounter_ = data[kGamOffsetPeriodic14DayCounter];
+        currentDay_ = std::clamp(currentMonthDayCounter_ / 2 + 1, 1, 31);
+        playerWealth_ = readGamU32Le(data, kGamOffsetMoney);
+        readInt16Array(data, kGamOffsetFamilyAttitudes, familyAttitudes_);
+        readInt16Array(data, kGamOffsetPositiveHouseCounters, housePositiveCounters_);
+        readInt16Array(data, kGamOffsetNegativeHouseCounters, houseNegativeCounters_);
+        playerReputationPoints_ = readGamU16Le(data, kGamOffsetReputationPoints);
+        playerReputationTier_ =
+            static_cast<uint8_t>(std::clamp<int>(readGamU16Le(data, kGamOffsetReputationTier), 0, 3));
+        if (playerReputationPoints_ == 0 && data[kGamOffsetReputation] <= 3) {
+            playerReputationTier_ = std::max<uint8_t>(playerReputationTier_, data[kGamOffsetReputation]);
+            playerReputationPoints_ = minimumReputationPointsForTier(playerReputationTier_);
+        }
+
+        storyMessageFlags_.fill(0);
+        for (size_t i = 0;
+             i < storyMessageFlags_.size() && i < kGamKnownMessageFlagCount && kGamOffsetMessageFlags + i < data.size();
+             ++i) {
+            storyMessageFlags_[i] = data[kGamOffsetMessageFlags + i];
+        }
+        if (!storyFlag(0x0A)) {
+            startingStoryPlanetName_ = currentPlanetNameAscii();
+        } else if (startingStoryPlanetName_.empty()) {
+            startingStoryPlanetName_ = std::string(kFallbackStartingPlanetName);
+        }
+        applyOriginalStoryCompatibilityFlags();
+        soundEnabled_ = data[kGamOffsetSoundDisabled] == 0;
+        detailLevel_ = std::clamp<int>(data[kGamOffsetDetailLevel], 0, 2);
+
+        for (size_t i = 0; i < extraAmmoInHold_.size(); ++i) {
+            extraAmmoInHold_[i] =
+                static_cast<int>(readGamU16Le(data, kGamOffsetExtraAmmo + i * 2u));
+        }
+
+        ownedMechs_.clear();
+        const size_t savedMechCount =
+            std::min<size_t>(readGamU16Le(data, kGamOffsetMechCount), kMaxOwnedMechs);
+        for (size_t slot = 0; slot < savedMechCount; ++slot) {
+            const uint16_t saveChassis = readGamU16Le(data, kGamOffsetMechChassisList + slot * 2u);
+            ChassisId chassis = ChassisId::Jenner;
+            if (!runtimeChassisId(saveChassis, chassis)) {
+                continue;
+            }
+            OwnedMech mech = makeMech(chassis, ownedMechs_.empty() ? 0 : -1);
+            readGamMechRecord(data, kGamOffsetMechRecords + slot * kGamMechRecordStride, mech);
+            const int ammoCount = static_cast<int>(readGamU16Le(data, kGamOffsetMechAmmo + slot * 2u));
+            const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
+            for (size_t i = 0; i < ammoTypes.size(); ++i) {
+                mech.ammoPacks[i] = ammoTypes[i] ? std::clamp(ammoCount, 0, kMechAmmoMaxPacks) : 0;
+            }
+            finalizeLoadedMech(mech);
+            ownedMechs_.push_back(std::move(mech));
+        }
+        if (ownedMechs_.empty()) {
+            ownedMechs_.push_back(makeStartingJenner(0));
+        }
+
+        applyGamCrewRosterToRuntime(data);
+        initializeRecruitmentState();
+        if (planetMechMarkets_.size() != planets_.size()) {
+            planetMechMarkets_.assign(planets_.size(), {});
+        }
+        activeContracts_.clear();
+        acceptedContract_ = {};
+        contractAccepted_ = false;
+        missionLaunchPending_ = false;
+        finalMissionStubActive_ = false;
+        storyPages_.clear();
+        currentStoryPageIndex_ = 0;
+        currentStoryChoiceIndex_ = 0;
+        barDialogState_ = BarDialogState::None;
+        starmapNameInputActive_ = false;
+        starmapNameInput_.clear();
+        closeStarmapMenu();
+        planetMenuIndex_ = kPlanetBarIconIndex;
+        statusMenuIndex_ = 0;
+        newsNetButtonIndex_ = 0;
+        newsNetMessageIndex_ = 0;
+        newsNetShowingNoOther_ = false;
+        newsNetDayCharged_ = false;
+    }
+
+    void applyOriginalStoryCompatibilityFlags() {
+        if (storyFlag(0x43) && !storyFlag(0x41) && currentPlanetIs("ALBIERO")) {
+            setStoryFlag(0x45);
+            darkWingDestinationPlanet_ = L"ALBIERO";
+        }
+    }
+
+    void writeRuntimeCrewRosterToGamSave(std::vector<uint8_t>& data) const {
+        const uint16_t crewCount = static_cast<uint16_t>(std::clamp<int>(hiredCrewCount(), 1, 4));
+        writeU16Le(data, kGamOffsetCrewCount, crewCount);
+
+        for (size_t slot = 0; slot < crewMembers_.size(); ++slot) {
+            const CrewMember& member = crewMembers_[slot];
+            const bool active = slot < crewCount && member.hired;
+            uint16_t pilotId = 0;
+            uint16_t assignedMech = 0xFFFF;
+            uint8_t gunnery = 0;
+            uint8_t piloting = 0;
+
+            if (active) {
+                gunnery = skillRank(member.gunnery);
+                piloting = skillRank(member.piloting);
+                if (slot > 0 && member.recruitIndex >= 0) {
+                    pilotId = static_cast<uint16_t>(member.recruitIndex + 1);
+                }
+
+                const int mechIndex = assignedMechIndexForCrewSlot(slot);
+                if (mechIndex >= 0 && static_cast<size_t>(mechIndex) < ownedMechs_.size()) {
+                    assignedMech = static_cast<uint16_t>(mechIndex);
+                }
+            }
+
+            writeU16Le(data, kGamOffsetCrewPilotIds + slot * 2u, pilotId);
+            writeU16Le(data, kGamOffsetCrewGunnerySkills + slot * 2u, gunnery);
+            writeU16Le(data, kGamOffsetCrewPilotingSkills + slot * 2u, piloting);
+            writeU16Le(data, kGamOffsetCrewAssignedMechs + slot * 2u, assignedMech);
+        }
+    }
+
+    void applyGamCrewRosterToRuntime(const std::vector<uint8_t>& data) {
+        resetCrewRosterForLoadedMechs();
+
+        const size_t crewCount = std::clamp<size_t>(
+            static_cast<size_t>(readGamU16Le(data, kGamOffsetCrewCount)),
+            1u,
+            crewMembers_.size());
+
+        for (size_t slot = 1; slot < crewCount; ++slot) {
+            const uint16_t pilotId = readGamU16Le(data, kGamOffsetCrewPilotIds + slot * 2u);
+            if (pilotId == 0) {
+                continue;
+            }
+
+            const size_t recruitIndex = static_cast<size_t>(pilotId - 1u);
+            if (recruitIndex >= recruitPilots_.size()) {
+                continue;
+            }
+
+            const RecruitPilot& pilot = recruitPilots_[recruitIndex];
+            const uint8_t gunnery = static_cast<uint8_t>(std::clamp<int>(
+                readGamU16Le(data, kGamOffsetCrewGunnerySkills + slot * 2u),
+                0,
+                3));
+            const uint8_t piloting = static_cast<uint8_t>(std::clamp<int>(
+                readGamU16Le(data, kGamOffsetCrewPilotingSkills + slot * 2u),
+                0,
+                3));
+
+            CrewMember& member = crewMembers_[slot];
+            member.hired = true;
+            member.name = std::wstring_view(pilot.name);
+            member.gunnery = skillLabel(gunnery);
+            member.piloting = skillLabel(piloting);
+            member.wage = monthlyWageForGunnery(gunnery);
+            member.portraitEntry = pilot.portraitEntry;
+            member.recruitIndex = static_cast<int>(recruitIndex);
+            member.missionExperience = 0;
+        }
+
+        for (OwnedMech& mech : ownedMechs_) {
+            mech.assignedCrewSlot = -1;
+        }
+
+        std::array<bool, kMaxOwnedMechs> mechAssigned = {};
+        for (size_t slot = 0; slot < crewMembers_.size(); ++slot) {
+            if (!crewMembers_[slot].hired) {
+                continue;
+            }
+
+            const uint16_t assignedMech = readGamU16Le(data, kGamOffsetCrewAssignedMechs + slot * 2u);
+            if (assignedMech == 0xFFFF ||
+                static_cast<size_t>(assignedMech) >= ownedMechs_.size() ||
+                mechAssigned[assignedMech]) {
+                continue;
+            }
+
+            ownedMechs_[assignedMech].assignedCrewSlot = static_cast<int>(slot);
+            mechAssigned[assignedMech] = true;
+        }
+
+        if (!ownedMechs_.empty() &&
+            crewMembers_[0].hired &&
+            assignedMechIndexForCrewSlot(0) < 0 &&
+            !mechAssigned[0]) {
+            ownedMechs_[0].assignedCrewSlot = 0;
+        }
+    }
+
+    void resetCrewRosterForLoadedMechs() {
+        crewMembers_ = {{
+            {true, L"G BRAVER", L"POOR", L"POOR", 0, kCrewPlayerPortraitEntry, -1},
+            {},
+            {},
+            {},
+        }};
+        bool assigned = false;
+        for (OwnedMech& mech : ownedMechs_) {
+            mech.assignedCrewSlot = assigned ? -1 : 0;
+            assigned = true;
+        }
+        crewInteractionMode_ = CrewInteractionMode::Navigate;
+        crewSelectionIndex_ = kCrewDoneSelectionIndex;
+        crewAssignmentIndex_ = 0;
+    }
+
+    int findPlanetIndexBySaveId(uint8_t saveId) const {
+        for (size_t i = 0; i < planets_.size(); ++i) {
+            if (planets_[i].planetNumber == static_cast<uint8_t>(saveId + 1u)) {
+                return static_cast<int>(i);
+            }
+        }
+        return findPlanetIndexByName(kFallbackStartingPlanetName);
+    }
+
+    static uint16_t gamChassisId(ChassisId chassis) {
+        switch (chassis) {
+        case ChassisId::Locust:
+            return 0;
+        case ChassisId::Wasp:
+            return 1;
+        case ChassisId::Jenner:
+            return 2;
+        case ChassisId::PhoenixHawk:
+            return 3;
+        case ChassisId::ShadowHawk:
+            return 4;
+        case ChassisId::Wolverine:
+            return 5;
+        case ChassisId::Rifleman:
+            return 6;
+        case ChassisId::Warhammer:
+            return 7;
+        case ChassisId::Marauder:
+            return 8;
+        case ChassisId::Battlemaster:
+            return 9;
+        }
+        return 2;
+    }
+
+    static bool runtimeChassisId(uint16_t saveId, ChassisId& chassis) {
+        switch (saveId) {
+        case 0:
+            chassis = ChassisId::Locust;
+            return true;
+        case 1:
+            chassis = ChassisId::Wasp;
+            return true;
+        case 2:
+            chassis = ChassisId::Jenner;
+            return true;
+        case 3:
+            chassis = ChassisId::PhoenixHawk;
+            return true;
+        case 4:
+            chassis = ChassisId::ShadowHawk;
+            return true;
+        case 5:
+            chassis = ChassisId::Wolverine;
+            return true;
+        case 6:
+            chassis = ChassisId::Rifleman;
+            return true;
+        case 7:
+            chassis = ChassisId::Warhammer;
+            return true;
+        case 8:
+            chassis = ChassisId::Marauder;
+            return true;
+        case 9:
+            chassis = ChassisId::Battlemaster;
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    static uint16_t readGamU16Le(const std::vector<uint8_t>& data, size_t offset) {
+        if (offset + 1u >= data.size()) {
+            return 0;
+        }
+        return static_cast<uint16_t>(data[offset] | (data[offset + 1u] << 8));
+    }
+
+    static uint32_t readGamU32Le(const std::vector<uint8_t>& data, size_t offset) {
+        if (offset + 3u >= data.size()) {
+            return 0;
+        }
+        return static_cast<uint32_t>(data[offset]) |
+            (static_cast<uint32_t>(data[offset + 1u]) << 8) |
+            (static_cast<uint32_t>(data[offset + 2u]) << 16) |
+            (static_cast<uint32_t>(data[offset + 3u]) << 24);
+    }
+
+    static void writeU16Le(std::vector<uint8_t>& data, size_t offset, uint16_t value) {
+        if (offset + 1u >= data.size()) {
+            return;
+        }
+        data[offset] = static_cast<uint8_t>(value & 0xFFu);
+        data[offset + 1u] = static_cast<uint8_t>((value >> 8) & 0xFFu);
+    }
+
+    static void writeU32Le(std::vector<uint8_t>& data, size_t offset, uint32_t value) {
+        if (offset + 3u >= data.size()) {
+            return;
+        }
+        data[offset] = static_cast<uint8_t>(value & 0xFFu);
+        data[offset + 1u] = static_cast<uint8_t>((value >> 8) & 0xFFu);
+        data[offset + 2u] = static_cast<uint8_t>((value >> 16) & 0xFFu);
+        data[offset + 3u] = static_cast<uint8_t>((value >> 24) & 0xFFu);
+    }
+
+    static void writeInt16Array(
+        std::vector<uint8_t>& data,
+        size_t offset,
+        const std::array<int, 5>& values) {
+        for (size_t i = 0; i < values.size(); ++i) {
+            const int value = std::clamp(values[i], -32768, 32767);
+            writeU16Le(data, offset + i * 2u, static_cast<uint16_t>(static_cast<int16_t>(value)));
+        }
+    }
+
+    static void readInt16Array(
+        const std::vector<uint8_t>& data,
+        size_t offset,
+        std::array<int, 5>& values) {
+        for (size_t i = 0; i < values.size(); ++i) {
+            values[i] = static_cast<int16_t>(readGamU16Le(data, offset + i * 2u));
+        }
+    }
+
+    static uint8_t gamDamageState(DamageState state) {
+        switch (state) {
+        case DamageState::Functional:
+            return 0;
+        case DamageState::LightDamage:
+            return 1;
+        case DamageState::HeavyDamage:
+            return 2;
+        case DamageState::Junk:
+            return 3;
+        }
+        return 0;
+    }
+
+    static DamageState runtimeDamageState(uint8_t value) {
+        switch (std::min<uint8_t>(value, 3)) {
+        case 1:
+            return DamageState::LightDamage;
+        case 2:
+            return DamageState::HeavyDamage;
+        case 3:
+            return DamageState::Junk;
+        default:
+            return DamageState::Functional;
+        }
+    }
+
+    static int gamAmmoCount(const OwnedMech& mech) {
+        const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
+        for (size_t i = 0; i < ammoTypes.size(); ++i) {
+            if (ammoTypes[i]) {
+                return mech.ammoPacks[i];
+            }
+        }
+        return 0;
+    }
+
+    static void writeGamMechRecord(std::vector<uint8_t>& data, size_t offset, const OwnedMech& mech) {
+        if (offset + kGamMechRecordStride > data.size()) {
+            return;
+        }
+        data[offset + 0x00u] = gamDamageState(mech.engine);
+        data[offset + 0x01u] = gamDamageState(mech.gyros);
+        data[offset + 0x02u] = gamDamageState(mech.sensors);
+        data[offset + 0x03u] = gamDamageState(mech.lifeSupport);
+        data[offset + 0x04u] =
+            static_cast<uint8_t>(std::clamp(mech.heatSinksTotal - mech.heatSinksWorking, 0, 255));
+        data[offset + 0x05u] = gamDamageState(mech.leftArmActuator);
+        data[offset + 0x06u] = gamDamageState(mech.rightArmActuator);
+        data[offset + 0x07u] = gamDamageState(mech.leftLegActuator);
+        data[offset + 0x08u] = gamDamageState(mech.rightLegActuator);
+        data[offset + 0x09u] =
+            static_cast<uint8_t>(std::clamp(mech.jumpJetsTotal - mech.jumpJetsWorking, 0, 255));
+        for (size_t i = 0; i < mech.weapons.size(); ++i) {
+            data[offset + 0x0Au + i] = gamDamageState(mech.weapons[i].condition);
+        }
+        for (size_t i = 0; i < mech.armorDamage.size(); ++i) {
+            data[offset + 0x14u + i] =
+                static_cast<uint8_t>(std::clamp(mech.armorDamage[i], 0, kArmorDamageMaxLevel));
+        }
+    }
+
+    static void readGamMechRecord(const std::vector<uint8_t>& data, size_t offset, OwnedMech& mech) {
+        if (offset + kGamMechRecordStride > data.size()) {
+            return;
+        }
+        mech.engine = runtimeDamageState(data[offset + 0x00u]);
+        mech.gyros = runtimeDamageState(data[offset + 0x01u]);
+        mech.sensors = runtimeDamageState(data[offset + 0x02u]);
+        mech.lifeSupport = runtimeDamageState(data[offset + 0x03u]);
+        mech.heatSinksWorking = std::clamp(
+            mech.heatSinksTotal - static_cast<int>(data[offset + 0x04u]),
+            0,
+            mech.heatSinksTotal);
+        mech.leftArmActuator = runtimeDamageState(data[offset + 0x05u]);
+        mech.rightArmActuator = runtimeDamageState(data[offset + 0x06u]);
+        mech.leftLegActuator = runtimeDamageState(data[offset + 0x07u]);
+        mech.rightLegActuator = runtimeDamageState(data[offset + 0x08u]);
+        mech.jumpJetsWorking = std::clamp(
+            mech.jumpJetsTotal - static_cast<int>(data[offset + 0x09u]),
+            0,
+            mech.jumpJetsTotal);
+        for (size_t i = 0; i < mech.weapons.size(); ++i) {
+            mech.weapons[i].condition = mech.weapons[i].weapon.empty()
+                ? DamageState::Functional
+                : runtimeDamageState(data[offset + 0x0Au + i]);
+        }
+        for (size_t i = 0; i < mech.armorDamage.size(); ++i) {
+            mech.armorDamage[i] = std::clamp<int>(data[offset + 0x14u + i], 0, kArmorDamageMaxLevel);
+        }
+    }
+
+    void finalizeLoadedMech(OwnedMech& mech) const {
+        updateArmorPercent(mech);
+        mech.repairCost = totalRepairCost(mech);
+        mech.condition =
+            mech.engine == DamageState::Junk ||
+                    mech.gyros == DamageState::Junk ||
+                    mech.sensors == DamageState::Junk ||
+                    mech.lifeSupport == DamageState::Junk ||
+                    mech.leftLegActuator == DamageState::Junk ||
+                    mech.rightLegActuator == DamageState::Junk
+                ? DamageState::Junk
+                : DamageState::Functional;
     }
 
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
@@ -3200,7 +6044,8 @@ private:
     }
 
     void setPlayerReputation(uint8_t reputation) {
-        playerReputation_ = std::min<uint8_t>(reputation, 3);
+        playerReputationTier_ = std::min<uint8_t>(reputation, 3);
+        playerReputationPoints_ = minimumReputationPointsForTier(playerReputationTier_);
         debugLog(L"Cheat reputation applied: " + std::wstring(reputationLabel()));
     }
 
@@ -3227,7 +6072,17 @@ private:
         newsNetShowingNoOther_ = false;
         newsNetNoOtherDirection_ = 0;
         newsNetMessageIndex_ = 0;
+        newsNetDayCharged_ = false;
         changeState(ScreenState::NewsNet);
+    }
+
+    void closeNewsNet() {
+        if (!newsNetDayCharged_) {
+            advanceCampaignDays(1);
+            newsNetDayCharged_ = true;
+            rebuildNewsNetMessages();
+        }
+        changeState(ScreenState::StatusMenu);
     }
 
     void activateNewsNetButton(size_t buttonIndex) {
@@ -3256,7 +6111,7 @@ private:
                 newsNetNoOtherDirection_ = 0;
             }
         } else {
-            changeState(ScreenState::StatusMenu);
+            closeNewsNet();
         }
     }
 
@@ -3306,6 +6161,48 @@ private:
         return static_cast<int>(std::distance(planets_.begin(), it));
     }
 
+    int findPlanetIndexByNameInsensitive(std::string_view name) const {
+        const std::string normalizedName = normalizePlanetNameInput(name);
+        if (normalizedName.empty()) {
+            return -1;
+        }
+
+        for (size_t i = 0; i < planets_.size(); ++i) {
+            if (normalizePlanetNameInput(planets_[i].name) == normalizedName) {
+                return static_cast<int>(i);
+            }
+        }
+        return -1;
+    }
+
+    static std::string normalizePlanetNameInput(std::string_view text) {
+        size_t begin = 0;
+        while (begin < text.size() && text[begin] <= ' ') {
+            ++begin;
+        }
+        size_t end = text.size();
+        while (end > begin && text[end - 1] <= ' ') {
+            --end;
+        }
+
+        std::string result;
+        result.reserve(end - begin);
+        bool lastWasSpace = false;
+        for (size_t i = begin; i < end; ++i) {
+            const unsigned char ch = static_cast<unsigned char>(text[i]);
+            if (std::isspace(ch)) {
+                if (!lastWasSpace) {
+                    result.push_back(' ');
+                    lastWasSpace = true;
+                }
+                continue;
+            }
+            result.push_back(static_cast<char>(std::toupper(ch)));
+            lastWasSpace = false;
+        }
+        return result;
+    }
+
     bool advanceStartupScreen() {
         if (state_ == ScreenState::ActivisionSplash || state_ == ScreenState::IntroText) {
             changeState(ScreenState::Title);
@@ -3320,6 +6217,9 @@ private:
             return true;
         }
         if (state_ == ScreenState::CampaignMessage) {
+            if (isStorySceneActive()) {
+                return false;
+            }
             changeState(ScreenState::MainMenu);
             return true;
         }
@@ -3328,12 +6228,20 @@ private:
 
     void handleKey(WPARAM key) {
         if (key == VK_ESCAPE) {
+            if (state_ == ScreenState::CampaignMessage && isStorySceneActive()) {
+                advanceStoryScene();
+                return;
+            }
             if (state_ == ScreenState::SystemMenu) {
-                changeState(ScreenState::MainMenu);
+                returnToMainMenu();
             } else if (state_ == ScreenState::StatusMenu) {
-                changeState(ScreenState::MainMenu);
+                returnToMainMenu();
             } else if (state_ == ScreenState::NewsNet) {
                 changeState(ScreenState::StatusMenu);
+            } else if (state_ == ScreenState::ContractMenu) {
+                returnToMainMenu();
+            } else if (state_ == ScreenState::ContractNegotiation) {
+                changeState(ScreenState::ContractMenu);
             } else if (state_ == ScreenState::CrewMenu) {
                 if (crewInteractionMode_ == CrewInteractionMode::AssignMech) {
                     closeCrewAssignment();
@@ -3341,7 +6249,7 @@ private:
                     changeState(ScreenState::StatusMenu);
                 }
             } else if (state_ == ScreenState::MechLabMenu) {
-                changeState(ScreenState::MainMenu);
+                returnToMainMenu();
             } else if (state_ == ScreenState::MechExtraAmmo) {
                 changeState(ScreenState::MechLabMenu);
             } else if (state_ == ScreenState::MechReviewList) {
@@ -3367,19 +6275,81 @@ private:
                 if (barDialogState_ != BarDialogState::None) {
                     closeBarDialog();
                 } else {
-                    changeState(ScreenState::MainMenu);
+                    returnToMainMenu();
                 }
             } else if (state_ == ScreenState::Starmap) {
-                changeState(ScreenState::MainMenu);
+                if (starmapNameInputActive_) {
+                    cancelStarmapNameInput();
+                    return;
+                }
+                if (starmapMenuMode_ == StarmapMenuMode::HousePlanets) {
+                    openStarmapHouseMenu();
+                    return;
+                }
+                if (starmapMenuMode_ == StarmapMenuMode::Houses) {
+                    closeStarmapMenu();
+                    return;
+                }
+                returnToMainMenu();
             } else if (state_ == ScreenState::TravelRoutePreview) {
                 return;
             } else if (state_ == ScreenState::TravelAnimation) {
                 return;
             } else if (state_ == ScreenState::MainMenu) {
-                systemMenuIndex_ = kSystemContinueMenuIndex;
+                if (contractAccepted_) {
+                    return;
+                }
+                systemMenuIndex_ = kSystemSaveMenuIndex;
                 changeState(ScreenState::SystemMenu);
+            } else if (state_ == ScreenState::SaveGameNameInput) {
+                systemMenuIndex_ = kSystemSaveMenuIndex;
+                changeState(ScreenState::SystemMenu);
+            } else if (state_ == ScreenState::RestoreGameList) {
+                systemMenuIndex_ = kSystemRestoreMenuIndex;
+                changeState(ScreenState::SystemMenu);
+            } else if (state_ == ScreenState::MissionBattleStub) {
+                return;
+            } else if (state_ == ScreenState::MissionDebrief) {
+                if (missionDebriefOutcome_ != MissionOutcome::Death) {
+                    changeState(ScreenState::MainMenu);
+                }
             } else {
                 DestroyWindow(hwnd_);
+            }
+            return;
+        }
+
+        if (state_ == ScreenState::CampaignMessage && isStorySceneActive()) {
+            if (key == VK_UP || key == VK_LEFT) {
+                moveStoryChoice(-1);
+            } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
+                moveStoryChoice(1);
+            } else if (key == VK_RETURN || key == VK_SPACE) {
+                advanceStoryScene();
+            }
+            return;
+        }
+
+        if (state_ == ScreenState::SaveGameNameInput) {
+            if (key == VK_RETURN) {
+                confirmSaveGameName();
+            } else if (key == VK_BACK) {
+                if (!saveGameNameInput_.empty()) {
+                    saveGameNameInput_.pop_back();
+                }
+            }
+            return;
+        }
+
+        if (state_ == ScreenState::RestoreGameList) {
+            if (key == VK_UP || key == VK_LEFT) {
+                restoreGameSelectionIndex_ =
+                    (restoreGameSelectionIndex_ + kRestoreGameCancelIndex) % (kRestoreGameCancelIndex + 1u);
+            } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
+                restoreGameSelectionIndex_ =
+                    (restoreGameSelectionIndex_ + 1u) % (kRestoreGameCancelIndex + 1u);
+            } else if (key == VK_RETURN || key == VK_SPACE) {
+                activateRestoreGameSelection();
             }
             return;
         }
@@ -3418,6 +6388,11 @@ private:
             return;
         }
 
+        if (state_ == ScreenState::Starmap) {
+            handleStarmapKey(key);
+            return;
+        }
+
         if (key == VK_SPACE) {
             if (!advanceStartupScreen() && state_ == ScreenState::MainMenu) {
                 activatePlanetIcon(planetMenuIndex_);
@@ -3426,10 +6401,13 @@ private:
         }
 
         if (state_ == ScreenState::MainMenu) {
+            if (!planetIconAvailable(planetMenuIndex_)) {
+                planetMenuIndex_ = kPlanetStatusIconIndex;
+            }
             if (key == VK_UP || key == VK_LEFT) {
-                planetMenuIndex_ = (planetMenuIndex_ + 5) % 6;
+                planetMenuIndex_ = nextAvailablePlanetIcon(planetMenuIndex_, -1);
             } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
-                planetMenuIndex_ = (planetMenuIndex_ + 1) % 6;
+                planetMenuIndex_ = nextAvailablePlanetIcon(planetMenuIndex_, 1);
             } else if (key == VK_RETURN) {
                 activatePlanetIcon(planetMenuIndex_);
             }
@@ -3454,6 +6432,46 @@ private:
                 newsNetButtonIndex_ = (newsNetButtonIndex_ + 1) % 3;
             } else if (key == VK_RETURN || key == VK_SPACE) {
                 activateNewsNetButton(newsNetButtonIndex_);
+            }
+            return;
+        }
+
+        if (state_ == ScreenState::ContractMenu) {
+            if (key == VK_UP || key == VK_LEFT || key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
+                contractMenuIndex_ = (contractMenuIndex_ + 1u) % 2u;
+            } else if (key == VK_RETURN || key == VK_SPACE) {
+                activateContractMenuItem(contractMenuIndex_);
+            }
+            return;
+        }
+
+        if (state_ == ScreenState::ContractNegotiation) {
+            if (contractNegotiationTerminated_ || contractNegotiationUnavailable_) {
+                if (key == VK_RETURN || key == VK_SPACE || key == VK_ESCAPE) {
+                    changeState(ScreenState::ContractMenu);
+                }
+                return;
+            }
+
+            if (contractEditableField_ != ContractEditableField::None) {
+                if (key == VK_UP || key == VK_RIGHT) {
+                    adjustSelectedContractTerm(1);
+                } else if (key == VK_DOWN || key == VK_LEFT) {
+                    adjustSelectedContractTerm(-1);
+                } else if (key == VK_RETURN || key == VK_SPACE) {
+                    contractEditableField_ = ContractEditableField::None;
+                } else if (key == VK_TAB) {
+                    cycleContractEditableField();
+                }
+                return;
+            }
+
+            if (key == VK_LEFT || key == VK_UP) {
+                contractNegotiationButtonIndex_ = (contractNegotiationButtonIndex_ + 2u) % 3u;
+            } else if (key == VK_RIGHT || key == VK_DOWN || key == VK_TAB) {
+                contractNegotiationButtonIndex_ = (contractNegotiationButtonIndex_ + 1u) % 3u;
+            } else if (key == VK_RETURN || key == VK_SPACE) {
+                activateContractNegotiationButton(contractNegotiationButtonIndex_);
             }
             return;
         }
@@ -3596,9 +6614,79 @@ private:
             return;
         }
 
+        if (state_ == ScreenState::MissionBattleStub) {
+            if (key == VK_UP || key == VK_LEFT) {
+                battleStubButtonIndex_ = (battleStubButtonIndex_ + 2u) % 3u;
+            } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
+                battleStubButtonIndex_ = (battleStubButtonIndex_ + 1u) % 3u;
+            } else if (key == VK_RETURN || key == VK_SPACE) {
+                activateBattleStubSelection();
+            }
+            return;
+        }
+
+        if (state_ == ScreenState::MissionDebrief) {
+            if (missionDebriefOutcome_ == MissionOutcome::Death) {
+                if (key == VK_UP || key == VK_LEFT || key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
+                    missionDeathMenuIndex_ = (missionDeathMenuIndex_ + 1u) % 2u;
+                } else if (key == VK_RETURN || key == VK_SPACE) {
+                    if (missionDeathMenuIndex_ == 0) {
+                        restartCampaign();
+                    } else {
+                        DestroyWindow(hwnd_);
+                    }
+                }
+            } else if (key == VK_RETURN || key == VK_SPACE || key == VK_ESCAPE) {
+                changeState(ScreenState::MainMenu);
+            }
+            return;
+        }
+
         if (key == 'R') {
             loadResources();
             changeState(ScreenState::ActivisionSplash);
+        }
+    }
+
+    void handleChar(WPARAM character) {
+        if (state_ == ScreenState::SaveGameNameInput) {
+            const wchar_t ch = static_cast<wchar_t>(character);
+            if (ch == L'\r' || ch == L'\n' || ch == L'\b' || ch == 27) {
+                return;
+            }
+            if (saveGameNameInput_.size() >= kGamMaxNameChars || ch < 32 || ch >= 128) {
+                return;
+            }
+
+            const char narrow = static_cast<char>(ch);
+            if (std::isalnum(static_cast<unsigned char>(narrow)) ||
+                narrow == '_' ||
+                narrow == '-' ||
+                narrow == '$') {
+                saveGameNameInput_.push_back(static_cast<char>(std::toupper(static_cast<unsigned char>(narrow))));
+            }
+            return;
+        }
+
+        if (state_ != ScreenState::Starmap || !starmapNameInputActive_) {
+            return;
+        }
+
+        const wchar_t ch = static_cast<wchar_t>(character);
+        if (ch == L'\r' || ch == L'\n' || ch == L'\b' || ch == 27) {
+            return;
+        }
+        if (ch < 32 || ch >= 128 || starmapNameInput_.size() >= kStarmapPlanetNameInputMaxChars) {
+            return;
+        }
+
+        const char narrow = static_cast<char>(ch);
+        if (std::isalnum(static_cast<unsigned char>(narrow)) ||
+            narrow == ' ' ||
+            narrow == '\'' ||
+            narrow == '-' ||
+            narrow == '.') {
+            starmapNameInput_.push_back(static_cast<char>(std::toupper(static_cast<unsigned char>(narrow))));
         }
     }
 
@@ -3613,21 +6701,54 @@ private:
         gpicsArchive_ = {};
         campaignArchive_ = {};
         barArchive_ = {};
+        barEnvironmentOverlayArchive_ = {};
+        barInformationArchive_ = {};
         crewArchive_ = {};
         crewMechArchive_ = {};
         mechStatusArchive_ = {};
         houseEmblemsArchive_ = {};
+        contractHouseNamesArchive_ = {};
+        contractHouseEmblemsArchive_ = {};
+        contractContactPortraitsArchive_ = {};
+        missionResultArchive_ = {};
         travelShuttleArchive_ = {};
         travelEngineArchive_ = {};
+        mwMainData_.clear();
         font_ = {};
         smallFont_ = {};
         menuFont_ = {};
         campaignMessageLines_.clear();
         newsNetMessageLines_.clear();
+        storyPages_.clear();
+        currentStoryPageIndex_ = 0;
+        currentStoryChoiceIndex_ = 0;
+        pendingStoryDefaultAction_ = StoryAction::None;
+        pendingStoryReturnState_ = ScreenState::MainMenu;
+        storyBackdrop_ = StoryBackdrop::Campaign;
+        storyMessageFlags_ = {};
+        startingStoryPlanetName_.clear();
+        grigDestinationPlanet_.clear();
+        wendallDestinationPlanet_.clear();
+        kearneyDestinationPlanet_.clear();
+        blackWidowDestinationPlanet_.clear();
+        darkWingDestinationPlanet_.clear();
         newsNetNoOtherLines_.clear();
+        missionVictoryLines_.clear();
+        missionDefeatLines_.clear();
+        missionDeathPromptLines_.clear();
         activeNewsNetMessageIndexes_.clear();
+        activeContracts_.clear();
+        acceptedContract_ = {};
+        contractAccepted_ = false;
+        missionLaunchPending_ = false;
+        finalMissionStubActive_ = false;
+        missionParticipants_.clear();
+        missionDebriefOutcome_ = MissionOutcome::Victory;
+        missionDebriefSalvage_ = 0;
+        missionDebriefPayment_ = 0;
         recruitPilots_.clear();
         planetRecruitPools_.clear();
+        contractNegotiationLockedVisitByPlanet_.clear();
         recruitLastPlanetIndex_.clear();
         recruitLastMonthKey_.clear();
         previousPlanetRecruitIndexes_.clear();
@@ -3636,51 +6757,102 @@ private:
         barDialogState_ = BarDialogState::None;
         activeRecruitIndex_ = -1;
         recruitChoiceIndex_ = 0;
+        saveGameNameInput_.clear();
+        restoreGameSlots_.assign(kGamVisibleSlotCount, {});
+        restoreGameSelectionIndex_ = 0;
+        gamRawState_.clear();
+        gamRawStateValid_ = false;
+        starmapNameInputActive_ = false;
+        starmapNameInput_.clear();
+        resetReputationAndHouseStanding();
         resetCrewRoster();
         try {
             const fs::path mwMainPath = resourceRoot_ / L"MW_MAIN.EXE";
-            const std::vector<uint8_t> mwMainData = readFile(mwMainPath);
+            mwMainData_ = readFile(mwMainPath);
             archive_ = loadPicsArchive(resourceRoot_ / L"MW_1PICS.BIN");
             activisionArchive_ = loadPicsArchive(resourceRoot_ / L"MW_APICS.BIN");
             titleArchive_ = loadPicsArchive(resourceRoot_ / L"MW_TPICS.BIN");
             gpicsArchive_ = loadPicsArchive(resourceRoot_ / L"MW_GPICS.BIN");
             crewArchive_ = loadPicsArchive(resourceRoot_ / L"MW_CPICS.BIN");
-            campaignArchive_ = loadRawPicsImage(resourceRoot_ / L"MW_PICS.BIN", 0x00000280u, 1);
+            const fs::path mwPicsPath = resourceRoot_ / L"MW_PICS.BIN";
+            const auto appendImages = [](PicsArchive& destination, PicsArchive source) {
+                destination.decodedSize = std::max(destination.decodedSize, source.decodedSize);
+                if (destination.palette.empty()) {
+                    destination.palette = source.palette;
+                }
+                destination.images.insert(
+                    destination.images.end(),
+                    std::make_move_iterator(source.images.begin()),
+                    std::make_move_iterator(source.images.end()));
+            };
+            campaignArchive_ = loadRawPicsImage(mwPicsPath, 0x00000280u, kCampaignDesertEntry);
+            appendImages(campaignArchive_, loadRawPicsImage(mwPicsPath, 0x00007F89u, kCampaignTropicalEntry));
+            appendImages(campaignArchive_, loadRawPicsImage(mwPicsPath, 0x0000FC92u, kCampaignIceEntry));
             loadMechArtArchives();
-            travelShuttleArchive_ = loadRawPicsImage(resourceRoot_ / L"MW_PICS.BIN", 0x000680D5u, kTravelShuttleEntry);
+            travelShuttleArchive_ = loadRawPicsImage(mwPicsPath, 0x000680D5u, kTravelShuttleEntry);
             travelEngineArchive_ = loadPicsArchive(resourceRoot_ / L"MW_2PICS.BIN");
             barArchive_ = loadRawPicsImageWithNibblePhase(
-                resourceRoot_ / L"MW_PICS.BIN",
+                mwPicsPath,
                 0x0001799Bu,
-                2,
+                kBarBaseEntry,
                 kScreenWidth,
                 kScreenHeight,
                 true,
                 1);
+            barEnvironmentOverlayArchive_ = loadRawPicsImageWithNibblePhase(
+                mwPicsPath,
+                0x000273AEu,
+                kBarTropicalOverlayEntry,
+                161,
+                70,
+                true,
+                1);
+            appendImages(
+                barEnvironmentOverlayArchive_,
+                loadRawPicsImage(mwPicsPath, 0x000289DEu, kBarIceOverlayEntry));
+            barInformationArchive_ = loadRawPicsImage(mwPicsPath, 0x0001F6A5u, 4);
             smallFont_ = loadFont(resourceRoot_ / L"6X6.FNT");
             font_ = loadFont(resourceRoot_ / L"8X8B.FNT");
             menuFont_ = loadFont(resourceRoot_ / L"FOX88.FNT");
-            campaignMessageLines_ = parseMwMainTextBlock(mwMainData, kCampaignIntroText);
-            newsNetNoOtherLines_ = parseMwMainTextBlock(mwMainData, kNewsNetNoOtherText);
-            newsNetMessageLines_.reserve(kNewsNetEntries.size());
+            campaignMessageLines_ = parseMwMainTextBlock(mwMainData_, kCampaignIntroText);
+            newsNetNoOtherLines_ = parseMwMainTextBlock(mwMainData_, kNewsNetNoOtherText);
+            missionVictoryLines_ = parseMwMainTextBlock(mwMainData_, kMissionVictoryText);
+            missionDefeatLines_ = parseMwMainTextBlock(mwMainData_, kMissionDefeatText);
+            missionDeathPromptLines_ = parseMwMainTextBlock(mwMainData_, kMissionDeathPromptText);
+            newsNetMessageLines_.reserve(kNewsNetEntries.size() + kStoryNewsNetEntries.size());
             for (const NewsNetEntry& entry : kNewsNetEntries) {
-                newsNetMessageLines_.push_back(parseMwMainTextBlock(mwMainData, entry.text));
+                newsNetMessageLines_.push_back(parseMwMainTextBlock(mwMainData_, entry.text));
             }
-            recruitPilots_ = loadRecruitPilots(mwMainData);
+            for (const StoryNewsNetEntry& entry : kStoryNewsNetEntries) {
+                std::vector<std::wstring> lines = storyLines(entry.text);
+                if (entry.messageId == 0x36) {
+                    appendToLastStoryLine(lines, blackWidowDestinationPlanet());
+                    appendStoryLines(lines, storyLines(kStoryNewsBlackWidowLeadSuffix));
+                } else if (entry.messageId == 0x40 && !lines.empty()) {
+                    if (lines.front().size() >= 2 && lines.front()[0] == L'-' && lines.front()[1] == L' ') {
+                        lines.front().erase(0, 2);
+                    }
+                }
+                newsNetMessageLines_.push_back(std::move(lines));
+            }
+            recruitPilots_ = loadRecruitPilots(mwMainData_);
             planets_ = loadPlanetRecords(mwMainPath);
             planetMechMarkets_.assign(planets_.size(), {});
-            currentPlanetIndex_ = findPlanetIndexByName(kStartingPlanetName);
+            currentPlanetIndex_ = chooseNewGameStartingPlanetIndex();
+            startingStoryPlanetName_ = currentPlanetNameAscii();
             selectedPlanetIndex_ = currentPlanetIndex_;
             pendingTravelPlanetIndex_ = currentPlanetIndex_;
             initializeRecruitmentState();
             loadHouseEmblems();
+            loadContractMenuImages();
+            loadMissionResultImages();
             std::wstringstream stream;
             stream << L"Loaded PICS: MW_1=" << archive_.images.size()
                    << L", MW_A=" << activisionArchive_.images.size()
                    << L", MW_T=" << titleArchive_.images.size()
                    << L", MW_G=" << gpicsArchive_.images.size()
                    << L", MW_C=" << crewArchive_.images.size()
-                   << L", MW_PICS raw=" << campaignArchive_.images.size() + barArchive_.images.size() + crewMechArchive_.images.size() + mechStatusArchive_.images.size() + travelShuttleArchive_.images.size()
+                   << L", MW_PICS raw=" << campaignArchive_.images.size() + barArchive_.images.size() + barEnvironmentOverlayArchive_.images.size() + barInformationArchive_.images.size() + crewMechArchive_.images.size() + mechStatusArchive_.images.size() + travelShuttleArchive_.images.size() + contractHouseNamesArchive_.images.size() + contractHouseEmblemsArchive_.images.size() + contractContactPortraitsArchive_.images.size() + missionResultArchive_.images.size()
                    << L", planets=" << planets_.size()
                    << L", pilots=" << recruitPilots_.size()
                    << L", text=" << widen(kCampaignIntroText.id);
@@ -3730,6 +6902,93 @@ private:
             append(loadRawPicsImageWithNibblePhase(picsPath, 0x00048170u, 4, 60, 55, true, 1));
         } catch (const std::exception&) {
         }
+    }
+
+    void loadContractMenuImages() {
+        contractHouseNamesArchive_.palette.assign(std::begin(kEgaPalette), std::end(kEgaPalette));
+        contractHouseEmblemsArchive_.palette.assign(std::begin(kEgaPalette), std::end(kEgaPalette));
+        contractContactPortraitsArchive_.palette.assign(std::begin(kEgaPalette), std::end(kEgaPalette));
+
+        const fs::path picsPath = resourceRoot_ / L"MW_PICS.BIN";
+        for (size_t i = 0; i < kContractHouseNameImages.size(); ++i) {
+            try {
+                appendContractImage(contractHouseNamesArchive_, picsPath, kContractHouseNameImages[i], static_cast<int>(i));
+            } catch (const std::exception&) {
+            }
+        }
+        for (size_t i = 0; i < kContractHouseEmblemImages.size(); ++i) {
+            try {
+                appendContractImage(contractHouseEmblemsArchive_, picsPath, kContractHouseEmblemImages[i], static_cast<int>(i));
+            } catch (const std::exception&) {
+            }
+        }
+        for (size_t house = 0; house < kContractContactPortraitImages.size(); ++house) {
+            const size_t portraitCount = kContractContactPortraitCounts[house];
+            for (size_t slot = 0; slot < portraitCount; ++slot) {
+                try {
+                    appendContractImage(
+                        contractContactPortraitsArchive_,
+                        picsPath,
+                        kContractContactPortraitImages[house][slot],
+                        contractContactPortraitEntryIndex(house, slot));
+                } catch (const std::exception&) {
+                }
+            }
+        }
+    }
+
+    void loadMissionResultImages() {
+        missionResultArchive_.palette.assign(std::begin(kEgaPalette), std::end(kEgaPalette));
+        const fs::path picsPath = resourceRoot_ / L"MW_PICS.BIN";
+        const auto append = [&](PicsArchive source) {
+            missionResultArchive_.decodedSize = std::max(missionResultArchive_.decodedSize, source.decodedSize);
+            missionResultArchive_.images.insert(
+                missionResultArchive_.images.end(),
+                std::make_move_iterator(source.images.begin()),
+                std::make_move_iterator(source.images.end()));
+        };
+
+        try {
+            append(loadRawPicsImageWithNibblePhase(
+                picsPath,
+                0x00065B96u,
+                kMissionResultDeathImageEntry,
+                149,
+                127,
+                true,
+                1));
+        } catch (const std::exception&) {
+        }
+        try {
+            append(loadRawPicsImage(picsPath, 0x0006FDF4u, kMissionResultVictoryImageEntry));
+        } catch (const std::exception&) {
+        }
+        try {
+            append(loadRawPicsImage(picsPath, 0x000776FCu, kMissionResultDefeatImageEntry));
+        } catch (const std::exception&) {
+        }
+    }
+
+    static void appendContractImage(
+        PicsArchive& destination,
+        const fs::path& picsPath,
+        const ContractImageSpec& spec,
+        int entryIndex) {
+        PicsArchive source = spec.nibblePhase == 0
+            ? loadRawPicsImage(picsPath, spec.offset, entryIndex)
+            : loadRawPicsImageWithNibblePhase(
+                  picsPath,
+                  spec.offset,
+                  entryIndex,
+                  spec.width,
+                  spec.height,
+                  true,
+                  spec.nibblePhase);
+        destination.decodedSize = std::max(destination.decodedSize, source.decodedSize);
+        destination.images.insert(
+            destination.images.end(),
+            std::make_move_iterator(source.images.begin()),
+            std::make_move_iterator(source.images.end()));
     }
 
     void loadMechArtArchives() {
@@ -3783,8 +7042,17 @@ private:
         crewAssignmentIndex_ = 0;
     }
 
+    void resetReputationAndHouseStanding() {
+        playerReputationPoints_ = 0;
+        playerReputationTier_ = 0;
+        housePositiveCounters_.fill(0);
+        houseNegativeCounters_.fill(0);
+        syncFamilyAttitudesFromHouseCounters();
+    }
+
     void initializeRecruitmentState() {
         planetRecruitPools_.assign(planets_.size(), {});
+        contractNegotiationLockedVisitByPlanet_.assign(planets_.size(), 0);
         recruitLastPlanetIndex_.assign(recruitPilots_.size(), -1);
         recruitLastMonthKey_.assign(recruitPilots_.size(), -1000000);
         previousPlanetRecruitIndexes_.clear();
@@ -3874,6 +7142,8 @@ private:
             changeState(ScreenState::Title);
         } else if (state_ == ScreenState::Authorization && elapsed > 1200) {
             changeState(ScreenState::CampaignMessage);
+        } else if (state_ == ScreenState::ContractAcceptedMessage && elapsed > kContractAcceptedMessageMs) {
+            changeState(ScreenState::MainMenu);
         } else if (state_ == ScreenState::MechLabMenu) {
             updateMechLabAnimation(now);
         } else if (state_ == ScreenState::TravelRoutePreview && elapsed > kTravelRoutePreviewMs) {
@@ -3892,8 +7162,17 @@ private:
             return;
         }
 
+        if (missionLaunchPending_) {
+            missionLaunchPending_ = false;
+            battleStubButtonIndex_ = 0;
+            changeState(ScreenState::MissionBattleStub);
+            return;
+        }
+
         completeTravel();
-        changeState(ScreenState::MainMenu);
+        if (!tryStartPostTravelStory()) {
+            changeState(ScreenState::MainMenu);
+        }
     }
 
     void completeTravel() {
@@ -3941,6 +7220,25 @@ private:
         stateStartedTick_ = GetTickCount();
         if (state_ == ScreenState::MechLabMenu) {
             resetMechLabAnimation(stateStartedTick_);
+        } else if (state_ == ScreenState::MainMenu) {
+            if (!planetIconAvailable(planetMenuIndex_)) {
+                planetMenuIndex_ = kPlanetStatusIconIndex;
+            }
+        } else if (state_ == ScreenState::Starmap) {
+            starmapButtonIndex_ = kStarmapNoButtonSelection;
+            closeStarmapMenu();
+            starmapNameInputActive_ = false;
+            starmapNameInput_.clear();
+            if (!planets_.empty()) {
+                selectedPlanetIndex_ = std::clamp(selectedPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+            }
+        } else if (state_ == ScreenState::ContractMenu) {
+            contractMenuIndex_ = std::min<size_t>(contractMenuIndex_, 1u);
+        } else if (state_ == ScreenState::ContractNegotiation) {
+            contractNegotiationButtonIndex_ = std::min<size_t>(contractNegotiationButtonIndex_, 2u);
+            activeContractIndex_ = activeContracts_.empty()
+                ? 0
+                : std::min(activeContractIndex_, activeContracts_.size() - 1u);
         } else if (state_ == ScreenState::MechExtraAmmo) {
             extraAmmoSelectionIndex_ = std::min<size_t>(extraAmmoSelectionIndex_, kAmmoDefinitions.size());
         } else if (state_ == ScreenState::MechReviewList) {
@@ -4013,6 +7311,15 @@ private:
         case ScreenState::NewsNet:
             renderNewsNet();
             break;
+        case ScreenState::ContractMenu:
+            renderContractMenu();
+            break;
+        case ScreenState::ContractNegotiation:
+            renderContractNegotiation();
+            break;
+        case ScreenState::ContractAcceptedMessage:
+            renderContractAcceptedMessage();
+            break;
         case ScreenState::MechLabMenu:
             renderMechLabMenu();
             break;
@@ -4057,6 +7364,12 @@ private:
         case ScreenState::SystemMenu:
             renderSystemMenu();
             break;
+        case ScreenState::SaveGameNameInput:
+            renderSaveGameNameInput();
+            break;
+        case ScreenState::RestoreGameList:
+            renderRestoreGameList();
+            break;
         case ScreenState::CrewMenu:
             renderCrewMenu();
             break;
@@ -4068,6 +7381,12 @@ private:
             break;
         case ScreenState::TravelAnimation:
             renderTravelAnimation();
+            break;
+        case ScreenState::MissionBattleStub:
+            renderBattleStub();
+            break;
+        case ScreenState::MissionDebrief:
+            renderMissionDebrief();
             break;
         }
 
@@ -4149,13 +7468,21 @@ private:
     }
 
     void renderCampaignShell(bool introMessage = false) {
-        drawImageFullScreenOrCentered(campaignArchive_, 1);
-        drawHeaderPanel(10, 10, 145, currentPlanetName());
-        drawHeaderPanel(170, 10, 145, campaignDateLabel());
+        renderCampaignBackdrop();
         drawCampaignButtons(introMessage);
     }
 
+    void renderCampaignBackdrop() {
+        drawImageFullScreenOrCentered(campaignArchive_, campaignBackdropEntry());
+        drawHeaderPanel(10, 10, 145, currentPlanetName());
+        drawHeaderPanel(170, 10, 145, campaignDateLabel());
+    }
+
     void renderCampaignMessage() {
+        if (isStorySceneActive()) {
+            renderStoryScene();
+            return;
+        }
         renderCampaignShell(true);
         drawGpPanel(22, 64, 276, 76, 8);
         int y = 74;
@@ -4165,25 +7492,78 @@ private:
         }
     }
 
+    void renderStoryScene() {
+        if (storyBackdrop_ == StoryBackdrop::Bar) {
+            renderBarInformationBackdrop();
+        } else if (storyBackdrop_ == StoryBackdrop::Contract) {
+            renderContractStoryBackdrop();
+        } else if (storyBackdrop_ == StoryBackdrop::MechLab) {
+            drawMechLabBackground();
+        } else {
+            renderCampaignBackdrop();
+        }
+
+        const StoryPage& page = storyPages_[currentStoryPageIndex_];
+        const RectI panel = storyPanelRect(page);
+        drawGpPanel(panel.x, panel.y, panel.width, panel.height, 8);
+
+        const int textX = panel.x + 9;
+        const int textY = panel.y + 10;
+        const int textWidth = panel.width - 18;
+        const int lineStep = storyLineStep(page);
+        const int textBottom = panel.y + panel.height - 8;
+
+        int y = textY;
+        for (size_t i = 0; i < page.lines.size(); ++i) {
+            if (y + 5 > textBottom) {
+                break;
+            }
+            uint8_t color = 7;
+            std::wstring trimmed = page.lines[i];
+            while (!trimmed.empty() && trimmed.front() == L' ') {
+                trimmed.erase(trimmed.begin());
+            }
+            for (size_t choiceIndex = 0; choiceIndex < page.choices.size(); ++choiceIndex) {
+                if (trimmed == page.choices[choiceIndex].label) {
+                    color = choiceIndex == currentStoryChoiceIndex_ ? 14 : 7;
+                    break;
+                }
+            }
+            drawNewsNetText5x5(textX, y, page.lines[i], color, textWidth);
+            y += lineStep;
+        }
+    }
+
     void renderMainMenu() {
         renderCampaignShell();
     }
 
+    void renderBarInformationBackdrop() {
+        if (!barInformationArchive_.images.empty()) {
+            drawImageFullScreenOrCentered(barInformationArchive_, 4);
+        } else {
+            renderBarMenu();
+        }
+    }
+
+    void renderContractStoryBackdrop() {
+        drawNewsNetFrame();
+        const uint8_t houseId = currentPlanetHouseId();
+        drawImageAt(contractHouseNamesArchive_, static_cast<int>(houseId), 44, 37, false);
+        drawImageAt(contractHouseEmblemsArchive_, static_cast<int>(houseId), 79, 91, false);
+        drawImageAt(contractContactPortraitsArchive_, currentPlanetContractPortraitEntry(), 190, 37, false);
+    }
+
     void renderStatusMenu() {
-        drawImageFullScreenOrCentered(campaignArchive_, 1);
-        drawGpPanel(25, 20, 136, 102, 8);
+        drawImageFullScreenOrCentered(campaignArchive_, campaignBackdropEntry());
+        drawGpPanel(25, 20, 186, 102, 8);
         drawGpPanel(158, 130, 142, 58, 8);
-        drawStatusInfoPanel(25, 20, 136);
+        drawStatusInfoPanel(25, 20, 186);
         drawStatusActionPanel(158, 130, 142);
     }
 
     void renderNewsNet() {
-        fillRect(0, 0, kScreenWidth, kScreenHeight, 0);
-        fillRect(29, 23, 262, 154, 0);
-        drawImageAt(gpicsArchive_, 12, 0, 0, false);
-        drawImageAt(gpicsArchive_, 45, 0, 23, false);
-        drawImageAt(gpicsArchive_, 46, 291, 23, false);
-        drawImageAt(gpicsArchive_, 44, 0, 177, false);
+        drawNewsNetFrame();
 
         if (newsNetShowingNoOther_ || activeNewsNetMessageIndexes_.empty()) {
             drawNewsNetText5x5Centered(29, 99, 262, noOtherNewsNetMessageLine(), kNewsNetTextColor);
@@ -4201,6 +7581,120 @@ private:
         drawNewsNetButton(kNewsNetPreviousButtonRect, L"PREVIOUS", newsNetButtonIndex_ == 0);
         drawNewsNetButton(kNewsNetNextButtonRect, L"NEXT", newsNetButtonIndex_ == 1);
         drawNewsNetButton(kNewsNetDoneButtonRect, L"DONE", newsNetButtonIndex_ == 2, -3);
+    }
+
+    void renderContractAcceptedMessage() {
+        drawNewsNetFrame();
+        drawContractText7x5Centered(29, 99, 262, L"YOUR CONTRACT IS ACCEPTED.", kContractTextColor);
+    }
+
+    void drawNewsNetFrame() {
+        fillRect(0, 0, kScreenWidth, kScreenHeight, 0);
+        fillRect(29, 23, 262, 154, 0);
+        drawImageAt(gpicsArchive_, 12, 0, 0, false);
+        drawImageAt(gpicsArchive_, 45, 0, 23, false);
+        drawImageAt(gpicsArchive_, 46, 291, 23, false);
+        drawImageAt(gpicsArchive_, 44, 0, 177, false);
+    }
+
+    void renderContractMenu() {
+        drawNewsNetFrame();
+
+        const uint8_t houseId = currentPlanetHouseId();
+        drawImageAt(contractHouseNamesArchive_, static_cast<int>(houseId), 44, 37, false);
+        drawImageAt(contractHouseEmblemsArchive_, static_cast<int>(houseId), 79, 91, false);
+        drawImageAt(contractContactPortraitsArchive_, currentPlanetContractPortraitEntry(), 190, 37, false);
+
+        drawGpPanel(
+            kContractMenuPanelRect.x,
+            kContractMenuPanelRect.y,
+            kContractMenuPanelRect.width,
+            kContractMenuPanelRect.height,
+            8);
+        drawNewsNetButton(kContractMenuRequestButtonRect, L"REQUEST MISSION", contractMenuIndex_ == 0);
+        drawNewsNetButton(kContractMenuLeaveButtonRect, L"LEAVE", contractMenuIndex_ == 1);
+    }
+
+    void renderContractNegotiation() {
+        drawNewsNetFrame();
+        if (contractNegotiationTerminated_) {
+            drawContractText7x5(38, 39, L"YOUR OFFER IS UNACCEPTABLE!", kContractTextColor);
+            drawContractText7x5(38, 47, L"ALL NEGOTIATIONS ARE HEREBY", kContractTextColor);
+            drawContractText7x5(38, 55, L"TERMINATED.", kContractTextColor);
+            return;
+        }
+        if (contractNegotiationUnavailable_) {
+            drawContractText7x5(38, 39, L"NO CONTRACTS ARE AVAILABLE", kContractTextColor);
+            drawContractText7x5(38, 47, L"AT THIS TIME.", kContractTextColor);
+            return;
+        }
+
+        const ContractOffer* offer = activeContractOffer();
+        if (!offer) {
+            drawContractText7x5Centered(29, 94, 262, L"NO CONTRACTS ARE AVAILABLE", kContractTextColor);
+            drawNewsNetButton(kNewsNetDoneButtonRect, L"LEAVE", true, -3);
+            return;
+        }
+
+        drawContractText7x5Centered(29, 31, 262, L"MERCENARY CONTRACT", kContractTextColor);
+        drawContractText7x5(45, 47, L"THIS AGREEMENT BETWEEN", kContractTextColor);
+        drawContractText7x5(38, 55, L"HOUSE", kContractTextColor);
+        drawContractText7x5(86, 55, houseNamePlain(offer->employerHouse), kContractVariableColor);
+        drawContractText7x5(149, 55, L"AND BLAZING ACES", kContractTextColor);
+        drawContractText7x5(38, 63, L"OUTLINES THE CONTRACT FOR", kContractTextColor);
+
+        int y = 71;
+        const std::vector<std::wstring> missionLines = wrapContractLine(offer->missionName, 31);
+        for (const std::wstring& line : missionLines) {
+            drawContractText7x5(38, y, line, kContractVariableColor);
+            y += 8;
+        }
+        drawContractText7x5(38, y, L"ON THE", kContractTextColor);
+        drawContractText7x5(94, y, houseNamePlain(offer->targetHouse), kContractVariableColor);
+        drawContractText7x5(157, y, L"PLANET OF", kContractTextColor);
+        y += 8;
+        drawContractText7x5(38, y, offer->targetPlanet, kContractVariableColor);
+
+        drawContractText7x5(38, 97, L"THE ESTIMATED ENEMY FORCE", kContractTextColor);
+        drawContractText7x5(38, 105, L"IS", kContractTextColor);
+        drawContractText7x5(62, 105, std::to_wstring(offer->heavyCount), kContractVariableColor);
+        drawContractText7x5(86, 105, L"HEAVY,", kContractTextColor);
+        drawContractText7x5(142, 105, std::to_wstring(offer->mediumCount), kContractVariableColor);
+        drawContractText7x5(166, 105, L"MEDIUM AND", kContractTextColor);
+        drawContractText7x5(38, 113, std::to_wstring(offer->lightCount), kContractVariableColor);
+        drawContractText7x5(62, 113, L"LIGHT MECHS.", kContractTextColor);
+
+        drawContractText7x5(38, 129, houseNamePlain(offer->employerHouse), kContractVariableColor);
+        drawContractText7x5(102, 129, L"WILL PAY", kContractTextColor);
+        drawContractValue7x5(kContractPriceValueRect.x, 129, std::to_wstring(offer->priceK), ContractEditableField::Price);
+        drawContractText7x5(214, 129, L"K C-BILLS", kContractTextColor);
+        drawContractText7x5(38, 137, L"AND", kContractTextColor);
+        const std::wstring salvagePercentText = std::to_wstring(offer->salvagePercent);
+        drawContractValue7x5(kContractSalvageValueRect.x, 137, salvagePercentText, ContractEditableField::Salvage);
+        drawContractText7x5(
+            std::max(102, kContractSalvageValueRect.x + newsNetButtonTextWidth(salvagePercentText) + 8),
+            137,
+            L"% OF ALL CONFISCATED",
+            kContractTextColor);
+        drawContractText7x5(38, 145, L"EQUIPMENT WITH", kContractTextColor);
+        const std::wstring advancePercentText = std::to_wstring(offer->advancePercent);
+        drawContractValue7x5(kContractAdvanceValueRect.x, 145, advancePercentText, ContractEditableField::Advance);
+        drawContractText7x5(
+            std::max(206, kContractAdvanceValueRect.x + newsNetButtonTextWidth(advancePercentText) + 8),
+            145,
+            L"% PAYABLE",
+            kContractTextColor);
+        drawContractText7x5(38, 153, L"IMMEDIATELY.", kContractTextColor);
+
+        drawContractText7x5(38, 169, L"DATED", kContractTextColor);
+        drawContractText7x5(86, 169, campaignDateLabel(), kContractVariableColor);
+
+        drawNewsNetButton(
+            kNewsNetPreviousButtonRect,
+            offer->termsModified ? L"SUBMIT" : L"ACCEPT",
+            contractNegotiationButtonIndex_ == 0);
+        drawNewsNetButton(kNewsNetNextButtonRect, L"NEXT", contractNegotiationButtonIndex_ == 1);
+        drawNewsNetButton(kNewsNetDoneButtonRect, L"LEAVE", contractNegotiationButtonIndex_ == 2, -3);
     }
 
     void renderMechLabMenu() {
@@ -4460,6 +7954,19 @@ private:
         const PlanetMechMarket& market = currentPlanetMechMarket();
         const RectI panel = mechBuyListPanelRect();
 
+        if (market.mechsForSale.empty()) {
+            renderMechLabMenu();
+            drawGpPanel(
+                panel.x,
+                panel.y,
+                panel.width,
+                panel.height,
+                8);
+            drawRecruitText7x5(panel.x + 16, panel.y + 12, L"SORRY, NO MECHS FOR SALE!", 7, panel.width - 24);
+            drawRecruitText7x5(panel.x + 16, panel.y + 22, L"TRY BACK NEXT WEEK.", 7, panel.width - 24);
+            return;
+        }
+
         drawMechLabBackground();
         drawGpPanel(
             panel.x,
@@ -4475,32 +7982,17 @@ private:
             L"MECHS FOR SALE",
             12);
 
-        if (market.mechsForSale.empty()) {
-            drawRecruitTextCenteredInRect(
-                panel.x + 8,
-                kMechBuyListFirstRowY + 28,
-                panel.width - 16,
-                L"SORRY, NO MECHS FOR SALE!",
-                7);
-            drawRecruitTextCenteredInRect(
-                panel.x + 8,
-                kMechBuyListFirstRowY + 38,
-                panel.width - 16,
-                L"TRY BACK NEXT WEEK.",
-                7);
-        } else {
-            const size_t visible = visibleMarketRows(market.mechsForSale.size());
-            for (size_t row = 0; row < visible; ++row) {
-                const size_t index = mechMarketScrollOffset_ + row;
-                const int y = kMechBuyListFirstRowY + static_cast<int>(row) * kMechBuyListLineStep;
-                const uint8_t color = index == selectedMarketMechIndex_ ? 14 : 7;
-                drawMenuTextCenteredInRect(
-                    panel.x,
-                    y,
-                    panel.width,
-                    market.mechsForSale[index].mech.name,
-                    color);
-            }
+        const size_t visible = visibleMarketRows(market.mechsForSale.size());
+        for (size_t row = 0; row < visible; ++row) {
+            const size_t index = mechMarketScrollOffset_ + row;
+            const int y = kMechBuyListFirstRowY + static_cast<int>(row) * kMechBuyListLineStep;
+            const uint8_t color = index == selectedMarketMechIndex_ ? 14 : 7;
+            drawMenuTextCenteredInRect(
+                panel.x,
+                y,
+                panel.width,
+                market.mechsForSale[index].mech.name,
+                color);
         }
 
         const uint8_t doneColor = selectedMarketMechIndex_ == market.mechsForSale.size() ? 14 : 7;
@@ -4617,7 +8109,11 @@ private:
     }
 
     void renderBarMenu() {
-        drawImageFullScreenOrCentered(barArchive_, 2);
+        drawImageFullScreenOrCentered(barArchive_, kBarBaseEntry);
+        const int overlayEntry = barEnvironmentOverlayEntry();
+        if (overlayEntry >= 0) {
+            drawImageAt(barEnvironmentOverlayArchive_, overlayEntry, 0, 0, false);
+        }
         if (barDialogState_ == BarDialogState::None) {
             drawGpPanel(166, 130, 128, 58, 8);
             drawMenuTextCenteredInRect(166, 135, 128, L"BAR", 12);
@@ -4707,9 +8203,68 @@ private:
     }
 
     void renderSystemMenu() {
-        drawImageFullScreenOrCentered(campaignArchive_, 1);
+        drawImageFullScreenOrCentered(campaignArchive_, campaignBackdropEntry());
         drawGpPanel(90, 80, 140, 86, 8);
         drawSystemMenu(90, 90, 140);
+    }
+
+    void renderSaveGameNameInput() {
+        drawImageFullScreenOrCentered(campaignArchive_, campaignBackdropEntry());
+        constexpr RectI panel{40, 102, 240, 55};
+        drawGpPanel(panel.x, panel.y, panel.width, panel.height, 8);
+        drawRecruitTextCenteredInRect(
+            panel.x,
+            panel.y + 17,
+            panel.width,
+            L"ENTER A NAME FOR THIS GAME",
+            7);
+
+        const std::wstring input = widen(saveGameNameInput_);
+        const int inputWidth = recruitTextWidth7x5(input);
+        const int inputX = panel.x + (panel.width - inputWidth) / 2;
+        const int inputY = panel.y + 37;
+        if (!input.empty()) {
+            drawRecruitText7x5(inputX, inputY, input, 4, panel.width - 20);
+        }
+        if (((GetTickCount() - stateStartedTick_) / 350u) % 2u == 0u) {
+            const int cursorX = input.empty() ? panel.x + panel.width / 2 - 3 : inputX + inputWidth + 4;
+            drawRecruitText7x5(cursorX, inputY, L"*", 4, 10);
+        }
+    }
+
+    void renderRestoreGameList() {
+        drawImageFullScreenOrCentered(campaignArchive_, campaignBackdropEntry());
+        constexpr RectI panel{52, 22, 216, 160};
+        constexpr int firstSlotY = 47;
+        constexpr int lineStep = 10;
+        drawGpPanel(panel.x, panel.y, panel.width, panel.height, 8);
+        drawRecruitTextCenteredInRect(
+            panel.x,
+            panel.y + 12,
+            panel.width,
+            L"SELECT A GAME TO LOAD",
+            12);
+
+        for (size_t i = 0; i < kGamVisibleSlotCount; ++i) {
+            std::wstring line = std::to_wstring(i + 1u) + L":";
+            if (i < restoreGameSlots_.size() && restoreGameSlots_[i].occupied) {
+                line += L"  ";
+                line += restoreGameSlots_[i].name;
+            }
+            drawRecruitText7x5(
+                panel.x + 68,
+                firstSlotY + static_cast<int>(i) * lineStep,
+                line,
+                i == restoreGameSelectionIndex_ ? 14 : 7,
+                panel.width - 80);
+        }
+
+        drawRecruitTextCenteredInRect(
+            panel.x,
+            panel.y + panel.height - 15,
+            panel.width,
+            L"CANCEL",
+            restoreGameSelectionIndex_ == kRestoreGameCancelIndex ? 14 : 7);
     }
 
     void renderCrewMenu() {
@@ -4805,7 +8360,12 @@ private:
         drawStarmapMarker(currentPlanet.mapX, currentPlanet.mapY, 15);
         drawStarmapMarker(selectedPlanet.mapX, selectedPlanet.mapY, 15);
 
-        drawStarmapText5x5(10, 8, widen(selectedPlanet.name), 15, 112);
+        if (starmapNameInputActive_) {
+            drawStarmapText5x5(10, 8, widen(starmapNameInput_), 12, 112);
+            drawStarmapNameInputCursor(10 + static_cast<int>(starmapNameInput_.size()) * 6, 7);
+        } else {
+            drawStarmapText5x5(10, 8, widen(selectedPlanet.name), 15, 112);
+        }
         drawStarmapText5x5Centered(135, 8, 60, environmentLabel(selectedPlanet.terrainCode), 15);
         drawStarmapText5x5Centered(204, 8, 108, L"POP:" + formatWealth(selectedPlanet.population), 15);
 
@@ -4816,9 +8376,77 @@ private:
         drawStarmapText5x5(240, 105, formatWealth(travelCost), 15, 70);
         drawStarmapText5x5(240, 129, formatWealth(playerWealth_), 15, 70);
 
-        drawStarmapText5x5Centered(249, 147, 52, L"TRAVEL", 15);
-        drawStarmapText5x5Centered(249, 166, 52, L"PLANETS", 15);
-        drawStarmapText5x5Centered(249, 185, 52, L"CANCEL", 15);
+        drawStarmapText5x5Centered(249, 147, 52, L"TRAVEL", starmapButtonIndex_ == 0 ? 14 : 15);
+        drawStarmapText5x5Centered(249, 166, 52, L"PLANETS", starmapButtonIndex_ == 1 ? 14 : 15);
+        drawStarmapText5x5Centered(249, 185, 52, L"CANCEL", starmapButtonIndex_ == 2 ? 14 : 15);
+
+        if (starmapMenuMode_ == StarmapMenuMode::Houses) {
+            renderStarmapHouseMenu();
+        } else if (starmapMenuMode_ == StarmapMenuMode::HousePlanets) {
+            renderStarmapPlanetMenu();
+        }
+    }
+
+    void renderStarmapHouseMenu() {
+        const RectI rect = starmapHouseMenuRect();
+        drawGpPanel(rect.x, rect.y, rect.width, rect.height, 0);
+        constexpr int kTextX = 140;
+        constexpr int kTitleY = 80;
+        constexpr int kFirstItemY = 90;
+        constexpr int kLineStep = 8;
+        drawStarmapText5x5(kTextX, kTitleY, L"HOUSES", 12, rect.x + rect.width - kTextX - 6);
+
+        for (size_t i = 0; i < kHouseMenuItemCount; ++i) {
+            const uint8_t color = starmapHouseSelectionIndex_ == i ? 14 : 7;
+            drawStarmapText5x5(
+                kTextX,
+                kFirstItemY + static_cast<int>(i) * kLineStep,
+                houseNamePlain(static_cast<uint8_t>(i)),
+                color,
+                rect.x + rect.width - kTextX - 6);
+        }
+
+        drawStarmapText5x5(
+            kTextX,
+            kFirstItemY + static_cast<int>(kHouseMenuItemCount) * kLineStep,
+            L"DONE",
+            starmapHouseSelectionIndex_ == kHouseMenuItemCount ? 14 : 7,
+            rect.x + rect.width - kTextX - 6);
+    }
+
+    void renderStarmapPlanetMenu() {
+        const RectI rect = starmapPlanetMenuRect();
+        drawGpPanel(rect.x, rect.y, rect.width, rect.height, 0);
+
+        const std::wstring title =
+            L"HOUSE " +
+            std::wstring(houseNamePlain(static_cast<uint8_t>(std::min<size_t>(starmapHouseSelectionIndex_, kHouseMenuItemCount - 1u))));
+        drawStarmapText5x5Centered(rect.x, 39, rect.width, title, 12);
+
+        const std::vector<int> indexes = starmapPlanetIndexesForSelectedHouse();
+        constexpr int kRowsPerColumn = 16;
+        constexpr int kLeftX = 65;
+        constexpr int kRightX = 172;
+        constexpr int kFirstY = 55;
+        constexpr int kLineStep = 8;
+        for (size_t i = 0; i < indexes.size(); ++i) {
+            const int column = static_cast<int>(i / kRowsPerColumn);
+            if (column > 1) {
+                break;
+            }
+            const int row = static_cast<int>(i % kRowsPerColumn);
+            const int x = column == 0 ? kLeftX : kRightX;
+            const int y = kFirstY + row * kLineStep;
+            const PlanetRecord& planet = planets_[static_cast<size_t>(indexes[i])];
+            drawStarmapText5x5(x, y, widen(planet.name), starmapPlanetSelectionIndex_ == i ? 14 : 7, 96);
+        }
+
+        drawStarmapText5x5Centered(
+            rect.x,
+            185,
+            rect.width,
+            L"CANCEL",
+            starmapPlanetSelectionIndex_ >= indexes.size() ? 14 : 7);
     }
 
     void renderTravelAnimation() {
@@ -4839,6 +8467,137 @@ private:
             kTravelEngineY,
             false);
     }
+
+    void renderBattleStub() {
+        fillRect(0, 0, kScreenWidth, kScreenHeight, 0);
+        drawGpPanel(70, 50, 180, 108, 8);
+        if (finalMissionStubActive_) {
+            drawRecruitTextCenteredInRect(70, 58, 180, L"FINAL MISSION STUB", 7);
+            drawRecruitTextCenteredInRect(70, 66, 180, L"DARK WING BASE", 7);
+        }
+        drawNewsNetButton(kBattleStubWinButtonRect, L"WIN BATTLE", battleStubButtonIndex_ == 0);
+        drawNewsNetButton(kBattleStubLoseButtonRect, L"LOSE BATTLE", battleStubButtonIndex_ == 1);
+        drawNewsNetButton(kBattleStubRunButtonRect, L"DIE IN BATTLE", battleStubButtonIndex_ == 2);
+    }
+
+    void renderMissionDebrief() {
+        fillRect(0, 0, kScreenWidth, kScreenHeight, 7);
+        drawDebriefPanel(
+            kMissionDebriefTopPanelRect.x,
+            kMissionDebriefTopPanelRect.y,
+            kMissionDebriefTopPanelRect.width,
+            kMissionDebriefTopPanelRect.height);
+        fillRect(156, 10, 1, 122, 0);
+
+        drawImageAt(missionResultArchive_, missionDebriefImageEntry(), 9, 7, false);
+
+        drawDebriefText(162, 16, L"CREW STATUS:", 0);
+        int crewY = 28;
+        for (const MissionParticipant& participant : missionParticipants_) {
+            if (crewY > 56) {
+                break;
+            }
+            drawDebriefText(162, crewY, participant.name, 0);
+            drawDebriefText(250, crewY, participant.killed ? L"KILLED" : L"OK", 0);
+            crewY += 10;
+        }
+
+        drawDebriefText(162, 76, L"MECH STATUS", 0);
+        int mechY = 88;
+        for (const MissionParticipant& participant : missionParticipants_) {
+            if (mechY > 108) {
+                break;
+            }
+            drawDebriefText(162, mechY, participant.mechName, 0);
+            drawDebriefTextRightAligned(294, mechY, std::to_wstring(participant.armorPercent) + L" %", 0);
+            mechY += 10;
+        }
+
+        drawDebriefText(162, 118, L"SALVAGE:", 0);
+        drawDebriefText(234, 118, formatWealth(missionDebriefSalvage_), 0);
+        drawDebriefText(162, 129, L"PAYMENT:", 0);
+        drawDebriefText(234, 129, formatWealth(missionDebriefPayment_), 0);
+
+        drawDebriefPanel(
+            kMissionDebriefBottomPanelRect.x,
+            kMissionDebriefBottomPanelRect.y,
+            kMissionDebriefBottomPanelRect.width,
+            kMissionDebriefBottomPanelRect.height);
+        const std::vector<std::wstring>& messageLines = missionDebriefMessageLines();
+        int messageY = 158;
+        for (const std::wstring& line : messageLines) {
+            if (line.empty()) {
+                continue;
+            }
+            if (messageY > 184) {
+                break;
+            }
+            drawNewsNetText5x5(10, messageY, line, 0, kMissionDebriefMessageTextWidth);
+            messageY += 8;
+        }
+        drawImageAt(
+            houseEmblemsArchive_,
+            static_cast<int>(acceptedContract_.employerHouse),
+            kMissionDebriefEmblemX,
+            kMissionDebriefEmblemY,
+            false);
+
+        if (missionDebriefOutcome_ == MissionOutcome::Death) {
+            renderMissionDeathMenu();
+        }
+    }
+
+    int missionDebriefImageEntry() const {
+        if (missionDebriefOutcome_ == MissionOutcome::Victory) {
+            return kMissionResultVictoryImageEntry;
+        }
+        if (missionDebriefOutcome_ == MissionOutcome::Death) {
+            return kMissionResultDeathImageEntry;
+        }
+        return kMissionResultDefeatImageEntry;
+    }
+
+    const std::vector<std::wstring>& missionDebriefMessageLines() const {
+        if (missionDebriefOutcome_ == MissionOutcome::Victory) {
+            return missionVictoryLines_;
+        }
+        if (missionDebriefOutcome_ == MissionOutcome::Death) {
+            static const std::vector<std::wstring> kNoDeathHouseLines;
+            return kNoDeathHouseLines;
+        }
+        return missionDefeatLines_;
+    }
+
+    void renderMissionDeathMenu() {
+        drawGpPanel(25, 72, 270, 54, 8);
+        if (missionDeathPromptLines_.size() >= 2) {
+            drawNewsNetText5x5(37, 83, missionDeathPromptLines_[0], 7, 250);
+            drawNewsNetText5x5(37, 91, missionDeathPromptLines_[1], 7, 250);
+        } else {
+            drawNewsNetText5x5(37, 83, L"SUDDEN DEATH IS A GRIM REALITY IN THE", 7, 250);
+            drawNewsNetText5x5(37, 91, L"SUCCESSOR STATES OF THE 31ST CENTURY.", 7, 250);
+        }
+        drawNewsNetText5x5(48, 106, L"PLAY AGAIN", missionDeathMenuIndex_ == 0 ? 14 : 7, 100);
+        drawNewsNetText5x5(48, 113, L"QUIT", missionDeathMenuIndex_ == 1 ? 14 : 7, 60);
+    }
+
+    void drawDebriefText(int x, int y, std::wstring_view text, uint8_t color) {
+        const Font& debriefFont = menuFont_.rows.empty() ? font_ : menuFont_;
+        int cursorX = x;
+        for (wchar_t wideCh : text) {
+            const char ch = (wideCh < 128) ? static_cast<char>(wideCh) : '?';
+            if (cursorX > 309) {
+                break;
+            }
+            drawGlyph7x5(debriefFont, cursorX, y, ch, color);
+            cursorX += 8;
+        }
+    }
+
+    void drawDebriefTextRightAligned(int rightX, int y, std::wstring_view text, uint8_t color) {
+        drawDebriefText(rightX - newsNetButtonTextWidth(text), y, text, color);
+    }
+
 
     void drawImageFullScreenOrCentered(int entryIndex) {
         drawImageFullScreenOrCentered(archive_, entryIndex);
@@ -4915,6 +8674,37 @@ private:
         drawGpFrame(x, y, width, height);
     }
 
+    void drawDebriefPanel(int x, int y, int width, int height) {
+        fillRect(x + 6, y + 5, width - 12, height - 9, 7);
+        drawDebriefFrame(x, y, width, height);
+    }
+
+    void drawDebriefFrame(int x, int y, int width, int height) {
+        if (width < 30 || height < 24) {
+            drawBox(x, y, width, height, 0);
+            return;
+        }
+
+        const RectI topClip{x + 15, y, width - 30, 5};
+        const RectI bottomClip{x + 15, y + height - 4, width - 30, 4};
+        const RectI leftClip{x, y + 12, 6, height - 24};
+        const RectI rightClip{x + width - 6, y + 12, 6, height - 24};
+
+        for (int edgeX = topClip.x; edgeX < topClip.x + topClip.width; edgeX += 64) {
+            drawImageAtClipped(gpicsArchive_, kDebriefFrameTopEdgeEntry, edgeX, topClip.y, true, topClip);
+            drawImageAtClipped(gpicsArchive_, kDebriefFrameBottomEdgeEntry, edgeX, bottomClip.y, true, bottomClip);
+        }
+        for (int edgeY = leftClip.y; edgeY < leftClip.y + leftClip.height; edgeY += 32) {
+            drawImageAtClipped(gpicsArchive_, kDebriefFrameLeftEdgeEntry, leftClip.x, edgeY, true, leftClip);
+            drawImageAtClipped(gpicsArchive_, kDebriefFrameRightEdgeEntry, rightClip.x, edgeY, true, rightClip);
+        }
+
+        drawImageAt(gpicsArchive_, kDebriefFrameUpperLeftEntry, x, y, true);
+        drawImageAt(gpicsArchive_, kDebriefFrameUpperRightEntry, x + width - 15, y, true);
+        drawImageAt(gpicsArchive_, kDebriefFrameLowerLeftEntry, x, y + height - 12, true);
+        drawImageAt(gpicsArchive_, kDebriefFrameLowerRightEntry, x + width - 15, y + height - 12, true);
+    }
+
     void drawGpFrame(int x, int y, int width, int height) {
         const RectI topClip{x + 15, y, width - 30, 4};
         const RectI bottomClip{x + 15, y + height - 4, width - 30, 4};
@@ -4953,10 +8743,21 @@ private:
     }
 
     void drawCampaignButtons(bool introMessage) {
+        (void)introMessage;
         drawImageAt(gpicsArchive_, 5, 25, 57, true);
         drawImageAt(gpicsArchive_, 6, 25, 106, true);
-        drawImageAt(gpicsArchive_, introMessage ? 26 : 30, 25, 156, true);
+        if (contractAccepted_ || currentPlanetContractsAvailable()) {
+            drawImageAt(
+                gpicsArchive_,
+                contractAccepted_ ? kMissionLaunchIconEntry : contractIconEntryForHouse(currentPlanetHouseId()),
+                25,
+                156,
+                true);
+        }
 
+        if (contractAccepted_) {
+            return;
+        }
         drawImageAt(gpicsArchive_, 8, 257, 57, true);
         drawImageAt(gpicsArchive_, 9, 257, 106, true);
         drawImageAt(gpicsArchive_, 10, 257, 156, true);
@@ -5116,6 +8917,9 @@ private:
 
     RectI mechBuyListPanelRect() {
         const size_t marketCount = currentPlanetMechMarket().mechsForSale.size();
+        if (marketCount == 0) {
+            return kMechBuyMessagePanelRect;
+        }
         const int doneY = mechBuyListDoneY(marketCount);
         const int height = (doneY + 14) - kMechBuyListPanelY;
         return {kMechBuyListPanelX, kMechBuyListPanelY, kMechBuyListPanelWidth, height};
@@ -5153,72 +8957,63 @@ private:
         return lhs.kind == rhs.kind && lhs.index == rhs.index;
     }
 
-    static int armorMaxTotal(const OwnedMech& mech) {
+    static int armorDamageTotal(const OwnedMech& mech) {
         int total = 0;
-        for (int value : mech.armorMax) {
-            total += value;
+        for (int value : mech.armorDamage) {
+            total += std::clamp(value, 0, kArmorDamageMaxLevel);
         }
         return total;
     }
 
-    static int armorPointTotal(const OwnedMech& mech) {
+    static int armorDamagedSectionCount(const OwnedMech& mech) {
         int total = 0;
-        for (int value : mech.armorPoints) {
-            total += value;
+        for (int value : mech.armorDamage) {
+            if (value > 0) {
+                ++total;
+            }
         }
         return total;
     }
 
-    static int armorMissingPoints(const OwnedMech& mech) {
-        return std::max(0, armorMaxTotal(mech) - armorPointTotal(mech));
+    static int nextRepairableArmorDamageLevel(const OwnedMech& mech) {
+        for (size_t section : kArmorDamageOrder) {
+            if (section < mech.armorDamage.size() && mech.armorDamage[section] > 0) {
+                return std::clamp(mech.armorDamage[section], 0, kArmorDamageMaxLevel);
+            }
+        }
+        return 0;
     }
 
     static void updateArmorPercent(OwnedMech& mech) {
-        const int maxArmor = armorMaxTotal(mech);
-        mech.armorPercent = maxArmor > 0 ? (armorPointTotal(mech) * 100 + maxArmor / 2) / maxArmor : 100;
+        const int damage = std::clamp(armorDamageTotal(mech), 0, kArmorDamageDenominator);
+        mech.armorPercent = ((kArmorDamageDenominator - damage) * 100) / kArmorDamageDenominator;
     }
 
     static void damageArmorToPercent(OwnedMech& mech, int targetPercent) {
-        const int maxArmor = armorMaxTotal(mech);
         const int clampedPercent = std::clamp(targetPercent, 0, 100);
-        const int targetTotal = (maxArmor * clampedPercent + 50) / 100;
-        int missing = std::max(0, maxArmor - targetTotal);
+        const int targetRemaining =
+            (kArmorDamageDenominator * clampedPercent + 99) / 100;
+        int damage = std::clamp(kArmorDamageDenominator - targetRemaining, 0, kArmorDamageDenominator);
 
-        mech.armorPoints = mech.armorMax;
+        mech.armorDamage = {};
         for (size_t section : kArmorDamageOrder) {
-            if (missing <= 0 || section >= mech.armorPoints.size()) {
+            if (damage <= 0 || section >= mech.armorDamage.size()) {
                 break;
             }
-
-            const int preferredFloor = std::max(0, mech.armorMax[section] / 3);
-            const int removableToFloor = std::max(0, mech.armorPoints[section] - preferredFloor);
-            const int removed = std::min(missing, removableToFloor);
-            mech.armorPoints[section] -= removed;
-            missing -= removed;
-        }
-
-        for (size_t section : kArmorDamageOrder) {
-            if (missing <= 0 || section >= mech.armorPoints.size()) {
-                break;
-            }
-            const int removed = std::min(missing, mech.armorPoints[section]);
-            mech.armorPoints[section] -= removed;
-            missing -= removed;
+            const int applied = std::min(damage, kArmorDamageMaxLevel);
+            mech.armorDamage[section] = applied;
+            damage -= applied;
         }
 
         updateArmorPercent(mech);
     }
 
     static void repairArmorStep(OwnedMech& mech) {
-        int remaining = kMechRepairArmorStepPoints;
-        for (size_t section : kArmorRepairOrder) {
-            if (remaining <= 0 || section >= mech.armorPoints.size()) {
+        for (size_t section : kArmorDamageOrder) {
+            if (section < mech.armorDamage.size() && mech.armorDamage[section] > 0) {
+                mech.armorDamage[section] = 0;
                 break;
             }
-            const int missing = std::max(0, mech.armorMax[section] - mech.armorPoints[section]);
-            const int repaired = std::min(remaining, missing);
-            mech.armorPoints[section] += repaired;
-            remaining -= repaired;
         }
         updateArmorPercent(mech);
     }
@@ -5294,9 +9089,11 @@ private:
     static uint32_t componentBaseCost(const OwnedMech& mech, RepairTargetKind kind) {
         static constexpr std::array<std::array<uint32_t, 8>, kPlayableMechCount> costs = {{
             {{210, 190, 40, 50, 5, 5, 7, 7}},
+            {{0, 0, 40, 50, 5, 5, 7, 7}},
             {{570, 540, 70, 50, 8, 8, 12, 12}},
             {{42, 2, 90, 50, 10, 10, 15, 15}},
             {{232, 132, 110, 50, 13, 13, 19, 19}},
+            {{240, 142, 110, 50, 13, 13, 19, 19}},
             {{192, 112, 120, 50, 14, 14, 21, 21}},
             {{20, 176, 140, 50, 16, 16, 24, 24}},
             {{220, 20, 150, 50, 17, 17, 26, 26}},
@@ -5460,19 +9257,19 @@ private:
         int componentHits = 2;
         int weaponHits = 1;
         int armorMin = 70;
-        int armorMax = 94;
+        int armorPercentMax = 94;
         if (roll >= 76 && roll < 94) {
             targetState = DamageState::HeavyDamage;
             componentHits = 4;
             weaponHits = 2;
             armorMin = 35;
-            armorMax = 72;
+            armorPercentMax = 72;
         } else if (roll >= 94) {
             targetState = DamageState::Junk;
             componentHits = 6;
             weaponHits = 3;
             armorMin = 12;
-            armorMax = 45;
+            armorPercentMax = 45;
         }
 
         static constexpr std::array<RepairTargetKind, 8> componentKinds = {{
@@ -5495,7 +9292,7 @@ private:
 
         mech.heatSinksWorking = std::max(0, mech.heatSinksTotal - static_cast<int>(rng() % (targetState == DamageState::Junk ? 6u : 3u)));
         mech.jumpJetsWorking = std::max(0, mech.jumpJetsTotal - static_cast<int>(rng() % (targetState == DamageState::Functional ? 1u : 4u)));
-        std::uniform_int_distribution<int> armorDist(armorMin, armorMax);
+        std::uniform_int_distribution<int> armorDist(armorMin, armorPercentMax);
         damageArmorToPercent(mech, armorDist(rng));
 
         mech.repairCost = totalRepairCost(mech);
@@ -5557,7 +9354,8 @@ private:
             return static_cast<uint32_t>(std::max(0, mech.jumpJetsTotal - mech.jumpJetsWorking)) *
                 kMechRepairCountUnitCost;
         case RepairTargetKind::Armor:
-            return armorMissingPoints(mech) > 0 ? kMechRepairArmorStepCost : 0;
+            return static_cast<uint32_t>(nextRepairableArmorDamageLevel(mech)) *
+                kMechRepairArmorLevelCost;
         case RepairTargetKind::Weapon:
             if (target.index < mech.weapons.size()) {
                 return kMechRepairWeaponLightCost * damageRepairMultiplier(mech.weapons[target.index].condition);
@@ -5590,7 +9388,7 @@ private:
         if (mech.jumpJetsWorking < mech.jumpJetsTotal) {
             targets.push_back({RepairTargetKind::JumpJets, 0});
         }
-        if (mech.armorPercent < 100) {
+        if (armorDamagedSectionCount(mech) > 0) {
             targets.push_back({RepairTargetKind::Armor, 0});
         }
         for (size_t i = 0; i < mech.weapons.size(); ++i) {
@@ -5605,9 +9403,8 @@ private:
         uint32_t total = 0;
         for (const RepairTarget& target : repairableTargets(mech)) {
             if (target.kind == RepairTargetKind::Armor) {
-                const int missing = armorMissingPoints(mech);
-                const int steps = (missing + kMechRepairArmorStepPoints - 1) / kMechRepairArmorStepPoints;
-                total += static_cast<uint32_t>(steps) * kMechRepairArmorStepCost;
+                total += static_cast<uint32_t>(armorDamageTotal(mech)) *
+                    kMechRepairArmorLevelCost;
             } else {
                 total += repairTargetCost(mech, target);
             }
@@ -5941,12 +9738,14 @@ private:
     static RectI mechStatusImageOffset(ChassisId chassis) {
         switch (chassis) {
         case ChassisId::Locust:
+        case ChassisId::Wasp:
             return {1, -3, 0, 0};
         case ChassisId::Jenner:
             return {0, -2, 0, 0};
         case ChassisId::PhoenixHawk:
             return {1, -1, 0, 0};
         case ChassisId::ShadowHawk:
+        case ChassisId::Wolverine:
             return {1, -3, 0, 0};
         case ChassisId::Rifleman:
             return {0, -1, 0, 0};
@@ -5960,22 +9759,73 @@ private:
         return {};
     }
 
-    static uint8_t armorSectionColor(int current, int maxValue) {
-        if (maxValue <= 0) {
+    static uint8_t armorSectionColor(int damageLevel) {
+        switch (std::clamp(damageLevel, 0, kArmorDamageMaxLevel)) {
+        case 0:
             return 7;
-        }
-        const int percent = current * 100 / maxValue;
-        if (percent <= 50) {
-            return 0;
-        }
-        if (percent <= 75) {
+        case 1:
             return 14;
+        case 2:
+            return 12;
+        case 3:
+            return 0;
         }
         return 7;
     }
 
+    static size_t statusArtSectionToArmorDamageIndex(size_t statusArtSection) {
+        switch (statusArtSection) {
+        case 5:
+            return 0; // RA
+        case 4:
+            return 1; // LA
+        case 7:
+            return 2; // RL
+        case 6:
+            return 3; // LL
+        case 0:
+            return 4; // HEAD
+        case 1:
+            return 5; // CT
+        case 8:
+            return 6; // BACK / center rear
+        case 3:
+        case 10:
+            return 7; // TR
+        case 2:
+        case 9:
+            return 8; // TL
+        }
+        return kArmorSectionCount;
+    }
+
+    static size_t armorOverlayIndex(ChassisId chassis) {
+        switch (chassis) {
+        case ChassisId::Locust:
+        case ChassisId::Wasp:
+            return 0;
+        case ChassisId::Jenner:
+            return 1;
+        case ChassisId::PhoenixHawk:
+            return 2;
+        case ChassisId::ShadowHawk:
+        case ChassisId::Wolverine:
+            return 3;
+        case ChassisId::Rifleman:
+            return 4;
+        case ChassisId::Warhammer:
+            return 5;
+        case ChassisId::Marauder:
+            return 6;
+        case ChassisId::Battlemaster:
+            return 7;
+        }
+        return 0;
+    }
+
     static const std::vector<ArmorOverlayRect>& armorOverlayRects(ChassisId chassis) {
-        static const std::array<std::vector<ArmorOverlayRect>, kPlayableMechCount> overlays = {{
+        static constexpr size_t kMechStatusOverlayCount = 8;
+        static const std::array<std::vector<ArmorOverlayRect>, kMechStatusOverlayCount> overlays = {{
             {
                 {5, {0, 2, 17, 29}},
                 {7, {6, 139, 45, 43}},
@@ -6096,7 +9946,7 @@ private:
                 {4, {99, 35, 9, 46}},
             },
         }};
-        return overlays[chassisIndex(chassis)];
+        return overlays[armorOverlayIndex(chassis)];
     }
 
     void drawArmorOverlay(const OwnedMech& mech, int imageX, int imageY) {
@@ -6104,14 +9954,14 @@ private:
         const uint32_t brightMagenta = toBgra(paletteColor(13));
 
         for (const ArmorOverlayRect& overlayRect : armorOverlayRects(mech.chassis)) {
-            const size_t section = overlayRect.section;
-            if (section >= mech.armorPoints.size() || section >= mech.armorMax.size()) {
+            const size_t section = statusArtSectionToArmorDamageIndex(overlayRect.section);
+            if (section >= mech.armorDamage.size()) {
                 continue;
             }
 
             const RectI& imageRect = overlayRect.rect;
             const uint32_t target =
-                toBgra(paletteColor(armorSectionColor(mech.armorPoints[section], mech.armorMax[section])));
+                toBgra(paletteColor(armorSectionColor(mech.armorDamage[section])));
             const int x0 = std::max(0, imageX + imageRect.x);
             const int y0 = std::max(0, imageY + imageRect.y);
             const int x1 = std::min(kScreenWidth, imageX + imageRect.x + imageRect.width);
@@ -6234,7 +10084,7 @@ private:
         drawTextPass(smallFont_, x + 8, y + 24, L"AGE:", 7);
         drawTextPass(smallFont_, x + 38, y + 24, L" " + std::to_wstring(commanderAge()), 7);
         drawTextPass(smallFont_, x + 8, y + 32, L"REPUTATION:", 7);
-        drawTextPass(smallFont_, x + 80, y + 32, std::wstring(L" ") + std::wstring(reputationLabel()), 7);
+        drawTextPass(smallFont_, x + 78, y + 32, reputationLabel(), 7);
         drawTextPass(smallFont_, x + 8, y + 40, L"WEALTH:", 7);
         drawTextPass(smallFont_, x + 56, y + 40, formatWealth(playerWealth_), 7);
         drawTextPass(smallFont_, x + 8, y + 48, L"FAMILY ATTITUDES:", 7);
@@ -6299,7 +10149,7 @@ private:
     }
 
     std::wstring_view reputationLabel() const {
-        switch (playerReputation_) {
+        switch (playerReputationTier_) {
         case 0:
             return L"RISKY";
         case 1:
@@ -6312,14 +10162,13 @@ private:
     }
 
     std::wstring_view attitudeLabel(int score) const {
-        const int clamped = std::clamp(score, 0, 20);
-        if (clamped <= 5) {
+        if (score < 0) {
             return L"NEGATIVE";
         }
-        if (clamped <= 10) {
+        if (score == 0) {
             return L"NEUTRAL";
         }
-        if (clamped <= 16) {
+        if (score < 10) {
             return L"POSITIVE";
         }
         return L"CONFIDENT";
@@ -6469,20 +10318,50 @@ private:
 
     bool isNewsNetEntryAvailable(const NewsNetEntry& entry) const {
         const int currentMonthOneBased = currentMonth_ + 1;
-        const int currentDay = std::max(1, currentMonthDayCounter_);
+        const int requiredDayCounter = std::max(0, (entry.day - 1) * 2);
         if (currentYear_ != entry.year) {
             return currentYear_ > entry.year;
         }
         if (currentMonthOneBased != entry.month) {
             return currentMonthOneBased > entry.month;
         }
-        return currentDay >= entry.day;
+        return currentMonthDayCounter_ >= requiredDayCounter;
+    }
+
+    bool isNewsNetMessageAvailable(size_t messageIndex) const {
+        if (messageIndex < kNewsNetEntries.size()) {
+            return isNewsNetEntryAvailable(kNewsNetEntries[messageIndex]);
+        }
+        const size_t storyIndex = messageIndex - kNewsNetEntries.size();
+        if (storyIndex >= kStoryNewsNetEntries.size()) {
+            return false;
+        }
+        const StoryNewsNetEntry& entry = kStoryNewsNetEntries[storyIndex];
+        if (entry.messageId == 0x40 && storyFlag(0x39)) {
+            return true;
+        }
+        return storyFlag(entry.prerequisiteMessageId);
+    }
+
+    uint8_t newsNetMessageId(size_t messageIndex) const {
+        if (messageIndex < kNewsNetEntries.size()) {
+            return kNewsNetEntries[messageIndex].messageId;
+        }
+        const size_t storyIndex = messageIndex - kNewsNetEntries.size();
+        if (storyIndex < kStoryNewsNetEntries.size()) {
+            return kStoryNewsNetEntries[storyIndex].messageId;
+        }
+        return 0;
     }
 
     void rebuildNewsNetMessages() {
         activeNewsNetMessageIndexes_.clear();
-        for (size_t i = 0; i < kNewsNetEntries.size(); ++i) {
-            if (isNewsNetEntryAvailable(kNewsNetEntries[i])) {
+        for (size_t i = 0; i < newsNetMessageLines_.size(); ++i) {
+            if (isNewsNetMessageAvailable(i)) {
+                const uint8_t messageId = newsNetMessageId(i);
+                if (messageId != 0) {
+                    setStoryFlag(messageId);
+                }
                 activeNewsNetMessageIndexes_.push_back(i);
             }
         }
@@ -6505,10 +10384,641 @@ private:
 
     std::wstring currentPlanetName() const {
         if (planets_.empty()) {
-            return widen(kStartingPlanetName);
+            return widen(kFallbackStartingPlanetName);
         }
         const int index = std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
         return widen(planets_[index].name);
+    }
+
+    uint8_t currentPlanetHouseId() const {
+        if (planets_.empty()) {
+            return 0;
+        }
+        const int index = std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+        return static_cast<uint8_t>(std::min<uint8_t>(planets_[index].houseId, 4));
+    }
+
+    bool currentPlanetContractsAvailable() const {
+        if (planets_.empty()) {
+            return true;
+        }
+        const int index = std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+        return planets_[index].contractAvailableFlag != 0;
+    }
+
+    bool planetIconAvailable(size_t iconIndex) const {
+        if (contractAccepted_) {
+            return iconIndex <= kPlanetContractIconIndex;
+        }
+        if (iconIndex == kPlanetContractIconIndex) {
+            return currentPlanetContractsAvailable();
+        }
+        return iconIndex < kPlanetIconRects.size();
+    }
+
+    size_t nextAvailablePlanetIcon(size_t iconIndex, int delta) const {
+        size_t candidate = iconIndex;
+        for (size_t i = 0; i < kPlanetIconRects.size(); ++i) {
+            candidate = delta < 0
+                ? (candidate + kPlanetIconRects.size() - 1u) % kPlanetIconRects.size()
+                : (candidate + 1u) % kPlanetIconRects.size();
+            if (planetIconAvailable(candidate)) {
+                return candidate;
+            }
+        }
+        return kPlanetStatusIconIndex;
+    }
+
+    const ContractOffer* activeContractOffer() const {
+        if (activeContractIndex_ >= activeContracts_.size()) {
+            return nullptr;
+        }
+        return &activeContracts_[activeContractIndex_];
+    }
+
+    ContractOffer* activeContractOffer() {
+        if (activeContractIndex_ >= activeContracts_.size()) {
+            return nullptr;
+        }
+        return &activeContracts_[activeContractIndex_];
+    }
+
+    static std::wstring_view houseNamePlain(uint8_t houseId) {
+        static constexpr std::array<std::wstring_view, 5> kPlainHouseNames = {{
+            L"KURITA",
+            L"STEINER",
+            L"MARIK",
+            L"LIAO",
+            L"DAVION",
+        }};
+        return kPlainHouseNames[std::min<size_t>(houseId, kPlainHouseNames.size() - 1u)];
+    }
+
+    int contractForceScore() const {
+        int tons = 0;
+        int assignedMechs = 0;
+        for (const OwnedMech& mech : ownedMechs_) {
+            if (mech.assignedCrewSlot >= 0) {
+                tons += mech.tons;
+                ++assignedMechs;
+            }
+        }
+        if (assignedMechs == 0) {
+            for (const OwnedMech& mech : ownedMechs_) {
+                tons += mech.tons;
+            }
+        }
+
+        const int yearProgress = std::max(0, currentYear_ - kStartingYear);
+        return std::max(1, tons / 50 + yearProgress * 2 + static_cast<int>(playerReputationTier_) / 2);
+    }
+
+    static bool contractMissionHasHostileTargetHouse(const ContractMissionDefinition& mission) {
+        return mission.name != L"GARRISON DUTY" && mission.name != L"GENERAL SECURITY DUTY";
+    }
+
+    static void assignContractEnemyCounts(int score, ContractOffer& offer, uint32_t randomValue) {
+        offer.heavyCount = score / 25;
+        int remainder = score % 25;
+        offer.mediumCount = remainder / 15;
+        offer.lightCount = (remainder % 15) / 7;
+
+        int total = offer.heavyCount + offer.mediumCount + offer.lightCount;
+        if (total <= 0) {
+            offer.lightCount = 1;
+            total = 1;
+        }
+        while (total > 4) {
+            if (offer.heavyCount > 0) {
+                --offer.heavyCount;
+            } else if (offer.mediumCount > 0) {
+                --offer.mediumCount;
+            } else {
+                --offer.lightCount;
+            }
+            --total;
+        }
+
+        if (offer.heavyCount == 4) {
+            if ((randomValue & 1u) == 0u) {
+                offer.heavyCount = 3;
+                offer.mediumCount = 1;
+            } else {
+                offer.heavyCount = 2;
+                offer.mediumCount = 2;
+            }
+        }
+    }
+
+    static int contractBasePriceK(int score, uint8_t employerHouse, uint32_t randomValue) {
+        static constexpr std::array<int, 5> kHousePriceBias = {{3, 5, 2, 4, 3}};
+        static constexpr std::array<int, 5> kHousePriceMultiplier = {{7, 9, 6, 8, 7}};
+        const int house = std::min<int>(employerHouse, 4);
+        const int basePrice = ((std::max(1, score) >> 1) + 1) * 100;
+        const int randomTerm = static_cast<int>(randomValue % 12u) + 1 + kHousePriceBias[house];
+        const int price = basePrice + (randomTerm * basePrice * kHousePriceMultiplier[house]) / 100;
+        return std::clamp(roundToNearest10(price), 100, kContractMaxPriceK);
+    }
+
+    static int contractDefaultSalvagePercent(uint8_t employerHouse, uint32_t randomValue) {
+        static constexpr std::array<int, 5> kHouseSalvage = {{4, 5, 5, 4, 5}};
+        const int house = std::min<int>(employerHouse, 4);
+        return std::clamp(kHouseSalvage[house] + static_cast<int>(randomValue % 2u), 0, 100);
+    }
+
+    static int contractDefaultAdvancePercent(uint8_t employerHouse, uint32_t randomValue) {
+        static constexpr std::array<int, 5> kHouseAdvance = {{4, 5, 3, 3, 5}};
+        const int house = std::min<int>(employerHouse, 4);
+        return std::clamp(kHouseAdvance[house] + static_cast<int>(randomValue % 2u), 0, 100);
+    }
+
+    static int roundToNearest10(int value) {
+        return ((value + 5) / 10) * 10;
+    }
+
+    const ContractMissionDefinition& chooseContractMission(bool allowExtended, std::mt19937& rng) const {
+        for (int attempts = 0; attempts < 12; ++attempts) {
+            const size_t index = static_cast<size_t>(rng() % kContractMissionDefinitions.size());
+            const ContractMissionDefinition& mission = kContractMissionDefinitions[index];
+            if (allowExtended || !mission.extended) {
+                return mission;
+            }
+        }
+        return kContractMissionDefinitions[static_cast<size_t>(rng() % 14u)];
+    }
+
+    std::wstring contractTargetPlanetName(uint8_t targetHouse, std::mt19937& rng) const {
+        std::vector<size_t> candidates;
+        for (size_t i = 0; i < planets_.size(); ++i) {
+            if (planets_[i].houseId == targetHouse) {
+                candidates.push_back(i);
+            }
+        }
+        if (candidates.empty()) {
+            return currentPlanetName();
+        }
+        const size_t planetIndex = candidates[static_cast<size_t>(rng() % candidates.size())];
+        return widen(planets_[planetIndex].name);
+    }
+
+    void beginContractTermEdit(ContractEditableField field) {
+        ContractOffer* offer = activeContractOffer();
+        if (!offer) {
+            return;
+        }
+        contractEditableField_ = field;
+        offer->termsModified = true;
+        contractNegotiationButtonIndex_ = 0;
+    }
+
+    void adjustSelectedContractTerm(int direction) {
+        ContractOffer* offer = activeContractOffer();
+        if (!offer) {
+            return;
+        }
+
+        if (contractEditableField_ == ContractEditableField::Price) {
+            offer->priceK = std::clamp(
+                offer->priceK + direction * kContractPriceStepK,
+                0,
+                kContractMaxPriceK);
+        } else if (contractEditableField_ == ContractEditableField::Salvage) {
+            offer->salvagePercent = std::clamp(offer->salvagePercent + direction, 0, 100);
+        } else if (contractEditableField_ == ContractEditableField::Advance) {
+            offer->advancePercent = std::clamp(offer->advancePercent + direction, 0, 100);
+        }
+        offer->termsModified = true;
+        contractNegotiationButtonIndex_ = 0;
+    }
+
+    void submitContractCounterOffer() {
+        ContractOffer* offer = activeContractOffer();
+        if (!offer) {
+            return;
+        }
+
+        ++offer->negotiationRounds;
+        if (contractOfferIsUnacceptable(*offer)) {
+            terminateContractNegotiations();
+            return;
+        }
+
+        offer->priceK = contractCounterPriceK(*offer);
+        offer->salvagePercent = contractCounterPercent(
+            offer->houseSalvagePercent,
+            offer->salvagePercent,
+            offer->negotiationRounds,
+            1);
+        offer->advancePercent = contractCounterPercent(
+            offer->houseAdvancePercent,
+            offer->advancePercent,
+            offer->negotiationRounds,
+            1);
+        offer->termsModified = false;
+        contractEditableField_ = ContractEditableField::None;
+        contractNegotiationButtonIndex_ = 0;
+    }
+
+    void acceptActiveContract() {
+        const ContractOffer* offer = activeContractOffer();
+        if (!offer) {
+            return;
+        }
+        acceptedContract_ = *offer;
+        contractAccepted_ = true;
+        activeContracts_.clear();
+        activeContractIndex_ = 0;
+        contractEditableField_ = ContractEditableField::None;
+        planetMenuIndex_ = kPlanetContractIconIndex;
+        changeState(ScreenState::ContractAcceptedMessage);
+    }
+
+    void beginMissionLaunch() {
+        if (!contractAccepted_) {
+            return;
+        }
+        missionParticipants_ = currentMissionParticipants();
+        if (missionParticipants_.empty()) {
+            return;
+        }
+        finalMissionStubActive_ = false;
+        missionLaunchPending_ = true;
+        changeState(ScreenState::TravelAnimation);
+    }
+
+    void handleBattleStubClick(int screenX, int screenY) {
+        if (hitRect(kBattleStubWinButtonRect, screenX, screenY)) {
+            battleStubButtonIndex_ = 0;
+            activateBattleStubSelection();
+        } else if (hitRect(kBattleStubLoseButtonRect, screenX, screenY)) {
+            battleStubButtonIndex_ = 1;
+            activateBattleStubSelection();
+        } else if (hitRect(kBattleStubRunButtonRect, screenX, screenY)) {
+            battleStubButtonIndex_ = 2;
+            activateBattleStubSelection();
+        }
+    }
+
+    void activateBattleStubSelection() {
+        if (finalMissionStubActive_) {
+            finalMissionStubActive_ = false;
+            planetMenuIndex_ = kPlanetStatusIconIndex;
+            changeState(ScreenState::MainMenu);
+            return;
+        }
+
+        if (battleStubButtonIndex_ == 0) {
+            resolveMissionOutcome(MissionOutcome::Victory);
+        } else if (battleStubButtonIndex_ == 1) {
+            resolveMissionOutcome(MissionOutcome::Defeat);
+        } else {
+            resolveMissionOutcome(MissionOutcome::Death);
+        }
+    }
+
+    void handleMissionDebriefClick(int screenX, int screenY) {
+        if (missionDebriefOutcome_ != MissionOutcome::Death) {
+            changeState(ScreenState::MainMenu);
+            return;
+        }
+        if (hitRect(kDeathPlayAgainRect, screenX, screenY)) {
+            missionDeathMenuIndex_ = 0;
+            restartCampaign();
+        } else if (hitRect(kDeathQuitRect, screenX, screenY)) {
+            missionDeathMenuIndex_ = 1;
+            DestroyWindow(hwnd_);
+        }
+    }
+
+    std::vector<MissionParticipant> currentMissionParticipants() const {
+        std::vector<MissionParticipant> participants;
+        participants.reserve(crewMembers_.size());
+        for (size_t mechIndex = 0; mechIndex < ownedMechs_.size(); ++mechIndex) {
+            const OwnedMech& mech = ownedMechs_[mechIndex];
+            if (mech.assignedCrewSlot < 0 ||
+                static_cast<size_t>(mech.assignedCrewSlot) >= crewMembers_.size()) {
+                continue;
+            }
+            const CrewMember& crew = crewMembers_[static_cast<size_t>(mech.assignedCrewSlot)];
+            if (!crew.hired) {
+                continue;
+            }
+            participants.push_back({
+                mech.assignedCrewSlot,
+                static_cast<int>(mechIndex),
+                std::wstring(crew.name),
+                std::wstring(mech.name),
+                mech.armorPercent,
+                false,
+            });
+            if (participants.size() >= crewMembers_.size()) {
+                break;
+            }
+        }
+        std::sort(
+            participants.begin(),
+            participants.end(),
+            [](const MissionParticipant& lhs, const MissionParticipant& rhs) {
+                return lhs.crewSlot < rhs.crewSlot;
+            });
+        return participants;
+    }
+
+    void resolveMissionOutcome(MissionOutcome outcome) {
+        if (!contractAccepted_ && outcome != MissionOutcome::Death) {
+            return;
+        }
+        if (missionParticipants_.empty()) {
+            missionParticipants_ = currentMissionParticipants();
+        }
+        if (outcome == MissionOutcome::Death) {
+            for (MissionParticipant& participant : missionParticipants_) {
+                participant.killed = participant.crewSlot == 0;
+            }
+        }
+
+        missionDebriefOutcome_ = outcome;
+        missionDebriefSalvage_ = outcome == MissionOutcome::Victory ? missionPlaceholderSalvage() : 0;
+        missionDebriefPayment_ = outcome == MissionOutcome::Victory
+            ? std::min<uint64_t>(
+                  kMaxPlayerWealth,
+                  static_cast<uint64_t>(acceptedContract_.priceK) * 1000ull)
+            : 0;
+
+        if (outcome == MissionOutcome::Victory) {
+            playerWealth_ = std::min(kMaxPlayerWealth, playerWealth_ + missionDebriefPayment_ + missionDebriefSalvage_);
+            applyMissionHouseConsequences(outcome);
+            addCompanyReputationPoints(missionReputationDelta(acceptedContract_));
+            applyMissionExperience();
+        } else if (outcome == MissionOutcome::Defeat) {
+            applyMissionHouseConsequences(outcome);
+            applyMissionExperience();
+        }
+
+        if (outcome != MissionOutcome::Death) {
+            advanceCampaignDays(missionDurationTicks(acceptedContract_));
+        }
+
+        contractAccepted_ = false;
+        missionLaunchPending_ = false;
+        activeContracts_.clear();
+        planetMenuIndex_ = kPlanetStatusIconIndex;
+        missionDeathMenuIndex_ = 0;
+        changeState(ScreenState::MissionDebrief);
+    }
+
+    uint64_t missionPlaceholderSalvage() const {
+        const uint64_t enemyPool =
+            static_cast<uint64_t>(acceptedContract_.heavyCount) * 800000ull +
+            static_cast<uint64_t>(acceptedContract_.mediumCount) * 450000ull +
+            static_cast<uint64_t>(acceptedContract_.lightCount) * 180000ull;
+        return (enemyPool * static_cast<uint64_t>(acceptedContract_.salvagePercent)) / 100ull;
+    }
+
+    void applyMissionHouseConsequences(MissionOutcome outcome) {
+        if (acceptedContract_.hasHostileTargetHouse) {
+            addHouseNegativeCounter(acceptedContract_.targetHouse, 2);
+        }
+
+        if (outcome == MissionOutcome::Victory) {
+            addHousePositiveCounter(acceptedContract_.employerHouse, 2);
+        } else if (outcome == MissionOutcome::Defeat) {
+            addHouseNegativeCounter(acceptedContract_.employerHouse, 1);
+        }
+        syncFamilyAttitudesFromHouseCounters();
+    }
+
+    void addHousePositiveCounter(uint8_t houseId, int delta) {
+        const size_t index = std::min<size_t>(houseId, housePositiveCounters_.size() - 1u);
+        housePositiveCounters_[index] = std::max(0, housePositiveCounters_[index] + delta);
+    }
+
+    void addHouseNegativeCounter(uint8_t houseId, int delta) {
+        const size_t index = std::min<size_t>(houseId, houseNegativeCounters_.size() - 1u);
+        houseNegativeCounters_[index] = std::max(0, houseNegativeCounters_[index] + delta);
+    }
+
+    void syncFamilyAttitudesFromHouseCounters() {
+        for (size_t i = 0; i < familyAttitudes_.size(); ++i) {
+            familyAttitudes_[i] = housePositiveCounters_[i] - houseNegativeCounters_[i];
+        }
+    }
+
+    static int missionReputationDelta(const ContractOffer& offer) {
+        return std::max(0, offer.heavyCount + offer.mediumCount + offer.lightCount);
+    }
+
+    static uint32_t missionDurationTicks(const ContractOffer& offer) {
+        const uint32_t enemyWeight =
+            static_cast<uint32_t>(std::max(0, offer.heavyCount)) * 24u +
+            static_cast<uint32_t>(std::max(0, offer.mediumCount)) * 18u +
+            static_cast<uint32_t>(std::max(0, offer.lightCount)) * 12u;
+        uint32_t seed = 0x4D575243u;
+        seed ^= static_cast<uint32_t>(offer.employerHouse) * 0x9E3779B9u;
+        seed ^= static_cast<uint32_t>(offer.targetHouse) * 0x85EBCA6Bu;
+        seed ^= static_cast<uint32_t>(offer.priceK) * 0xC2B2AE35u;
+        seed ^= static_cast<uint32_t>(offer.salvagePercent) * 0x27D4EB2Du;
+        seed ^= static_cast<uint32_t>(offer.advancePercent) * 0x165667B1u;
+        seed ^= enemyWeight * 0xD3A2646Cu;
+
+        if (offer.hasHostileTargetHouse) {
+            return kMissionHostileBaseDuration + enemyWeight + seed % 36u;
+        }
+        return kMissionGarrisonBaseDuration + enemyWeight + seed % 72u;
+    }
+
+    void addCompanyReputationPoints(int delta) {
+        playerReputationPoints_ = static_cast<uint16_t>(
+            std::min<int>(
+                std::numeric_limits<uint16_t>::max(),
+                static_cast<int>(playerReputationPoints_) + std::max(0, delta)));
+        playerReputationTier_ = reputationTierForPoints(playerReputationPoints_);
+    }
+
+    static uint8_t reputationTierForPoints(uint16_t points) {
+        if (points > 20) {
+            return 3;
+        }
+        if (points > 10) {
+            return 2;
+        }
+        if (points > 5) {
+            return 1;
+        }
+        return 0;
+    }
+
+    static uint16_t minimumReputationPointsForTier(uint8_t tier) {
+        switch (std::min<uint8_t>(tier, 3)) {
+        case 1:
+            return 6;
+        case 2:
+            return 11;
+        case 3:
+            return 21;
+        default:
+            return 0;
+        }
+    }
+
+    void applyMissionExperience() {
+        for (const MissionParticipant& participant : missionParticipants_) {
+            if (participant.killed ||
+                participant.crewSlot < 0 ||
+                static_cast<size_t>(participant.crewSlot) >= crewMembers_.size()) {
+                continue;
+            }
+            improveCrewMemberAfterMission(crewMembers_[static_cast<size_t>(participant.crewSlot)]);
+        }
+    }
+
+    void improveCrewMemberAfterMission(CrewMember& member) {
+        const uint8_t skill = skillRank(member.gunnery);
+        if (skill >= 3) {
+            return;
+        }
+        static constexpr std::array<uint8_t, 4> kPromotionMissionThresholds = {{3, 10, 15, 255}};
+        ++member.missionExperience;
+        if (member.missionExperience < kPromotionMissionThresholds[skill]) {
+            return;
+        }
+
+        const uint8_t promotedSkill = static_cast<uint8_t>(std::min<int>(3, skill + 1));
+        member.gunnery = skillLabel(promotedSkill);
+        member.piloting = skillLabel(promotedSkill);
+        member.missionExperience = 0;
+        if (member.recruitIndex >= 0 && static_cast<size_t>(member.recruitIndex) < recruitPilots_.size()) {
+            RecruitPilot& pilot = recruitPilots_[static_cast<size_t>(member.recruitIndex)];
+            pilot.gunnerySkill = promotedSkill;
+            pilot.pilotingSkill = promotedSkill;
+            pilot.monthlyWage = monthlyWageForGunnery(promotedSkill);
+            member.wage = pilot.monthlyWage;
+        } else if (member.wage > 0) {
+            member.wage = monthlyWageForGunnery(promotedSkill);
+        }
+    }
+
+    static uint8_t skillRank(std::wstring_view label) {
+        if (label == L"AVERAGE") {
+            return 1;
+        }
+        if (label == L"GOOD") {
+            return 2;
+        }
+        if (label == L"EXCELLENT") {
+            return 3;
+        }
+        return 0;
+    }
+
+    void restartCampaign() {
+        loadResources();
+        changeState(ScreenState::CampaignMessage);
+    }
+
+    bool contractOfferIsUnacceptable(const ContractOffer& offer) const {
+        const int patience = contractHousePatience(offer.employerHouse);
+        if (offer.negotiationRounds > patience) {
+            return true;
+        }
+
+        const int priceDemand = std::max(0, offer.priceK - offer.housePriceK) / 10;
+        const int salvageDemand = std::max(0, offer.salvagePercent - offer.houseSalvagePercent) * 5;
+        const int advanceDemand = std::max(0, offer.advancePercent - offer.houseAdvancePercent) * 3;
+        const int demandScore = priceDemand + salvageDemand + advanceDemand;
+        return demandScore > 150 + patience * 20;
+    }
+
+    static int contractHousePatience(uint8_t employerHouse) {
+        static constexpr std::array<int, 5> kHousePatience = {{3, 4, 3, 3, 4}};
+        return kHousePatience[std::min<size_t>(employerHouse, kHousePatience.size() - 1u)];
+    }
+
+    static int contractCounterPriceK(const ContractOffer& offer) {
+        const int requestedExtra = std::max(0, offer.priceK - offer.housePriceK);
+        const int concession = std::min(requestedExtra, 20 * offer.negotiationRounds);
+        if (offer.priceK <= offer.housePriceK) {
+            return offer.priceK;
+        }
+        return std::clamp(roundToNearest10(offer.housePriceK + concession), 0, kContractMaxPriceK);
+    }
+
+    static int contractCounterPercent(int houseValue, int requestedValue, int negotiationRounds, int concessionPerRound) {
+        if (requestedValue <= houseValue) {
+            return requestedValue;
+        }
+        const int concession = std::min(requestedValue - houseValue, negotiationRounds * concessionPerRound);
+        return std::clamp(houseValue + concession, 0, 100);
+    }
+
+    void terminateContractNegotiations() {
+        if (!planets_.empty()) {
+            const size_t planetIndex = static_cast<size_t>(
+                std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1));
+            if (planetIndex < contractNegotiationLockedVisitByPlanet_.size()) {
+                contractNegotiationLockedVisitByPlanet_[planetIndex] = currentPlanetVisitSerial_;
+            }
+        }
+        activeContracts_.clear();
+        activeContractIndex_ = 0;
+        contractEditableField_ = ContractEditableField::None;
+        contractNegotiationButtonIndex_ = 2;
+        contractNegotiationTerminated_ = true;
+    }
+
+    bool currentPlanetContractsLocked() const {
+        if (planets_.empty()) {
+            return false;
+        }
+        const size_t planetIndex = static_cast<size_t>(
+            std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1));
+        return planetIndex < contractNegotiationLockedVisitByPlanet_.size() &&
+            contractNegotiationLockedVisitByPlanet_[planetIndex] == currentPlanetVisitSerial_;
+    }
+
+    void cycleContractEditableField() {
+        if (contractEditableField_ == ContractEditableField::Price) {
+            contractEditableField_ = ContractEditableField::Salvage;
+        } else if (contractEditableField_ == ContractEditableField::Salvage) {
+            contractEditableField_ = ContractEditableField::Advance;
+        } else {
+            contractEditableField_ = ContractEditableField::Price;
+        }
+    }
+
+    int currentPlanetContractPortraitEntry() const {
+        const size_t houseId = currentPlanetHouseId();
+        const size_t portraitCount = kContractContactPortraitCounts[houseId];
+        const size_t slot = portraitCount == 0 ? 0 : currentPlanetHouseOrdinal(static_cast<uint8_t>(houseId)) % portraitCount;
+        return contractContactPortraitEntryIndex(houseId, slot);
+    }
+
+    size_t currentPlanetHouseOrdinal(uint8_t houseId) const {
+        if (planets_.empty()) {
+            return 0;
+        }
+
+        const int currentIndex = std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+        const PlanetRecord& currentPlanet = planets_[currentIndex];
+        size_t ordinal = 0;
+        for (const PlanetRecord& planet : planets_) {
+            if (planet.houseId != houseId) {
+                continue;
+            }
+            if (planet.tableOrder < currentPlanet.tableOrder ||
+                (planet.tableOrder == currentPlanet.tableOrder && planet.planetNumber < currentPlanet.planetNumber)) {
+                ++ordinal;
+            }
+        }
+        return ordinal;
+    }
+
+    static int contractIconEntryForHouse(uint8_t houseId) {
+        return 26 + static_cast<int>(std::min<uint8_t>(houseId, 4));
+    }
+
+    static int contractContactPortraitEntryIndex(size_t houseId, size_t slot) {
+        return static_cast<int>(houseId * 5u + slot);
     }
 
     std::wstring campaignDateLabel() const {
@@ -6534,12 +11044,56 @@ private:
         return currentYear_ * kCampaignMonthsPerYear + currentMonth_;
     }
 
-    std::wstring_view environmentLabel(uint8_t terrainCode) const {
+    static PlanetEnvironment environmentForTerrain(uint8_t terrainCode) {
         switch (terrainCode % 3u) {
         case 1:
-            return L"DESERT";
+            return PlanetEnvironment::Desert;
         case 2:
+            return PlanetEnvironment::Tropical;
+        default:
+            return PlanetEnvironment::Ice;
+        }
+    }
+
+    PlanetEnvironment currentPlanetEnvironment() const {
+        if (planets_.empty()) {
+            return PlanetEnvironment::Desert;
+        }
+        const int index = std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
+        return environmentForTerrain(planets_[static_cast<size_t>(index)].terrainCode);
+    }
+
+    int campaignBackdropEntry() const {
+        switch (currentPlanetEnvironment()) {
+        case PlanetEnvironment::Tropical:
+            return kCampaignTropicalEntry;
+        case PlanetEnvironment::Ice:
+            return kCampaignIceEntry;
+        case PlanetEnvironment::Desert:
+        default:
+            return kCampaignDesertEntry;
+        }
+    }
+
+    int barEnvironmentOverlayEntry() const {
+        switch (currentPlanetEnvironment()) {
+        case PlanetEnvironment::Tropical:
+            return kBarTropicalOverlayEntry;
+        case PlanetEnvironment::Ice:
+            return kBarIceOverlayEntry;
+        case PlanetEnvironment::Desert:
+        default:
+            return -1;
+        }
+    }
+
+    std::wstring_view environmentLabel(uint8_t terrainCode) const {
+        switch (environmentForTerrain(terrainCode)) {
+        case PlanetEnvironment::Desert:
+            return L"DESERT";
+        case PlanetEnvironment::Tropical:
             return L"TROPICAL";
+        case PlanetEnvironment::Ice:
         default:
             return L"ICE";
         }
@@ -6720,6 +11274,63 @@ private:
         }
     }
 
+    void drawContractText7x5(int x, int y, std::wstring_view text, uint8_t color) {
+        const Font& contractFont = menuFont_.rows.empty() ? font_ : menuFont_;
+        int cursorX = x;
+        for (wchar_t wideCh : text) {
+            const char ch = (wideCh < 128) ? static_cast<char>(wideCh) : '?';
+            if (cursorX > 286) {
+                break;
+            }
+            drawGlyph7x5(contractFont, cursorX, y, ch, color);
+            cursorX += 8;
+        }
+    }
+
+    void drawContractText7x5Centered(int x, int y, int width, std::wstring_view text, uint8_t color) {
+        const int measuredWidth = newsNetButtonTextWidth(text);
+        drawContractText7x5(x + (width - measuredWidth) / 2, y, text, color);
+    }
+
+    void drawContractValue7x5(int x, int y, std::wstring_view text, ContractEditableField field) {
+        const uint8_t color = contractEditableField_ == field
+            ? kContractSelectedValueColor
+            : kContractValueColor;
+        drawContractText7x5(x, y, text, color);
+    }
+
+    static std::vector<std::wstring> wrapContractLine(std::wstring_view text, size_t maxChars) {
+        std::vector<std::wstring> lines;
+        std::wstring current;
+        size_t index = 0;
+        while (index < text.size()) {
+            while (index < text.size() && text[index] == L' ') {
+                ++index;
+            }
+            size_t end = index;
+            while (end < text.size() && text[end] != L' ') {
+                ++end;
+            }
+            std::wstring word(text.substr(index, end - index));
+            if (!current.empty() && current.size() + 1u + word.size() > maxChars) {
+                lines.push_back(current);
+                current.clear();
+            }
+            if (!current.empty()) {
+                current.push_back(L' ');
+            }
+            current += word;
+            index = end;
+        }
+        if (!current.empty()) {
+            lines.push_back(current);
+        }
+        if (lines.empty()) {
+            lines.push_back(std::wstring(text));
+        }
+        return lines;
+    }
+
     void drawHouseEmblem(uint8_t houseId) {
         if (houseId > 4) {
             return;
@@ -6736,6 +11347,19 @@ private:
 
     void drawStarmapMarker(uint8_t mapX, uint8_t mapY, uint8_t color) {
         drawBox(static_cast<int>(mapX) - 2, static_cast<int>(mapY) - 2, 5, 5, color);
+    }
+
+    void drawStarmapNameInputCursor(int x, int y) {
+        if (((GetTickCount() - stateStartedTick_) / 300u) % 2u != 0u) {
+            return;
+        }
+
+        drawPixel(x + 2, y, 4);
+        fillRect(x + 1, y + 1, 3, 1, 4);
+        fillRect(x, y + 2, 5, 1, 4);
+        fillRect(x + 1, y + 3, 3, 1, 4);
+        drawPixel(x + 2, y + 4, 4);
+        drawPixel(x + 2, y + 2, 12);
     }
 
     void drawStarmapRouteLine(const PlanetRecord& from, const PlanetRecord& to) {
@@ -7114,19 +11738,30 @@ private:
     PicsArchive gpicsArchive_;
     PicsArchive campaignArchive_;
     PicsArchive barArchive_;
+    PicsArchive barEnvironmentOverlayArchive_;
+    PicsArchive barInformationArchive_;
     PicsArchive crewArchive_;
     PicsArchive crewMechArchive_;
     PicsArchive mechStatusArchive_;
     PicsArchive houseEmblemsArchive_;
+    PicsArchive contractHouseNamesArchive_;
+    PicsArchive contractHouseEmblemsArchive_;
+    PicsArchive contractContactPortraitsArchive_;
+    PicsArchive missionResultArchive_;
     PicsArchive travelShuttleArchive_;
     PicsArchive travelEngineArchive_;
+    std::vector<uint8_t> mwMainData_;
     Font font_;
     Font smallFont_;
     Font menuFont_;
     std::vector<uint32_t> framebuffer_;
     std::vector<std::wstring> campaignMessageLines_;
+    std::vector<StoryPage> storyPages_;
     std::vector<std::vector<std::wstring>> newsNetMessageLines_;
     std::vector<std::wstring> newsNetNoOtherLines_;
+    std::vector<std::wstring> missionVictoryLines_;
+    std::vector<std::wstring> missionDefeatLines_;
+    std::vector<std::wstring> missionDeathPromptLines_;
     std::vector<size_t> activeNewsNetMessageIndexes_;
     std::vector<RecruitPilot> recruitPilots_;
     std::vector<PlanetRecruitPool> planetRecruitPools_;
@@ -7134,7 +11769,18 @@ private:
     std::vector<int> recruitLastMonthKey_;
     std::vector<size_t> previousPlanetRecruitIndexes_;
     std::vector<PlanetMechMarket> planetMechMarkets_;
+    std::vector<int> contractNegotiationLockedVisitByPlanet_;
+    std::vector<ContractOffer> activeContracts_;
+    ContractOffer acceptedContract_;
+    std::vector<MissionParticipant> missionParticipants_;
     std::vector<PlanetRecord> planets_;
+    std::array<uint8_t, 256> storyMessageFlags_ = {};
+    std::string startingStoryPlanetName_;
+    std::wstring grigDestinationPlanet_;
+    std::wstring wendallDestinationPlanet_;
+    std::wstring kearneyDestinationPlanet_;
+    std::wstring blackWidowDestinationPlanet_;
+    std::wstring darkWingDestinationPlanet_;
     std::wstring status_;
     ScreenState state_ = ScreenState::ActivisionSplash;
     DWORD stateStartedTick_ = GetTickCount();
@@ -7144,11 +11790,38 @@ private:
     int pendingTravelPlanetIndex_ = 0;
     uint64_t pendingTravelCost_ = 0;
     uint16_t pendingTravelDays_ = 0;
+    size_t starmapButtonIndex_ = kStarmapNoButtonSelection;
+    StarmapMenuMode starmapMenuMode_ = StarmapMenuMode::None;
+    size_t starmapHouseSelectionIndex_ = 0;
+    size_t starmapPlanetSelectionIndex_ = 0;
+    bool starmapNameInputActive_ = false;
+    int starmapNameInputOriginalPlanetIndex_ = 0;
+    std::string starmapNameInput_;
     size_t statusMenuIndex_ = 0;
     size_t newsNetButtonIndex_ = 0;
+    size_t contractMenuIndex_ = 0;
+    size_t contractNegotiationButtonIndex_ = 1;
+    size_t activeContractIndex_ = 0;
+    ContractEditableField contractEditableField_ = ContractEditableField::None;
+    bool contractAccepted_ = false;
+    bool contractNegotiationTerminated_ = false;
+    bool contractNegotiationUnavailable_ = false;
+    bool missionLaunchPending_ = false;
+    bool finalMissionStubActive_ = false;
+    size_t battleStubButtonIndex_ = 0;
+    MissionOutcome missionDebriefOutcome_ = MissionOutcome::Victory;
+    uint64_t missionDebriefSalvage_ = 0;
+    uint64_t missionDebriefPayment_ = 0;
+    size_t missionDeathMenuIndex_ = 0;
     int newsNetMessageIndex_ = 0;
     bool newsNetShowingNoOther_ = false;
     int newsNetNoOtherDirection_ = 0;
+    bool newsNetDayCharged_ = false;
+    size_t currentStoryPageIndex_ = 0;
+    size_t currentStoryChoiceIndex_ = 0;
+    StoryAction pendingStoryDefaultAction_ = StoryAction::None;
+    ScreenState pendingStoryReturnState_ = ScreenState::MainMenu;
+    StoryBackdrop storyBackdrop_ = StoryBackdrop::Campaign;
     size_t mechLabMenuIndex_ = 0;
     size_t selectedMechIndex_ = 0;
     size_t mechStatusMenuIndex_ = 0;
@@ -7166,7 +11839,12 @@ private:
     uint32_t recruitmentSeed_ = 0;
     int planetVisitSerialCounter_ = 1;
     int currentPlanetVisitSerial_ = 1;
-    size_t systemMenuIndex_ = kSystemContinueMenuIndex;
+    size_t systemMenuIndex_ = kSystemSaveMenuIndex;
+    std::string saveGameNameInput_;
+    std::vector<SaveGameSlot> restoreGameSlots_ = std::vector<SaveGameSlot>(kGamVisibleSlotCount);
+    size_t restoreGameSelectionIndex_ = 0;
+    std::vector<uint8_t> gamRawState_;
+    bool gamRawStateValid_ = false;
     bool mechLabWeldingActive_ = false;
     DWORD mechLabNextWeldTick_ = 0;
     DWORD mechLabWeldStartedTick_ = 0;
@@ -7175,7 +11853,8 @@ private:
     bool soundEnabled_ = true;
     int detailLevel_ = 0;
     std::wstring_view commanderName_ = L"G BRAVER";
-    uint8_t playerReputation_ = 0;
+    uint16_t playerReputationPoints_ = 0;
+    uint8_t playerReputationTier_ = 0;
     uint64_t playerWealth_ = 1000000;
     std::array<int, 6> extraAmmoInHold_ = {};
     std::vector<OwnedMech> ownedMechs_ = {{makeStartingJenner()}};
@@ -7193,12 +11872,14 @@ private:
     int currentMonthDayCounter_ = kStartingMonthDayCounter;
     int currentPeriodic14DayCounter_ = kStartingPeriodic14DayCounter;
     int currentDay_ = 8;
+    std::array<int, 5> housePositiveCounters_ = {};
+    std::array<int, 5> houseNegativeCounters_ = {};
     std::array<int, 5> familyAttitudes_ = {{
-        10,
-        10,
-        10,
-        10,
-        10,
+        0,
+        0,
+        0,
+        0,
+        0,
     }};
     static constexpr std::array<std::wstring_view, 5> kHouseNames = {{
         L"KURITA :",
