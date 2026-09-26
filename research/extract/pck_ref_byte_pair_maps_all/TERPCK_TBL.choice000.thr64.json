@@ -1,0 +1,66 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/TERPCK_TBL.decoded.bin",
+    "size": 11270,
+    "sha256": "88e0760854181816ed8d3ec64cd15f84b80054bb60d7435086df22611e743b0f"
+  },
+  "kind": "pck_ref_byte_pair_selected_records",
+  "choice_index": 0,
+  "threshold": 64,
+  "selected_ref_count": 1,
+  "group_count": 1,
+  "entries": [
+    {
+      "id": "pck_object_0018_part_002_choice_000_frame_008",
+      "object_id": "pck_object_0018",
+      "part_id": "pck_object_0018_part_002",
+      "frame_table_id": "pck_object_0018_part_002_choice_000",
+      "part_index": 2,
+      "choice_index": 0,
+      "frame_index": 8,
+      "frame_abs": 6746,
+      "frame_abs_hex": "0x001A5A",
+      "threshold": 44,
+      "frame_type": 2,
+      "payload_abs": 6748,
+      "payload_abs_hex": "0x001A5C",
+      "record_8_hex": "2C021A1B1CFF1E1B",
+      "payload_16_hex": "1A1B1CFF1E1B1AFF1E201BFF061620FF",
+      "selected_choice_index": 0,
+      "selection_threshold": 64,
+      "payload_hex": "1A1B1CFF1E1B",
+      "semantic": "draw_referenced_shape_2d",
+      "dx": 26,
+      "dy": 27,
+      "shape_ref": 65308,
+      "extra_word": 6942,
+      "shape_ref_hex": "0xFF1C",
+      "shape_ref_signed": -228,
+      "shape_ref_low_byte": 28,
+      "shape_ref_high_byte": 255,
+      "byte_pair_key": "1C:FF"
+    }
+  ],
+  "groups": [
+    {
+      "source_file": "TERPCK_TBL.decoded.bin",
+      "byte_pair_key": "1C:FF",
+      "shape_ref_hex": "0xFF1C",
+      "shape_ref_low_byte": 28,
+      "shape_ref_high_byte": 255,
+      "frame_type": 2,
+      "transform_index": "",
+      "count": 1,
+      "object_count": 1,
+      "objects": "pck_object_0018",
+      "dx_min": 26,
+      "dx_max": 26,
+      "dy_min": 27,
+      "dy_max": 27,
+      "threshold_min": 44,
+      "threshold_max": 44
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/FOX88.FNT",
+    "size": 772,
+    "sha256": "0a1d188c6f4eba381aa098a3474a888164392d9492ece3cba06cd05159a505e9"
+  },
+  "entries": []
+}

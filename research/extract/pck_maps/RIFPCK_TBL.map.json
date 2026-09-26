@@ -1,0 +1,73 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/RIFPCK.TBL",
+    "size": 32775,
+    "sha256": "622866d77ba6f8b55a5b6916c95222298baa6e74dc2b6699bd10c2b85dab8473"
+  },
+  "codec": "pck_lzw_segmented",
+  "raw_codec_id": 2,
+  "decoded_size": 42774,
+  "decoded_sha256": "fbc49c635ef50506df4307eb25e7f30d051b9e5e991861ff496950b5462b61e9",
+  "decoded_structure_probe": {
+    "first_u16": 4,
+    "second_u16": 21,
+    "second_u16_times_16": 336,
+    "second_u16_times_16_hex": "0x0150",
+    "leading_pair_count": 84,
+    "leading_pair_bytes": 336,
+    "leading_pair_stop_offset": 338,
+    "leading_pair_stop_offset_hex": "0x0152",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 2649",
+    "boundary_16x_first_16_hex": "00000000800046010000000000000100"
+  },
+  "segment_count": 3,
+  "segments": [
+    {
+      "id": "pck_segment_000",
+      "index": 0,
+      "codec": 2,
+      "file_offset": 5,
+      "file_offset_hex": "0x000005",
+      "file_end_offset": 15072,
+      "file_end_offset_hex": "0x003AE0",
+      "body_offset": 0,
+      "body_end_offset": 15067,
+      "gap_before": 0,
+      "compressed_size": 15067,
+      "decoded_size": 20001,
+      "ended_by_code_256": true
+    },
+    {
+      "id": "pck_segment_001",
+      "index": 1,
+      "codec": 2,
+      "file_offset": 15073,
+      "file_offset_hex": "0x003AE1",
+      "file_end_offset": 30591,
+      "file_end_offset_hex": "0x00777F",
+      "body_offset": 15068,
+      "body_end_offset": 30586,
+      "gap_before": 1,
+      "compressed_size": 15518,
+      "decoded_size": 20001,
+      "ended_by_code_256": true
+    },
+    {
+      "id": "pck_segment_002",
+      "index": 2,
+      "codec": 2,
+      "file_offset": 30597,
+      "file_offset_hex": "0x007785",
+      "file_end_offset": 32775,
+      "file_end_offset_hex": "0x008007",
+      "body_offset": 30592,
+      "body_end_offset": 32770,
+      "gap_before": 6,
+      "compressed_size": 2178,
+      "decoded_size": 2772,
+      "ended_by_code_256": false
+    }
+  ]
+}

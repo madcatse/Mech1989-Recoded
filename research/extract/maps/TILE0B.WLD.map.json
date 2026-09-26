@@ -1,0 +1,32 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/TILE0B.WLD",
+    "size": 14,
+    "sha256": "100edd9726815137e97fe4bc0ad9fd4cd5ba8b51c6393773994bad3c46eb58ed"
+  },
+  "entries": [
+    {
+      "id": "records_7_2",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 14,
+      "end_offset": 14,
+      "depth": 0,
+      "confidence": "low",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 7,
+        "record_count": 2
+      }
+    }
+  ]
+}

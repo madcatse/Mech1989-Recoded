@@ -1,0 +1,33 @@
+﻿# Strings extracted from Original/TILE15.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 29
+
+$*********'
+!'/8@AAAAAAA:,
+#(-2;CKSWWWWWWM>0"
+$).38=FNV^fonnnn_QC4&
+#4:?DIQYairz
+rdUG9+
+0BKPU\dlu}
+whZL=/!
++=O\agox
+{m^PB3%
+	'D\lr{
+rcTF8)
+ >\t|
+m[I<.
+4J`uuuuuuuuuw
+zhVD2$
+#9Ocjjjjjjjpy{}
+ucQ?-
+)>R``````irtvxz|{o^L:(
+-AUUUUXakmoqsuwvjXF4"
+0DKKQZcegikmoqqeSA/ 
+#2@IS\^`bdfhjlk`N<.' 
+)7BLUWY[]_acegf[I<5(
+!/:ENPRTVXZ\^`baUJ<-
+&2=FHJLNPRTVXZ\\O@2#
+)4?ABDFGIJLNOQPI?5%
+ (0568:;=?@BDCA<2)
+ '*,./13465320&
+ "#%'('&$" 

@@ -1,0 +1,78 @@
+﻿# Strings extracted from Original/TERPCK.TBL
+# Minimum length: 4 printable ASCII bytes
+# Count: 74
+
+j)r+
+PpcBX
+8a@iw
+	8.+
+S#2j
+ 'pq 
+i/{Q
+q!IQ
+< 3&$
+@%0uJ
+g(@/
+{9D?
+@o`0
+(A"Z
+Hq) 7
+aLD8]
+PH/[
+,[&@
+ht5\
+,0D'v
+=*w!-
+s3Ws#
+svdq
+1	a`
+.m7ylD
+-(px
+3Dw%`
+$U%2
+#`!'
+p?eb
+[dmK
+kwq	
+Y n;
+fq	K`z
+.1!"
+P&x 
+!6HS
+"#R"'
+9-"$b"(
+PzC1
+g{`&fdffhf
+s^(s
+z8tw
+fq6g
+pU8G
+CaqN
+Fk	`k
+^/gi
+_lJS
+,w>M
+%`u%
+"z"`
+CaqN
+Fk	`k
+^/gi
+_lJS
+,w>M
+%`u%
+"z"`
+2&!4
+Fz))
+.hI1
+4c3T
+0P${
+:/eb
+>A&?_
+q<8B	
+-"C`P
+`+04
+/	`-T
+"6pI
+J1BJ
+"`?+F
+`F{.

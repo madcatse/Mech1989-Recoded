@@ -1,0 +1,8 @@
+﻿# Strings extracted from Original/MECH.MUS
+# Minimum length: 4 printable ASCII bytes
+# Count: 4
+
+MThd
+`MTrk
+!(C.
+I)	J

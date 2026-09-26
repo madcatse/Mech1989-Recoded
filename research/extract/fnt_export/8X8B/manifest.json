@@ -1,0 +1,29 @@
+{
+  "tool": "export_fnt",
+  "schema_version": 1,
+  "source": {
+    "path": "Sorted Original Files/FNT/8X8B.FNT",
+    "size": 780,
+    "sha256": "ee5e03776c73a5747f6e7d84789e6ef77df52a05e248fe504631c778adcf9003"
+  },
+  "wrapper": "FNT:",
+  "payload_offset": 8,
+  "payload_size": 772,
+  "payload_sha256": "cc66b5175a48ac80a1b992ccf025bd07494499d65a98df65793d0cb4a5023f4e",
+  "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+  "width": 8,
+  "height": 8,
+  "first_code": 32,
+  "first_code_hex": "0x20",
+  "glyph_count": 96,
+  "last_code": 127,
+  "last_code_hex": "0x7F",
+  "outputs": {
+    "payload": "research/extract/fnt_export/8X8B/8X8B.payload.bin",
+    "glyphs_csv": "research/extract/fnt_export/8X8B/glyphs.csv",
+    "glyphs_jsonl": "research/extract/fnt_export/8X8B/glyphs.jsonl",
+    "sheets": [
+      "research/extract/fnt_export/8X8B/8X8B_8x8_96glyphs.png"
+    ]
+  }
+}

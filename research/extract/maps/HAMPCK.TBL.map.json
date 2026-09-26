@@ -1,0 +1,183 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/HAMPCK.TBL",
+    "size": 29960,
+    "sha256": "1812f1d922bd82141fc4c9a5380e5c3a51528a72c4c805e9dcce4b8be0bcee60"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_000354",
+      "kind": "possible_offset_table",
+      "offset": 852,
+      "header_size": 0,
+      "payload_offset": 2561,
+      "payload_size": 27399,
+      "end_offset": 860,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 2561,
+        "last_value": 20499
+      }
+    },
+    {
+      "id": "records_4_7490",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 29960,
+      "end_offset": 29960,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 4,
+        "record_count": 7490
+      }
+    },
+    {
+      "id": "records_7_4280",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 29960,
+      "end_offset": 29960,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 7,
+        "record_count": 4280
+      }
+    },
+    {
+      "id": "records_8_3745",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 29960,
+      "end_offset": 29960,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 8,
+        "record_count": 3745
+      }
+    },
+    {
+      "id": "records_10_2996",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 29960,
+      "end_offset": 29960,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 10,
+        "record_count": 2996
+      }
+    },
+    {
+      "id": "records_14_2140",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 29960,
+      "end_offset": 29960,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 14,
+        "record_count": 2140
+      }
+    },
+    {
+      "id": "records_20_1498",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 29960,
+      "end_offset": 29960,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 20,
+        "record_count": 1498
+      }
+    },
+    {
+      "id": "records_28_1070",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 29960,
+      "end_offset": 29960,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 28,
+        "record_count": 1070
+      }
+    }
+  ]
+}

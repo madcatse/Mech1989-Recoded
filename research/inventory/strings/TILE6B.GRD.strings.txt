@@ -1,0 +1,13 @@
+﻿# Strings extracted from Original/TILE6B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 9
+
+"%'*-,%
+!%(,/258:=:3+
+ +.*(&$!
+#'+.26:=AEHKMH>/!
+4=;97531048<@CGKORVZ[RC4&
+2348;=<9;>?CFJLMOQRTUOE7+
+!$(+289;<>@ACEFGFC9/%
+")-/124579:865,"
+ #%&(*+,*)'% 

@@ -1,0 +1,4 @@
+﻿# Hex sample for Original/TILE5B.WLD
+# Size: 14 bytes
+# First 256 bytes
+00000000  02 00 4A 4A 00 00 B8 16 00 00 00 00 00 00        ..JJ..........

@@ -1,0 +1,17 @@
+{
+  "render_root": "research/extract/phase9_cockpit_scr",
+  "contact_sheet": "research/analysis/phase9_cockpit_scr/cockpit_scr_contact_sheet.png",
+  "runtime_regions": "research/analysis/phase9_cockpit_scr/cockpit_scr_runtime_regions.csv",
+  "families": [
+    "LIGHT",
+    "MEDIUM",
+    "HEAVY"
+  ],
+  "black_threshold": 0,
+  "min_area": 20,
+  "region_counts": {
+    "LIGHT": 3,
+    "MEDIUM": 3,
+    "HEAVY": 2
+  }
+}

@@ -1,0 +1,4 @@
+source_file,id,index,codec,file_offset_hex,file_end_offset_hex,gap_before,compressed_size,decoded_size,ended_by_code_256
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/RIFPCK.TBL,pck_segment_000,0,pck_lzw_segmented,0x000005,0x003AE0,0,15067,20001,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/RIFPCK.TBL,pck_segment_001,1,pck_lzw_segmented,0x003AE1,0x00777F,1,15518,20001,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/RIFPCK.TBL,pck_segment_002,2,pck_lzw_segmented,0x007785,0x008007,6,2178,2772,False

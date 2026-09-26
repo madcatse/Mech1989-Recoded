@@ -1,0 +1,36 @@
+﻿# Strings extracted from Original/MW.EXE
+# Minimum length: 4 printable ASCII bytes
+# Count: 32
+
+COPYRIGHT 1989 ACTIVISIONCOPYRIGHT 1989 ACTIVISIONCOPYRIGHT 1989 ACTIVISIONCOPYRIGHT 1989 ACTIVISION
+MECHWARRIOR
+MW_MAIN.EXE
+BTECH.EXE
+???????????
+           
+CANT RELEASE MEMORY.
+$Please put DISK 1 in drive $Please put DISK 3 in drive $Not enough memory to continue.
+Mechwarrior. Copyright 1989 Activision Inc.
+Select graphics mode.
+1 - For EGA
+2 - For Tandy
+Select audio output.
+1 - For Internal speaker
+2 - For Tandy 1000
+3 - For AdLib PC Music System
+4 - For Roland MT-32
+$: and press any key to continue
+or press ESC to quit.
+1tH&
+2tM&
+3tRF;
+tbF@&
+St@&
+st8&
+Tt8&
+tt0&
+At0&
+at(&
+Rt(&
+rt F;
+END OF MW_SHELL

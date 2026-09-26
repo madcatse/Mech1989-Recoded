@@ -1,0 +1,26 @@
+group,exe_offset_hex,embedded_name,original_path,exists_in_original,size,sha256,map_exists,entry_count,root_tags,nested_tags,bin_codecs,inf_dimensions,warnings,map_path
+mech_bmp_names,0x026DAC,loc.bmp,Original/LOC.BMP,yes,3033,5cd240f5748222cdf016ded95761dc8454fad8502d651dcf2adf73ca31c17007,yes,3,BMP:,INF:; BIN:,2,152x193,,research/extract/maps/LOC.BMP.map.json
+mech_bmp_names,0x026DB4,jen.bmp,Original/JEN.BMP,yes,2787,723a86ef231350a0939aa204507636e38b8ad83fe669b0764d05df1827b2b136,yes,3,BMP:,INF:; BIN:,2,152x193,,research/extract/maps/JEN.BMP.map.json
+mech_bmp_names,0x026DBC,pho.bmp,Original/PHO.BMP,yes,3577,01a776d96443b78737ac4ce233161912567b19d0e6804c1afdfa3e8ea23f107c,yes,3,BMP:,INF:; BIN:,2,152x193,,research/extract/maps/PHO.BMP.map.json
+mech_bmp_names,0x026DC4,sha.bmp,Original/SHA.BMP,yes,3864,4e31d965ab1f4e957272befe0b6edb62fb1ff96361be22080c531ecf119f6757,yes,3,BMP:,INF:; BIN:,2,152x193,,research/extract/maps/SHA.BMP.map.json
+mech_bmp_names,0x026DCC,rif.bmp,Original/RIF.BMP,yes,4293,feed4012ecfea7b765e0bf81961a6e40d273c6d5b5e21360f94fbecd3ae5e4c1,yes,3,BMP:,INF:; BIN:,2,152x193,,research/extract/maps/RIF.BMP.map.json
+mech_bmp_names,0x026DD4,war.bmp,Original/WAR.BMP,yes,3684,4a125cdc9fdd89258d8400ab9fbaf686c5f76ab747f5b5bc1a7ca906fbc0b9be,yes,3,BMP:,INF:; BIN:,2,152x193,,research/extract/maps/WAR.BMP.map.json
+mech_bmp_names,0x026DDC,mar.bmp,Original/MAR.BMP,yes,3324,0408df3c15c27faa79741fb9f07fffcae4e591842a402045815ac12c6634b12c,yes,3,BMP:,INF:; BIN:,2,152x193,,research/extract/maps/MAR.BMP.map.json
+mech_bmp_names,0x026DE4,bat.bmp,Original/BAT.BMP,yes,4152,8d74f68b08d336bdc61bae80fedcc3a76601394ee16cfaef9e1b4595e9449bf8,yes,3,BMP:,INF:; BIN:,2,152x193,,research/extract/maps/BAT.BMP.map.json
+combat_asset_names,0x027071,desert.pal,Original/DESERT.PAL,yes,314,ea8416b5f36a374827f565b0ad1a651cb436c8349910d00a3eccb838ec2de3ea,yes,3,PAL:,EGA:; CGA:,,,,research/extract/maps/DESERT.PAL.map.json
+combat_asset_names,0x02707C,arctic.pal,Original/ARCTIC.PAL,yes,314,739c04752a8d84ec3a9dfc60cd1323c97791bdd823bf2a068f1817bc39724f55,yes,3,PAL:,EGA:; CGA:,,,,research/extract/maps/ARCTIC.PAL.map.json
+combat_asset_names,0x027087,tropic.pal,Original/TROPIC.PAL,yes,314,4a8733ba0138b570e9c2067521219fa842858d848c65ad8948efea5732d97c7e,yes,3,PAL:,EGA:; CGA:,,,,research/extract/maps/TROPIC.PAL.map.json
+combat_asset_names,0x027092,dmgpal.pal,Original/DMGPAL.PAL,yes,314,ffb525e5876c8415b3ed0ef2461bf6d9ce210e697bf7ded6760134d4d7861dbd,yes,3,PAL:,EGA:; CGA:,,,,research/extract/maps/DMGPAL.PAL.map.json
+combat_asset_names,0x02709D,6x6b.fnt,Original/6X6B.FNT,yes,588,f8e794e6c0484dd8d6c26563a753eb3931fe4cb04ba07f4e6f119c7ef632f2f3,yes,1,FNT:,,,,,research/extract/maps/6X6B.FNT.map.json
+combat_asset_names,0x0270A6,prompt.bmp,Original/PROMPT.BMP,yes,294,7c6805f817119d9e376693f6113224bba749a073883ca10f6c16b42db4943308,yes,3,BMP:,INF:; BIN:,2,112x27,,research/extract/maps/PROMPT.BMP.map.json
+combat_asset_names,0x0270B1,btechsnd.snd,Original/BTECHSND.SND,yes,795,ae8fca499741a6c7b9d05f5c90da1fd921681afe35533c3f4d98b3d78e95d5c9,yes,3,SND:,INF:; IBM:,,,,research/extract/maps/BTECHSND.SND.map.json
+combat_asset_names,0x027159,point.bmp,Original/POINT.BMP,yes,278,43e9683506afa04294ef72e464a074284c514a8cb24d9a0276b5eda756413ee1,yes,3,BMP:,INF:; BIN:,1,16x10; 24x16; 16x13,,research/extract/maps/POINT.BMP.map.json
+combat_asset_names,0x027163,sm_mechs.bmp,Original/SM_MECHS.BMP,yes,3072,688bf3a104e9df42d1a90f27daa822bf225342007ab42b74cf9047628c71f522,yes,3,BMP:,INF:; BIN:,2,56x49,,research/extract/maps/SM_MECHS.BMP.map.json
+combat_asset_names,0x027170,struts.bmp,Original/STRUTS.BMP,yes,1135,a2b9d2cd714d8d9573fae54703a13cdf32c77c3c7bb5115c0ae987bba98fd9db,yes,3,BMP:,INF:; BIN:,2,24x15; 40x30; 80x9; 16x14; 32x27; 32x28; 104x3,,research/extract/maps/STRUTS.BMP.map.json
+combat_asset_names,0x02717B,cockpit.bmp,Original/COCKPIT.BMP,yes,767,7077105462f3fc8c89245f5261699a82bccc794a1b5b79b3c3227711d2198405,yes,3,BMP:,INF:; BIN:,2,8x7; 8x3; 16x9; 48x11; 48x15; 40x19,,research/extract/maps/COCKPIT.BMP.map.json
+combat_asset_names,0x027187,hud_cyan.bmp,Original/HUD_CYAN.BMP,yes,252,602d6781a3998023084e488a7edeaffb3bd933858876bada35d5d23fbe630d5d,yes,3,BMP:,INF:; BIN:,2,16x5,,research/extract/maps/HUD_CYAN.BMP.map.json
+combat_asset_names,0x027194,hud_nums.bmp,Original/HUD_NUMS.BMP,yes,252,682acf4122c233c531d4000195155c0573b18132d3aefc2d86a652fa272c93cb,yes,3,BMP:,INF:; BIN:,2,16x5,,research/extract/maps/HUD_NUMS.BMP.map.json
+scr_names,0x027248,light.scr,Original/LIGHT.SCR,yes,4703,8fb0dc101b92672967294e43cfca3a4016348a06a03bb57247cf881bbcc24d15,yes,2,SCR:,BIN:,2,,,research/extract/maps/LIGHT.SCR.map.json
+scr_names,0x027252,medium.scr,Original/MEDIUM.SCR,yes,4159,c697f934facd5fe99b216c186950ea86eed46e4f146f2e225a54f3cff3a761e1,yes,2,SCR:,BIN:,2,,,research/extract/maps/MEDIUM.SCR.map.json
+scr_names,0x02725D,heavy.scr,Original/HEAVY.SCR,yes,3475,63e1d01f54befd1b455ab82d44d7b54041b92b8778aa38797f90c8e33e398985,yes,2,SCR:,BIN:,2,,,research/extract/maps/HEAVY.SCR.map.json
+status_scr_name,0x0277DA,status.scr,Original/STATUS.SCR,yes,1593,32041ea193465e452733b62a558cf7e12f6eeb2f6836fb01cd7a89082097d6f9,yes,2,SCR:,BIN:,2,,,research/extract/maps/STATUS.SCR.map.json

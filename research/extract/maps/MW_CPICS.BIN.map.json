@@ -1,0 +1,111 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_CPICS.BIN",
+    "size": 30097,
+    "sha256": "bd8b1421760d410f3104ae8de7febf6f0616f1fe56028f1057d0da9c9f9d5800"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_0000D2",
+      "kind": "possible_offset_table",
+      "offset": 210,
+      "header_size": 0,
+      "payload_offset": 3893,
+      "payload_size": 26204,
+      "end_offset": 218,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 3893,
+        "last_value": 5407
+      }
+    },
+    {
+      "id": "offs_0001_0000DA",
+      "kind": "possible_offset_table",
+      "offset": 218,
+      "header_size": 0,
+      "payload_offset": 3893,
+      "payload_size": 26204,
+      "end_offset": 226,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 3893,
+        "last_value": 16143
+      }
+    },
+    {
+      "id": "offs_0002_0000F6",
+      "kind": "possible_offset_table",
+      "offset": 246,
+      "header_size": 0,
+      "payload_offset": 5279,
+      "payload_size": 24818,
+      "end_offset": 254,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 5279,
+        "last_value": 15667
+      }
+    },
+    {
+      "id": "offs_0003_000126",
+      "kind": "possible_offset_table",
+      "offset": 294,
+      "header_size": 0,
+      "payload_offset": 4383,
+      "payload_size": 25714,
+      "end_offset": 302,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 4383,
+        "last_value": 13267
+      }
+    }
+  ]
+}

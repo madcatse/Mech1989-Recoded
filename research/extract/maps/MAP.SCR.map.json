@@ -1,0 +1,64 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MAP.SCR",
+    "size": 3443,
+    "sha256": "dee945718c3d03f666c93421640253372ae406eb7e500c595ebc68d2111f7874"
+  },
+  "entries": [
+    {
+      "id": "MAP_0000_SCR_000000",
+      "kind": "tagged_chunk",
+      "offset": 0,
+      "header_size": 8,
+      "payload_offset": 8,
+      "payload_size": 3435,
+      "end_offset": 3443,
+      "depth": 0,
+      "confidence": "high",
+      "tag": "SCR:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "high bit set in length field"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x80000D6B",
+        "has_nested_flag": "yes",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "MAP_0000_BIN_000008",
+      "kind": "tagged_chunk",
+      "offset": 8,
+      "header_size": 8,
+      "payload_offset": 16,
+      "payload_size": 3427,
+      "end_offset": 3443,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "BIN:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "BIN payload starts with codec + decoded-size candidate"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000D63",
+        "has_nested_flag": "no",
+        "local_index": 0,
+        "bin_header_layout": "u8_codec_u32le_decoded_size",
+        "bin_codec_candidate": 2,
+        "bin_declared_decoded_size": 32000,
+        "bin_payload_body_size": 3422,
+        "bin_declared_to_payload_ratio": "9.3376"
+      }
+    }
+  ]
+}

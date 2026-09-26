@@ -1,0 +1,4 @@
+source_file,byte_pair_key,shape_ref_hex,shape_ref_low_byte,shape_ref_high_byte,frame_type,transform_index,count,object_count,objects,dx_min,dx_max,dy_min,dy_max,threshold_min,threshold_max
+HAMPCK_TBL.decoded.bin,0A:FF,0xFF0A,10,255,2,,2,1,pck_object_0004,22,22,24,24,255,255
+HAMPCK_TBL.decoded.bin,03:FF,0xFF03,3,255,2,,1,1,pck_object_0004,10,10,9,9,255,255
+HAMPCK_TBL.decoded.bin,B0:F8,0xF8B0,176,248,3,110,1,1,pck_object_0052,-24,-24,3,3,228,228

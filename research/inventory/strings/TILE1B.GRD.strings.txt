@@ -1,0 +1,25 @@
+﻿# Strings extracted from Original/TILE1B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 21
+
+'9D;'
+.BWYG4!
+2FOUQD1
+!4FJIFB:-
+!6??<962*"
+%<B80,)&"
++BH>1( 
+%2IND7* 
+,@OTK=0#
+5OZQD6)
+	#=UTH</"
++DOI<0%
+2JJ=1%
+!9E>2%
+(@?3&
+,:4'
+!$&$
+ '.56789;5)
+/DLNOMED:. 
+2LZWLB7-"
+2>D?5* 

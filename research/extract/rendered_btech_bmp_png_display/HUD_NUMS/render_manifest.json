@@ -1,0 +1,122 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/HUD_NUMS.BMP",
+    "size": 252,
+    "sha256": "682acf4122c233c531d4000195155c0573b18132d3aefc2d86a652fa272c93cb"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 480,
+  "entries": [
+    {
+      "index": 0,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_000_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_000_16x5.png"
+      ]
+    },
+    {
+      "index": 1,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_001_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_001_16x5.png"
+      ]
+    },
+    {
+      "index": 2,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_002_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_002_16x5.png"
+      ]
+    },
+    {
+      "index": 3,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_003_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_003_16x5.png"
+      ]
+    },
+    {
+      "index": 4,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_004_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_004_16x5.png"
+      ]
+    },
+    {
+      "index": 5,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_005_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_005_16x5.png"
+      ]
+    },
+    {
+      "index": 6,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_006_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_006_16x5.png"
+      ]
+    },
+    {
+      "index": 7,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_007_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_007_16x5.png"
+      ]
+    },
+    {
+      "index": 8,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_008_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_008_16x5.png"
+      ]
+    },
+    {
+      "index": 9,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_009_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_009_16x5.png"
+      ]
+    },
+    {
+      "index": 10,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_010_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_010_16x5.png"
+      ]
+    },
+    {
+      "index": 11,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_011_16x5.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/HUD_NUMS/HUD_NUMS_011_16x5.png"
+      ]
+    }
+  ]
+}

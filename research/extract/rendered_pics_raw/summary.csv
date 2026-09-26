@@ -1,0 +1,13 @@
+set,source_file,offset_hex,width,height,raw_height,height_flags,pixel_data_size,next_offset_without_padding_hex,path
+MW_PICS,Original/MW_PICS.BIN,0x00000280,320,200,200,0,32000,0x00007F84,research/extract/rendered_pics_raw/MW_PICS/raw_00000280_320x200.ppm
+MW_PICS,Original/MW_PICS.BIN,0x00007F89,320,200,200,0,32000,0x0000FC8D,research/extract/rendered_pics_raw/MW_PICS/raw_00007F89_320x200.ppm
+MW_PICS,Original/MW_PICS.BIN,0x0000FC92,320,200,200,0,32000,0x00017996,research/extract/rendered_pics_raw/MW_PICS/raw_0000FC92_320x200.ppm
+MW_PICS,Original/MW_PICS.BIN,0x0001F6A5,320,200,200,0,32000,0x000273A9,research/extract/rendered_pics_raw/MW_PICS/raw_0001F6A5_320x200.ppm
+MW_PICS_selected,Original/MW_PICS.BIN,0x00000280,320,200,200,0,32000,0x00007F84,research/extract/rendered_pics_raw/MW_PICS_selected/raw_00000280_320x200.ppm
+MW_PICS_selected,Original/MW_PICS.BIN,0x00007F89,320,200,200,0,32000,0x0000FC8D,research/extract/rendered_pics_raw/MW_PICS_selected/raw_00007F89_320x200.ppm
+MW_PICS_selected,Original/MW_PICS.BIN,0x0000FC92,320,200,200,0,32000,0x00017996,research/extract/rendered_pics_raw/MW_PICS_selected/raw_0000FC92_320x200.ppm
+MW_PICS_selected,Original/MW_PICS.BIN,0x0001799B,196,28,32796,32768,2744,0x00018457,research/extract/rendered_pics_raw/MW_PICS_selected/raw_0001799B_196x28_hflag_8000.ppm
+MW_PICS_selected,Original/MW_PICS.BIN,0x0001F6A5,320,200,200,0,32000,0x000273A9,research/extract/rendered_pics_raw/MW_PICS_selected/raw_0001F6A5_320x200.ppm
+MW_PICS_selected,Original/MW_PICS.BIN,0x0002A320,273,16,16,0,2192,0x0002ABB4,research/extract/rendered_pics_raw/MW_PICS_selected/raw_0002A320_273x16.ppm
+MW_PICS_selected,Original/MW_PICS.BIN,0x0002A470,273,16,16,0,2192,0x0002AD04,research/extract/rendered_pics_raw/MW_PICS_selected/raw_0002A470_273x16.ppm
+MW_PICS_selected,Original/MW_PICS.BIN,0x0002A5C0,273,16,16,0,2192,0x0002AE54,research/extract/rendered_pics_raw/MW_PICS_selected/raw_0002A5C0_273x16.ppm

@@ -1,0 +1,186 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/BMAPCK.TBL",
+    "size": 34973,
+    "sha256": "2b576e9a668301b7e790df7e6d8979463c72863283231158cd4338a9b522dd29"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_000042",
+      "kind": "possible_offset_table",
+      "offset": 66,
+      "header_size": 0,
+      "payload_offset": 165,
+      "payload_size": 34808,
+      "end_offset": 74,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 165,
+        "last_value": 32768
+      }
+    },
+    {
+      "id": "offs_0001_000044",
+      "kind": "possible_offset_table",
+      "offset": 68,
+      "header_size": 0,
+      "payload_offset": 23309,
+      "payload_size": 11664,
+      "end_offset": 76,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 23309,
+        "last_value": 32856
+      }
+    },
+    {
+      "id": "offs_0002_0000A6",
+      "kind": "possible_offset_table",
+      "offset": 166,
+      "header_size": 0,
+      "payload_offset": 1321,
+      "payload_size": 33652,
+      "end_offset": 174,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 1321,
+        "last_value": 22450
+      }
+    },
+    {
+      "id": "offs_0003_0000B8",
+      "kind": "possible_offset_table",
+      "offset": 184,
+      "header_size": 0,
+      "payload_offset": 206,
+      "payload_size": 34767,
+      "end_offset": 192,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 206,
+        "last_value": 13416
+      }
+    },
+    {
+      "id": "offs_0004_0000BA",
+      "kind": "possible_offset_table",
+      "offset": 186,
+      "header_size": 0,
+      "payload_offset": 6332,
+      "payload_size": 28641,
+      "end_offset": 194,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 6332,
+        "last_value": 21248
+      }
+    },
+    {
+      "id": "offs_0005_0000EC",
+      "kind": "possible_offset_table",
+      "offset": 236,
+      "header_size": 0,
+      "payload_offset": 1216,
+      "payload_size": 33757,
+      "end_offset": 244,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 1216,
+        "last_value": 16389
+      }
+    },
+    {
+      "id": "offs_0006_0001F8",
+      "kind": "possible_offset_table",
+      "offset": 504,
+      "header_size": 0,
+      "payload_offset": 4504,
+      "payload_size": 30469,
+      "end_offset": 512,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 4504,
+        "last_value": 16487
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+﻿# Strings extracted from Original/MW_EGA.EXE
+# Minimum length: 4 printable ASCII bytes
+# Count: 10
+
+BWS.
+6X6.FNT
+88C64.FNT
+8X8.FNT
+FOX88.FNT
+PROM88.FNT
+PSQRV
+^ZY[X
+PSQRWU
+]_ZY[X

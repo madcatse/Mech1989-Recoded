@@ -1,0 +1,5 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+offs_0000_0000BC,Original/RIFPCK.TBL,possible_offset_table,,,0x0000BC,0,0x002006,24577,0x0000C4,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 8198, ""last_value"": 30109}"
+offs_0001_000196,Original/RIFPCK.TBL,possible_offset_table,,,0x000196,0,0x002B9A,21613,0x00019E,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 11162, ""last_value"": 26189}"
+offs_0002_0003D2,Original/RIFPCK.TBL,possible_offset_table,,,0x0003D2,0,0x0014CA,27453,0x0003DA,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 5322, ""last_value"": 11599}"
+records_3_10925,Original/RIFPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,32775,0x008007,0,medium,file size divisible by record size,,"{""record_count"": 10925, ""record_size"": 3}"

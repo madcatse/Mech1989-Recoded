@@ -1,0 +1,23 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/TERPCK_GI.decoded.bin",
+    "size": 19264,
+    "sha256": "c55c849b0e1f15b23c1ebcf4e4200322956b75c20847dd9612a2cb9f3245040b"
+  },
+  "decoded_size": 19264,
+  "decoded_sha256": "c55c849b0e1f15b23c1ebcf4e4200322956b75c20847dd9612a2cb9f3245040b",
+  "layout_candidate": "pck_shape_object_headers_parts_frame_tables",
+  "decoded_index": {
+    "row_count": 7,
+    "row_size": 16,
+    "slots_per_row": 4,
+    "entry_size": 4,
+    "index_size": 112
+  },
+  "objects": [],
+  "parts": [],
+  "frame_tables": [],
+  "frame_records": []
+}

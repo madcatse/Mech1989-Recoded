@@ -1,0 +1,2 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+8X8B_0000_FNT_000000,Original/8X8B.FNT,tagged_chunk,FNT:,,0x000000,8,0x000008,772,0x00030C,0,high,ASCII tag; little-endian length fits parent/file,,"{""has_nested_flag"": ""no"", ""local_index"": 0, ""raw_length_hex"": ""0x00000304""}"

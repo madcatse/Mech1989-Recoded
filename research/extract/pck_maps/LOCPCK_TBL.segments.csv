@@ -1,0 +1,4 @@
+source_file,id,index,codec,file_offset_hex,file_end_offset_hex,gap_before,compressed_size,decoded_size,ended_by_code_256
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/LOCPCK.TBL,pck_segment_000,0,pck_lzw_segmented,0x000005,0x003633,0,13870,19999,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/LOCPCK.TBL,pck_segment_001,1,pck_lzw_segmented,0x003639,0x00363B,6,2,0,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/LOCPCK.TBL,pck_segment_002,2,pck_lzw_segmented,0x00363D,0x006803,2,12742,18707,False

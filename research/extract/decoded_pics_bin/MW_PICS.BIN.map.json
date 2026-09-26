@@ -1,0 +1,15 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_PICS.BIN",
+    "size": 328171,
+    "sha256": "d11684f462a0af5f89a3c5f018c43f4e21b623ce012a74c9934571f093eccbce"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 997238,
+  "decoded_size": 498619,
+  "decoded_sha256": "c5311f1c802b93528c48e74248a8b39e3f2397549fe157f9586b2bbdf5500fea",
+  "decoded_header_candidate": {},
+  "entries": []
+}

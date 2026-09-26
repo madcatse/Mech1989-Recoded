@@ -1,0 +1,4 @@
+source_file,id,index,codec,file_offset_hex,file_end_offset_hex,gap_before,compressed_size,decoded_size,ended_by_code_256
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/MARPCK.TBL,pck_segment_000,0,pck_lzw_segmented,0x000005,0x003B2C,0,15143,20004,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/MARPCK.TBL,pck_segment_001,1,pck_lzw_segmented,0x003B35,0x007815,9,15584,20001,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/MARPCK.TBL,pck_segment_002,2,pck_lzw_segmented,0x007815,0x00986E,0,8281,10507,False

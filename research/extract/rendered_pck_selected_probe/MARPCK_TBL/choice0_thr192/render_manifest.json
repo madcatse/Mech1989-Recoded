@@ -1,0 +1,473 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "research/extract/decoded_pck/MARPCK_TBL.decoded.bin",
+    "size": 50512,
+    "sha256": "fb3d849a3a09cb23e53d88347d1c197e6632f801958167de7c1078abaa144f03"
+  },
+  "kind": "pck_selected_frame_probe",
+  "choice_index": 0,
+  "threshold": 192,
+  "entries": [
+    {
+      "object_id": "pck_object_0003",
+      "entry_index": "pck_object_0003",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0003_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0003_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0004",
+      "entry_index": "pck_object_0004",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 6,
+      "frame_type_counts": {
+        "0": 1,
+        "7": 3,
+        "255": 1,
+        "14": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0004_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0004_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0015",
+      "entry_index": "pck_object_0015",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 2,
+      "frame_type_counts": {
+        "1": 2
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0015_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0015_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0017",
+      "entry_index": "pck_object_0017",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "5": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0017_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0017_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0019",
+      "entry_index": "pck_object_0019",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "2": 1
+      },
+      "shape_refs": [
+        8
+      ],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0019_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0019_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0021",
+      "entry_index": "pck_object_0021",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "129": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0021_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0021_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0022",
+      "entry_index": "pck_object_0022",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0022_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0022_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0023",
+      "entry_index": "pck_object_0023",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0023_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0023_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0024",
+      "entry_index": "pck_object_0024",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0024_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0024_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0030",
+      "entry_index": "pck_object_0030",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0030_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0030_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0034",
+      "entry_index": "pck_object_0034",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0034_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0034_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0037",
+      "entry_index": "pck_object_0037",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0037_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0037_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0044",
+      "entry_index": "pck_object_0044",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "100": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0044_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0044_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0056",
+      "entry_index": "pck_object_0056",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "255": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0056_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0056_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0057",
+      "entry_index": "pck_object_0057",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "254": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0057_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0057_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0058",
+      "entry_index": "pck_object_0058",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0058_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0058_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0059",
+      "entry_index": "pck_object_0059",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "0": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0059_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0059_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0061",
+      "entry_index": "pck_object_0061",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 2,
+      "frame_type_counts": {
+        "0": 2
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0061_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0061_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0063",
+      "entry_index": "pck_object_0063",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "254": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0063_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0063_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0065",
+      "entry_index": "pck_object_0065",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 3,
+      "frame_type_counts": {
+        "0": 3
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0065_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0065_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0066",
+      "entry_index": "pck_object_0066",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 3,
+      "frame_type_counts": {
+        "1": 1,
+        "2": 2
+      },
+      "shape_refs": [
+        9,
+        5139
+      ],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0066_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0066_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0067",
+      "entry_index": "pck_object_0067",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "254": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0067_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0067_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0068",
+      "entry_index": "pck_object_0068",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "100": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0068_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0068_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0069",
+      "entry_index": "pck_object_0069",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 3,
+      "frame_type_counts": {
+        "1": 1,
+        "2": 2
+      },
+      "shape_refs": [
+        9,
+        4882
+      ],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0069_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0069_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0070",
+      "entry_index": "pck_object_0070",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 3,
+      "frame_type_counts": {
+        "1": 1,
+        "2": 2
+      },
+      "shape_refs": [
+        2056,
+        4882
+      ],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0070_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0070_choice000_thr192_selected_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0078",
+      "entry_index": "pck_object_0078",
+      "choice_index": 0,
+      "threshold": 192,
+      "record_count": 1,
+      "frame_type_counts": {
+        "8": 1
+      },
+      "shape_refs": [],
+      "width": 160,
+      "height": 160,
+      "path": "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0078_choice000_thr192_selected_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_selected_probe/MARPCK_TBL/choice0_thr192/MARPCK_TBL_pck_object_0078_choice000_thr192_selected_probe.png"
+      ]
+    }
+  ]
+}

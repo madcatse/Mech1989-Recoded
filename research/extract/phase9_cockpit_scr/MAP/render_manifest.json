@@ -1,0 +1,21 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Sorted Original Files/SCR/MAP.SCR",
+    "size": 3443,
+    "sha256": "dee945718c3d03f666c93421640253372ae406eb7e500c595ebc68d2111f7874"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 32000,
+  "palette": {
+    "kind": "ega_default"
+  },
+  "width": 320,
+  "height": 200,
+  "path": "research/extract/phase9_cockpit_scr/MAP/MAP_320x200.png",
+  "paths": [
+    "research/extract/phase9_cockpit_scr/MAP/MAP_320x200.png"
+  ]
+}

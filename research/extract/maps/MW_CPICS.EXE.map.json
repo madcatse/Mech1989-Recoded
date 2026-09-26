@@ -1,0 +1,677 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_CPICS.EXE",
+    "size": 3566,
+    "sha256": "c0a999d7f647031ac1ff36276d64c5e6409b05c2163d42a18a81c7cd8f34735d"
+  },
+  "entries": [
+    {
+      "id": "name_0000_0004B8",
+      "kind": "resource_name_string",
+      "offset": 1208,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 1221,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "$MW_CPICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0001_000A45",
+      "kind": "resource_name_string",
+      "offset": 2629,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2654,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\PALETTE.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0002_000A5F",
+      "kind": "resource_name_string",
+      "offset": 2655,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2679,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW01.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0003_000A78",
+      "kind": "resource_name_string",
+      "offset": 2680,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2704,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW02.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0004_000A91",
+      "kind": "resource_name_string",
+      "offset": 2705,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2729,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW03.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0005_000AAA",
+      "kind": "resource_name_string",
+      "offset": 2730,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2754,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW04.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0006_000AC3",
+      "kind": "resource_name_string",
+      "offset": 2755,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2779,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW05.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0007_000ADC",
+      "kind": "resource_name_string",
+      "offset": 2780,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2804,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW06.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0008_000AF5",
+      "kind": "resource_name_string",
+      "offset": 2805,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2829,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW07.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0009_000B0E",
+      "kind": "resource_name_string",
+      "offset": 2830,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2854,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW08.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0010_000B27",
+      "kind": "resource_name_string",
+      "offset": 2855,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2879,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW09.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0011_000B40",
+      "kind": "resource_name_string",
+      "offset": 2880,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2904,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW10.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0012_000B59",
+      "kind": "resource_name_string",
+      "offset": 2905,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2929,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW11.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0013_000B72",
+      "kind": "resource_name_string",
+      "offset": 2930,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2954,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW12.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0014_000B8B",
+      "kind": "resource_name_string",
+      "offset": 2955,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2979,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW13.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0015_000BA4",
+      "kind": "resource_name_string",
+      "offset": 2980,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3004,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW14.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0016_000BBD",
+      "kind": "resource_name_string",
+      "offset": 3005,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3029,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW15.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0017_000BD6",
+      "kind": "resource_name_string",
+      "offset": 3030,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3054,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW16.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0018_000BEF",
+      "kind": "resource_name_string",
+      "offset": 3055,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3079,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW17.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0019_000C08",
+      "kind": "resource_name_string",
+      "offset": 3080,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3104,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW18.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0020_000C21",
+      "kind": "resource_name_string",
+      "offset": 3105,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3129,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW19.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0021_000C3A",
+      "kind": "resource_name_string",
+      "offset": 3130,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3154,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW20.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0022_000C53",
+      "kind": "resource_name_string",
+      "offset": 3155,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3179,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREW21.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0023_000C6C",
+      "kind": "resource_name_string",
+      "offset": 3180,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3204,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\PLAYER.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0024_000C85",
+      "kind": "resource_name_string",
+      "offset": 3205,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3228,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\DS2A1.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0025_000C9D",
+      "kind": "resource_name_string",
+      "offset": 3229,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3252,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\DS2A2.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0026_000CB5",
+      "kind": "resource_name_string",
+      "offset": 3253,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3276,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\DS2A3.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0027_000CCD",
+      "kind": "resource_name_string",
+      "offset": 3277,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3302,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\CREWPAN.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0028_000CE7",
+      "kind": "resource_name_string",
+      "offset": 3303,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3329,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\HR1_ICON.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0029_000D02",
+      "kind": "resource_name_string",
+      "offset": 3330,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3356,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\HR2_ICON.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0030_000D1D",
+      "kind": "resource_name_string",
+      "offset": 3357,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3383,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\HR3_ICON.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0031_000D38",
+      "kind": "resource_name_string",
+      "offset": 3384,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3410,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\HR4_ICON.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0032_000D53",
+      "kind": "resource_name_string",
+      "offset": 3411,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3434,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\MC_AA.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0033_000D6B",
+      "kind": "resource_name_string",
+      "offset": 3435,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3458,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\MC_AB.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0034_000D83",
+      "kind": "resource_name_string",
+      "offset": 3459,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3482,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\MC_AC.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0035_000D9B",
+      "kind": "resource_name_string",
+      "offset": 3483,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3506,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\MC_AD.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0036_000DB3",
+      "kind": "resource_name_string",
+      "offset": 3507,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 3531,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "C:\\B_TECH\\ART\\BUTTON.LBM",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    }
+  ]
+}

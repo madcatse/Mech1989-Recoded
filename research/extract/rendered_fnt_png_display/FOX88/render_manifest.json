@@ -1,0 +1,21 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/FOX88.FNT",
+    "size": 772,
+    "sha256": "0a1d188c6f4eba381aa098a3474a888164392d9492ece3cba06cd05159a505e9"
+  },
+  "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+  "width": 8,
+  "height": 8,
+  "first_code": 32,
+  "first_code_hex": "0x20",
+  "glyph_count": 96,
+  "last_code": 127,
+  "last_code_hex": "0x7F",
+  "path": "research/extract/rendered_fnt_png_display/FOX88/FOX88_8x8_96glyphs.png",
+  "paths": [
+    "research/extract/rendered_fnt_png_display/FOX88/FOX88_8x8_96glyphs.png"
+  ]
+}

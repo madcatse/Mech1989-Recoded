@@ -1,0 +1,39 @@
+﻿# Strings extracted from Original/LOC.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 35
+
+BMP:
+INF:
+BIN:
+	#2|H1!
+q$BL
+ YND
+\3I=8i
+*|k6m
+hVe)
++(d2
+rgye
+-zae
+6_CC
+0t42
+%O9	
+cET6fG
+:gP4j
+Y(e>
+E1J&
+D6/K
+uUsL
+ZGy3 
+y\k.
+\rh 
+ d-Z
+Gmj#
+Y9/y7h>
+P,2h
+8U2N
+G~IF?
+w~	(
+!xzS
+(0 g
+Haw!2
+&Uif

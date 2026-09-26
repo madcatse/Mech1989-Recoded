@@ -1,0 +1,4 @@
+region_id,role_candidate,x0,y0,x1,y1,width,height,area
+0,main_viewport,11,11,307,102,297,92,25283
+1,lower_left_button_slots,10,182,97,196,88,15,171
+2,right_status_black_detail,226,142,236,156,11,15,48

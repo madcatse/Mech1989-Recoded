@@ -1,0 +1,66 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/RIFPCK_TBL.decoded.bin",
+    "size": 42774,
+    "sha256": "fbc49c635ef50506df4307eb25e7f30d051b9e5e991861ff496950b5462b61e9"
+  },
+  "kind": "pck_ref_byte_pair_selected_records",
+  "choice_index": 0,
+  "threshold": 64,
+  "selected_ref_count": 1,
+  "group_count": 1,
+  "entries": [
+    {
+      "id": "pck_object_0029_part_001_choice_000_frame_000",
+      "object_id": "pck_object_0029",
+      "part_id": "pck_object_0029_part_001",
+      "frame_table_id": "pck_object_0029_part_001_choice_000",
+      "part_index": 1,
+      "choice_index": 0,
+      "frame_index": 0,
+      "frame_abs": 13699,
+      "frame_abs_hex": "0x003583",
+      "threshold": 31,
+      "frame_type": 2,
+      "payload_abs": 13701,
+      "payload_abs_hex": "0x003585",
+      "record_8_hex": "1F0281000000002B",
+      "payload_16_hex": "81000000002B25022020212223FF2323",
+      "selected_choice_index": 0,
+      "selection_threshold": 64,
+      "payload_hex": "81000000002B",
+      "semantic": "draw_referenced_shape_2d",
+      "dx": -127,
+      "dy": 0,
+      "shape_ref": 0,
+      "extra_word": 11008,
+      "shape_ref_hex": "0x0000",
+      "shape_ref_signed": 0,
+      "shape_ref_low_byte": 0,
+      "shape_ref_high_byte": 0,
+      "byte_pair_key": "00:00"
+    }
+  ],
+  "groups": [
+    {
+      "source_file": "RIFPCK_TBL.decoded.bin",
+      "byte_pair_key": "00:00",
+      "shape_ref_hex": "0x0000",
+      "shape_ref_low_byte": 0,
+      "shape_ref_high_byte": 0,
+      "frame_type": 2,
+      "transform_index": "",
+      "count": 1,
+      "object_count": 1,
+      "objects": "pck_object_0029",
+      "dx_min": -127,
+      "dx_max": -127,
+      "dy_min": 0,
+      "dy_max": 0,
+      "threshold_min": 31,
+      "threshold_max": 31
+    }
+  ]
+}

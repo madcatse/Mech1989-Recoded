@@ -1,0 +1,29 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/BAT.BMP",
+    "size": 4152,
+    "sha256": "8d74f68b08d336bdc61bae80fedcc3a76601394ee16cfaef9e1b4595e9449bf8"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 14668,
+  "palette": {
+    "kind": "pal_ega_pair_banks_tentative",
+    "path": "Original/DESERT.PAL",
+    "bank": 1,
+    "interpretation": "low"
+  },
+  "entries": [
+    {
+      "index": 0,
+      "width": 152,
+      "height": 193,
+      "path": "research/extract/palette_render_probe/DESERT_bank1/BAT_000_152x193.png",
+      "paths": [
+        "research/extract/palette_render_probe/DESERT_bank1/BAT_000_152x193.png"
+      ]
+    }
+  ]
+}

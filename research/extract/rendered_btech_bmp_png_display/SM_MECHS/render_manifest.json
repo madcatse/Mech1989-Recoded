@@ -1,0 +1,95 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/SM_MECHS.BMP",
+    "size": 3072,
+    "sha256": "688bf3a104e9df42d1a90f27daa822bf225342007ab42b74cf9047628c71f522"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 12348,
+  "entries": [
+    {
+      "index": 0,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_000_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_000_56x49.png"
+      ]
+    },
+    {
+      "index": 1,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_001_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_001_56x49.png"
+      ]
+    },
+    {
+      "index": 2,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_002_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_002_56x49.png"
+      ]
+    },
+    {
+      "index": 3,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_003_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_003_56x49.png"
+      ]
+    },
+    {
+      "index": 4,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_004_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_004_56x49.png"
+      ]
+    },
+    {
+      "index": 5,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_005_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_005_56x49.png"
+      ]
+    },
+    {
+      "index": 6,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_006_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_006_56x49.png"
+      ]
+    },
+    {
+      "index": 7,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_007_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_007_56x49.png"
+      ]
+    },
+    {
+      "index": 8,
+      "width": 56,
+      "height": 49,
+      "path": "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_008_56x49.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SM_MECHS/SM_MECHS_008_56x49.png"
+      ]
+    }
+  ]
+}

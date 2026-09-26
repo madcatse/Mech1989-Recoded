@@ -1,0 +1,17 @@
+﻿# Strings extracted from Original/COCKPIT.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 13
+
+BMP:
+INF:2
+BIN:
+OA2H
+W'DV
+n4e"
+|mu'
+5F#\
+!HDc
+H!e@\($f
+'&\u
+%Hw2
+1A$a

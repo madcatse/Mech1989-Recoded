@@ -1,0 +1,18 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/LIGHT.SCR",
+    "size": 4703,
+    "sha256": "8fb0dc101b92672967294e43cfca3a4016348a06a03bb57247cf881bbcc24d15"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 32000,
+  "width": 320,
+  "height": 200,
+  "path": "research/extract/rendered_btech_scr_png_display/LIGHT/LIGHT_320x200.png",
+  "paths": [
+    "research/extract/rendered_btech_scr_png_display/LIGHT/LIGHT_320x200.png"
+  ]
+}

@@ -1,0 +1,11 @@
+﻿# Strings extracted from Original/DIGITS.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 7
+
+BMP:
+INF:
+BIN:
+'Qf,Yq
+j=iS
+QlHv
+z	3F

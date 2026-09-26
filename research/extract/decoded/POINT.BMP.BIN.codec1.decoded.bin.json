@@ -1,0 +1,15 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/POINT.BMP",
+    "size": 278,
+    "sha256": "43e9683506afa04294ef72e464a074284c514a8cb24d9a0276b5eda756413ee1"
+  },
+  "entry_id": "POINT_0001_BIN_00001E",
+  "codec": 1,
+  "encoded_size": 235,
+  "decoded_size": 376,
+  "decoded_sha256": "c03d54ade452769c88af76dc7737f2653f3b60f8e3cf5e93abda3f46e168dc3d",
+  "output": "research/extract/decoded/POINT.BMP.BIN.codec1.decoded.bin"
+}

@@ -1,0 +1,32 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_APICS.BIN",
+    "size": 5013,
+    "sha256": "de30de978c3caa0185ee3c27c278babe069b329718ede911e216ba5d95901aa2"
+  },
+  "entries": [
+    {
+      "id": "records_3_1671",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 5013,
+      "end_offset": 5013,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 3,
+        "record_count": 1671
+      }
+    }
+  ]
+}

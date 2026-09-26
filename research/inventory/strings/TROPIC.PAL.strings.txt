@@ -1,0 +1,17 @@
+﻿# Strings extracted from Original/TROPIC.PAL
+# Minimum length: 4 printable ASCII bytes
+# Count: 13
+
+PAL:2
+EGA:
+DD33ffww
+22rr
+xxpp
+DD33ffww
+##((..##''((
+CGA:
+DDUU""
+3333ww33
+ff33
+DDUU""
+ffff

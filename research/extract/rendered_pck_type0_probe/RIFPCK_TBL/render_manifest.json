@@ -1,0 +1,134 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/RIFPCK_TBL.decoded.bin",
+    "size": 42774,
+    "sha256": "fbc49c635ef50506df4307eb25e7f30d051b9e5e991861ff496950b5462b61e9"
+  },
+  "kind": "pck_type0_point_cloud_probe",
+  "layout": "three_projection_xy_xz_yz",
+  "max_abs": 10000,
+  "min_points": 3,
+  "entries": [
+    {
+      "object_id": "pck_object_0003",
+      "entry_index": "pck_object_0003",
+      "width": 392,
+      "height": 128,
+      "point_count": 56,
+      "x_min": -2042,
+      "x_max": 4864,
+      "y_min": -2048,
+      "y_max": 9216,
+      "z_min": -5120,
+      "z_max": 8728,
+      "path": "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0003_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0003_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0004",
+      "entry_index": "pck_object_0004",
+      "width": 392,
+      "height": 128,
+      "point_count": 222,
+      "x_min": -2048,
+      "x_max": 9216,
+      "y_min": -2048,
+      "y_max": 7424,
+      "z_min": -2040,
+      "z_max": 2177,
+      "path": "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0004_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0004_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0039",
+      "entry_index": "pck_object_0039",
+      "width": 392,
+      "height": 128,
+      "point_count": 186,
+      "x_min": -2019,
+      "x_max": 3584,
+      "y_min": -2048,
+      "y_max": 3584,
+      "z_min": -357,
+      "z_max": 4615,
+      "path": "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0039_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0039_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0041",
+      "entry_index": "pck_object_0041",
+      "width": 392,
+      "height": 128,
+      "point_count": 8,
+      "x_min": 2,
+      "x_max": 5,
+      "y_min": 528,
+      "y_max": 1015,
+      "z_min": 0,
+      "z_max": 2177,
+      "path": "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0041_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0041_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0042",
+      "entry_index": "pck_object_0042",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": -200,
+      "x_max": 178,
+      "y_min": -2040,
+      "y_max": 2000,
+      "z_min": -41,
+      "z_max": 87,
+      "path": "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0042_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0042_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0075",
+      "entry_index": "pck_object_0075",
+      "width": 392,
+      "height": 128,
+      "point_count": 8,
+      "x_min": 2,
+      "x_max": 5,
+      "y_min": 594,
+      "y_max": 1081,
+      "z_min": 0,
+      "z_max": 0,
+      "path": "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0075_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0075_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0081",
+      "entry_index": "pck_object_0081",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": 129,
+      "x_max": 2177,
+      "y_min": 0,
+      "y_max": 2056,
+      "z_min": -251,
+      "z_max": 3328,
+      "path": "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0081_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/RIFPCK_TBL/RIFPCK_TBL_pck_object_0081_type0_probe.png"
+      ]
+    }
+  ]
+}

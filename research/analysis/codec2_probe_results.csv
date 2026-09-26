@@ -1,0 +1,11 @@
+family,sample,matching_samples_for_params,ok,out_len,declared_decoded_size,consumed,encoded_body_size,reason,params
+simple_lzss,DOTS.BMP,1,True,72,72,24,24,ok,bit_order=msb; literal_bit=0; len_low_nibble=True; length_base=11
+simple_lzss,DIGITS.BMP,1,False,1029,1024,204,249,out_len=1029,bit_order=msb; literal_bit=0; len_low_nibble=True; length_base=11
+simple_lzss,HUD_CYAN.BMP,1,False,486,480,73,173,out_len=486,bit_order=msb; literal_bit=0; len_low_nibble=True; length_base=11
+simple_lzss,BAT.BMP,1,False,14682,14668,2326,4117,out_len=14682,bit_order=msb; literal_bit=0; len_low_nibble=True; length_base=11
+simple_lzss,PROMPT.BMP,1,False,1525,1512,237,259,out_len=1525,bit_order=msb; literal_bit=0; len_low_nibble=True; length_base=11
+bit_rle,DOTS.BMP,1,True,72,72,24,24,ok,bit_order=msb; count_bits=1; value_bits=8; count_base=3
+bit_rle,DIGITS.BMP,1,False,769,1024,249,249,out_len=769,bit_order=msb; count_bits=1; value_bits=8; count_base=3
+bit_rle,HUD_CYAN.BMP,1,False,481,480,159,173,out_len=481,bit_order=msb; count_bits=1; value_bits=8; count_base=3
+bit_rle,BAT.BMP,1,False,12767,14668,4117,4117,out_len=12767,bit_order=msb; count_bits=1; value_bits=8; count_base=3
+bit_rle,PROMPT.BMP,1,False,806,1512,259,259,out_len=806,bit_order=msb; count_bits=1; value_bits=8; count_base=3

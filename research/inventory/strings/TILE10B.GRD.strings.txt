@@ -1,0 +1,16 @@
+﻿# Strings extracted from Original/TILE10B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 12
+
+#.2#
+#4<.
+!3>6&
+2E>.
+1EF6&
+1EO>-
+1EOG5"
+0DWO;*
+/DXT?'
+)?UR7
+$:E?-
+2/)"

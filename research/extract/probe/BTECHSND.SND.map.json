@@ -1,0 +1,81 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/BTECHSND.SND",
+    "size": 795,
+    "sha256": "ae8fca499741a6c7b9d05f5c90da1fd921681afe35533c3f4d98b3d78e95d5c9"
+  },
+  "entries": [
+    {
+      "id": "BTECHSND_0000_SND_000000",
+      "kind": "tagged_chunk",
+      "offset": 0,
+      "header_size": 8,
+      "payload_offset": 8,
+      "payload_size": 787,
+      "end_offset": 795,
+      "depth": 0,
+      "confidence": "high",
+      "tag": "SND:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "high bit set in length field"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x80000313",
+        "has_nested_flag": "yes",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "BTECHSND_0000_INF_000008",
+      "kind": "tagged_chunk",
+      "offset": 8,
+      "header_size": 8,
+      "payload_offset": 16,
+      "payload_size": 6,
+      "end_offset": 22,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "INF:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000006",
+        "has_nested_flag": "no",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "BTECHSND_0001_IBM_000016",
+      "kind": "tagged_chunk",
+      "offset": 22,
+      "header_size": 8,
+      "payload_offset": 30,
+      "payload_size": 765,
+      "end_offset": 795,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "IBM:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x000002FD",
+        "has_nested_flag": "no",
+        "local_index": 1
+      }
+    }
+  ]
+}

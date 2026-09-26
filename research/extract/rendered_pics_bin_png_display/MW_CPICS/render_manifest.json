@@ -1,0 +1,247 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/MW_CPICS.BIN",
+    "size": 30097,
+    "sha256": "bd8b1421760d410f3104ae8de7febf6f0616f1fe56028f1057d0da9c9f9d5800"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "palette": "ega_default",
+  "entries": [
+    {
+      "entry_index": 1,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_001_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_001_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 2,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_002_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_002_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 3,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_003_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_003_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 4,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_004_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_004_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 5,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_005_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_005_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 6,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_006_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_006_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 7,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_007_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_007_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 8,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_008_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_008_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 9,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_009_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_009_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 10,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_010_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_010_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 11,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_011_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_011_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 12,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_012_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_012_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 13,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_013_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_013_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 14,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_014_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_014_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 15,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_015_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_015_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 16,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_016_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_016_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 17,
+      "width": 68,
+      "height": 69,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_017_68x69.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_017_68x69.png"
+      ]
+    },
+    {
+      "entry_index": 18,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_018_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_018_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 19,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_019_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_019_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 20,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_020_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_020_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 21,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_021_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_021_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 22,
+      "width": 68,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_022_68x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_022_68x68.png"
+      ]
+    },
+    {
+      "entry_index": 23,
+      "width": 49,
+      "height": 7,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_023_49x7.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_023_49x7.png"
+      ]
+    },
+    {
+      "entry_index": 24,
+      "width": 49,
+      "height": 7,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_024_49x7.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_024_49x7.png"
+      ]
+    },
+    {
+      "entry_index": 25,
+      "width": 49,
+      "height": 7,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_025_49x7.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_025_49x7.png"
+      ]
+    },
+    {
+      "entry_index": 26,
+      "width": 44,
+      "height": 68,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_026_44x68.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_CPICS/entry_026_44x68.png"
+      ]
+    }
+  ]
+}

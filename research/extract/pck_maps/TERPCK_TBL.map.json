@@ -1,0 +1,43 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/TERPCK.TBL",
+    "size": 8293,
+    "sha256": "6b7a399e0711b9944069e0206c1bcf4bc33097809b34518a1cd886087e4c0414"
+  },
+  "codec": "pck_lzw_segmented",
+  "raw_codec_id": 2,
+  "decoded_size": 11270,
+  "decoded_sha256": "88e0760854181816ed8d3ec64cd15f84b80054bb60d7435086df22611e743b0f",
+  "decoded_structure_probe": {
+    "first_u16": 12,
+    "second_u16": 7,
+    "second_u16_times_16": 112,
+    "second_u16_times_16_hex": "0x0070",
+    "leading_pair_count": 30,
+    "leading_pair_bytes": 120,
+    "leading_pair_stop_offset": 122,
+    "leading_pair_stop_offset_hex": "0x007A",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 685",
+    "boundary_16x_first_16_hex": "08009A020A00AD02000000008000BA2F"
+  },
+  "segment_count": 1,
+  "segments": [
+    {
+      "id": "pck_segment_000",
+      "index": 0,
+      "codec": 2,
+      "file_offset": 5,
+      "file_offset_hex": "0x000005",
+      "file_end_offset": 8293,
+      "file_end_offset_hex": "0x002065",
+      "body_offset": 0,
+      "body_end_offset": 8288,
+      "gap_before": 0,
+      "compressed_size": 8288,
+      "decoded_size": 11270,
+      "ended_by_code_256": false
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+﻿# Strings extracted from Original/SNARIO.DAT
+# Minimum length: 4 printable ASCII bytes
+# Count: 0
+

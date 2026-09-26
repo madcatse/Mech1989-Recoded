@@ -1,0 +1,20 @@
+﻿# Strings extracted from Original/TILE2.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 16
+
+-?G<)
+3HYVE2
+#7JSRNB/
+%9CIFC?7+
+%<><963/'
++B@6.*&#
+1HF</&
+*8OLC5(
+/EUSI<.!
+8R\OB5'
+&EdYE9. 
+:mpS9."
+/a{jM/"
+{^A#
+IutV9
+JTV9

@@ -1,0 +1,12 @@
+source_file,objects,parts,frame_tables,frame_records,object_issues,part_issues,frame_table_issues
+BMAPCK_TBL.decoded.bin,84,224,224,1698,0,0,127
+HAMPCK_TBL.decoded.bin,84,238,238,1484,0,0,151
+JENPCK_TBL.decoded.bin,120,240,240,4337,0,0,112
+LOCPCK_TBL.decoded.bin,84,222,222,827,1,0,153
+MARPCK_TBL.decoded.bin,84,238,238,1691,0,0,169
+OTHPCK_TBL.decoded.bin,23,39,42,42,0,0,38
+PHAPCK_TBL.decoded.bin,120,200,200,4897,0,0,79
+RIFPCK_TBL.decoded.bin,84,238,238,1842,0,0,152
+SHAPCK_TBL.decoded.bin,120,294,294,718,0,0,213
+TERPCK_GI.decoded.bin,0,0,0,0,0,0,0
+TERPCK_TBL.decoded.bin,28,53,53,789,0,0,22

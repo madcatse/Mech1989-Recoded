@@ -1,0 +1,4 @@
+source_file,id,index,codec,file_offset_hex,file_end_offset_hex,gap_before,compressed_size,decoded_size,ended_by_code_256
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/PHAPCK.TBL,pck_segment_000,0,pck_lzw_segmented,0x000005,0x002E7A,0,11893,20001,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/PHAPCK.TBL,pck_segment_001,1,pck_lzw_segmented,0x002E81,0x005E8F,7,12302,20001,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/PHAPCK.TBL,pck_segment_002,2,pck_lzw_segmented,0x005E95,0x006061,6,460,638,False

@@ -1,0 +1,7 @@
+﻿# Strings extracted from Original/PROMPT.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 3
+
+BMP:
+INF:
+BIN:

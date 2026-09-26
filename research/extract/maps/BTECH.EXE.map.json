@@ -1,0 +1,533 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/BTECH.EXE",
+    "size": 174267,
+    "sha256": "1705b607e798ddfce93da73f999fa98e770e0359c739ec939d1cb7cefc5d3a4c"
+  },
+  "entries": [
+    {
+      "id": "name_0000_026B44",
+      "kind": "resource_name_string",
+      "offset": 158532,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 158539,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "map.scr",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0001_026DAC",
+      "kind": "resource_name_string",
+      "offset": 159148,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159155,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "loc.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0002_026DB4",
+      "kind": "resource_name_string",
+      "offset": 159156,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159163,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "jen.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0003_026DBC",
+      "kind": "resource_name_string",
+      "offset": 159164,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159171,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "pho.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0004_026DC4",
+      "kind": "resource_name_string",
+      "offset": 159172,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159179,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "sha.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0005_026DCC",
+      "kind": "resource_name_string",
+      "offset": 159180,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159187,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "rif.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0006_026DD4",
+      "kind": "resource_name_string",
+      "offset": 159188,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159195,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "war.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0007_026DDC",
+      "kind": "resource_name_string",
+      "offset": 159196,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159203,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "mar.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0008_026DE4",
+      "kind": "resource_name_string",
+      "offset": 159204,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159211,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "bat.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0009_026FFA",
+      "kind": "resource_name_string",
+      "offset": 159738,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159748,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "snario.dat",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0010_027022",
+      "kind": "resource_name_string",
+      "offset": 159778,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159788,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "snario.dat",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0011_027071",
+      "kind": "resource_name_string",
+      "offset": 159857,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159867,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "desert.pal",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0012_02707C",
+      "kind": "resource_name_string",
+      "offset": 159868,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159878,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "arctic.pal",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0013_027087",
+      "kind": "resource_name_string",
+      "offset": 159879,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159889,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "tropic.pal",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0014_027092",
+      "kind": "resource_name_string",
+      "offset": 159890,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159900,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "dmgpal.pal",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0015_02709D",
+      "kind": "resource_name_string",
+      "offset": 159901,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159909,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "6x6b.fnt",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0016_0270A6",
+      "kind": "resource_name_string",
+      "offset": 159910,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159920,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "prompt.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0017_0270B1",
+      "kind": "resource_name_string",
+      "offset": 159921,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 159933,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "btechsnd.snd",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0018_027159",
+      "kind": "resource_name_string",
+      "offset": 160089,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160098,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "point.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0019_027163",
+      "kind": "resource_name_string",
+      "offset": 160099,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160111,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "sm_mechs.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0020_027170",
+      "kind": "resource_name_string",
+      "offset": 160112,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160122,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "struts.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0021_02717B",
+      "kind": "resource_name_string",
+      "offset": 160123,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160134,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "cockpit.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0022_027187",
+      "kind": "resource_name_string",
+      "offset": 160135,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160147,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "hud_cyan.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0023_027194",
+      "kind": "resource_name_string",
+      "offset": 160148,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160160,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "hud_nums.bmp",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0024_027248",
+      "kind": "resource_name_string",
+      "offset": 160328,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160337,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "light.scr",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0025_027252",
+      "kind": "resource_name_string",
+      "offset": 160338,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160348,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "medium.scr",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0026_02725D",
+      "kind": "resource_name_string",
+      "offset": 160349,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160358,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "heavy.scr",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0027_027414",
+      "kind": "resource_name_string",
+      "offset": 160788,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 160794,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "mw.exe",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0028_0277DA",
+      "kind": "resource_name_string",
+      "offset": 161754,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 161764,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "status.scr",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    }
+  ]
+}

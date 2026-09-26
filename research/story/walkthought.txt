@@ -1,0 +1,47 @@
+The basic premise behind MechWarrior is that you're the only surviving son of the leader of the planet Ander's Moon. A group of 'Mechs known as the Dark Wing attacked the planet, killed your family, and installed a new government on the planet. They also stole a valuable chalice whose possession entitles the owner to rule Ander's Moon. Your job is to track down the killers, find the chalice, and restore your family to power on Ander's Moon.
+
+When you start out, you will usually be on one of the Davion planets, but might start out on a Kurita planet. Travel immediately to the Kurita planet of Land's End.
+
+(FYI: Normal Gameplay, at your starting planet, you visit the bar twice and the 'Mech bay, and get a lead about Grig Griez. At some point in time, a newsnet message appears saying that there is a bounty on Grig, head to Galedon V for his last known whereabouts. And at Galedon V, they will direct you to Land's End. So this FAQ skips all that stuff)
+
+When you get to Land's End, enter the bar and order a drink. The barkeep will tell you to come back later. Go to the 'Mech complex and sell your Jenner, as you won't need it for a while, and can make a nice profit here. Besides, it will be a lot more expensive to haul it along with you where you're going.
+
+Go back to the bar. The ruffian you meet there will tell you "Grig can be found on..." Make a note of the planet he gives you and go there. I have seen New Samarkand, Tabayama, and Delacruz often. It will always be a Kurita world.
+
+When you get there, you will meet Grig. Accept his mission to deliver a packet to his agent on Dustball, and go there. Dustball is a Steiner world.
+
+When you get to Dustball, there will be a little scuffle. You can either FIGHT then RUN, or RUN then RUN. Just make sure that you RUN the second time. After that, go to the bar and order a drink. The barkeeper will tell you to return later, but you can just order another drink and he'll give you some information and the name of a Marik planet, such as Gibson, Mosiro, or Sadurni. Travel there.
+
+When you arrive on the Marik planet, go to the 'Mech complex. The man there will tell you that you might find Kangaroo Jack on Tancredi IV or Okefenokee (Davion planets). When you leave, you will be shot at by a sniper. RUN.
+
+When you get to the Davion planet, go to the bar. Order a drink, and you'll be introduced to a guy named Kearny. He'll give you some information, and a scrap of paper with an address on it, telling you to meet him there. When you leave the bar, go ahead and follow the address. Then HIDE and FIGHT.
+
+When you finish that, read the news net. You'll note a few news items in which you were involved. You'll also get a message from Jordan Rowe, telling you where the Black Widows currently are. That's your next destination. It will be a Kurita world like Thestria or Proserpina.
+
+When you get there, go into the bar. You'll see some of the Black Widows, and get a story. CHALLENGE it.
+
+You'll get in a fight, and some woman named Tasha will save you. She'll tell you that Matabushi is your enemy, not the Black Widows, and that Kearny was just trying to get you killed. Go ahead and leave the bar.
+
+If you read the news net, you'll see that Tasha gave you some files supposedly from Matabushi telling about your family's execution. Read on, and you'll find something about Matabushi announcing a new commercial strategy. Another news item from Jordan Rowe will tell you to meet up with Kearney on Albiero. Go there.
+
+When you get there, you'll land in the middle of a battle, and see Tasha. Follow her. You will see Tasha and Kearny confronting each other, and have to decide whom to trust. I would suggest you trust Tasha.
+
+When the smoke clears, Tasha will give you a data disk explaining the action which killed your family, and who was behind it. She'll also give you five million bucks, which isn't too bad. She'll tell you that the chalice you're after is on a Kurita planet called Kirchbach or Albiero guarded by four Battlemasters and one Warhammer.
+
+Another loose end to tie up is Grig. Head to the planet where you first found him (New Samarkand, Delacruz, or Tabayama) and you'll meet a vagrant. Ask him to GO ON with his story. Make a DEAL with him.
+
+When you see Grig, WAIT for the situation to improve. You'll get a chance when there are only two guards with him, STRIKE now. He'll try to make a deal with you. Don't go for it, and PULL THE TRIGGER. You'll pocket some easy cash.
+
+You've now done everything you need to do except get the chalice back. The above actions should have taken about a year of game time, meaning you've got about four more years to go. Save the game now, and also try to save the game after every two or three missions since it is easy to forget that you only have five years from the start of the game to reclaim the chalice. Remember that travelling to and from missions takes time, as does travelling to the planet where the Dark Wing is hiding.
+
+You should have about 10.5 million C-bills, so go ahead and invest in some 'Mechs and crew. SAVE THE GAME before you try to hire any crew members, because the game will sometimes crash when you do. You'll want to end up with a good crew and some good 'Mechs, I would suggest you get four BattleMasters. You'll need money for this, and there are three ways you can get it:
+
+    Go around buying 'Mechs at industrial planets and 'Mech-manufacturing planets (such as Alshain (Kurita), Hesperus II (Steiner), Calloway VI (Marik), Ares (Liao), and Marduk (Davion). Other good planets include Amity, Aldebaran, and Galax. Buy 'Mechs at these planets, and travel to various backwater and out of the way places like Land's End and Baxley. There are a huge number of these planets. Anyway, you can sell 'Mechs at these places for a nice profit.
+
+    Take missions for House Davion and quickly build up your experience and lance status. Once you have a lance of four heavy 'Mechs, you should start being offered extended contracts (usually to fight 12 enemy 'Mechs of varying weights). You should be able to negotiate a deal that'll give you 9990-K C-bills, 27-30% salvage and around 30% upfront. Before you take launch on an extended contract, buy enough ammo to fully reload your 'Mechs twice. A few extended contracts should soon see you with enough money to afford Battlemasters for your entire crew.
+
+    Norton Utilities. Save the game, NU it, and give yourself some cash. Money is offset 73 (49h). Fill the three bytes with $FF, and you'll get about 16.7 Million. Or if you're REALLY greedy, go to byte 76 (4Ch), and change that one to 01h to 0Fh (0Fh will give you about 250,000,000).
+
+If you only traded 'Mechs to build up your cash (or cheated), you'll probably have to train up your crew to have a chance of beating the Dark Wing. I recommend fighting for House Davion as they tend to pay the most, not only in direct payments but in salvage (once you and your crew start getting experienced, you should be able to demand 27-40% salvage rights and around 30% of the contract upfront. The actual contract amount varies depending on the number of enemy 'Mechs expected and their weight.
+
+When your crew gets good enough, go to Kirchbach (or wherever the Dark Wing is located) and reclaim your chalice. 

@@ -1,0 +1,84 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "research/extract/decoded_pck/JENPCK_TBL.decoded.bin",
+    "size": 38374,
+    "sha256": "a25facf3a01ef2ab5b82f7c6c5c202ca1e0a6ddbe6b5d9bea46478de7257a8a7"
+  },
+  "kind": "pck_recursive_ref_probe",
+  "choice_index": 0,
+  "threshold": 192,
+  "max_depth": 4,
+  "min_score": 0,
+  "entries": [
+    {
+      "object_id": "pck_object_0004",
+      "entry_index": "pck_object_0004",
+      "choice_index": 0,
+      "threshold": 192,
+      "max_depth": 4,
+      "min_score": 0,
+      "node_count": 8,
+      "root_record_count": 5,
+      "resolved_edge_count": 3,
+      "width": 192,
+      "height": 192,
+      "path": "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL_min0/choice0_thr192/JENPCK_TBL_pck_object_0004_choice000_thr192_recursive_ref_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL_min0/choice0_thr192/JENPCK_TBL_pck_object_0004_choice000_thr192_recursive_ref_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0038",
+      "entry_index": "pck_object_0038",
+      "choice_index": 0,
+      "threshold": 192,
+      "max_depth": 4,
+      "min_score": 0,
+      "node_count": 8,
+      "root_record_count": 4,
+      "resolved_edge_count": 4,
+      "width": 192,
+      "height": 192,
+      "path": "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL_min0/choice0_thr192/JENPCK_TBL_pck_object_0038_choice000_thr192_recursive_ref_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL_min0/choice0_thr192/JENPCK_TBL_pck_object_0038_choice000_thr192_recursive_ref_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0042",
+      "entry_index": "pck_object_0042",
+      "choice_index": 0,
+      "threshold": 192,
+      "max_depth": 4,
+      "min_score": 0,
+      "node_count": 8,
+      "root_record_count": 4,
+      "resolved_edge_count": 4,
+      "width": 192,
+      "height": 192,
+      "path": "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL_min0/choice0_thr192/JENPCK_TBL_pck_object_0042_choice000_thr192_recursive_ref_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL_min0/choice0_thr192/JENPCK_TBL_pck_object_0042_choice000_thr192_recursive_ref_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0110",
+      "entry_index": "pck_object_0110",
+      "choice_index": 0,
+      "threshold": 192,
+      "max_depth": 4,
+      "min_score": 0,
+      "node_count": 2,
+      "root_record_count": 2,
+      "resolved_edge_count": 0,
+      "width": 192,
+      "height": 192,
+      "path": "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL_min0/choice0_thr192/JENPCK_TBL_pck_object_0110_choice000_thr192_recursive_ref_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL_min0/choice0_thr192/JENPCK_TBL_pck_object_0110_choice000_thr192_recursive_ref_probe.png"
+      ]
+    }
+  ]
+}

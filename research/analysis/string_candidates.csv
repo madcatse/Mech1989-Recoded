@@ -1,0 +1,526 @@
+id,file,offset_hex,offset_dec,length,encoding,storage,candidate_kind,confidence,text,neighboring_range,notes
+STR-0001,Original/1.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0002,Original/286WI2.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0003,Original/286WIN.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0004,Original/286WIN1.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0005,Original/6X6B.FNT,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,FNT:,0x000000-0x000004,ASCII chunk tag found by byte-level scan
+STR-0006,Original/8X8B.FNT,0x000000,0,4,ASCII,ASCII extracted run,resource chunk tag,high,FNT:,0x000000-0x00030B,ASCII chunk tag in tagged resource file
+STR-0007,Original/ARCTIC.PAL,0x000008,8,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,EGA:,0x000000-0x000116,ASCII chunk tag in tagged resource file
+STR-0008,Original/ARCTIC.PAL,0x000090,144,4,ASCII,ASCII extracted run,resource chunk tag,high,CGA:,0x000000-0x000116,ASCII chunk tag in tagged resource file
+STR-0009,Original/ARCTIC.PAL,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x000000-0x000004,ASCII chunk tag found by byte-level scan
+STR-0010,Original/BAT.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00004B,ASCII chunk tag in tagged resource file
+STR-0011,Original/BAT.BMP,0x000016,22,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00004B,ASCII chunk tag in tagged resource file
+STR-0012,Original/BAT.BMP,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,BMP:,0x000000-0x000004,ASCII chunk tag found by byte-level scan
+STR-0013,Original/BOUNTY.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0014,Original/BTECH.EXE,0x026AE7,158439,6,ASCII,ASCII extracted run,ui/menu/economy message,high,PAUSED,0x026A78-0x026D13,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0015,Original/BTECH.EXE,0x026B2A,158506,25,ASCII,null-terminated candidate,loader/error message,high,no memory for map buffer.,0x026A78-0x026D13,explicit loader/runtime/error wording
+STR-0016,Original/BTECH.EXE,0x026B44,158532,7,ASCII,ASCII extracted run,resource filename,high,map.scr,0x026A78-0x026D13,file-name-like string
+STR-0017,Original/BTECH.EXE,0x026CCB,158923,13,ASCII,ASCII extracted run,ui/menu/economy message,high,WEAPON STATUS,0x026A78-0x026D13,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0018,Original/BTECH.EXE,0x026CDE,158942,13,ASCII,null-terminated candidate,ui/menu/economy message,high,SELECT ORDER:,0x026A78-0x026D13,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0019,Original/BTECH.EXE,0x026D0C,158988,7,ASCII,ASCII extracted run,ui/menu/economy message,high,WEAPONS,0x026A78-0x026D13,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0020,Original/BTECH.EXE,0x026DAC,159148,7,ASCII,null-terminated candidate,resource filename,high,loc.bmp,0x026DAC-0x026F01,file-name-like string
+STR-0021,Original/BTECH.EXE,0x026DB4,159156,7,ASCII,null-terminated candidate,resource filename,high,jen.bmp,0x026DAC-0x026F01,file-name-like string
+STR-0022,Original/BTECH.EXE,0x026DBC,159164,7,ASCII,null-terminated candidate,resource filename,high,pho.bmp,0x026DAC-0x026F01,file-name-like string
+STR-0023,Original/BTECH.EXE,0x026DC4,159172,7,ASCII,null-terminated candidate,resource filename,high,sha.bmp,0x026DAC-0x026F01,file-name-like string
+STR-0024,Original/BTECH.EXE,0x026DCC,159180,7,ASCII,null-terminated candidate,resource filename,high,rif.bmp,0x026DAC-0x026F01,file-name-like string
+STR-0025,Original/BTECH.EXE,0x026DD4,159188,7,ASCII,null-terminated candidate,resource filename,high,war.bmp,0x026DAC-0x026F01,file-name-like string
+STR-0026,Original/BTECH.EXE,0x026DDC,159196,7,ASCII,null-terminated candidate,resource filename,high,mar.bmp,0x026DAC-0x026F01,file-name-like string
+STR-0027,Original/BTECH.EXE,0x026DE4,159204,7,ASCII,fixed-width/null-terminated candidate,resource filename,high,bat.bmp,0x026DAC-0x026F01,file-name-like string
+STR-0028,Original/BTECH.EXE,0x026F62,159586,27,ASCII,null-terminated candidate,loader/error message,high,not enough memory for shape,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0029,Original/BTECH.EXE,0x026FB6,159670,13,ASCII,ASCII extracted run,ui/menu/economy message,high,  HEAT SINKS:,0x026F62-0x0272F9,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0030,Original/BTECH.EXE,0x026FFA,159738,10,ASCII,null-terminated candidate,resource filename,high,snario.dat,0x026F62-0x0272F9,file-name-like string
+STR-0031,Original/BTECH.EXE,0x027005,159749,25,ASCII,ASCII extracted run,loader/error message,high,No scenario file found...,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0032,Original/BTECH.EXE,0x027022,159778,10,ASCII,null-terminated candidate,resource filename,high,snario.dat,0x026F62-0x0272F9,file-name-like string
+STR-0033,Original/BTECH.EXE,0x02702D,159789,25,ASCII,ASCII extracted run,loader/error message,high,No scenario file found...,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0034,Original/BTECH.EXE,0x027071,159857,10,ASCII,null-terminated candidate,resource filename,high,desert.pal,0x026F62-0x0272F9,file-name-like string
+STR-0035,Original/BTECH.EXE,0x02707C,159868,10,ASCII,null-terminated candidate,resource filename,high,arctic.pal,0x026F62-0x0272F9,file-name-like string
+STR-0036,Original/BTECH.EXE,0x027087,159879,10,ASCII,null-terminated candidate,resource filename,high,tropic.pal,0x026F62-0x0272F9,file-name-like string
+STR-0037,Original/BTECH.EXE,0x027092,159890,10,ASCII,null-terminated candidate,resource filename,high,dmgpal.pal,0x026F62-0x0272F9,file-name-like string
+STR-0038,Original/BTECH.EXE,0x02709D,159901,8,ASCII,null-terminated candidate,resource filename,high,6x6b.fnt,0x026F62-0x0272F9,file-name-like string
+STR-0039,Original/BTECH.EXE,0x0270A6,159910,10,ASCII,null-terminated candidate,resource filename,high,prompt.bmp,0x026F62-0x0272F9,file-name-like string
+STR-0040,Original/BTECH.EXE,0x0270B1,159921,12,ASCII,null-terminated candidate,resource filename,high,btechsnd.snd,0x026F62-0x0272F9,file-name-like string
+STR-0041,Original/BTECH.EXE,0x0270BE,159934,23,ASCII,null-terminated candidate,loader/error message,high,Sound file not found...,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0042,Original/BTECH.EXE,0x02714A,160074,14,ASCII,null-terminated candidate,ui/menu/economy message,high,card not found,0x026F62-0x0272F9,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0043,Original/BTECH.EXE,0x027159,160089,9,ASCII,null-terminated candidate,resource filename,high,point.bmp,0x026F62-0x0272F9,file-name-like string
+STR-0044,Original/BTECH.EXE,0x027163,160099,12,ASCII,null-terminated candidate,resource filename,high,sm_mechs.bmp,0x026F62-0x0272F9,file-name-like string
+STR-0045,Original/BTECH.EXE,0x027170,160112,10,ASCII,null-terminated candidate,resource filename,high,struts.bmp,0x026F62-0x0272F9,file-name-like string
+STR-0046,Original/BTECH.EXE,0x02717B,160123,11,ASCII,null-terminated candidate,resource filename,high,cockpit.bmp,0x026F62-0x0272F9,file-name-like string
+STR-0047,Original/BTECH.EXE,0x027187,160135,12,ASCII,null-terminated candidate,resource filename,high,hud_cyan.bmp,0x026F62-0x0272F9,file-name-like string
+STR-0048,Original/BTECH.EXE,0x027194,160148,12,ASCII,ASCII extracted run,resource filename,high,hud_nums.bmp,0x026F62-0x0272F9,file-name-like string
+STR-0049,Original/BTECH.EXE,0x0271DB,160219,30,ASCII,ASCII extracted run,loader/error message,high,Can't find 3space tile data...,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0050,Original/BTECH.EXE,0x0271FE,160254,23,ASCII,ASCII extracted run,loader/error message,high,Can't find grid data...,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0051,Original/BTECH.EXE,0x027248,160328,9,ASCII,null-terminated candidate,resource filename,high,light.scr,0x026F62-0x0272F9,file-name-like string
+STR-0052,Original/BTECH.EXE,0x027252,160338,10,ASCII,null-terminated candidate,resource filename,high,medium.scr,0x026F62-0x0272F9,file-name-like string
+STR-0053,Original/BTECH.EXE,0x02725D,160349,9,ASCII,ASCII extracted run,resource filename,high,heavy.scr,0x026F62-0x0272F9,file-name-like string
+STR-0054,Original/BTECH.EXE,0x0272A5,160421,34,ASCII,ASCII extracted run,loader/error message,high,Could not create demo data file ..,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0055,Original/BTECH.EXE,0x0272CB,160459,24,ASCII,ASCII extracted run,loader/error message,high,Could not open demo file,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0056,Original/BTECH.EXE,0x0272E7,160487,18,ASCII,ASCII extracted run,loader/error message,high,NO DEMO FILE FOUND,0x026F62-0x0272F9,explicit loader/runtime/error wording
+STR-0057,Original/BTECH.EXE,0x027414,160788,6,ASCII,ASCII extracted run,resource filename,high,mw.exe,0x0273CA-0x02781F,file-name-like string
+STR-0058,Original/BTECH.EXE,0x027463,160867,26,ASCII,null-terminated candidate,contract/mission text,medium,DEFENSE OF A WATER FACTORY,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0059,Original/BTECH.EXE,0x02747E,160894,28,ASCII,null-terminated candidate,ui/menu/economy message,high,DEFENSE OF A WEAPONS FACTORY,0x0273CA-0x02781F,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0060,Original/BTECH.EXE,0x02749B,160923,22,ASCII,null-terminated candidate,contract/mission text,medium,DEFENSE OF A FUEL DUMP,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0061,Original/BTECH.EXE,0x0274B2,160946,25,ASCII,null-terminated candidate,contract/mission text,medium,DEFENSE OF FIELD COM UNIT,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0062,Original/BTECH.EXE,0x0274CC,160972,25,ASCII,null-terminated candidate,contract/mission text,medium,DEFENSE OF A SUPPLY DEPOT,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0063,Original/BTECH.EXE,0x0274E6,160998,26,ASCII,null-terminated candidate,contract/mission text,medium,DEFENSE OF PORT FACILITIES,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0064,Original/BTECH.EXE,0x027501,161025,24,ASCII,null-terminated candidate,contract/mission text,medium,SUPPRESSION OF REBELLION,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0065,Original/BTECH.EXE,0x0275D9,161241,19,ASCII,null-terminated candidate,contract/mission text,medium,A PLANETARY ASSAULT,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0066,Original/BTECH.EXE,0x027689,161417,30,ASCII,null-terminated candidate,ui/menu/economy message,high,DISABLING OF A WEAPONS FACTORY,0x0273CA-0x02781F,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0067,Original/BTECH.EXE,0x0276DF,161503,31,ASCII,ASCII extracted run,contract/mission text,medium,DISABLING OF A FIELD COM CENTER,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0068,Original/BTECH.EXE,0x0277DA,161754,10,ASCII,null-terminated candidate,resource filename,high,status.scr,0x0273CA-0x02781F,file-name-like string
+STR-0069,Original/BTECH.EXE,0x0277E5,161765,18,ASCII,null-terminated candidate,contract/mission text,medium,YOUR NEXT MISSION:,0x0273CA-0x02781F,explicit contract or mission wording
+STR-0070,Original/BTECH.EXE,0x028CF3,167155,26,ASCII,ASCII extracted run,loader/error message,high,no shells left to allocate,0x0289E6-0x028D0D,explicit loader/runtime/error wording
+STR-0071,Original/BTECH.EXE,0x0290CC,168140,25,ASCII,null-terminated candidate,loader/error message,high,Could not allocate object,0x0290CC-0x02914C,explicit loader/runtime/error wording
+STR-0072,Original/BTECH.EXE,0x0290E6,168166,29,ASCII,null-terminated candidate,loader/error message,high,Max objects already allocated,0x0290CC-0x02914C,explicit loader/runtime/error wording
+STR-0073,Original/BTECH.EXE,0x029104,168196,36,ASCII,null-terminated candidate,loader/error message,high,Could not allocate dynamic object...,0x0290CC-0x02914C,explicit loader/runtime/error wording
+STR-0074,Original/BTECH.EXE,0x02912A,168234,34,ASCII,ASCII extracted run,loader/error message,high,Could not allocate laser object...,0x0290CC-0x02914C,explicit loader/runtime/error wording
+STR-0075,Original/BTECH.EXE,0x0293D4,168916,13,ASCII,ASCII extracted run,loader/error message,high,malloc failed,0x0293B3-0x029522,explicit loader/runtime/error wording
+STR-0076,Original/BTECH.EXE,0x029403,168963,22,ASCII,null-terminated candidate,loader/error message,high,bitmaps already loaded,0x0293B3-0x029522,explicit loader/runtime/error wording
+STR-0077,Original/BTECH.EXE,0x02942A,169002,13,ASCII,null-terminated candidate,loader/error message,high,malloc failed,0x0293B3-0x029522,explicit loader/runtime/error wording
+STR-0078,Original/BTECH.EXE,0x029462,169058,21,ASCII,null-terminated candidate,loader/error message,high,shapes already loaded,0x0293B3-0x029522,explicit loader/runtime/error wording
+STR-0079,Original/BTECH.EXE,0x02961F,169503,4,ASCII,null-terminated candidate,resource chunk tag,high,FNT:,0x0295E3-0x029741,ASCII chunk tag in tagged resource file
+STR-0080,Original/BTECH.EXE,0x029EE7,171751,34,ASCII,ASCII extracted run,loader/error message,high,- not enough space for environment,0x029E46-0x029F6C,explicit loader/runtime/error wording
+STR-0081,Original/BTECH.EXE,0x029F13,171795,15,ASCII,ASCII extracted run,loader/error message,high,run-time error ,0x029E46-0x029F6C,explicit loader/runtime/error wording
+STR-0082,Original/BTECH.EXE,0x029F2C,171820,27,ASCII,fixed-width/null-terminated candidate,loader/error message,high,- floating point not loaded,0x029E46-0x029F6C,explicit loader/runtime/error wording
+STR-0083,Original/BTECH.EXE,0x02A096,172182,24,ASCII,ASCII extracted run,loader/error message,high,!Packed file is corrupt6,0x02A096-0x02A0E9,explicit loader/runtime/error wording
+STR-0084,Original/BTECH.EXE,0x0295F0,169456,4,ASCII,tag marker,resource chunk tag,high,BIN:,0x0295F0-0x0295F4,ASCII chunk tag found by byte-level scan
+STR-0085,Original/BTECH.EXE,0x029607,169479,4,ASCII,tag marker,resource chunk tag,high,BIN:,0x029607-0x02960B,ASCII chunk tag found by byte-level scan
+STR-0086,Original/BTECH.EXE,0x0295E3,169443,4,ASCII,tag marker,resource chunk tag,high,BMP:,0x0295E3-0x0295E7,ASCII chunk tag found by byte-level scan
+STR-0087,Original/BTECH.EXE,0x0295EC,169452,4,ASCII,tag marker,resource chunk tag,high,BMP:,0x0295EC-0x0295F0,ASCII chunk tag found by byte-level scan
+STR-0088,Original/BTECH.EXE,0x0295F7,169463,4,ASCII,tag marker,resource chunk tag,high,BMP:,0x0295F7-0x0295FB,ASCII chunk tag found by byte-level scan
+STR-0089,Original/BTECH.EXE,0x029636,169526,4,ASCII,tag marker,resource chunk tag,high,CGA:,0x029636-0x02963A,ASCII chunk tag found by byte-level scan
+STR-0090,Original/BTECH.EXE,0x029651,169553,4,ASCII,tag marker,resource chunk tag,high,CGA:,0x029651-0x029655,ASCII chunk tag found by byte-level scan
+STR-0091,Original/BTECH.EXE,0x02963F,169535,4,ASCII,tag marker,resource chunk tag,high,EGA:,0x02963F-0x029643,ASCII chunk tag found by byte-level scan
+STR-0092,Original/BTECH.EXE,0x029648,169544,4,ASCII,tag marker,resource chunk tag,high,EGA:,0x029648-0x02964C,ASCII chunk tag found by byte-level scan
+STR-0093,Original/BTECH.EXE,0x0291ED,168429,4,ASCII,tag marker,resource chunk tag,high,INF:,0x0291ED-0x0291F1,ASCII chunk tag found by byte-level scan
+STR-0094,Original/BTECH.EXE,0x029225,168485,4,ASCII,tag marker,resource chunk tag,high,INF:,0x029225-0x029229,ASCII chunk tag found by byte-level scan
+STR-0095,Original/BTECH.EXE,0x0295E7,169447,4,ASCII,tag marker,resource chunk tag,high,INF:,0x0295E7-0x0295EB,ASCII chunk tag found by byte-level scan
+STR-0096,Original/BTECH.EXE,0x029632,169522,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x029632-0x029636,ASCII chunk tag found by byte-level scan
+STR-0097,Original/BTECH.EXE,0x02963B,169531,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x02963B-0x02963F,ASCII chunk tag found by byte-level scan
+STR-0098,Original/BTECH.EXE,0x029644,169540,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x029644-0x029648,ASCII chunk tag found by byte-level scan
+STR-0099,Original/BTECH.EXE,0x02964D,169549,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x02964D-0x029651,ASCII chunk tag found by byte-level scan
+STR-0100,Original/BTECH.EXE,0x029656,169558,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x029656-0x02965A,ASCII chunk tag found by byte-level scan
+STR-0101,Original/BTECH.EXE,0x02965F,169567,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x02965F-0x029663,ASCII chunk tag found by byte-level scan
+STR-0102,Original/BTECH.EXE,0x029668,169576,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x029668-0x02966C,ASCII chunk tag found by byte-level scan
+STR-0103,Original/BTECH.EXE,0x029671,169585,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x029671-0x029675,ASCII chunk tag found by byte-level scan
+STR-0104,Original/BTECHSND.SND,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00001A,ASCII chunk tag in tagged resource file
+STR-0105,Original/COCKPIT.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x000046,ASCII chunk tag in tagged resource file
+STR-0106,Original/COCKPIT.BMP,0x000042,66,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x000046,ASCII chunk tag in tagged resource file
+STR-0107,Original/COCKPIT.BMP,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,INF:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0108,Original/DESERT.PAL,0x000008,8,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,EGA:,0x000000-0x000108,ASCII chunk tag in tagged resource file
+STR-0109,Original/DESERT.PAL,0x000090,144,4,ASCII,ASCII extracted run,resource chunk tag,high,CGA:,0x000000-0x000108,ASCII chunk tag in tagged resource file
+STR-0110,Original/DESERT.PAL,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x000000-0x000004,ASCII chunk tag found by byte-level scan
+STR-0111,Original/DIGITS.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x00000C,ASCII chunk tag in tagged resource file
+STR-0112,Original/DIGITS.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00000C,ASCII chunk tag in tagged resource file
+STR-0113,Original/DIGITS.BMP,0x0000C2,194,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x0000C2-0x000175,ASCII chunk tag in tagged resource file
+STR-0114,Original/DMGPAL.PAL,0x000008,8,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,EGA:,0x000000-0x0000AC,ASCII chunk tag in tagged resource file
+STR-0115,Original/DMGPAL.PAL,0x000090,144,4,ASCII,ASCII extracted run,resource chunk tag,high,CGA:,0x000000-0x0000AC,ASCII chunk tag in tagged resource file
+STR-0116,Original/DMGPAL.PAL,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x000000-0x000004,ASCII chunk tag found by byte-level scan
+STR-0117,Original/DOTS.BMP,0x00005A,90,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00005E,ASCII chunk tag in tagged resource file
+STR-0118,Original/DOTS.BMP,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,BMP:,0x000000-0x000004,ASCII chunk tag found by byte-level scan
+STR-0119,Original/DOTS.BMP,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,INF:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0120,Original/HEAVY.SCR,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00000C,ASCII chunk tag in tagged resource file
+STR-0121,Original/HUD_CYAN.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x000046,ASCII chunk tag in tagged resource file
+STR-0122,Original/HUD_CYAN.BMP,0x000042,66,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x000046,ASCII chunk tag in tagged resource file
+STR-0123,Original/HUD_CYAN.BMP,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,INF:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0124,Original/HUD_NUMS.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x000046,ASCII chunk tag in tagged resource file
+STR-0125,Original/HUD_NUMS.BMP,0x000042,66,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x000046,ASCII chunk tag in tagged resource file
+STR-0126,Original/HUD_NUMS.BMP,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,INF:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0127,Original/INSTALL.BAT,0x000000,0,8,ASCII,null-terminated candidate,installer/script text,medium,echo off,0x000000-0x00107D,DOS installer script command or label
+STR-0128,Original/INSTALL.BAT,0x00000A,10,26,ASCII,ASCII extracted run,installer/script text,medium,if .%2 == .~ goto TrueCopy,0x000000-0x00107D,DOS installer script command or label
+STR-0129,Original/INSTALL.BAT,0x00002B,43,33,ASCII,null-terminated candidate,installer/script text,medium,if %1a == a goto noDriveSpecified,0x000000-0x00107D,DOS installer script command or label
+STR-0130,Original/INSTALL.BAT,0x00004E,78,22,ASCII,null-terminated candidate,installer/script text,medium,if %1 == c: goto begin,0x000000-0x00107D,DOS installer script command or label
+STR-0131,Original/INSTALL.BAT,0x000066,102,22,ASCII,null-terminated candidate,installer/script text,medium,if %1 == C: goto begin,0x000000-0x00107D,DOS installer script command or label
+STR-0132,Original/INSTALL.BAT,0x00007E,126,22,ASCII,null-terminated candidate,installer/script text,medium,if %1 == d: goto begin,0x000000-0x00107D,DOS installer script command or label
+STR-0133,Original/INSTALL.BAT,0x000096,150,22,ASCII,null-terminated candidate,installer/script text,medium,if %1 == D: goto begin,0x000000-0x00107D,DOS installer script command or label
+STR-0134,Original/INSTALL.BAT,0x0000AE,174,22,ASCII,null-terminated candidate,installer/script text,medium,if %1 == e: goto begin,0x000000-0x00107D,DOS installer script command or label
+STR-0135,Original/INSTALL.BAT,0x0000C6,198,22,ASCII,null-terminated candidate,installer/script text,medium,if %1 == E: goto begin,0x000000-0x00107D,DOS installer script command or label
+STR-0136,Original/INSTALL.BAT,0x0000DE,222,22,ASCII,null-terminated candidate,installer/script text,medium,if %1 == f: goto begin,0x000000-0x00107D,DOS installer script command or label
+STR-0137,Original/INSTALL.BAT,0x0000F6,246,22,ASCII,null-terminated candidate,installer/script text,medium,if %1 == F: goto begin,0x000000-0x00107D,DOS installer script command or label
+STR-0138,Original/INSTALL.BAT,0x00010E,270,19,ASCII,null-terminated candidate,installer/script text,medium,goto notOnThatDrive,0x000000-0x00107D,DOS installer script command or label
+STR-0139,Original/INSTALL.BAT,0x000123,291,6,ASCII,null-terminated candidate,installer/script text,medium,:begin,0x000000-0x00107D,DOS installer script command or label
+STR-0140,Original/INSTALL.BAT,0x000181,385,71,ASCII,ASCII extracted run,ui/menu/economy message,high,                    MechWarrior Hard Disk Installation                 ,0x000000-0x00107D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0141,Original/INSTALL.BAT,0x000221,545,71,ASCII,ASCII extracted run,installer/script text,medium,"       If you don't want to install MechWarrior now, press Ctrl-C.     ",0x000000-0x00107D,DOS installer script command or label
+STR-0142,Original/INSTALL.BAT,0x0002BB,699,5,ASCII,null-terminated candidate,ui/menu/economy message,high,pause,0x000000-0x00107D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0143,Original/INSTALL.BAT,0x0002CA,714,32,ASCII,null-terminated candidate,installer file reference,high,if not exist MW.exe goto diskerr,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0144,Original/INSTALL.BAT,0x0002EC,748,37,ASCII,null-terminated candidate,installer/script text,medium,echo Creating directory %1\MECHWAR...,0x000000-0x00107D,DOS installer script command or label
+STR-0145,Original/INSTALL.BAT,0x000313,787,47,ASCII,null-terminated candidate,installer file reference,high,if exist %1\MECHWAR\mw.exe goto directoryExists,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0146,Original/INSTALL.BAT,0x000344,836,41,ASCII,ASCII extracted run,installer/script text,medium,if not exist %1\MECHWAR\*.* md %1\MECHWAR,0x000000-0x00107D,DOS installer script command or label
+STR-0147,Original/INSTALL.BAT,0x000378,888,54,ASCII,null-terminated candidate,installer/script text,medium,echo Insert the MechWarrior Disk #1 in the disk drive.,0x000000-0x00107D,DOS installer script command or label
+STR-0148,Original/INSTALL.BAT,0x0003B0,944,64,ASCII,null-terminated candidate,installer/script text,medium,"echo If Installing from 3 1/2, insert MechWarrior 3 1/2 Disk #1.",0x000000-0x00107D,DOS installer script command or label
+STR-0149,Original/INSTALL.BAT,0x0003F2,1010,5,ASCII,null-terminated candidate,ui/menu/economy message,high,pause,0x000000-0x00107D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0150,Original/INSTALL.BAT,0x0003F9,1017,27,ASCII,null-terminated candidate,installer file reference,high,copy install.bat %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0151,Original/INSTALL.BAT,0x000416,1046,50,ASCII,null-terminated candidate,installer file reference,high,if not exist %1\MECHWAR\install.bat goto InstError,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0152,Original/INSTALL.BAT,0x00044A,1098,23,ASCII,null-terminated candidate,installer/script text,medium,%1\MECHWAR\install %1 ~,0x000000-0x00107D,DOS installer script command or label
+STR-0153,Original/INSTALL.BAT,0x000463,1123,9,ASCII,null-terminated candidate,installer/script text,medium,:TrueCopy,0x000000-0x00107D,DOS installer script command or label
+STR-0154,Original/INSTALL.BAT,0x00046E,1134,9,ASCII,null-terminated candidate,installer/script text,medium,:Disk1Now,0x000000-0x00107D,DOS installer script command or label
+STR-0155,Original/INSTALL.BAT,0x000481,1153,33,ASCII,null-terminated candidate,installer/script text,medium,echo Copying MechWarrior files...,0x000000-0x00107D,DOS installer script command or label
+STR-0156,Original/INSTALL.BAT,0x0004A4,1188,28,ASCII,null-terminated candidate,installer file reference,high,copy mw_apics.bin %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0157,Original/INSTALL.BAT,0x0004C2,1218,28,ASCII,null-terminated candidate,installer file reference,high,copy mw_1pics.bin %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0158,Original/INSTALL.BAT,0x0004E0,1248,28,ASCII,null-terminated candidate,installer file reference,high,copy mw_2pics.bin %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0159,Original/INSTALL.BAT,0x0004FE,1278,28,ASCII,null-terminated candidate,installer file reference,high,copy mw_cpics.bin %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0160,Original/INSTALL.BAT,0x00051C,1308,28,ASCII,null-terminated candidate,installer file reference,high,copy mw_gpics.bin %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0161,Original/INSTALL.BAT,0x00053A,1338,28,ASCII,null-terminated candidate,installer file reference,high,copy mw_tpics.bin %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0162,Original/INSTALL.BAT,0x000558,1368,23,ASCII,null-terminated candidate,installer file reference,high,copy mw*.exe %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0163,Original/INSTALL.BAT,0x000571,1393,22,ASCII,null-terminated candidate,installer file reference,high,copy m*.mus %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0164,Original/INSTALL.BAT,0x000589,1417,25,ASCII,null-terminated candidate,installer file reference,high,copy death.mus %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0165,Original/INSTALL.BAT,0x0005A4,1444,21,ASCII,null-terminated candidate,installer file reference,high,copy *.fnt %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0166,Original/INSTALL.BAT,0x0005BB,1467,45,ASCII,null-terminated candidate,installer file reference,high,if not exist %1\MECHWAR\mw.exe goto InstError,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0167,Original/INSTALL.BAT,0x0005F2,1522,9,ASCII,fixed-width/null-terminated candidate,installer/script text,medium,:Disk2Now,0x000000-0x00107D,DOS installer script command or label
+STR-0168,Original/INSTALL.BAT,0x000602,1538,61,ASCII,null-terminated candidate,installer/script text,medium,echo Please insert the MechWarrior Disk #2 in the disk drive.,0x000000-0x00107D,DOS installer script command or label
+STR-0169,Original/INSTALL.BAT,0x000641,1601,63,ASCII,null-terminated candidate,installer/script text,medium,echo If installing from 3 1/2 disks leave disk #1 in the drive.,0x000000-0x00107D,DOS installer script command or label
+STR-0170,Original/INSTALL.BAT,0x000682,1666,5,ASCII,null-terminated candidate,ui/menu/economy message,high,pause,0x000000-0x00107D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0171,Original/INSTALL.BAT,0x000689,1673,38,ASCII,null-terminated candidate,installer file reference,high,if not exist mw_pics.bin goto Disk2Now,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0172,Original/INSTALL.BAT,0x0006B1,1713,27,ASCII,null-terminated candidate,installer file reference,high,copy mw_pics.bin %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0173,Original/INSTALL.BAT,0x0006CE,1742,28,ASCII,null-terminated candidate,installer file reference,high,copy mw_fpics.bin %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0174,Original/INSTALL.BAT,0x0006EC,1772,27,ASCII,null-terminated candidate,installer file reference,high,copy victory.mus %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0175,Original/INSTALL.BAT,0x000709,1801,22,ASCII,null-terminated candidate,installer file reference,high,copy l*.mus %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0176,Original/INSTALL.BAT,0x000721,1825,50,ASCII,null-terminated candidate,installer file reference,high,if not exist %1\MECHWAR\mw_pics.bin goto InstError,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0177,Original/INSTALL.BAT,0x000755,1877,51,ASCII,null-terminated candidate,installer file reference,high,if not exist %1\MECHWAR\mw_fpics.bin goto InstError,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0178,Original/INSTALL.BAT,0x00078A,1930,9,ASCII,fixed-width/null-terminated candidate,installer/script text,medium,:Disk3Now,0x000000-0x00107D,DOS installer script command or label
+STR-0179,Original/INSTALL.BAT,0x00079A,1946,61,ASCII,null-terminated candidate,installer/script text,medium,echo Please insert the MechWarrior Disk #3 in the disk drive.,0x000000-0x00107D,DOS installer script command or label
+STR-0180,Original/INSTALL.BAT,0x0007D9,2009,64,ASCII,null-terminated candidate,installer/script text,medium,"echo If installing from 3 1/2, insert MechWarrior 3 1/2 Disk #2.",0x000000-0x00107D,DOS installer script command or label
+STR-0181,Original/INSTALL.BAT,0x00081B,2075,5,ASCII,null-terminated candidate,ui/menu/economy message,high,pause,0x000000-0x00107D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0182,Original/INSTALL.BAT,0x000822,2082,36,ASCII,null-terminated candidate,installer file reference,high,if not exist btech.exe goto Disk3Now,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0183,Original/INSTALL.BAT,0x000848,2120,21,ASCII,null-terminated candidate,installer file reference,high,copy *.dat %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0184,Original/INSTALL.BAT,0x00085F,2143,21,ASCII,null-terminated candidate,installer file reference,high,copy *.fnt %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0185,Original/INSTALL.BAT,0x000876,2166,21,ASCII,null-terminated candidate,installer file reference,high,copy *.exe %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0186,Original/INSTALL.BAT,0x00088D,2189,21,ASCII,null-terminated candidate,installer file reference,high,copy *.wld %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0187,Original/INSTALL.BAT,0x0008A4,2212,21,ASCII,null-terminated candidate,installer file reference,high,copy *.grd %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0188,Original/INSTALL.BAT,0x0008BB,2235,21,ASCII,null-terminated candidate,installer file reference,high,copy *.snd %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0189,Original/INSTALL.BAT,0x0008D2,2258,21,ASCII,null-terminated candidate,installer file reference,high,copy *.pal %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0190,Original/INSTALL.BAT,0x0008E9,2281,48,ASCII,null-terminated candidate,installer file reference,high,If not exist %1\MECHWAR\btech.exe goto InstError,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0191,Original/INSTALL.BAT,0x00091B,2331,9,ASCII,fixed-width/null-terminated candidate,installer/script text,medium,:Disk4Now,0x000000-0x00107D,DOS installer script command or label
+STR-0192,Original/INSTALL.BAT,0x00092B,2347,60,ASCII,null-terminated candidate,installer/script text,medium,echo Please inser the MechWarrior Disk #4 in the disk drive.,0x000000-0x00107D,DOS installer script command or label
+STR-0193,Original/INSTALL.BAT,0x000969,2409,63,ASCII,null-terminated candidate,installer/script text,medium,echo If installing from 3 1/2 disks leave disk #2 in the drive.,0x000000-0x00107D,DOS installer script command or label
+STR-0194,Original/INSTALL.BAT,0x0009AA,2474,5,ASCII,null-terminated candidate,ui/menu/economy message,high,pause,0x000000-0x00107D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0195,Original/INSTALL.BAT,0x0009B1,2481,34,ASCII,null-terminated candidate,installer file reference,high,if not exist war.bmp goto Disk4Now,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0196,Original/INSTALL.BAT,0x0009D5,2517,20,ASCII,null-terminated candidate,installer/script text,medium,copy *.gi %1\MECHWAR,0x000000-0x00107D,DOS installer script command or label
+STR-0197,Original/INSTALL.BAT,0x0009EB,2539,21,ASCII,null-terminated candidate,installer file reference,high,copy *.tbl %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0198,Original/INSTALL.BAT,0x000A02,2562,21,ASCII,null-terminated candidate,installer file reference,high,copy *.scr %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0199,Original/INSTALL.BAT,0x000A19,2585,21,ASCII,null-terminated candidate,installer file reference,high,copy *.bmp %1\MECHWAR,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0200,Original/INSTALL.BAT,0x000A30,2608,49,ASCII,null-terminated candidate,installer file reference,high,if not exist %1\MECHWAR\rifpck.tbl goto InstError,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0201,Original/INSTALL.BAT,0x000A63,2659,46,ASCII,null-terminated candidate,installer file reference,high,if not exist %1\MECHWAR\war.bmp goto InstError,0x000000-0x00107D,file reference or copy pattern in installer script
+STR-0202,Original/INSTALL.BAT,0x000A93,2707,12,ASCII,null-terminated candidate,installer/script text,medium,:installDone,0x000000-0x00107D,DOS installer script command or label
+STR-0203,Original/INSTALL.BAT,0x000AB5,2741,73,ASCII,ASCII extracted run,installer/script text,medium,"echo MechWarrior is now installed on your hard disk.  To run it, type MW.",0x000000-0x00107D,DOS installer script command or label
+STR-0204,Original/INSTALL.BAT,0x000B04,2820,9,ASCII,null-terminated candidate,installer/script text,medium,goto done,0x000000-0x00107D,DOS installer script command or label
+STR-0205,Original/INSTALL.BAT,0x000B0F,2831,17,ASCII,null-terminated candidate,installer/script text,medium,:noDriveSpecified,0x000000-0x00107D,DOS installer script command or label
+STR-0206,Original/INSTALL.BAT,0x000B2A,2858,71,ASCII,null-terminated candidate,installer/script text,medium,"echo Installation Error:  To install MechWarrior on your hard disk, you",0x000000-0x00107D,DOS installer script command or label
+STR-0207,Original/INSTALL.BAT,0x000B73,2931,56,ASCII,null-terminated candidate,installer/script text,medium,"echo must specify the drive to install to.  For example,",0x000000-0x00107D,DOS installer script command or label
+STR-0208,Original/INSTALL.BAT,0x000BAD,2989,74,ASCII,null-terminated candidate,installer/script text,medium,"echo to install MechWarrior on drive C, type ""INSTALL C:"" and press Enter.",0x000000-0x00107D,DOS installer script command or label
+STR-0209,Original/INSTALL.BAT,0x000BF9,3065,14,ASCII,null-terminated candidate,installer/script text,medium,goto errorDone,0x000000-0x00107D,DOS installer script command or label
+STR-0210,Original/INSTALL.BAT,0x000C09,3081,15,ASCII,null-terminated candidate,installer/script text,medium,:notOnThatDrive,0x000000-0x00107D,DOS installer script command or label
+STR-0211,Original/INSTALL.BAT,0x000C22,3106,76,ASCII,null-terminated candidate,installer/script text,medium,"echo Installation Error: The hard drive letter must be a letter from C to F,",0x000000-0x00107D,DOS installer script command or label
+STR-0212,Original/INSTALL.BAT,0x000C70,3184,77,ASCII,null-terminated candidate,installer/script text,medium,"echo and must be followed by a colon.  For example, ""INSTALL C:"" will install",0x000000-0x00107D,DOS installer script command or label
+STR-0213,Original/INSTALL.BAT,0x000CBF,3263,28,ASCII,null-terminated candidate,installer/script text,medium,echo MechWarrior on drive C.,0x000000-0x00107D,DOS installer script command or label
+STR-0214,Original/INSTALL.BAT,0x000CDD,3293,14,ASCII,null-terminated candidate,installer/script text,medium,goto errorDone,0x000000-0x00107D,DOS installer script command or label
+STR-0215,Original/INSTALL.BAT,0x000CED,3309,10,ASCII,null-terminated candidate,loader/error message,high,:InstError,0x000000-0x00107D,explicit loader/runtime/error wording
+STR-0216,Original/INSTALL.BAT,0x000D06,3334,53,ASCII,null-terminated candidate,installer/script text,medium,echo Installation Error: The error might caused by...,0x000000-0x00107D,DOS installer script command or label
+STR-0217,Original/INSTALL.BAT,0x000D3D,3389,76,ASCII,null-terminated candidate,installer/script text,medium,"echo      A) insufficient space on the hard disk (1,440k of space is needed ",0x000000-0x00107D,DOS installer script command or label
+STR-0218,Original/INSTALL.BAT,0x000D8B,3467,37,ASCII,null-terminated candidate,installer/script text,medium,echo         to install MechWarrior).,0x000000-0x00107D,DOS installer script command or label
+STR-0219,Original/INSTALL.BAT,0x000DB2,3506,36,ASCII,null-terminated candidate,installer/script text,medium,echo      B) damaged disk or file.  ,0x000000-0x00107D,DOS installer script command or label
+STR-0220,Original/INSTALL.BAT,0x000DD8,3544,65,ASCII,null-terminated candidate,installer/script text,medium,echo      C) ejecting the disk while the installation is still in,0x000000-0x00107D,DOS installer script command or label
+STR-0221,Original/INSTALL.BAT,0x000E1B,3611,22,ASCII,null-terminated candidate,installer/script text,medium,echo         progress.,0x000000-0x00107D,DOS installer script command or label
+STR-0222,Original/INSTALL.BAT,0x000E33,3635,50,ASCII,null-terminated candidate,installer/script text,medium,echo      D) Installation to a nonexistent drive. ,0x000000-0x00107D,DOS installer script command or label
+STR-0223,Original/INSTALL.BAT,0x000E67,3687,69,ASCII,null-terminated candidate,installer/script text,medium,"echo Delete all files in the MECHWAR directory (del %1\mechwar\*.*), ",0x000000-0x00107D,DOS installer script command or label
+STR-0224,Original/INSTALL.BAT,0x000EAE,3758,67,ASCII,null-terminated candidate,installer/script text,medium,echo remove the directory (rd %1\MECHWAR) and try the installation ,0x000000-0x00107D,DOS installer script command or label
+STR-0225,Original/INSTALL.BAT,0x000EF3,3827,19,ASCII,null-terminated candidate,installer/script text,medium,echo process again.,0x000000-0x00107D,DOS installer script command or label
+STR-0226,Original/INSTALL.BAT,0x000F08,3848,14,ASCII,null-terminated candidate,installer/script text,medium,goto errorDone,0x000000-0x00107D,DOS installer script command or label
+STR-0227,Original/INSTALL.BAT,0x000F18,3864,16,ASCII,null-terminated candidate,loader/error message,high,:directoryExists,0x000000-0x00107D,explicit loader/runtime/error wording
+STR-0228,Original/INSTALL.BAT,0x000F32,3890,66,ASCII,null-terminated candidate,installer/script text,medium,echo Installation Error: MechWarrior already exists on this drive.,0x000000-0x00107D,DOS installer script command or label
+STR-0229,Original/INSTALL.BAT,0x000F76,3958,74,ASCII,null-terminated candidate,installer/script text,medium,"echo Delete this directory and all files in it, then try installing again.",0x000000-0x00107D,DOS installer script command or label
+STR-0230,Original/INSTALL.BAT,0x000FC2,4034,14,ASCII,null-terminated candidate,installer/script text,medium,goto errorDone,0x000000-0x00107D,DOS installer script command or label
+STR-0231,Original/INSTALL.BAT,0x000FDA,4058,8,ASCII,null-terminated candidate,loader/error message,high,:diskerr,0x000000-0x00107D,explicit loader/runtime/error wording
+STR-0232,Original/INSTALL.BAT,0x000FE4,4068,63,ASCII,null-terminated candidate,installer/script text,medium,echo Installation Error: Please run install from original disk.,0x000000-0x00107D,DOS installer script command or label
+STR-0233,Original/INSTALL.BAT,0x001025,4133,14,ASCII,null-terminated candidate,installer/script text,medium,goto errorDone,0x000000-0x00107D,DOS installer script command or label
+STR-0234,Original/INSTALL.BAT,0x001035,4149,10,ASCII,null-terminated candidate,installer/script text,medium,:errorDone,0x000000-0x00107D,DOS installer script command or label
+STR-0235,Original/INSTALL.BAT,0x001049,4169,45,ASCII,null-terminated candidate,installer/script text,medium,echo MechWarrior was not installed correctly.,0x000000-0x00107D,DOS installer script command or label
+STR-0236,Original/INSTALL.BAT,0x001078,4216,5,ASCII,ASCII extracted run,installer/script text,medium,:done,0x000000-0x00107D,DOS installer script command or label
+STR-0237,Original/JEN.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x00005D,ASCII chunk tag in tagged resource file
+STR-0238,Original/JEN.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00005D,ASCII chunk tag in tagged resource file
+STR-0239,Original/JEN.BMP,0x000016,22,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00005D,ASCII chunk tag in tagged resource file
+STR-0240,Original/JUN3.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0241,Original/LIGHT.SCR,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,BIN:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0242,Original/LOC.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x0000A8,ASCII chunk tag in tagged resource file
+STR-0243,Original/LOC.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x0000A8,ASCII chunk tag in tagged resource file
+STR-0244,Original/LOC.BMP,0x000016,22,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x0000A8,ASCII chunk tag in tagged resource file
+STR-0245,Original/MAP.SCR,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,BIN:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0246,Original/MAR.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x00003C,ASCII chunk tag in tagged resource file
+STR-0247,Original/MAR.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00003C,ASCII chunk tag in tagged resource file
+STR-0248,Original/MAR.BMP,0x000016,22,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00003C,ASCII chunk tag in tagged resource file
+STR-0249,Original/MAY17.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0250,Original/MAY172.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0251,Original/MAY25.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0252,Original/MEDIUM.SCR,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,BIN:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0253,Original/MW.EXE,0x000A43,2627,11,ASCII,null-terminated candidate,resource filename,high,MW_MAIN.EXE,0x000A34-0x000C47,file-name-like string
+STR-0254,Original/MW.EXE,0x000A4F,2639,9,ASCII,ASCII extracted run,resource filename,high,BTECH.EXE,0x000A34-0x000C47,file-name-like string
+STR-0255,Original/MW.EXE,0x000ABA,2746,20,ASCII,null-terminated candidate,loader/error message,high,CANT RELEASE MEMORY.,0x000A34-0x000C47,explicit loader/runtime/error wording
+STR-0256,Original/MW.EXE,0x000AD0,2768,87,ASCII,ASCII extracted run,loader/error message,high,$Please put DISK 1 in drive $Please put DISK 3 in drive $Not enough memory to continue.,0x000A34-0x000C47,explicit loader/runtime/error wording
+STR-0257,Original/MW.EXE,0x000BDB,3035,29,ASCII,null-terminated candidate,ui/menu/economy message,high,3 - For AdLib PC Music System,0x000A34-0x000C47,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0258,Original/MW_CPICS.EXE,0x00034C,844,20,ASCII,ASCII extracted run,loader/error message,high,CANT RELEASE MEMORY.,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0259,Original/MW_CPICS.EXE,0x000365,869,12,ASCII,ASCII extracted run,loader/error message,high,DISK ERROR !,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0260,Original/MW_CPICS.EXE,0x000376,886,25,ASCII,fixed-width/null-terminated candidate,loader/error message,high,NOT A DPAINT BRUSH FILE !,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0261,Original/MW_CPICS.EXE,0x0003C7,967,30,ASCII,null-terminated candidate,loader/error message,high,$64k ALLOCATED FOR PIC BUFFER.,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0262,Original/MW_CPICS.EXE,0x0003E7,999,31,ASCII,null-terminated candidate,loader/error message,high,$64k ALLOCATED FOR FILE BUFFER.,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0263,Original/MW_CPICS.EXE,0x000408,1032,40,ASCII,null-terminated candidate,loader/error message,high,$64k ALLOCATED FOR DECOMPRESSION BUFFER.,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0264,Original/MW_CPICS.EXE,0x000432,1074,39,ASCII,null-terminated candidate,loader/error message,high,$COULD NOT ALLOCATE 64K FOR PIC BUFFER.,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0265,Original/MW_CPICS.EXE,0x00045B,1115,40,ASCII,null-terminated candidate,loader/error message,high,$COULD NOT ALLOCATE 64K FOR FILE BUFFER.,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0266,Original/MW_CPICS.EXE,0x000485,1157,49,ASCII,null-terminated candidate,loader/error message,high,$COULD NOT ALLOCATE 64K FOR DECOMPRESSION BUFFER.,0x00034C-0x0004C5,explicit loader/runtime/error wording
+STR-0267,Original/MW_CPICS.EXE,0x0004B8,1208,13,ASCII,ASCII extracted run,resource filename,high,$MW_CPICS.BIN,0x00034C-0x0004C5,file-name-like string
+STR-0268,Original/MW_CPICS.EXE,0x000A45,2629,25,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\PALETTE.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0269,Original/MW_CPICS.EXE,0x000A5F,2655,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW01.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0270,Original/MW_CPICS.EXE,0x000A78,2680,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW02.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0271,Original/MW_CPICS.EXE,0x000A91,2705,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW03.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0272,Original/MW_CPICS.EXE,0x000AAA,2730,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW04.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0273,Original/MW_CPICS.EXE,0x000AC3,2755,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW05.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0274,Original/MW_CPICS.EXE,0x000ADC,2780,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW06.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0275,Original/MW_CPICS.EXE,0x000AF5,2805,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW07.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0276,Original/MW_CPICS.EXE,0x000B0E,2830,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW08.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0277,Original/MW_CPICS.EXE,0x000B27,2855,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW09.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0278,Original/MW_CPICS.EXE,0x000B40,2880,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW10.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0279,Original/MW_CPICS.EXE,0x000B59,2905,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW11.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0280,Original/MW_CPICS.EXE,0x000B72,2930,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW12.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0281,Original/MW_CPICS.EXE,0x000B8B,2955,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW13.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0282,Original/MW_CPICS.EXE,0x000BA4,2980,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW14.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0283,Original/MW_CPICS.EXE,0x000BBD,3005,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW15.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0284,Original/MW_CPICS.EXE,0x000BD6,3030,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW16.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0285,Original/MW_CPICS.EXE,0x000BEF,3055,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW17.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0286,Original/MW_CPICS.EXE,0x000C08,3080,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW18.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0287,Original/MW_CPICS.EXE,0x000C21,3105,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW19.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0288,Original/MW_CPICS.EXE,0x000C3A,3130,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW20.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0289,Original/MW_CPICS.EXE,0x000C53,3155,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREW21.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0290,Original/MW_CPICS.EXE,0x000C6C,3180,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\PLAYER.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0291,Original/MW_CPICS.EXE,0x000C85,3205,23,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\DS2A1.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0292,Original/MW_CPICS.EXE,0x000C9D,3229,23,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\DS2A2.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0293,Original/MW_CPICS.EXE,0x000CB5,3253,23,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\DS2A3.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0294,Original/MW_CPICS.EXE,0x000CCD,3277,25,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\CREWPAN.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0295,Original/MW_CPICS.EXE,0x000CE7,3303,26,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\HR1_ICON.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0296,Original/MW_CPICS.EXE,0x000D02,3330,26,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\HR2_ICON.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0297,Original/MW_CPICS.EXE,0x000D1D,3357,26,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\HR3_ICON.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0298,Original/MW_CPICS.EXE,0x000D38,3384,26,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\HR4_ICON.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0299,Original/MW_CPICS.EXE,0x000D53,3411,23,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\MC_AA.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0300,Original/MW_CPICS.EXE,0x000D6B,3435,23,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\MC_AB.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0301,Original/MW_CPICS.EXE,0x000D83,3459,23,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\MC_AC.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0302,Original/MW_CPICS.EXE,0x000D9B,3483,23,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\MC_AD.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0303,Original/MW_CPICS.EXE,0x000DB3,3507,24,ASCII,null-terminated candidate,source art filename,medium,C:\B_TECH\ART\BUTTON.LBM,0x000A1E-0x000DEE,development/source art path embedded in executable
+STR-0304,Original/MW_EGA.EXE,0x000CD4,3284,7,ASCII,null-terminated candidate,resource filename,high,6X6.FNT,0x000CD4-0x000D02,file-name-like string
+STR-0305,Original/MW_EGA.EXE,0x000CDC,3292,9,ASCII,null-terminated candidate,resource filename,high,88C64.FNT,0x000CD4-0x000D02,file-name-like string
+STR-0306,Original/MW_EGA.EXE,0x000CE6,3302,7,ASCII,null-terminated candidate,resource filename,high,8X8.FNT,0x000CD4-0x000D02,file-name-like string
+STR-0307,Original/MW_EGA.EXE,0x000CEE,3310,9,ASCII,null-terminated candidate,resource filename,high,FOX88.FNT,0x000CD4-0x000D02,file-name-like string
+STR-0308,Original/MW_EGA.EXE,0x000CF8,3320,10,ASCII,ASCII extracted run,resource filename,high,PROM88.FNT,0x000CD4-0x000D02,file-name-like string
+STR-0309,Original/MW_MAIN.EXE,0x008D10,36112,10,ASCII,null-terminated candidate,resource filename,high,MW_EGA.EXE,0x008CC3-0x0090A1,file-name-like string
+STR-0310,Original/MW_MAIN.EXE,0x008D1B,36123,12,ASCII,ASCII extracted run,resource filename,high,MW_TANDY.EXE,0x008CC3-0x0090A1,file-name-like string
+STR-0311,Original/MW_MAIN.EXE,0x008D30,36144,25,ASCII,null-terminated candidate,loader/error message,high,Picture buffer allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0312,Original/MW_MAIN.EXE,0x008D4B,36171,31,ASCII,null-terminated candidate,loader/error message,high,$Game picture buffer allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0313,Original/MW_MAIN.EXE,0x008D6C,36204,31,ASCII,null-terminated candidate,loader/error message,high,$Crew picture buffer allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0314,Original/MW_MAIN.EXE,0x008D8D,36237,32,ASCII,null-terminated candidate,loader/error message,high,$Decompression buffer allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0315,Original/MW_MAIN.EXE,0x008DAF,36271,28,ASCII,null-terminated candidate,loader/error message,high,$Picture buffer 1 allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0316,Original/MW_MAIN.EXE,0x008DCD,36301,28,ASCII,null-terminated candidate,loader/error message,high,$Picture buffer 2 allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0317,Original/MW_MAIN.EXE,0x008DEB,36331,28,ASCII,null-terminated candidate,loader/error message,high,$Picture buffer 3 allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0318,Original/MW_MAIN.EXE,0x008E09,36361,26,ASCII,null-terminated candidate,loader/error message,high,$Overlay memory allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0319,Original/MW_MAIN.EXE,0x008E25,36389,25,ASCII,null-terminated candidate,loader/error message,high,$Graphics Overlay loaded.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0320,Original/MW_MAIN.EXE,0x008E40,36416,26,ASCII,ASCII extracted run,loader/error message,high,$Phrases memory allocated.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0321,Original/MW_MAIN.EXE,0x008E8B,36491,47,ASCII,null-terminated candidate,loader/error message,high,Unable to allocate memory for graphics overlay.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0322,Original/MW_MAIN.EXE,0x008EBC,36540,29,ASCII,null-terminated candidate,loader/error message,high,$Could not load 'MW_EGA.EXE'.,0x008CC3-0x0090A1,file-name-like string inside loader/error text
+STR-0323,Original/MW_MAIN.EXE,0x008EDB,36571,43,ASCII,null-terminated candidate,loader/error message,high,$Unable to allocate memory for draw buffer.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0324,Original/MW_MAIN.EXE,0x008F08,36616,52,ASCII,null-terminated candidate,loader/error message,high,$Unable to allocate memory for graphics data buffer.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0325,Original/MW_MAIN.EXE,0x008F3E,36670,45,ASCII,null-terminated candidate,loader/error message,high,$Unable to allocate memory for phrase buffer.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0326,Original/MW_MAIN.EXE,0x008F6D,36717,27,ASCII,null-terminated candidate,loader/error message,high,$Unable to load font files.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0327,Original/MW_MAIN.EXE,0x008F8A,36746,30,ASCII,ASCII extracted run,loader/error message,high,$Unable to load MW_GPICS file.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0328,Original/MW_MAIN.EXE,0x00902E,36910,16,ASCII,null-terminated candidate,loader/error message,high,$No mouse found.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0329,Original/MW_MAIN.EXE,0x009040,36928,35,ASCII,null-terminated candidate,loader/error message,high,$No joystick found. Using keyboard.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0330,Original/MW_MAIN.EXE,0x009077,36983,21,ASCII,null-terminated candidate,loader/error message,high,$CANT RELEASE MEMORY.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0331,Original/MW_MAIN.EXE,0x00908E,37006,19,ASCII,ASCII extracted run,loader/error message,high,$RELEASE MEMORY OK.,0x008CC3-0x0090A1,explicit loader/runtime/error wording
+STR-0332,Original/MW_MAIN.EXE,0x009AC1,39617,11,ASCII,null-terminated candidate,resource filename,high,MW_PICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0333,Original/MW_MAIN.EXE,0x009ACD,39629,12,ASCII,ASCII extracted run,resource filename,high,MW_GPICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0334,Original/MW_MAIN.EXE,0x009ADC,39644,12,ASCII,ASCII extracted run,resource filename,high,MW_CPICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0335,Original/MW_MAIN.EXE,0x009AEB,39659,12,ASCII,null-terminated candidate,resource filename,high,MW_1PICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0336,Original/MW_MAIN.EXE,0x009AF8,39672,12,ASCII,null-terminated candidate,resource filename,high,MW_2PICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0337,Original/MW_MAIN.EXE,0x009B05,39685,12,ASCII,null-terminated candidate,resource filename,high,MW_3PICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0338,Original/MW_MAIN.EXE,0x009B12,39698,12,ASCII,null-terminated candidate,resource filename,high,MW_TPICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0339,Original/MW_MAIN.EXE,0x009B1F,39711,12,ASCII,null-terminated candidate,resource filename,high,MW_APICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0340,Original/MW_MAIN.EXE,0x009B2C,39724,12,ASCII,ASCII extracted run,resource filename,high,MW_FPICS.BIN,0x009AC1-0x009D7F,file-name-like string
+STR-0341,Original/MW_MAIN.EXE,0x009B3B,39739,8,ASCII,null-terminated candidate,resource filename,high,MECH.MUS,0x009AC1-0x009D7F,file-name-like string
+STR-0342,Original/MW_MAIN.EXE,0x009B44,39748,11,ASCII,null-terminated candidate,resource filename,high,MECHBAR.MUS,0x009AC1-0x009D7F,file-name-like string
+STR-0343,Original/MW_MAIN.EXE,0x009B50,39760,9,ASCII,null-terminated candidate,resource filename,high,DEATH.MUS,0x009AC1-0x009D7F,file-name-like string
+STR-0344,Original/MW_MAIN.EXE,0x009B5A,39770,10,ASCII,null-terminated candidate,resource filename,high,LAUNCH.MUS,0x009AC1-0x009D7F,file-name-like string
+STR-0345,Original/MW_MAIN.EXE,0x009B65,39781,11,ASCII,null-terminated candidate,resource filename,high,VICTORY.MUS,0x009AC1-0x009D7F,file-name-like string
+STR-0346,Original/MW_MAIN.EXE,0x009B71,39793,30,ASCII,null-terminated candidate,loader/error message,high,PLEASE CHANGE DISK IN DRIVE A:,0x009AC1-0x009D7F,explicit loader/runtime/error wording
+STR-0347,Original/MW_MAIN.EXE,0x009BD6,39894,29,ASCII,fixed-width/null-terminated candidate,loader/error message,high,PLEASE PUT DISK 1 IN DRIVE A:,0x009AC1-0x009D7F,explicit loader/runtime/error wording
+STR-0348,Original/MW_MAIN.EXE,0x009BF6,39926,9,ASCII,null-terminated candidate,resource filename,high,BTECH.EXE,0x009AC1-0x009D7F,file-name-like string
+STR-0349,Original/MW_MAIN.EXE,0x009C00,39936,32,ASCII,null-terminated candidate,loader/error message,high,PUT SIMULATOR DISK INTO DRIVE A:,0x009AC1-0x009D7F,explicit loader/runtime/error wording
+STR-0350,Original/MW_MAIN.EXE,0x009D31,40241,32,ASCII,null-terminated candidate,contract/mission text,medium,YOUR CONTRACT HAS BEEN CANCELED.,0x009AC1-0x009D7F,explicit contract or mission wording
+STR-0351,Original/MW_MAIN.EXE,0x009E8D,40589,11,ASCII,ASCII extracted run,world/faction/planet text,medium,PLANET NAME,0x009E55-0x00AF2D,"house, planet, location, or world label"
+STR-0352,Original/MW_MAIN.EXE,0x00A20B,41483,28,ASCII,null-terminated candidate,contract/mission text,medium,WOULD ASK PERMISSION TO DIE.,0x009E55-0x00AF2D,explicit contract or mission wording
+STR-0353,Original/MW_MAIN.EXE,0x00A55E,42334,32,ASCII,null-terminated candidate,contract/mission text,medium,"OVERALL, THIS MISSION HAS BEEN A",0x009E55-0x00AF2D,explicit contract or mission wording
+STR-0354,Original/MW_MAIN.EXE,0x00A608,42504,40,ASCII,null-terminated candidate,ui/menu/economy message,high,HOUSE TRANSPORTS. TRANSPORTAION COSTS TO,0x009E55-0x00AF2D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0355,Original/MW_MAIN.EXE,0x00A6F0,42736,33,ASCII,null-terminated candidate,contract/mission text,medium,CONSTITUTES A BREACH OF CONTRACT!,0x009E55-0x00AF2D,explicit contract or mission wording
+STR-0356,Original/MW_MAIN.EXE,0x00AA92,43666,10,ASCII,null-terminated candidate,ui/menu/economy message,high,     MUSIC,0x009E55-0x00AF2D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0357,Original/MW_MAIN.EXE,0x00AADC,43740,10,ASCII,null-terminated candidate,ui/menu/economy message,high,    SOUNDS,0x009E55-0x00AF2D,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0358,Original/MW_MAIN.EXE,0x00B05D,45149,5,ASCII,ASCII extracted run,ui/menu/economy message,high,PILOT,0x00AF83-0x00B53A,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0359,Original/MW_MAIN.EXE,0x00B114,45332,8,ASCII,null-terminated candidate,ui/menu/economy message,high,NEGATIVE,0x00AF83-0x00B53A,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0360,Original/MW_MAIN.EXE,0x00B8CC,47308,26,ASCII,null-terminated candidate,ui/menu/economy message,high,TO REPAIR ALL THIS DAMAGE!,0x00B7E9-0x00BD55,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0361,Original/MW_MAIN.EXE,0x00B987,47495,12,ASCII,null-terminated candidate,ui/menu/economy message,high,REPAIR COST:,0x00B7E9-0x00BD55,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0362,Original/MW_MAIN.EXE,0x00B9CF,47567,6,ASCII,fixed-width/null-terminated candidate,ui/menu/economy message,high,REPAIR,0x00B7E9-0x00BD55,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0363,Original/MW_MAIN.EXE,0x00B9DB,47579,10,ASCII,fixed-width/null-terminated candidate,ui/menu/economy message,high,REPAIR ALL,0x00B7E9-0x00BD55,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0364,Original/MW_MAIN.EXE,0x00B9EB,47595,6,ASCII,fixed-width/null-terminated candidate,loader/error message,high,RELOAD,0x00B7E9-0x00BD55,explicit loader/runtime/error wording
+STR-0365,Original/MW_MAIN.EXE,0x00BE2B,48683,13,ASCII,null-terminated candidate,loader/error message,high,RELOAD COST: ,0x00BD90-0x00C257,explicit loader/runtime/error wording
+STR-0366,Original/MW_MAIN.EXE,0x00BE48,48712,6,ASCII,fixed-width/null-terminated candidate,loader/error message,high,RELOAD,0x00BD90-0x00C257,explicit loader/runtime/error wording
+STR-0367,Original/MW_MAIN.EXE,0x00BFF3,49139,25,ASCII,ASCII extracted run,ui/menu/economy message,high,HEAT SINK   :   OF       ,0x00BD90-0x00C257,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0368,Original/MW_MAIN.EXE,0x00C0AD,49325,18,ASCII,ASCII extracted run,ui/menu/economy message,high,ARMOR:           %,0x00BD90-0x00C257,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0369,Original/MW_MAIN.EXE,0x00C0EA,49386,15,ASCII,null-terminated candidate,ui/menu/economy message,high,COST OF REPAIR:,0x00BD90-0x00C257,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0370,Original/MW_MAIN.EXE,0x00CE8B,52875,30,ASCII,ASCII extracted run,ui/menu/economy message,high,AMMO TYPE     COST     IN HOLD,0x00CC7E-0x00CF67,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0371,Original/MW_MAIN.EXE,0x00D030,53296,22,ASCII,null-terminated candidate,loader/error message,high,YOU CAN'T AFFORD THIS!,0x00CFFB-0x00D841,explicit loader/runtime/error wording
+STR-0372,Original/MW_MAIN.EXE,0x00D0C0,53440,12,ASCII,null-terminated candidate,ui/menu/economy message,high,REPAIR COST:,0x00CFFB-0x00D841,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0373,Original/MW_MAIN.EXE,0x00D2D0,53968,25,ASCII,ASCII extracted run,ui/menu/economy message,high,HEAT SINK   :   OF       ,0x00CFFB-0x00D841,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0374,Original/MW_MAIN.EXE,0x00D38A,54154,18,ASCII,ASCII extracted run,ui/menu/economy message,high,ARMOR:           %,0x00CFFB-0x00D841,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0375,Original/MW_MAIN.EXE,0x00D54F,54607,15,ASCII,ASCII extracted run,contract/mission text,medium,REQUEST MISSION,0x00CFFB-0x00D841,explicit contract or mission wording
+STR-0376,Original/MW_MAIN.EXE,0x00D591,54673,25,ASCII,null-terminated candidate,contract/mission text,medium,       MERCENARY CONTRACT,0x00CFFB-0x00D841,explicit contract or mission wording
+STR-0377,Original/MW_MAIN.EXE,0x00D5E3,54755,25,ASCII,null-terminated candidate,contract/mission text,medium,OUTLINES THE CONTRACT FOR,0x00CFFB-0x00D841,explicit contract or mission wording
+STR-0378,Original/MW_MAIN.EXE,0x00D8FC,55548,26,ASCII,null-terminated candidate,contract/mission text,medium,NO CONTRACTS ARE AVAILABLE,0x00D8B4-0x00D9E5,explicit contract or mission wording
+STR-0379,Original/MW_MAIN.EXE,0x00D96C,55660,26,ASCII,ASCII extracted run,contract/mission text,medium,YOUR CONTRACT IS ACCEPTED.,0x00D8B4-0x00D9E5,explicit contract or mission wording
+STR-0380,Original/MW_MAIN.EXE,0x00E6C4,59076,14,ASCII,null-terminated candidate,world/faction/planet text,medium,Y HOUSE KURITA,0x00E6C4-0x00E7CB,"house, planet, location, or world label"
+STR-0381,Original/MW_MAIN.EXE,0x00E6D3,59091,13,ASCII,null-terminated candidate,world/faction/planet text,medium,HOUSE STEINER,0x00E6C4-0x00E7CB,"house, planet, location, or world label"
+STR-0382,Original/MW_MAIN.EXE,0x00E6E1,59105,13,ASCII,null-terminated candidate,world/faction/planet text,medium, HOUSE MARIK ,0x00E6C4-0x00E7CB,"house, planet, location, or world label"
+STR-0383,Original/MW_MAIN.EXE,0x00E6EF,59119,13,ASCII,null-terminated candidate,world/faction/planet text,medium,  HOUSE LIAO ,0x00E6C4-0x00E7CB,"house, planet, location, or world label"
+STR-0384,Original/MW_MAIN.EXE,0x00E6FD,59133,13,ASCII,fixed-width/null-terminated candidate,world/faction/planet text,medium, HOUSE DAVION,0x00E6C4-0x00E7CB,"house, planet, location, or world label"
+STR-0385,Original/MW_MAIN.EXE,0x00E730,59184,6,ASCII,fixed-width/null-terminated candidate,world/faction/planet text,medium,HOUSES,0x00E6C4-0x00E7CB,"house, planet, location, or world label"
+STR-0386,Original/MW_MAIN.EXE,0x00E8E9,59625,7,ASCII,null-terminated candidate,ui/menu/economy message,high,  COST:,0x00E85A-0x00EB1B,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0387,Original/MW_MAIN.EXE,0x00E98C,59788,7,ASCII,ASCII extracted run,world/faction/planet text,medium,PLANETS,0x00E85A-0x00EB1B,"house, planet, location, or world label"
+STR-0388,Original/MW_MAIN.EXE,0x00EAA4,60068,14,ASCII,null-terminated candidate,ui/menu/economy message,high,NOT INTERESTED,0x00E85A-0x00EB1B,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0389,Original/MW_MAIN.EXE,0x00EBF3,60403,23,ASCII,null-terminated candidate,loader/error message,high,A ROW YOU COULD NOT PAY,0x00EB78-0x00EE69,explicit loader/runtime/error wording
+STR-0390,Original/MW_MAIN.EXE,0x00EC3B,60475,23,ASCII,null-terminated candidate,loader/error message,high,A ROW YOU COULD NOT PAY,0x00EB78-0x00EE69,explicit loader/runtime/error wording
+STR-0391,Original/MW_MAIN.EXE,0x00FA6F,64111,4,ASCII,null-terminated candidate,world/faction/planet text,medium,VEGA,0x00F4C0-0x011715,"house, planet, location, or world label"
+STR-0392,Original/MW_MAIN.EXE,0x00FBAC,64428,7,ASCII,null-terminated candidate,world/faction/planet text,medium,DONEGAL,0x00F4C0-0x011715,"house, planet, location, or world label"
+STR-0393,Original/MW_MAIN.EXE,0x00FDAA,64938,44,ASCII,ASCII extracted run,world/faction/planet text,medium,WAR RAVAGED FROM STRUGGLES WITH HOUSE KURITA,0x00F4C0-0x011715,"house, planet, location, or world label"
+STR-0394,Original/MW_MAIN.EXE,0x010893,67731,36,ASCII,ASCII extracted run,ui/menu/economy message,high,SMALL BUT IMPORTANT WEAPONS BUSINESS,0x00F4C0-0x011715,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0395,Original/MW_MAIN.EXE,0x010A7B,68219,47,ASCII,ASCII extracted run,ui/menu/economy message,high,"MILITARY STAGING, TRAINING, AND REPAIR FACILITY",0x00F4C0-0x011715,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0396,Original/MW_MAIN.EXE,0x010ABB,68283,34,ASCII,ASCII extracted run,ui/menu/economy message,high,HOME OF MCCARRON'S ARMORED CAVALRY,0x00F4C0-0x011715,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0397,Original/MW_MAIN.EXE,0x010DE0,69088,29,ASCII,fixed-width/null-terminated candidate,ui/menu/economy message,high,LIAO DROPSHIP REPAIR FACILITY,0x00F4C0-0x011715,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0398,Original/MW_MAIN.EXE,0x01122F,70191,12,ASCII,null-terminated candidate,world/faction/planet text,medium,ANDER'S MOON,0x00F4C0-0x011715,"house, planet, location, or world label"
+STR-0399,Original/MW_MAIN.EXE,0x0116DF,71391,12,ASCII,null-terminated candidate,world/faction/planet text,medium,ANDER'S MOON,0x00F4C0-0x011715,"house, planet, location, or world label"
+STR-0400,Original/MW_MAIN.EXE,0x011793,71571,26,ASCII,ASCII extracted run,contract/mission text,medium,DEFENSE OF A WATER FACTORY,0x01176B-0x011B45,explicit contract or mission wording
+STR-0401,Original/MW_MAIN.EXE,0x0117B0,71600,28,ASCII,ASCII extracted run,ui/menu/economy message,high,DEFENSE OF A WEAPONS FACTORY,0x01176B-0x011B45,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0402,Original/MW_MAIN.EXE,0x0117CF,71631,22,ASCII,ASCII extracted run,contract/mission text,medium,DEFENSE OF A FUEL DUMP,0x01176B-0x011B45,explicit contract or mission wording
+STR-0403,Original/MW_MAIN.EXE,0x0117E8,71656,25,ASCII,ASCII extracted run,contract/mission text,medium,DEFENSE OF FIELD COM UNIT,0x01176B-0x011B45,explicit contract or mission wording
+STR-0404,Original/MW_MAIN.EXE,0x011804,71684,25,ASCII,ASCII extracted run,contract/mission text,medium,DEFENSE OF A SUPPLY DEPOT,0x01176B-0x011B45,explicit contract or mission wording
+STR-0405,Original/MW_MAIN.EXE,0x011820,71712,29,ASCII,fixed-width/null-terminated candidate,contract/mission text,medium,DEFENSE OF LANDING FACILITIES,0x01176B-0x011B45,explicit contract or mission wording
+STR-0406,Original/MW_MAIN.EXE,0x011840,71744,24,ASCII,ASCII extracted run,contract/mission text,medium,SUPPRESSION OF REBELLION,0x01176B-0x011B45,explicit contract or mission wording
+STR-0407,Original/MW_MAIN.EXE,0x0119E6,72166,30,ASCII,ASCII extracted run,ui/menu/economy message,high,DISABLING OF A WEAPONS FACTORY,0x01176B-0x011B45,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0408,Original/MW_MAIN.EXE,0x011A42,72258,31,ASCII,ASCII extracted run,contract/mission text,medium,DISABLING OF A FIELD COM CENTER,0x01176B-0x011B45,explicit contract or mission wording
+STR-0409,Original/MW_MAIN.EXE,0x011DB0,73136,18,ASCII,ASCII extracted run,ui/menu/economy message,high,A GOOD MECH PILOT.,0x011BDA-0x011E16,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0410,Original/MW_MAIN.EXE,0x011E11,73233,5,ASCII,ASCII extracted run,ui/menu/economy message,high,PILOT,0x011BDA-0x011E16,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0411,Original/MW_MAIN.EXE,0x01224E,74318,12,ASCII,null-terminated candidate,loader/error message,high,MECH I CAN'T,0x011E7A-0x012A22,explicit loader/runtime/error wording
+STR-0412,Original/MW_MAIN.EXE,0x012961,76129,14,ASCII,null-terminated candidate,loader/error message,high,YOU CAN'T HIRE,0x011E7A-0x012A22,explicit loader/runtime/error wording
+STR-0413,Original/MW_MAIN.EXE,0x012994,76180,14,ASCII,null-terminated candidate,loader/error message,high,YOU CAN'T HIRE,0x011E7A-0x012A22,explicit loader/runtime/error wording
+STR-0414,Original/MW_MAIN.EXE,0x012A11,76305,17,ASCII,ASCII extracted run,ui/menu/economy message,high,WANT TO RESTART ?,0x011E7A-0x012A22,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0415,Original/MW_MAIN.EXE,0x012A75,76405,10,ASCII,fixed-width/null-terminated candidate,ui/menu/economy message,high, SAVE GAME,0x012A75-0x012AEA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0416,Original/MW_MAIN.EXE,0x012A97,76439,14,ASCII,ASCII extracted run,ui/menu/economy message,high,TURN SOUND OFF,0x012A75-0x012AEA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0417,Original/MW_MAIN.EXE,0x012ABD,76477,12,ASCII,ASCII extracted run,ui/menu/economy message,high,RESTART GAME,0x012A75-0x012AEA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0418,Original/MW_MAIN.EXE,0x012ACF,76495,11,ASCII,ASCII extracted run,ui/menu/economy message,high,EXIT TO DOS,0x012A75-0x012AEA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0419,Original/MW_MAIN.EXE,0x012B7E,76670,21,ASCII,ASCII extracted run,loader/error message,high,SELECT A GAME TO LOAD,0x012B7E-0x012C7A,explicit loader/runtime/error wording
+STR-0420,Original/MW_MAIN.EXE,0x012D31,77105,26,ASCII,ASCII extracted run,ui/menu/economy message,high,ENTER A NAME FOR THIS GAME,0x012D31-0x012E34,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0421,Original/MW_MAIN.EXE,0x012D88,77192,18,ASCII,null-terminated candidate,loader/error message,high,THIS DISK IS FULL!,0x012D31-0x012E34,explicit loader/runtime/error wording
+STR-0422,Original/MW_MAIN.EXE,0x012DB3,77235,23,ASCII,null-terminated candidate,loader/error message,high,THERE WAS A DISK ERROR!,0x012D31-0x012E34,explicit loader/runtime/error wording
+STR-0423,Original/MW_MAIN.EXE,0x012DE3,77283,23,ASCII,null-terminated candidate,loader/error message,high,THERE WAS A DISK ERROR!,0x012D31-0x012E34,explicit loader/runtime/error wording
+STR-0424,Original/MW_MAIN.EXE,0x012E14,77332,23,ASCII,null-terminated candidate,loader/error message,high,PUT SAVE GAME DISK INTO,0x012D31-0x012E34,explicit loader/runtime/error wording
+STR-0425,Original/MW_MAIN.EXE,0x012F6B,77675,41,ASCII,null-terminated candidate,loader/error message,high,"NO, CAN'T SAY AS I'VE EVER HEARD OF THAT.",0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0426,Original/MW_MAIN.EXE,0x0131D8,78296,42,ASCII,null-terminated candidate,ui/menu/economy message,high,DRINK'S GOING TO COST YOU TRIPLE.  RISKING,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0427,Original/MW_MAIN.EXE,0x013DB2,81330,40,ASCII,null-terminated candidate,ui/menu/economy message,high,ALLEYS AND DISREPAIR. THROUGH A BATTERED,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0428,Original/MW_MAIN.EXE,0x01489B,84123,35,ASCII,null-terminated candidate,contract/mission text,medium,"HIM CONTRACT INTO A BALL. AND THEN,",0x012F40-0x020FDA,explicit contract or mission wording
+STR-0429,Original/MW_MAIN.EXE,0x014992,84370,43,ASCII,null-terminated candidate,ui/menu/economy message,high,"IT BEFORE, BUT I MIGHT COULD FIND OUT. COST",0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0430,Original/MW_MAIN.EXE,0x014C39,85049,38,ASCII,null-terminated candidate,loader/error message,high,REGULAR PPC AND MARVEL 6-LOAD-SRM RACK,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0431,Original/MW_MAIN.EXE,0x014C60,85088,41,ASCII,null-terminated candidate,loader/error message,high,AUGMENTED BY TWIN AUTO-LOAD HEAVY MORTARS,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0432,Original/MW_MAIN.EXE,0x0155FE,87550,39,ASCII,null-terminated candidate,ui/menu/economy message,high,MEMBERS OF THE 5TH ARMORED RANGERS LAST,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0433,Original/MW_MAIN.EXE,0x01589D,88221,39,ASCII,null-terminated candidate,loader/error message,high,HE POURS HOT SAKI FROM A SMALL DECANTER,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0434,Original/MW_MAIN.EXE,0x015F1A,89882,40,ASCII,null-terminated candidate,loader/error message,high,THE CHAIR BEHIND THE DESK PROVIDES SCANT,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0435,Original/MW_MAIN.EXE,0x01620D,90637,42,ASCII,null-terminated candidate,ui/menu/economy message,high,A PAUSE AS A NEW MAGAZINE IS SLAMMED HOME.,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0436,Original/MW_MAIN.EXE,0x016261,90721,40,ASCII,null-terminated candidate,loader/error message,high,MAGAZINE GETS UNLOADED INTO THE GUNMAN'S,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0437,Original/MW_MAIN.EXE,0x016B3B,92987,41,ASCII,null-terminated candidate,loader/error message,high,LOADING BEGINS. THE SIX CRAFT FORMING THE,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0438,Original/MW_MAIN.EXE,0x016B65,93029,39,ASCII,null-terminated candidate,loader/error message,high,WINGS OF THE FORMATION ARE LOADED FIRST,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0439,Original/MW_MAIN.EXE,0x016BE3,93155,39,ASCII,null-terminated candidate,loader/error message,high,CONTAINER WITH SPECIAL GUARDS IS LOADED,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0440,Original/MW_MAIN.EXE,0x0176BC,95932,40,ASCII,null-terminated candidate,ui/menu/economy message,high,THE FLOOR SHE TAKES THE PILOT SEAT AGAIN,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0441,Original/MW_MAIN.EXE,0x0176E5,95973,38,ASCII,null-terminated candidate,ui/menu/economy message,high,SHUTTING DOWN THE AUTO-PILOT. THE VTOL,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0442,Original/MW_MAIN.EXE,0x017852,96338,41,ASCII,null-terminated candidate,contract/mission text,medium,"AGENTS, AND COINCIDENTALY ON THIS MISSION",0x012F40-0x020FDA,explicit contract or mission wording
+STR-0443,Original/MW_MAIN.EXE,0x018147,98631,43,ASCII,null-terminated candidate,ui/menu/economy message,high,AGAINST THE LONG TANGLED HAIR OF THE PILOT.,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0444,Original/MW_MAIN.EXE,0x0187FD,100349,40,ASCII,null-terminated candidate,contract/mission text,medium,REQUIRED. REQUEST PERMISSION TO EXERCISE,0x012F40-0x020FDA,explicit contract or mission wording
+STR-0445,Original/MW_MAIN.EXE,0x018B2D,101165,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0446,Original/MW_MAIN.EXE,0x018C7D,101501,39,ASCII,null-terminated candidate,ui/menu/economy message,high,"PILOT, HIRED GUN KILLED IN GANGLAND WAR",0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0447,Original/MW_MAIN.EXE,0x019DE3,105955,23,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON ",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0448,Original/MW_MAIN.EXE,0x01A672,108146,38,ASCII,null-terminated candidate,ui/menu/economy message,high,100 INFANTRY AND ARMORED REGIMENTS ARE,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0449,Original/MW_MAIN.EXE,0x01A7C2,108482,38,ASCII,null-terminated candidate,ui/menu/economy message,high,ARMORED REGIMENTS. NEARLY ONE THIRD OF,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0450,Original/MW_MAIN.EXE,0x01AA9E,109214,38,ASCII,null-terminated candidate,ui/menu/economy message,high,REGIMENTS AND 100 INFANTRY AND ARMORED,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0451,Original/MW_MAIN.EXE,0x01ADF4,110068,40,ASCII,null-terminated candidate,ui/menu/economy message,high,"TROOPS, ONE EACH OF INFANTRY, ARMOR, AND",0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0452,Original/MW_MAIN.EXE,0x01B30A,111370,41,ASCII,null-terminated candidate,loader/error message,high,PRECENTOR'S MEGLOMANIA AND THE CORRUPTION,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0453,Original/MW_MAIN.EXE,0x01B4DB,111835,43,ASCII,null-terminated candidate,contract/mission text,medium,DEATH WERE UNDER CONTRACT TO THE MARIK FREE,0x012F40-0x020FDA,explicit contract or mission wording
+STR-0454,Original/MW_MAIN.EXE,0x01B79C,112540,42,ASCII,null-terminated candidate,contract/mission text,medium,CONTRACT ON THE PART OF KURITA ARE CLAIMED,0x012F40-0x020FDA,explicit contract or mission wording
+STR-0455,Original/MW_MAIN.EXE,0x01BBE6,113638,36,ASCII,null-terminated candidate,ui/menu/economy message,high,DRAGOON'S LAY DOWN THEIR WEAPONS AND,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0456,Original/MW_MAIN.EXE,0x01C033,114739,41,ASCII,null-terminated candidate,loader/error message,high,SIGNIFICANT ADVANCES AGAINST THEIR ENEMY.,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0457,Original/MW_MAIN.EXE,0x01C0B4,114868,12,ASCII,null-terminated candidate,world/faction/planet text,medium,ANDER'S MOON,0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0458,Original/MW_MAIN.EXE,0x01C326,115494,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0459,Original/MW_MAIN.EXE,0x01C3AD,115629,40,ASCII,null-terminated candidate,contract/mission text,medium,MISSION.  JM IS WORKING HARD TO SOLIDIFY,0x012F40-0x020FDA,explicit contract or mission wording
+STR-0460,Original/MW_MAIN.EXE,0x01C541,116033,42,ASCII,null-terminated candidate,ui/menu/economy message,high,ATTACKED THE ARMORY.  MUCH OF THE WEAPONRY,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0461,Original/MW_MAIN.EXE,0x01C929,117033,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0462,Original/MW_MAIN.EXE,0x01D242,119362,42,ASCII,null-terminated candidate,loader/error message,high,THE LOADING FINISHES AND THE TRUCKS RETURN,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0463,Original/MW_MAIN.EXE,0x01D6D9,120537,41,ASCII,null-terminated candidate,loader/error message,high,NEAR THE LOADING AND TWO POWERFUL LOOKING,0x012F40-0x020FDA,explicit loader/runtime/error wording
+STR-0464,Original/MW_MAIN.EXE,0x01D703,120579,39,ASCII,null-terminated candidate,ui/menu/economy message,high,"MEN STEP OUT, WEAPONS AT THE READY. ONE",0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0465,Original/MW_MAIN.EXE,0x01D9E7,121319,16,ASCII,ASCII extracted run,ui/menu/economy message,high,  NOT INTERESTED,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0466,Original/MW_MAIN.EXE,0x01E041,122945,23,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALLENSIA,ANDER'S MOON ",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0467,Original/MW_MAIN.EXE,0x01E668,124520,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0468,Original/MW_MAIN.EXE,0x01E8F3,125171,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0469,Original/MW_MAIN.EXE,0x01EA9C,125596,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0470,Original/MW_MAIN.EXE,0x01EAD2,125650,28,ASCII,null-terminated candidate,world/faction/planet text,medium,ANDER'S MOON ECONOMY REELING,0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0471,Original/MW_MAIN.EXE,0x01ED2C,126252,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0472,Original/MW_MAIN.EXE,0x01F01F,127007,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0473,Original/MW_MAIN.EXE,0x01F292,127634,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0474,Original/MW_MAIN.EXE,0x01F545,128325,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0475,Original/MW_MAIN.EXE,0x01F9D0,129488,42,ASCII,ASCII extracted run,ui/menu/economy message,high,    VENGENCE - KILLS DAVION PILOT IN GAMES,0x012F40-0x020FDA,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0476,Original/MW_MAIN.EXE,0x01FBB9,129977,43,ASCII,null-terminated candidate,world/faction/planet text,medium,"         - THARKAD, DISTRICT OF DONEGAL, LC",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0477,Original/MW_MAIN.EXE,0x02007D,131197,43,ASCII,null-terminated candidate,world/faction/planet text,medium,"23 AUG 3028 - THARKAD, DISTRICT OF DONEGAL,",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0478,Original/MW_MAIN.EXE,0x020298,131736,44,ASCII,null-terminated candidate,world/faction/planet text,medium,"   OCT 3028 -  THARKAD, DISTRICT OF DONEGAL,",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0479,Original/MW_MAIN.EXE,0x02043F,132159,39,ASCII,null-terminated candidate,world/faction/planet text,medium,"20 DEC 3028 - VEGA, DIERON DISTRICT, DC",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0480,Original/MW_MAIN.EXE,0x020492,132242,8,ASCII,null-terminated candidate,world/faction/planet text,medium,    VEGA,0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0481,Original/MW_MAIN.EXE,0x020515,132373,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0482,Original/MW_MAIN.EXE,0x0206AF,132783,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0483,Original/MW_MAIN.EXE,0x020912,133394,22,ASCII,null-terminated candidate,world/faction/planet text,medium,"VALENSIA, ANDER'S MOON",0x012F40-0x020FDA,"house, planet, location, or world label"
+STR-0484,Original/MW_MAIN.EXE,0x0210AA,135338,21,ASCII,ASCII extracted run,ui/menu/economy message,high,AdLib PC Music System,0x0210AA-0x0210BF,"explicit UI, save, repair, sound, armor, or weapon wording"
+STR-0485,Original/MW_MAIN.EXE,0x021A04,137732,34,ASCII,ASCII extracted run,loader/error message,high,- not enough space for environment,0x0219B6-0x021A89,explicit loader/runtime/error wording
+STR-0486,Original/MW_MAIN.EXE,0x021A30,137776,15,ASCII,ASCII extracted run,loader/error message,high,run-time error ,0x0219B6-0x021A89,explicit loader/runtime/error wording
+STR-0487,Original/MW_MAIN.EXE,0x021A49,137801,27,ASCII,fixed-width/null-terminated candidate,loader/error message,high,- floating point not loaded,0x0219B6-0x021A89,explicit loader/runtime/error wording
+STR-0488,Original/MW_TANDY.EXE,0x00091E,2334,7,ASCII,null-terminated candidate,resource filename,high,6X6.FNT,0x00091E-0x00094C,file-name-like string
+STR-0489,Original/MW_TANDY.EXE,0x000926,2342,9,ASCII,null-terminated candidate,resource filename,high,88C64.FNT,0x00091E-0x00094C,file-name-like string
+STR-0490,Original/MW_TANDY.EXE,0x000930,2352,7,ASCII,null-terminated candidate,resource filename,high,8X8.FNT,0x00091E-0x00094C,file-name-like string
+STR-0491,Original/MW_TANDY.EXE,0x000938,2360,9,ASCII,null-terminated candidate,resource filename,high,FOX88.FNT,0x00091E-0x00094C,file-name-like string
+STR-0492,Original/MW_TANDY.EXE,0x000942,2370,10,ASCII,ASCII extracted run,resource filename,high,PROM88.FNT,0x00091E-0x00094C,file-name-like string
+STR-0493,Original/PHO.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x00003C,ASCII chunk tag in tagged resource file
+STR-0494,Original/PHO.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00003C,ASCII chunk tag in tagged resource file
+STR-0495,Original/PHO.BMP,0x000016,22,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00003C,ASCII chunk tag in tagged resource file
+STR-0496,Original/POINT.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x000022,ASCII chunk tag in tagged resource file
+STR-0497,Original/POINT.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x000022,ASCII chunk tag in tagged resource file
+STR-0498,Original/POINT.BMP,0x00001E,30,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x000022,ASCII chunk tag in tagged resource file
+STR-0499,Original/PROMPT.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x00001A,ASCII chunk tag in tagged resource file
+STR-0500,Original/PROMPT.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00001A,ASCII chunk tag in tagged resource file
+STR-0501,Original/PROMPT.BMP,0x000016,22,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00001A,ASCII chunk tag in tagged resource file
+STR-0502,Original/RIF.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x0002C1,ASCII chunk tag in tagged resource file
+STR-0503,Original/RIF.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x0002C1,ASCII chunk tag in tagged resource file
+STR-0504,Original/RIF.BMP,0x000016,22,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x0002C1,ASCII chunk tag in tagged resource file
+STR-0505,Original/SAVE1.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0506,Original/SAVE2.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0507,Original/SAVE3.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0508,Original/SAVE4.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0509,Original/SHA.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x00005D,ASCII chunk tag in tagged resource file
+STR-0510,Original/SHA.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00005D,ASCII chunk tag in tagged resource file
+STR-0511,Original/SHA.BMP,0x000016,22,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00005D,ASCII chunk tag in tagged resource file
+STR-0512,Original/SM_MECHS.BMP,0x000000,0,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,BMP:,0x000000-0x00011F,ASCII chunk tag in tagged resource file
+STR-0513,Original/SM_MECHS.BMP,0x000036,54,4,ASCII,ASCII extracted run,resource chunk tag,high,BIN:,0x000000-0x00011F,ASCII chunk tag in tagged resource file
+STR-0514,Original/SM_MECHS.BMP,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,INF:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0515,Original/STATUS.SCR,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,BIN:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0516,Original/STRUTS.BMP,0x000042,66,4,ASCII,tag marker,resource chunk tag,high,BIN:,0x000042-0x000046,ASCII chunk tag found by byte-level scan
+STR-0517,Original/STRUTS.BMP,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,BMP:,0x000000-0x000004,ASCII chunk tag found by byte-level scan
+STR-0518,Original/STRUTS.BMP,0x000008,8,4,ASCII,tag marker,resource chunk tag,high,INF:,0x000008-0x00000C,ASCII chunk tag found by byte-level scan
+STR-0519,Original/TEST.GAM,0x00003B,59,9,ASCII,ASCII extracted run,save/player text,medium,G. BRAVER,0x00003B-0x000044,printable text inside fixed-size .GAM save/state candidate
+STR-0520,Original/TROPIC.PAL,0x000008,8,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,EGA:,0x000000-0x00010C,ASCII chunk tag in tagged resource file
+STR-0521,Original/TROPIC.PAL,0x000090,144,4,ASCII,fixed-width/null-terminated candidate,resource chunk tag,high,CGA:,0x000000-0x00010C,ASCII chunk tag in tagged resource file
+STR-0522,Original/TROPIC.PAL,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,PAL:,0x000000-0x000004,ASCII chunk tag found by byte-level scan
+STR-0523,Original/WAR.BMP,0x000008,8,4,ASCII,ASCII extracted run,resource chunk tag,high,INF:,0x000000-0x00005D,ASCII chunk tag in tagged resource file
+STR-0524,Original/WAR.BMP,0x000016,22,4,ASCII,tag marker,resource chunk tag,high,BIN:,0x000016-0x00001A,ASCII chunk tag found by byte-level scan
+STR-0525,Original/WAR.BMP,0x000000,0,4,ASCII,tag marker,resource chunk tag,high,BMP:,0x000000-0x000004,ASCII chunk tag found by byte-level scan

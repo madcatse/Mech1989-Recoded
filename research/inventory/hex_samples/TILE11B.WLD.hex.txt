@@ -1,0 +1,6 @@
+﻿# Hex sample for Original/TILE11B.WLD
+# Size: 42 bytes
+# First 256 bytes
+00000000  1C 00 5F 7F FF FF 50 BB FF FF 00 00 00 00 1A 00  .._...P.........
+00000010  B3 BB FF FF B2 B3 FF FF 00 00 00 00 1B 00 57 8A  ..............W.
+00000020  FF FF 10 EC FF FF 00 00 00 00                    ..........

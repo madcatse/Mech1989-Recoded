@@ -1,0 +1,3 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+records_3_7622,Original/JENPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,22866,0x005952,0,medium,file size divisible by record size,,"{""record_count"": 7622, ""record_size"": 3}"
+records_6_3811,Original/JENPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,22866,0x005952,0,medium,file size divisible by record size,,"{""record_count"": 3811, ""record_size"": 6}"

@@ -1,0 +1,16 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/LOCPCK_TBL.decoded.bin",
+    "size": 38706,
+    "sha256": "b9ef97d6705384ef0c5b161bd50dcc1b063ee65153b567cc61b2361d04443e2c"
+  },
+  "kind": "pck_ref_byte_pair_selected_records",
+  "choice_index": 0,
+  "threshold": 64,
+  "selected_ref_count": 0,
+  "group_count": 0,
+  "entries": [],
+  "groups": []
+}

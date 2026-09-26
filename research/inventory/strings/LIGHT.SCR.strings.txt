@@ -1,0 +1,40 @@
+﻿# Strings extracted from Original/LIGHT.SCR
+# Minimum length: 4 printable ASCII bytes
+# Count: 36
+
+SCR:W
+BIN:O
+I%[-
+lNEX
+\-VEcYA(
+4ReZi
+0B	e
+)er(Ute
+M}gR
+UT<n
+M0x]
+C l`EN
+8 $&Q
+xE,6E]Zl
+J&&!AO! "
+:AhN
+t'>0
+Mq2P
+V5'ge*VM
+Z5nq
+T-"X
+w\cd<
+iIgz
+"vv3o
+{ xxH
+%X'gy
+Py)W
+zRxxT
+uhtwxgzHd|
+IhlK8
+/i|`9
+v*zA
+zn6`
+g/Gh?
+"GnX
+2^6@

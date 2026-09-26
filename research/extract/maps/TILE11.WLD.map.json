@@ -1,0 +1,74 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/TILE11.WLD",
+    "size": 70,
+    "sha256": "2684093c40c15ea1b9301612477b9c5c852fcb66a13ea61200b9fe0801dd362a"
+  },
+  "entries": [
+    {
+      "id": "records_7_10",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 70,
+      "end_offset": 70,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 7,
+        "record_count": 10
+      }
+    },
+    {
+      "id": "records_10_7",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 70,
+      "end_offset": 70,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 10,
+        "record_count": 7
+      }
+    },
+    {
+      "id": "records_14_5",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 70,
+      "end_offset": 70,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 14,
+        "record_count": 5
+      }
+    }
+  ]
+}

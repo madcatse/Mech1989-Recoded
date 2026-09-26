@@ -1,0 +1,3 @@
+exe,string_file_offset_hex,string_module_offset_hex,string,ref_file_offset_hex,ref_module_offset_hex,ref_context_hex
+Original/MW_MAIN.EXE,0x008D8D,0x898D,$Decompression buffer allocated.,0x00F390,0xEF90,8D87C487FC8741888388C288058946898D89D5892E6D386C976A3F6B086EC76AB568
+Original/MW_MAIN.EXE,0x008D8D,0x898D,$Decompression buffer allocated.,0x00F484,0xF084,DE7DB881218225851187C28893868D878D89C4878B83B8844A865487CD85D4866685

@@ -1,0 +1,4 @@
+﻿# Strings extracted from Original/TILE6B.WLD
+# Minimum length: 4 printable ASCII bytes
+# Count: 0
+

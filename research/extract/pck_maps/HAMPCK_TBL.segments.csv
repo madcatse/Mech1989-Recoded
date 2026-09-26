@@ -1,0 +1,3 @@
+source_file,id,index,codec,file_offset_hex,file_end_offset_hex,gap_before,compressed_size,decoded_size,ended_by_code_256
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/HAMPCK.TBL,pck_segment_000,0,pck_lzw_segmented,0x000005,0x003967,0,14690,20004,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/HAMPCK.TBL,pck_segment_001,1,pck_lzw_segmented,0x00396D,0x007508,6,15259,19526,False

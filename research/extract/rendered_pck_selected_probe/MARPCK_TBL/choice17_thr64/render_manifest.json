@@ -1,0 +1,13 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "research/extract/decoded_pck/MARPCK_TBL.decoded.bin",
+    "size": 50512,
+    "sha256": "fb3d849a3a09cb23e53d88347d1c197e6632f801958167de7c1078abaa144f03"
+  },
+  "kind": "pck_selected_frame_probe",
+  "choice_index": 17,
+  "threshold": 64,
+  "entries": []
+}

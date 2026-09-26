@@ -1,0 +1,219 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/BMAPCK_TBL.decoded.bin",
+    "size": 44938,
+    "sha256": "0c25b1695ce316efafdade8386c22ab8e047ce6dc233a80fc6152b2f95881e7d"
+  },
+  "kind": "pck_type0_point_cloud_probe",
+  "layout": "three_projection_xy_xz_yz",
+  "max_abs": 10000,
+  "min_points": 3,
+  "entries": [
+    {
+      "object_id": "pck_object_0006",
+      "entry_index": "pck_object_0006",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": -68,
+      "x_max": 298,
+      "y_min": -234,
+      "y_max": 294,
+      "z_min": -2983,
+      "z_max": 7438,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0006_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0006_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0007",
+      "entry_index": "pck_object_0007",
+      "width": 392,
+      "height": 128,
+      "point_count": 29,
+      "x_min": -271,
+      "x_max": 7438,
+      "y_min": -2048,
+      "y_max": 5389,
+      "z_min": -2935,
+      "z_max": 7438,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0007_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0007_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0015",
+      "entry_index": "pck_object_0015",
+      "width": 392,
+      "height": 128,
+      "point_count": 12,
+      "x_min": -2048,
+      "x_max": 2008,
+      "y_min": -401,
+      "y_max": 2045,
+      "z_min": -500,
+      "z_max": 3848,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0015_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0015_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0019",
+      "entry_index": "pck_object_0019",
+      "width": 392,
+      "height": 128,
+      "point_count": 41,
+      "x_min": -2048,
+      "x_max": 9728,
+      "y_min": -750,
+      "y_max": 8728,
+      "z_min": -2047,
+      "z_max": 7168,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0019_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0019_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0021",
+      "entry_index": "pck_object_0021",
+      "width": 392,
+      "height": 128,
+      "point_count": 37,
+      "x_min": -3803,
+      "x_max": 3584,
+      "y_min": -7391,
+      "y_max": 5377,
+      "z_min": -768,
+      "z_max": 8728,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0021_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0021_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0045",
+      "entry_index": "pck_object_0045",
+      "width": 392,
+      "height": 128,
+      "point_count": 27,
+      "x_min": -1666,
+      "x_max": 2048,
+      "y_min": -1942,
+      "y_max": 2824,
+      "z_min": -1190,
+      "z_max": 2040,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0045_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0045_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0054",
+      "entry_index": "pck_object_0054",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": -191,
+      "x_max": 6,
+      "y_min": 0,
+      "y_max": 294,
+      "z_min": -3000,
+      "z_max": 6926,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0054_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0054_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0057",
+      "entry_index": "pck_object_0057",
+      "width": 392,
+      "height": 128,
+      "point_count": 41,
+      "x_min": -2017,
+      "x_max": 7184,
+      "y_min": -2047,
+      "y_max": 6929,
+      "z_min": -2047,
+      "z_max": 6929,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0057_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0057_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0063",
+      "entry_index": "pck_object_0063",
+      "width": 392,
+      "height": 128,
+      "point_count": 31,
+      "x_min": -2047,
+      "x_max": 9984,
+      "y_min": -2048,
+      "y_max": 9472,
+      "z_min": -750,
+      "z_max": 8192,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0063_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0063_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0067",
+      "entry_index": "pck_object_0067",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 4,
+      "x_max": 6,
+      "y_min": 302,
+      "y_max": 458,
+      "z_min": 0,
+      "z_max": 2056,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0067_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0067_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0076",
+      "entry_index": "pck_object_0076",
+      "width": 392,
+      "height": 128,
+      "point_count": 8,
+      "x_min": -379,
+      "x_max": 541,
+      "y_min": -383,
+      "y_max": 613,
+      "z_min": 0,
+      "z_max": 366,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0076_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0076_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0077",
+      "entry_index": "pck_object_0077",
+      "width": 392,
+      "height": 128,
+      "point_count": 16,
+      "x_min": -2036,
+      "x_max": 2040,
+      "y_min": -1858,
+      "y_max": 2048,
+      "z_min": -182,
+      "z_max": 1997,
+      "path": "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0077_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/BMAPCK_TBL/BMAPCK_TBL_pck_object_0077_type0_probe.png"
+      ]
+    }
+  ]
+}

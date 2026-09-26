@@ -1,0 +1,11 @@
+tag,count,total_payload_size,max_payload_size
+BIN:,22,51674,4687
+BMP:,17,35211,4285
+CGA:,4,648,162
+EGA:,4,512,128
+FNT:,2,1352,772
+IBM:,1,765,765
+INF:,18,564,178
+PAL:,4,1224,306
+SCR:,5,17333,4695
+SND:,1,787,787

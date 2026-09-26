@@ -1,0 +1,12 @@
+source_file,decoded_size,row_count,index_entries,block_count,block_size_min,block_size_max,role_counts
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/BMAPCK_TBL.decoded.bin,44938,21,84,84,336,880,prefixed_shape_command_candidate=82; shape_command_candidate=2
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/HAMPCK_TBL.decoded.bin,39530,21,84,84,176,1232,prefixed_shape_command_candidate=76; shape_command_candidate=8
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/JENPCK_TBL.decoded.bin,38374,30,120,120,80,704,prefixed_shape_command_candidate=109; shape_command_candidate=11
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/LOCPCK_TBL.decoded.bin,38706,21,84,84,192,1040,prefixed_shape_command_candidate=82; shape_command_candidate=2
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/MARPCK_TBL.decoded.bin,50512,21,84,84,176,1152,prefixed_shape_command_candidate=82; shape_command_candidate=2
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/OTHPCK_TBL.decoded.bin,3359,6,24,23,32,1040,prefixed_shape_command_candidate=21; shape_command_candidate=2
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/PHAPCK_TBL.decoded.bin,40640,30,120,120,160,544,prefixed_shape_command_candidate=104; shape_command_candidate=16
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/RIFPCK_TBL.decoded.bin,42774,21,84,84,160,1120,prefixed_shape_command_candidate=82; shape_command_candidate=2
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/SHAPCK_TBL.decoded.bin,56772,30,120,120,176,1040,prefixed_shape_command_candidate=119; shape_command_candidate=1
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/TERPCK_GI.decoded.bin,19264,7,28,28,16,1472,ff_delimited_command_candidate=7; unknown_pck_block=21
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/TERPCK_TBL.decoded.bin,11270,7,28,28,80,886,prefixed_shape_command_candidate=21; shape_command_candidate=7

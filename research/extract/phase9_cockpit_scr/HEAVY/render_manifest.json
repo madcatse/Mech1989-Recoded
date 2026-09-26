@@ -1,0 +1,21 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Sorted Original Files/SCR/HEAVY.SCR",
+    "size": 3475,
+    "sha256": "63e1d01f54befd1b455ab82d44d7b54041b92b8778aa38797f90c8e33e398985"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 32000,
+  "palette": {
+    "kind": "ega_default"
+  },
+  "width": 320,
+  "height": 200,
+  "path": "research/extract/phase9_cockpit_scr/HEAVY/HEAVY_320x200.png",
+  "paths": [
+    "research/extract/phase9_cockpit_scr/HEAVY/HEAVY_320x200.png"
+  ]
+}

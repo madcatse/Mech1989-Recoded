@@ -1,0 +1,5 @@
+﻿# Strings extracted from Original/1.GAM
+# Minimum length: 4 printable ASCII bytes
+# Count: 1
+
+G. BRAVER

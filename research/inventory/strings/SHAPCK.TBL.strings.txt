@@ -1,0 +1,353 @@
+﻿# Strings extracted from Original/SHAPCK.TBL
+# Minimum length: 4 printable ASCII bytes
+# Count: 349
+
+He@U5
+	.NI
+XZ(0
+00X<
+	<zm
+Obv!
+}PAZ
+Z<A@
+x2kx
+W3	L
+m-s!
+*VDe
+XG<(
+5{W%
+.1#hF
+WPk5
+b<3S
+X]!Z_
+e ,h
+&(`Rq
+*f:%
+Sh.W
+9z)/
+nmC+
+4S@7]
+0j;3J
+b&:x
+@7f9
+w2 Q
+6qJ7
+-K.0k
+3F:t
+uuLa
+cm8`
+om/q
+,]h+
+$s`C*
+D~Ma
+`(@3
+O'-A
+EMDa
+]0Oc`O
+x	~f
+zM2t
+gFhTP
+Q%3QidQ
+IjR@
+J5AKp2J
+zM2T
+@p2J
+-AfQ
+30O9
+gFhTP
+Q%3QidQ
+KiS@
+wxiQ
+p)'9
+gFhTP
+Q%3QidQ
+@p2J
+LWN6)N
+gFhTP
+Q%3QidQ
+unZ@
+x	~f
+gFhTP
+Q%3QidQ
+4Xwm
+bL]3
+x	~f
+Fp$G!c
+'@S@
+2tM24
+gFhT3k
+2&xGy
+"xAJ"
+"@c(
+Fp$G!c
+r@@3
+2tM2
+gFhT3k
+2&xGy
+&$()
+gFhT3k
+2&xGy
+'@sK@S
+J|?M
+gFhT3k
+2&xGy
+E90O
+gFhT3k
+2&xGy
+gFhT3k
+2&xGy
+Sp'.0
+Sp'{!
+0,yZ
+ y>n%
+b'Hx*
+b'RU
+a@7H
+e46F6
+P:%@a 
+Fa/ 
+0`J2p
+m1@p2
+V%?p
+n@SPP
+^zB7
++b0|
++]9t
+`c46F6
+BFd^hd
+;+@k
+;> />Pr
+PA s
+Gp'! 
+Gp'e@SOp
+0,yZ
+ y>n%
+b'Hx*
+b'RU
+a@7H
+.Fccdc
+D1WV3Pk
+oDf.
+.Fa 
+Ba/`
+Fa9 o0
+p2-+
+'U1I*
+*@SD
+9PTD
+UX%Wn
+'xeVP
+rX|%
+eYr'V
+:]3Z
+G_c%`
+q_cE 
+XFccdcF
+&.dD
+a6fevfi
+!7r%wr)
+r17s5ws9
+Sp'.0
+Sp'{!
+h/U\
+0,y;>
+r*Hh'
++Hh'RE
+TXvq
+XFccdc
+&.dD
+oDf.
+Vi!P
+&l# 
+Fa6 o
+V%?p
+n@SPP
+#`aM=
+?I$A
+?L0aD
+L%LUU
+S	4c
+LiLUS
+8$C&
+9eB	
+P@& P
+jtP"(
+1@0p
+ GnY
+e	q_H
+LcJC
+0}A>p
+_&_@;?
+31, 87W
+`:WU
+GyP1
+ {!P
+'~oU~
+r*w7,
+s('t
+P'uTgu>
+ax'x
+#*Pu
+2Y)w
+0Cg1?
+ 13)s
+xu9yE
+0Gme
+q[XN
+`x2!
+;2SX
+R8@2
+PX\5
+2WXo
+_`^M6
+X*e}V
+7=z?
+O2.P
+F=2Q=2O]UO]UQ-TT
+Oa?>_
+z_Uz
+ONU*
+ *N%	 S
+py(~
+Ox_*
+"*_]*
+@SFM
+(Su9
+U%*a
+@SFM
+U2Qs
+U_]*z/*z
+)-X*M]U
+@SDm
+)2A..
+N%	$s
+^EX*
+@SFM
+|	$}
+py(~
+|	$}
+nEX;
+&*_]5
+@SFM
+(Su9
+Eh	]
+@SDm
+|	$}
+'SXC
+7 ]=
+#m<:?
+Pe$pF4
+8`F~
+/lSUo
+.j@*
+5X)z
+/Ex0
+*O3&
+< ]B
+K<:?
+`>(0
+c P:"
+EPMC
+:	EPb+
+:pj9
+wCPb;
+0l03
+Y'+w
+:qx0
+><:?
+c P:"
+:@F@0
+JpgR0
+t/kB
+tLI0
+&)pOI
+PPM(
+p;ls+
+r7=W)
+ls0M(
+0CD1
+"@c$
++ f/0
+\>"I
+"2$Gp
+2Pe8pF4
+$K"MO
+BPPk
+PPq%
+6w0k
+_<:?
+ 6{-
+$ O@$
+c P:"
+?@Fy
+9v4p
+	fQ"
+xT@R
+HW	A0
+} Y<
+mAQT
+?UQ(
+lStX
+%%2KRJd
+gEkZ
+@?;(
+`q=p
+g@?!P~Fw
+	1F?^
+](IG
+eCP<`
+y<c*/
+9=iZ
+d ! H
+KfIx`G?
+GR&'a
+T yo
+F"in
+DP6(
+AW*wWO
+f=7f
+@YKgYV
+5Z\WZ
+6	A(
+5x	q
+TXEyiS
+xeNQ
+B,IX
+nS&	
+~[5w
+~[CO%
+V=xYm
+&[Xr
+Tb%G
+v"':
+v"':
+w9$w 
+A!_ P
+a)4 
+BA5o 
+;= s
+ ?u8
+`iY	
+g`7`
+	!ak
+`|	a
+=\Pk?
+@8 A
+Zn`T
+@8 a
+/@}-`
+ N3@
+v:KKWKr
+h^wZ
+}fu!
+VFF$
+H%^B9c
+;gXb
+X@gf?A(E
+b;Rg)
+YXgu
+ P5U
+q(_8.PW4
+9F@9
+;gXb
+X@gf?!

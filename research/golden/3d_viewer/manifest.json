@@ -1,0 +1,109 @@
+{
+  "contract_version": 1,
+  "description": "Golden data exported from the Python GPU viewer for the C++ OpenGL 3D engine port.",
+  "entries": [
+    {
+      "kind": "record",
+      "path": "jenpck/record_000.json",
+      "record_index": 0,
+      "resource": "JENPCK.TBL",
+      "triangles": 7,
+      "vertices": 30
+    },
+    {
+      "kind": "composite",
+      "path": "jenpck/composite_000_001_002_003_004_005_006.json",
+      "record_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "resource": "JENPCK.TBL",
+      "triangles": 115,
+      "vertices": 474
+    },
+    {
+      "kind": "record",
+      "path": "locpck/record_000.json",
+      "record_index": 0,
+      "resource": "LOCPCK.TBL",
+      "triangles": 12,
+      "vertices": 48
+    },
+    {
+      "kind": "composite",
+      "path": "locpck/composite_000_001_002_003_004_005_006.json",
+      "record_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "resource": "LOCPCK.TBL",
+      "triangles": 170,
+      "vertices": 686
+    },
+    {
+      "kind": "record",
+      "path": "marpck/record_000.json",
+      "record_index": 0,
+      "resource": "MARPCK.TBL",
+      "triangles": 20,
+      "vertices": 84
+    },
+    {
+      "kind": "composite",
+      "path": "marpck/composite_000_001_002_003_004_005_006.json",
+      "record_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "resource": "MARPCK.TBL",
+      "triangles": 241,
+      "vertices": 968
+    },
+    {
+      "kind": "record",
+      "path": "shapck/record_000.json",
+      "record_index": 0,
+      "resource": "SHAPCK.TBL",
+      "triangles": 20,
+      "vertices": 80
+    },
+    {
+      "kind": "composite",
+      "path": "shapck/composite_000_001_002_003_004_005_006.json",
+      "record_indices": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "resource": "SHAPCK.TBL",
+      "triangles": 193,
+      "vertices": 778
+    }
+  ],
+  "generator": "mech89GL_viewer/export_gpu_golden.py",
+  "load_options": {
+    "runtime": true,
+    "runtime_index_mode": "raw",
+    "scale": 1.0,
+    "swizzle": "xzy"
+  }
+}

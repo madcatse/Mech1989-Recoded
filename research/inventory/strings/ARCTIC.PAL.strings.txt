@@ -1,0 +1,15 @@
+﻿# Strings extracted from Original/ARCTIC.PAL
+# Minimum length: 4 printable ASCII bytes
+# Count: 11
+
+PAL:2
+EGA:
+DD33ffww
+xxpp
+DD33ffww
+ppww
+ss88
+CGA:
+DDff
+3333
+ww33

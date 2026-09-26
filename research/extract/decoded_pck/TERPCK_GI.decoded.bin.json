@@ -1,0 +1,38 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/TERPCK.GI",
+    "size": 15036,
+    "sha256": "02cd058e8b93c42517450b53751230e9f48e43b0f9cc024a28f894aaced8998d"
+  },
+  "codec": "pck_lzw_segmented",
+  "raw_codec_id": 2,
+  "encoded_size": 15031,
+  "decoded_size": 19264,
+  "decoded_sha256": "c55c849b0e1f15b23c1ebcf4e4200322956b75c20847dd9612a2cb9f3245040b",
+  "decoded_structure_probe": {
+    "first_u16": 12,
+    "second_u16": 7,
+    "second_u16_times_16": 112,
+    "second_u16_times_16_hex": "0x0070",
+    "leading_pair_count": 30,
+    "leading_pair_bytes": 120,
+    "leading_pair_stop_offset": 122,
+    "leading_pair_stop_offset_hex": "0x007A",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 1173",
+    "boundary_16x_first_16_hex": "0C00760406009504000000004416BA2F"
+  },
+  "segment_count": 1,
+  "segments": [
+    {
+      "body_offset": 0,
+      "gap_before": 0,
+      "compressed_size": 15031,
+      "body_end_offset": 15031,
+      "decoded_size": 19264,
+      "ended_by_code_256": false
+    }
+  ],
+  "output": "research/extract/decoded_pck/TERPCK_GI.decoded.bin"
+}

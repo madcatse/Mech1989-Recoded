@@ -1,0 +1,10 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/6X6.FNT",
+    "size": 580,
+    "sha256": "c0df8daeec521175190e72eb1c868fcb9d2deee3359b480311b83dee3f5115cc"
+  },
+  "entries": []
+}

@@ -1,0 +1,18 @@
+source_file,entry_id,payload_offset_hex,payload_size,layout,record_count,width_min,width_max,height_min,height_max,dimensions_preview
+Original/BAT.BMP,BAT_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,152,152,193,193,152x193
+Original/COCKPIT.BMP,COCKPIT_0000_INF_000008,0x000010,50,count_widths_heights_u16le,12,8,48,3,19,8x7; 8x3; 16x9; 48x11; 48x15; 40x19
+Original/DIGITS.BMP,DIGITS_0000_INF_000008,0x000010,178,count_widths_heights_u16le,44,8,8,3,7,8x5; 8x7; 8x3
+Original/DOTS.BMP,DOTS_0000_INF_000008,0x000010,74,count_widths_heights_u16le,18,8,8,1,1,8x1
+Original/HUD_CYAN.BMP,HUD_CYAN_0000_INF_000008,0x000010,50,count_widths_heights_u16le,12,16,16,5,5,16x5
+Original/HUD_NUMS.BMP,HUD_NUMS_0000_INF_000008,0x000010,50,count_widths_heights_u16le,12,16,16,5,5,16x5
+Original/JEN.BMP,JEN_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,152,152,193,193,152x193
+Original/LOC.BMP,LOC_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,152,152,193,193,152x193
+Original/MAR.BMP,MAR_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,152,152,193,193,152x193
+Original/PHO.BMP,PHO_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,152,152,193,193,152x193
+Original/POINT.BMP,POINT_0000_INF_000008,0x000010,14,count_widths_heights_u16le,3,16,24,10,16,16x10; 24x16; 16x13
+Original/PROMPT.BMP,PROMPT_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,112,112,27,27,112x27
+Original/RIF.BMP,RIF_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,152,152,193,193,152x193
+Original/SHA.BMP,SHA_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,152,152,193,193,152x193
+Original/SM_MECHS.BMP,SM_MECHS_0000_INF_000008,0x000010,38,count_widths_heights_u16le,9,56,56,49,49,56x49
+Original/STRUTS.BMP,STRUTS_0000_INF_000008,0x000010,50,count_widths_heights_u16le,12,16,104,3,30,24x15; 40x30; 80x9; 16x14; 32x27; 32x28; 104x3
+Original/WAR.BMP,WAR_0000_INF_000008,0x000010,6,count_widths_heights_u16le,1,152,152,193,193,152x193

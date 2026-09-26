@@ -1,0 +1,9 @@
+scr,region_id,role_candidate,x0,y0,x1,y1,width,height,area
+LIGHT,0,main_3d_viewport,11,11,307,102,297,92,25283
+LIGHT,1,lower_button_or_readout_slot,10,182,97,196,88,15,171
+LIGHT,2,small_runtime_detail,226,142,236,156,11,15,48
+MEDIUM,0,main_3d_viewport,9,0,309,102,301,103,30310
+MEDIUM,1,runtime_slot,3,109,106,109,104,1,104
+MEDIUM,2,runtime_slot,214,109,317,109,104,1,104
+HEAVY,0,main_3d_viewport,0,0,319,102,320,103,32960
+HEAVY,1,runtime_slot,120,117,191,183,72,67,4824

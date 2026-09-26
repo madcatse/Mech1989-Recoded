@@ -1,0 +1,9 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+offs_0000_000354,Original/HAMPCK.TBL,possible_offset_table,,,0x000354,0,0x000A01,27399,0x00035C,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 2561, ""last_value"": 20499}"
+records_4_7490,Original/HAMPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,29960,0x007508,0,medium,file size divisible by record size,,"{""record_count"": 7490, ""record_size"": 4}"
+records_7_4280,Original/HAMPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,29960,0x007508,0,medium,file size divisible by record size,,"{""record_count"": 4280, ""record_size"": 7}"
+records_8_3745,Original/HAMPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,29960,0x007508,0,medium,file size divisible by record size,,"{""record_count"": 3745, ""record_size"": 8}"
+records_10_2996,Original/HAMPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,29960,0x007508,0,medium,file size divisible by record size,,"{""record_count"": 2996, ""record_size"": 10}"
+records_14_2140,Original/HAMPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,29960,0x007508,0,medium,file size divisible by record size,,"{""record_count"": 2140, ""record_size"": 14}"
+records_20_1498,Original/HAMPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,29960,0x007508,0,medium,file size divisible by record size,,"{""record_count"": 1498, ""record_size"": 20}"
+records_28_1070,Original/HAMPCK.TBL,possible_fixed_records,,,0x000000,0,0x000000,29960,0x007508,0,medium,file size divisible by record size,,"{""record_count"": 1070, ""record_size"": 28}"

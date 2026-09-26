@@ -1,0 +1,19 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+name_0000_008D10,Original/MW_MAIN.EXE,resource_name_string,,MW_EGA.EXE,0x008D10,0,0x000000,0,0x008D1A,0,medium,file-name-like ASCII string,,{}
+name_0001_008D1B,Original/MW_MAIN.EXE,resource_name_string,,MW_TANDY.EXE,0x008D1B,0,0x000000,0,0x008D27,0,medium,file-name-like ASCII string,,{}
+name_0002_008ECC,Original/MW_MAIN.EXE,resource_name_string,,'MW_EGA.EXE,0x008ECC,0,0x000000,0,0x008ED7,0,medium,file-name-like ASCII string,,{}
+name_0003_009AC1,Original/MW_MAIN.EXE,resource_name_string,,MW_PICS.BIN,0x009AC1,0,0x000000,0,0x009ACC,0,medium,file-name-like ASCII string,,{}
+name_0004_009ACD,Original/MW_MAIN.EXE,resource_name_string,,MW_GPICS.BIN,0x009ACD,0,0x000000,0,0x009AD9,0,medium,file-name-like ASCII string,,{}
+name_0005_009ADC,Original/MW_MAIN.EXE,resource_name_string,,MW_CPICS.BIN,0x009ADC,0,0x000000,0,0x009AE8,0,medium,file-name-like ASCII string,,{}
+name_0006_009AEB,Original/MW_MAIN.EXE,resource_name_string,,MW_1PICS.BIN,0x009AEB,0,0x000000,0,0x009AF7,0,medium,file-name-like ASCII string,,{}
+name_0007_009AF8,Original/MW_MAIN.EXE,resource_name_string,,MW_2PICS.BIN,0x009AF8,0,0x000000,0,0x009B04,0,medium,file-name-like ASCII string,,{}
+name_0008_009B05,Original/MW_MAIN.EXE,resource_name_string,,MW_3PICS.BIN,0x009B05,0,0x000000,0,0x009B11,0,medium,file-name-like ASCII string,,{}
+name_0009_009B12,Original/MW_MAIN.EXE,resource_name_string,,MW_TPICS.BIN,0x009B12,0,0x000000,0,0x009B1E,0,medium,file-name-like ASCII string,,{}
+name_0010_009B1F,Original/MW_MAIN.EXE,resource_name_string,,MW_APICS.BIN,0x009B1F,0,0x000000,0,0x009B2B,0,medium,file-name-like ASCII string,,{}
+name_0011_009B2C,Original/MW_MAIN.EXE,resource_name_string,,MW_FPICS.BIN,0x009B2C,0,0x000000,0,0x009B38,0,medium,file-name-like ASCII string,,{}
+name_0012_009B3B,Original/MW_MAIN.EXE,resource_name_string,,MECH.MUS,0x009B3B,0,0x000000,0,0x009B43,0,medium,file-name-like ASCII string,,{}
+name_0013_009B44,Original/MW_MAIN.EXE,resource_name_string,,MECHBAR.MUS,0x009B44,0,0x000000,0,0x009B4F,0,medium,file-name-like ASCII string,,{}
+name_0014_009B50,Original/MW_MAIN.EXE,resource_name_string,,DEATH.MUS,0x009B50,0,0x000000,0,0x009B59,0,medium,file-name-like ASCII string,,{}
+name_0015_009B5A,Original/MW_MAIN.EXE,resource_name_string,,LAUNCH.MUS,0x009B5A,0,0x000000,0,0x009B64,0,medium,file-name-like ASCII string,,{}
+name_0016_009B65,Original/MW_MAIN.EXE,resource_name_string,,VICTORY.MUS,0x009B65,0,0x000000,0,0x009B70,0,medium,file-name-like ASCII string,,{}
+name_0017_009BF6,Original/MW_MAIN.EXE,resource_name_string,,BTECH.EXE,0x009BF6,0,0x000000,0,0x009BFF,0,medium,file-name-like ASCII string,,{}

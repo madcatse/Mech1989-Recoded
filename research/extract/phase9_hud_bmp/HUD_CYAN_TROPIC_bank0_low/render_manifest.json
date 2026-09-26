@@ -1,0 +1,128 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Sorted Original Files/BMP/HUD_CYAN.BMP",
+    "size": 252,
+    "sha256": "602d6781a3998023084e488a7edeaffb3bd933858876bada35d5d23fbe630d5d"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 480,
+  "palette": {
+    "kind": "pal_ega_pair_banks_tentative",
+    "path": "Sorted Original Files/PAL/TROPIC.PAL",
+    "bank": 0,
+    "interpretation": "low"
+  },
+  "entries": [
+    {
+      "index": 0,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_000_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_000_16x5.png"
+      ]
+    },
+    {
+      "index": 1,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_001_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_001_16x5.png"
+      ]
+    },
+    {
+      "index": 2,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_002_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_002_16x5.png"
+      ]
+    },
+    {
+      "index": 3,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_003_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_003_16x5.png"
+      ]
+    },
+    {
+      "index": 4,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_004_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_004_16x5.png"
+      ]
+    },
+    {
+      "index": 5,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_005_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_005_16x5.png"
+      ]
+    },
+    {
+      "index": 6,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_006_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_006_16x5.png"
+      ]
+    },
+    {
+      "index": 7,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_007_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_007_16x5.png"
+      ]
+    },
+    {
+      "index": 8,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_008_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_008_16x5.png"
+      ]
+    },
+    {
+      "index": 9,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_009_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_009_16x5.png"
+      ]
+    },
+    {
+      "index": 10,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_010_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_010_16x5.png"
+      ]
+    },
+    {
+      "index": 11,
+      "width": 16,
+      "height": 5,
+      "path": "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_011_16x5.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/HUD_CYAN_TROPIC_bank0_low/HUD_CYAN_011_16x5.png"
+      ]
+    }
+  ]
+}

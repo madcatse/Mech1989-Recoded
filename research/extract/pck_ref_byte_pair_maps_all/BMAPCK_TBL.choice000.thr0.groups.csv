@@ -1,0 +1,4 @@
+source_file,byte_pair_key,shape_ref_hex,shape_ref_low_byte,shape_ref_high_byte,frame_type,transform_index,count,object_count,objects,dx_min,dx_max,dy_min,dy_max,threshold_min,threshold_max
+BMAPCK_TBL.decoded.bin,00:08,0x0800,0,8,2,,2,2,pck_object_0079;pck_object_0080,-127,-127,23,23,10,10
+BMAPCK_TBL.decoded.bin,00:00,0x0000,0,0,2,,1,1,pck_object_0025,-127,-127,0,0,4,4
+BMAPCK_TBL.decoded.bin,FF:07,0x07FF,255,7,3,2,1,1,pck_object_0053,4,4,5,5,2,2

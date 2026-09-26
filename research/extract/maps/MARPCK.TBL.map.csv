@@ -1,0 +1,4 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+offs_0000_00007E,Original/MARPCK.TBL,possible_offset_table,,,0x00007E,0,0x005674,16890,0x000086,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 22132, ""last_value"": 30721}"
+offs_0001_000296,Original/MARPCK.TBL,possible_offset_table,,,0x000296,0,0x003FC9,22693,0x00029E,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 16329, ""last_value"": 37436}"
+offs_0002_000324,Original/MARPCK.TBL,possible_offset_table,,,0x000324,0,0x000B42,36140,0x00032C,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 2882, ""last_value"": 34299}"

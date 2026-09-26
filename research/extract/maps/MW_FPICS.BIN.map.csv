@@ -1,0 +1,8 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+offs_0000_000086,Original/MW_FPICS.BIN,possible_offset_table,,,0x000086,0,0x000F35,9751,0x00008E,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 3893, ""last_value"": 5407}"
+offs_0001_000194,Original/MW_FPICS.BIN,possible_offset_table,,,0x000194,0,0x00110A,9282,0x00019C,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 4362, ""last_value"": 12275}"
+offs_0002_0003CC,Original/MW_FPICS.BIN,possible_offset_table,,,0x0003CC,0,0x0003F0,12636,0x0003D4,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 1008, ""last_value"": 7521}"
+records_3_4548,Original/MW_FPICS.BIN,possible_fixed_records,,,0x000000,0,0x000000,13644,0x00354C,0,medium,file size divisible by record size,,"{""record_count"": 4548, ""record_size"": 3}"
+records_4_3411,Original/MW_FPICS.BIN,possible_fixed_records,,,0x000000,0,0x000000,13644,0x00354C,0,medium,file size divisible by record size,,"{""record_count"": 3411, ""record_size"": 4}"
+records_6_2274,Original/MW_FPICS.BIN,possible_fixed_records,,,0x000000,0,0x000000,13644,0x00354C,0,medium,file size divisible by record size,,"{""record_count"": 2274, ""record_size"": 6}"
+records_12_1137,Original/MW_FPICS.BIN,possible_fixed_records,,,0x000000,0,0x000000,13644,0x00354C,0,medium,file size divisible by record size,,"{""record_count"": 1137, ""record_size"": 12}"

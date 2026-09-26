@@ -1,0 +1,34 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/6X6B.FNT",
+    "size": 588,
+    "sha256": "f8e794e6c0484dd8d6c26563a753eb3931fe4cb04ba07f4e6f119c7ef632f2f3"
+  },
+  "entries": [
+    {
+      "id": "6X6B_0000_FNT_000000",
+      "kind": "tagged_chunk",
+      "offset": 0,
+      "header_size": 8,
+      "payload_offset": 8,
+      "payload_size": 580,
+      "end_offset": 588,
+      "depth": 0,
+      "confidence": "high",
+      "tag": "FNT:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000244",
+        "has_nested_flag": "no",
+        "local_index": 0
+      }
+    }
+  ]
+}

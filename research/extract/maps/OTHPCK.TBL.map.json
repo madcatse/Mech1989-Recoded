@@ -1,0 +1,10 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/OTHPCK.TBL",
+    "size": 2182,
+    "sha256": "1450ece44914d1383294df6ae7d396230bdc92464701794d59532cd2db8a95e3"
+  },
+  "entries": []
+}

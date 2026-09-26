@@ -1,0 +1,23 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/PROMPT.BMP",
+    "size": 294,
+    "sha256": "7c6805f817119d9e376693f6113224bba749a073883ca10f6c16b42db4943308"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 1512,
+  "entries": [
+    {
+      "index": 0,
+      "width": 112,
+      "height": 27,
+      "path": "research/extract/rendered_btech_bmp_png_display/PROMPT/PROMPT_000_112x27.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/PROMPT/PROMPT_000_112x27.png"
+      ]
+    }
+  ]
+}

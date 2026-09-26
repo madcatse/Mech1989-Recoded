@@ -1,0 +1,11 @@
+﻿# Strings extracted from Original/TILE8B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 7
+
+"--!
+'5=5(
+%5EB:2'
+5EMI=0'"
+5IRL?2%
+!1AD@5(
+!/-)%

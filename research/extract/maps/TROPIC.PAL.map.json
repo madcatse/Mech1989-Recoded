@@ -1,0 +1,81 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/TROPIC.PAL",
+    "size": 314,
+    "sha256": "4a8733ba0138b570e9c2067521219fa842858d848c65ad8948efea5732d97c7e"
+  },
+  "entries": [
+    {
+      "id": "TROPIC_0000_PAL_000000",
+      "kind": "tagged_chunk",
+      "offset": 0,
+      "header_size": 8,
+      "payload_offset": 8,
+      "payload_size": 306,
+      "end_offset": 314,
+      "depth": 0,
+      "confidence": "high",
+      "tag": "PAL:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "high bit set in length field"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x80000132",
+        "has_nested_flag": "yes",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "TROPIC_0000_EGA_000008",
+      "kind": "tagged_chunk",
+      "offset": 8,
+      "header_size": 8,
+      "payload_offset": 16,
+      "payload_size": 128,
+      "end_offset": 144,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "EGA:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000080",
+        "has_nested_flag": "no",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "TROPIC_0001_CGA_000090",
+      "kind": "tagged_chunk",
+      "offset": 144,
+      "header_size": 8,
+      "payload_offset": 152,
+      "payload_size": 162,
+      "end_offset": 314,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "CGA:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x000000A2",
+        "has_nested_flag": "no",
+        "local_index": 1
+      }
+    }
+  ]
+}

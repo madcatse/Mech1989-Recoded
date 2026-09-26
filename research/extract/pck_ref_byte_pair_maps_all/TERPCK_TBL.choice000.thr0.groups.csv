@@ -1,0 +1,2 @@
+source_file,byte_pair_key,shape_ref_hex,shape_ref_low_byte,shape_ref_high_byte,frame_type,transform_index,count,object_count,objects,dx_min,dx_max,dy_min,dy_max,threshold_min,threshold_max
+TERPCK_TBL.decoded.bin,15:15,0x1515,21,21,2,,1,1,pck_object_0018,-127,-127,21,21,12,12

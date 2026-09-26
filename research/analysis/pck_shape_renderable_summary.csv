@@ -1,0 +1,16 @@
+metric,value
+total_renderable_frame_records,8537
+frame_type_0,5919
+frame_type_1,1409
+frame_type_2,630
+frame_type_3,579
+source_BMAPCK_TBL.decoded.bin,665
+source_HAMPCK_TBL.decoded.bin,709
+source_JENPCK_TBL.decoded.bin,2423
+source_LOCPCK_TBL.decoded.bin,351
+source_MARPCK_TBL.decoded.bin,595
+source_OTHPCK_TBL.decoded.bin,21
+source_PHAPCK_TBL.decoded.bin,2317
+source_RIFPCK_TBL.decoded.bin,840
+source_SHAPCK_TBL.decoded.bin,261
+source_TERPCK_TBL.decoded.bin,355

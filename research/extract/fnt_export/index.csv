@@ -1,0 +1,5 @@
+source_path,source_size,wrapper,payload_size,width,height,first_code_hex,glyph_count,manifest,glyphs_csv
+Sorted Original Files/FNT/6X6.FNT,580,raw,580,6,6,0x20,96,research/extract/fnt_export/6X6/manifest.json,research/extract/fnt_export/6X6/glyphs.csv
+Sorted Original Files/FNT/6X6B.FNT,588,FNT:,580,6,6,0x20,96,research/extract/fnt_export/6X6B/manifest.json,research/extract/fnt_export/6X6B/glyphs.csv
+Sorted Original Files/FNT/8X8B.FNT,780,FNT:,772,8,8,0x20,96,research/extract/fnt_export/8X8B/manifest.json,research/extract/fnt_export/8X8B/glyphs.csv
+Sorted Original Files/FNT/FOX88.FNT,772,raw,772,8,8,0x20,96,research/extract/fnt_export/FOX88/manifest.json,research/extract/fnt_export/FOX88/glyphs.csv

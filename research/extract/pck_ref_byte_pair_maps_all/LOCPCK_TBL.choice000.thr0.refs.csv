@@ -1,0 +1,1 @@
+source_file,id,object_id,part_id,frame_table_id,part_index,choice_index,selected_choice_index,selection_threshold,frame_index,frame_abs_hex,threshold,frame_type,semantic,dx,dy,shape_ref,shape_ref_hex,shape_ref_signed,shape_ref_low_byte,shape_ref_high_byte,byte_pair_key,transform_index,extra_word,extra_byte,record_8_hex

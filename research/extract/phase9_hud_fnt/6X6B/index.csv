@@ -1,0 +1,2 @@
+source_path,source_size,wrapper,payload_size,width,height,first_code_hex,glyph_count,manifest,glyphs_csv
+Sorted Original Files/FNT/6X6B.FNT,588,FNT:,580,6,6,0x20,96,research/extract/phase9_hud_fnt/6X6B/6X6B/manifest.json,research/extract/phase9_hud_fnt/6X6B/6X6B/glyphs.csv

@@ -1,0 +1,46 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/JENPCK.TBL",
+    "size": 22866,
+    "sha256": "82fc7d5482b3410a2ba95c7d7f42982c29cc1a9c0dc22b942bb371b68be19bca"
+  },
+  "codec": "pck_lzw_segmented",
+  "raw_codec_id": 2,
+  "encoded_size": 22861,
+  "decoded_size": 38374,
+  "decoded_sha256": "a25facf3a01ef2ab5b82f7c6c5c202ca1e0a6ddbe6b5d9bea46478de7257a8a7",
+  "decoded_structure_probe": {
+    "first_u16": 4,
+    "second_u16": 30,
+    "second_u16_times_16": 480,
+    "second_u16_times_16_hex": "0x01E0",
+    "leading_pair_count": 120,
+    "leading_pair_bytes": 480,
+    "leading_pair_stop_offset": 482,
+    "leading_pair_stop_offset_hex": "0x01E2",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 2386",
+    "boundary_16x_first_16_hex": "0000000080002F010000000000000100"
+  },
+  "segment_count": 2,
+  "segments": [
+    {
+      "body_offset": 0,
+      "gap_before": 0,
+      "compressed_size": 11293,
+      "body_end_offset": 11293,
+      "decoded_size": 20386,
+      "ended_by_code_256": true
+    },
+    {
+      "body_offset": 11300,
+      "gap_before": 7,
+      "compressed_size": 11561,
+      "body_end_offset": 22861,
+      "decoded_size": 17988,
+      "ended_by_code_256": false
+    }
+  ],
+  "output": "research/extract/decoded_pck/JENPCK_TBL.decoded.bin"
+}

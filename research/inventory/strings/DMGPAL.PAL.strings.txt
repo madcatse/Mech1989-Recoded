@@ -1,0 +1,13 @@
+﻿# Strings extracted from Original/DMGPAL.PAL
+# Minimum length: 4 printable ASCII bytes
+# Count: 9
+
+PAL:2
+EGA:
+DD33ffww
+xxpp
+DD33ffww
+ppww
+ss88
+CGA:
+wwUU

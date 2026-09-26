@@ -1,0 +1,24 @@
+﻿# Strings extracted from Original/TILE13.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 20
+
+&GXN
+.NXJ
+5PNA
+:JD7
+!>F:-
+%@<0#
+	'<4)
+,?8)
+4F;,
+<L>/!
+ CPA2$
+,KSD5&
+8TVF6&
+!;TVE5$
+1IUE3#
+&?LD3"
+4LC2!
+*AB1 
+ 7B1 
+"$'!

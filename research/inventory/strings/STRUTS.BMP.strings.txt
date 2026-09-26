@@ -1,0 +1,18 @@
+﻿# Strings extracted from Original/STRUTS.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 14
+
+BMP:g
+INF:2
+BIN:%
+o2%x
+pb4+
+3Mrm
+UC(*$c
+Gc@Z
+RB4"y
+f&D'
+ygbt
+s,7,B
+/![:
+o9:9

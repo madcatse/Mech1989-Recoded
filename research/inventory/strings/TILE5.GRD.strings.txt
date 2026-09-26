@@ -1,0 +1,19 @@
+﻿# Strings extracted from Original/TILE5.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 15
+
+3@F3 
+	#=WU=%
+,EWN3
+3LR?%
+	":MC0
+)AH4!
+0B9%
+	"%$
+"/4(
+(7?9- 
+(8GD=1+
+2GOL?2&!
+.?UNA5(
+&6>;7*
+&($ 

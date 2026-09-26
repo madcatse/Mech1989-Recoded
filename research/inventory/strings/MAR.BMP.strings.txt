@@ -1,0 +1,55 @@
+﻿# Strings extracted from Original/MAR.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 51
+
+BMP:
+INF:
+BIN:
+	#2|H1!
+ b[A
+cu>.7Z
+9icz
+Pdgf
+:.ze
+y>bJ
+zl{Y
+ EB6u
+|hfo{
+b:y.rz
+oUekrU
+g[_z
+EhA?,
+)JnA
+w3x|
+qqJ|
+:eM~
+fMSQ]
+[5IWY
+6u#k
+fC+`
+=JrHC
+?-)[
+^$LO
+rU(%D
+y$X<
+XuY:
+o0g()
+q/E: 
+@^Qo
+\+>H"
+tFR"
+8|x4
+xQsq%
+RkAs
+w[NU
+GDgA
+fkc=
+ITA#
+D{R8
+I#[X,|
+"g7F;
+ukR8}y
+PG$C
+)*1S
+R']Tz
+M4Ej

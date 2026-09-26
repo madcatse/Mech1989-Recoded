@@ -1,0 +1,52 @@
+{
+  "contract_version": 1,
+  "description": "C++ OpenGL battle viewer phase-2 visual smoke screenshots for first records.",
+  "captured_on": "2026-08-08",
+  "viewer": "build/Release/mw_battle_viewer.exe",
+  "entries": [
+    {
+      "resource": "JENPCK.TBL",
+      "record_index": 0,
+      "path": "jenpck_record_000_cpp_battle_viewer.png",
+      "vbo_vertices": 30,
+      "triangles": 7,
+      "line_pairs": 15,
+      "shade_mode": "stored",
+      "sha256": "63c30dd40eac044d6885be2346107fd8bf1db48b8d0931c089c962fe537ec411",
+      "byte_size": 27530
+    },
+    {
+      "resource": "LOCPCK.TBL",
+      "record_index": 0,
+      "path": "locpck_record_000_cpp_battle_viewer.png",
+      "vbo_vertices": 48,
+      "triangles": 12,
+      "line_pairs": 24,
+      "shade_mode": "stored",
+      "sha256": "4ecced87889b51668c7d70da13b33cfb134df3b846e4ff38ad79687afded9d56",
+      "byte_size": 28340
+    },
+    {
+      "resource": "MARPCK.TBL",
+      "record_index": 0,
+      "path": "marpck_record_000_cpp_battle_viewer.png",
+      "vbo_vertices": 84,
+      "triangles": 20,
+      "line_pairs": 42,
+      "shade_mode": "stored",
+      "sha256": "c49fb7d1ca06c879db5cfc909efe21ef9e81833c2ec6392210a0b970c72263f4",
+      "byte_size": 52873
+    },
+    {
+      "resource": "SHAPCK.TBL",
+      "record_index": 0,
+      "path": "shapck_record_000_cpp_battle_viewer.png",
+      "vbo_vertices": 80,
+      "triangles": 20,
+      "line_pairs": 40,
+      "shade_mode": "stored",
+      "sha256": "fe522b5e29410b2e86e84f5d164e6dd9c744b0521a73c03ac18a9fed1cfc1f8d",
+      "byte_size": 24216
+    }
+  ]
+}

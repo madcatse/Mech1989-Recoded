@@ -1,0 +1,6 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+name_0000_000CD4,Original/MW_EGA.EXE,resource_name_string,,6X6.FNT,0x000CD4,0,0x000000,0,0x000CDB,0,medium,file-name-like ASCII string,,{}
+name_0001_000CDC,Original/MW_EGA.EXE,resource_name_string,,88C64.FNT,0x000CDC,0,0x000000,0,0x000CE5,0,medium,file-name-like ASCII string,,{}
+name_0002_000CE6,Original/MW_EGA.EXE,resource_name_string,,8X8.FNT,0x000CE6,0,0x000000,0,0x000CED,0,medium,file-name-like ASCII string,,{}
+name_0003_000CEE,Original/MW_EGA.EXE,resource_name_string,,FOX88.FNT,0x000CEE,0,0x000000,0,0x000CF7,0,medium,file-name-like ASCII string,,{}
+name_0004_000CF8,Original/MW_EGA.EXE,resource_name_string,,PROM88.FNT,0x000CF8,0,0x000000,0,0x000D02,0,medium,file-name-like ASCII string,,{}

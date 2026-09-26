@@ -1,0 +1,16 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/OTHPCK_TBL.decoded.bin",
+    "size": 3359,
+    "sha256": "0669fde1d78580c04376e373714e97aa479845cf41d0144ac0680c7e526eb5b4"
+  },
+  "kind": "pck_ref_byte_pair_selected_records",
+  "choice_index": 0,
+  "threshold": 0,
+  "selected_ref_count": 0,
+  "group_count": 0,
+  "entries": [],
+  "groups": []
+}

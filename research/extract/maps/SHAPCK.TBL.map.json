@@ -1,0 +1,283 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/SHAPCK.TBL",
+    "size": 40544,
+    "sha256": "63abc05e37d544c0c9c74593a0e1cb33ee0c5cba7267c86bd8206f5b8818e7f9"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_000044",
+      "kind": "possible_offset_table",
+      "offset": 68,
+      "header_size": 0,
+      "payload_offset": 296,
+      "payload_size": 40248,
+      "end_offset": 76,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 296,
+        "last_value": 32857
+      }
+    },
+    {
+      "id": "offs_0001_000066",
+      "kind": "possible_offset_table",
+      "offset": 102,
+      "header_size": 0,
+      "payload_offset": 285,
+      "payload_size": 40259,
+      "end_offset": 110,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 285,
+        "last_value": 27177
+      }
+    },
+    {
+      "id": "offs_0002_000176",
+      "kind": "possible_offset_table",
+      "offset": 374,
+      "header_size": 0,
+      "payload_offset": 8236,
+      "payload_size": 32308,
+      "end_offset": 382,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 8236,
+        "last_value": 32964
+      }
+    },
+    {
+      "id": "offs_0003_000304",
+      "kind": "possible_offset_table",
+      "offset": 772,
+      "header_size": 0,
+      "payload_offset": 1459,
+      "payload_size": 39085,
+      "end_offset": 780,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 1459,
+        "last_value": 25319
+      }
+    },
+    {
+      "id": "offs_0004_000322",
+      "kind": "possible_offset_table",
+      "offset": 802,
+      "header_size": 0,
+      "payload_offset": 2167,
+      "payload_size": 38377,
+      "end_offset": 810,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 2167,
+        "last_value": 18442
+      }
+    },
+    {
+      "id": "records_4_10136",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 40544,
+      "end_offset": 40544,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 4,
+        "record_count": 10136
+      }
+    },
+    {
+      "id": "records_7_5792",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 40544,
+      "end_offset": 40544,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 7,
+        "record_count": 5792
+      }
+    },
+    {
+      "id": "records_8_5068",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 40544,
+      "end_offset": 40544,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 8,
+        "record_count": 5068
+      }
+    },
+    {
+      "id": "records_14_2896",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 40544,
+      "end_offset": 40544,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 14,
+        "record_count": 2896
+      }
+    },
+    {
+      "id": "records_16_2534",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 40544,
+      "end_offset": 40544,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 16,
+        "record_count": 2534
+      }
+    },
+    {
+      "id": "records_28_1448",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 40544,
+      "end_offset": 40544,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 28,
+        "record_count": 1448
+      }
+    },
+    {
+      "id": "records_32_1267",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 40544,
+      "end_offset": 40544,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 32,
+        "record_count": 1267
+      }
+    }
+  ]
+}

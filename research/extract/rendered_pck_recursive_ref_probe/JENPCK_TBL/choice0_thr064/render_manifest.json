@@ -1,0 +1,33 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "research/extract/decoded_pck/JENPCK_TBL.decoded.bin",
+    "size": 38374,
+    "sha256": "a25facf3a01ef2ab5b82f7c6c5c202ca1e0a6ddbe6b5d9bea46478de7257a8a7"
+  },
+  "kind": "pck_recursive_ref_probe",
+  "choice_index": 0,
+  "threshold": 64,
+  "max_depth": 4,
+  "min_score": 30,
+  "entries": [
+    {
+      "object_id": "pck_object_0004",
+      "entry_index": "pck_object_0004",
+      "choice_index": 0,
+      "threshold": 64,
+      "max_depth": 4,
+      "min_score": 30,
+      "node_count": 9,
+      "root_record_count": 5,
+      "resolved_edge_count": 4,
+      "width": 192,
+      "height": 192,
+      "path": "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL/choice0_thr064/JENPCK_TBL_pck_object_0004_choice000_thr064_recursive_ref_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_recursive_ref_probe/JENPCK_TBL/choice0_thr064/JENPCK_TBL_pck_object_0004_choice000_thr064_recursive_ref_probe.png"
+      ]
+    }
+  ]
+}

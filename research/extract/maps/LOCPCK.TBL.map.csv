@@ -1,0 +1,3 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+offs_0000_00006A,Original/LOCPCK.TBL,possible_offset_table,,,0x00006A,0,0x002805,16382,0x000072,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 10245, ""last_value"": 20503}"
+offs_0001_0000A6,Original/LOCPCK.TBL,possible_offset_table,,,0x0000A6,0,0x0000C5,26430,0x0000AE,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 197, ""last_value"": 24992}"

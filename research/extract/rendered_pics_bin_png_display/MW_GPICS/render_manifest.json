@@ -1,0 +1,427 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/MW_GPICS.BIN",
+    "size": 18846,
+    "sha256": "db31ff5880315b78bdeaaa6f2af69195856c79873a23b96bd69566b13749cd6a"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "palette": "ega_default",
+  "entries": [
+    {
+      "entry_index": 1,
+      "width": 18,
+      "height": 20,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_001_18x20.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_001_18x20.png"
+      ]
+    },
+    {
+      "entry_index": 2,
+      "width": 18,
+      "height": 20,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_002_18x20.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_002_18x20.png"
+      ]
+    },
+    {
+      "entry_index": 3,
+      "width": 19,
+      "height": 17,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_003_19x17.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_003_19x17.png"
+      ]
+    },
+    {
+      "entry_index": 4,
+      "width": 145,
+      "height": 35,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_004_145x35.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_004_145x35.png"
+      ]
+    },
+    {
+      "entry_index": 5,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_005_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_005_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 6,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_006_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_006_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 7,
+      "width": 40,
+      "height": 35,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_007_40x35.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_007_40x35.png"
+      ]
+    },
+    {
+      "entry_index": 8,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_008_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_008_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 9,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_009_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_009_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 10,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_010_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_010_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 11,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_011_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_011_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 12,
+      "width": 320,
+      "height": 23,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_012_320x23.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_012_320x23.png"
+      ]
+    },
+    {
+      "entry_index": 13,
+      "width": 5,
+      "height": 5,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_013_5x5.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_013_5x5.png"
+      ]
+    },
+    {
+      "entry_index": 14,
+      "width": 60,
+      "height": 35,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_014_60x35.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_014_60x35.png"
+      ]
+    },
+    {
+      "entry_index": 15,
+      "width": 60,
+      "height": 35,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_015_60x35.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_015_60x35.png"
+      ]
+    },
+    {
+      "entry_index": 16,
+      "width": 140,
+      "height": 7,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_016_140x7.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_016_140x7.png"
+      ]
+    },
+    {
+      "entry_index": 17,
+      "width": 140,
+      "height": 5,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_017_140x5.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_017_140x5.png"
+      ]
+    },
+    {
+      "entry_index": 18,
+      "width": 15,
+      "height": 12,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_018_15x12.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_018_15x12.png"
+      ]
+    },
+    {
+      "entry_index": 19,
+      "width": 15,
+      "height": 12,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_019_15x12.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_019_15x12.png"
+      ]
+    },
+    {
+      "entry_index": 20,
+      "width": 15,
+      "height": 12,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_020_15x12.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_020_15x12.png"
+      ]
+    },
+    {
+      "entry_index": 21,
+      "width": 15,
+      "height": 12,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_021_15x12.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_021_15x12.png"
+      ]
+    },
+    {
+      "entry_index": 22,
+      "width": 64,
+      "height": 4,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_022_64x4.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_022_64x4.png"
+      ]
+    },
+    {
+      "entry_index": 23,
+      "width": 64,
+      "height": 4,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_023_64x4.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_023_64x4.png"
+      ]
+    },
+    {
+      "entry_index": 24,
+      "width": 6,
+      "height": 32,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_024_6x32.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_024_6x32.png"
+      ]
+    },
+    {
+      "entry_index": 25,
+      "width": 6,
+      "height": 32,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_025_6x32.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_025_6x32.png"
+      ]
+    },
+    {
+      "entry_index": 26,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_026_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_026_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 27,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_027_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_027_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 28,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_028_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_028_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 29,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_029_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_029_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 30,
+      "width": 38,
+      "height": 44,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_030_38x44.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_030_38x44.png"
+      ]
+    },
+    {
+      "entry_index": 31,
+      "width": 40,
+      "height": 32,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_031_40x32.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_031_40x32.png"
+      ]
+    },
+    {
+      "entry_index": 32,
+      "width": 40,
+      "height": 32,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_032_40x32.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_032_40x32.png"
+      ]
+    },
+    {
+      "entry_index": 33,
+      "width": 40,
+      "height": 32,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_033_40x32.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_033_40x32.png"
+      ]
+    },
+    {
+      "entry_index": 34,
+      "width": 40,
+      "height": 32,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_034_40x32.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_034_40x32.png"
+      ]
+    },
+    {
+      "entry_index": 35,
+      "width": 76,
+      "height": 21,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_035_76x21.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_035_76x21.png"
+      ]
+    },
+    {
+      "entry_index": 36,
+      "width": 15,
+      "height": 12,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_036_15x12.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_036_15x12.png"
+      ]
+    },
+    {
+      "entry_index": 37,
+      "width": 15,
+      "height": 12,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_037_15x12.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_037_15x12.png"
+      ]
+    },
+    {
+      "entry_index": 38,
+      "width": 15,
+      "height": 12,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_038_15x12.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_038_15x12.png"
+      ]
+    },
+    {
+      "entry_index": 39,
+      "width": 15,
+      "height": 12,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_039_15x12.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_039_15x12.png"
+      ]
+    },
+    {
+      "entry_index": 40,
+      "width": 64,
+      "height": 5,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_040_64x5.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_040_64x5.png"
+      ]
+    },
+    {
+      "entry_index": 41,
+      "width": 64,
+      "height": 4,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_041_64x4.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_041_64x4.png"
+      ]
+    },
+    {
+      "entry_index": 42,
+      "width": 6,
+      "height": 32,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_042_6x32.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_042_6x32.png"
+      ]
+    },
+    {
+      "entry_index": 43,
+      "width": 6,
+      "height": 32,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_043_6x32.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_043_6x32.png"
+      ]
+    },
+    {
+      "entry_index": 44,
+      "width": 320,
+      "height": 23,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_044_320x23.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_044_320x23.png"
+      ]
+    },
+    {
+      "entry_index": 45,
+      "width": 29,
+      "height": 154,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_045_29x154.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_045_29x154.png"
+      ]
+    },
+    {
+      "entry_index": 46,
+      "width": 29,
+      "height": 154,
+      "path": "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_046_29x154.png",
+      "paths": [
+        "research/extract/rendered_pics_bin_png_display/MW_GPICS/entry_046_29x154.png"
+      ]
+    }
+  ]
+}

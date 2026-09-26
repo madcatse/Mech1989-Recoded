@@ -1,0 +1,140 @@
+offset_hex,offset_dec,width,height,raw_height,height_flags_hex,row_stride_bytes,pixel_data_size,next_offset_without_padding_hex,score,evidence,first_16_hex
+0x0000024C,588,160,160,160,0x0000,80,12800,0x00003450,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,A000A00091D14754CB51000000000000
+0x00000280,640,320,200,200,0x0000,160,32000,0x00007F84,50,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width; known/near-known height,4001C800EE8EEE9E93E22222297229EE
+0x00007F89,32649,320,200,200,0x0000,160,32000,0x0000FC8D,50,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width; known/near-known height,4001C8001111C11C1C1CCC11CCCCCCCC
+0x0000FC92,64658,320,200,200,0x0000,160,32000,0x00017996,50,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width; known/near-known height,4001C800111111CD5555555C55C11111
+0x0001F6A5,128677,320,200,200,0x0000,160,32000,0x000273A9,50,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width; known/near-known height,4001C800765522225566774CC1313441
+0x000289DE,166366,161,70,70,0x0000,81,5670,0x0002A008,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,A1004600333333111111111111111114
+0x0002A919,174361,256,65,65,0x0000,128,8320,0x0002C99D,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014100000200141111111014111117
+0x0002C3CA,181194,32,321,321,0x0000,16,5136,0x0002D7DE,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,20004101166666664666666666466666
+0x0002C3E2,181218,32,321,321,0x0000,16,5136,0x0002D7F6,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,20004101166666666646666666664604
+0x0002C5FB,181755,324,32,32,0x0000,162,5184,0x0002DA3F,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,44012000011666466666666646666611
+0x0002C613,181779,324,32,32,0x0000,162,5184,0x0002DA57,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,44012000011666664666666666460444
+0x0002D0A8,184488,64,256,256,0x0000,32,8192,0x0002F0AC,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000001111000400000014110011144
+0x0002D0AF,184495,64,256,256,0x0000,32,8192,0x0002F0B3,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000001411001114411111001411114
+0x0002D113,184595,320,65,65,0x0000,160,10400,0x0002F9B7,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40014100111222222022222220000000
+0x0002D32B,185131,256,68,68,0x0000,128,8704,0x0002F52F,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000111444444444444444444
+0x0002D32D,185133,68,256,256,0x0000,34,8704,0x0002F531,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001114444444444444444444406
+0x0002F9A0,194976,288,68,68,0x0000,144,9792,0x00031FE4,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,20014400000012200141220000000144
+0x0002F9DA,195034,288,68,68,0x0000,144,9792,0x0003201E,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,20014400000012222141220000000014
+0x0002FA14,195092,288,68,68,0x0000,144,9792,0x00032058,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,20014400000011111141220000000014
+0x0002FA4E,195150,288,68,68,0x0000,144,9792,0x00032092,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,20014400000012200141220000000014
+0x0002FA88,195208,288,68,68,0x0000,144,9792,0x000320CC,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,20014400000011111141114444444441
+0x0002FC9C,195740,528,32,32,0x0000,264,8448,0x00031DA0,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,10022000000412222222111111112200
+0x0002FF99,196505,512,34,34,0x0000,256,8704,0x0003219D,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00022200002000400002221144411444
+0x000305FE,198142,577,18,18,0x0000,289,5202,0x00031A54,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41021200001004116666466666610000
+0x00030638,198200,577,18,18,0x0000,289,5202,0x00031A8E,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41021200001044116666466666611111
+0x000315A4,202148,32,324,324,0x0000,16,5184,0x000329E8,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,20004401144444444444444444444444
+0x000315DE,202206,32,324,324,0x0000,16,5184,0x00032A22,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,20004401166646666666664666666666
+0x000326B9,206521,257,68,68,0x0000,129,8772,0x00034901,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,01014400000014111100000122444444
+0x000326F5,206581,257,68,68,0x0000,129,8772,0x0003493D,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,01014400000014114110001444222244
+0x00032731,206641,257,68,68,0x0000,129,8772,0x00034979,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,01014400000011164110001224444422
+0x0003276D,206701,257,68,68,0x0000,129,8772,0x000349B5,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,01014400000141164110014442224444
+0x0003276F,206703,68,256,256,0x0000,34,8704,0x00034973,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001411641100144422244444422
+0x000327AB,206763,68,256,256,0x0000,34,8704,0x000349AF,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001411641100122444422244444
+0x000327E7,206823,68,256,256,0x0000,34,8704,0x000349EB,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001411646111444222444422224
+0x00032823,206883,64,256,256,0x0000,32,8192,0x00034827,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000001411646111144444222444442
+0x0003285F,206943,64,256,256,0x0000,32,8192,0x00034863,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000001411646111111144444222444
+0x0003289B,207003,64,256,256,0x0000,32,8192,0x0003489F,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000001411646611144411114444222
+0x000328D7,207063,64,256,256,0x0000,32,8192,0x000348DB,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000001411646611414444441144444
+0x00032BC1,207809,256,68,68,0x0000,128,8704,0x00034DC5,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000000222211111166666646
+0x00032BFD,207869,256,68,68,0x0000,128,8704,0x00034E01,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000000000022211166666646
+0x00032C39,207929,256,68,68,0x0000,128,8704,0x00034E3D,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000000000000011166666646
+0x00032DE6,208358,64,256,256,0x0000,32,8192,0x00034DEA,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000001144444444441120410000000
+0x00032F05,208645,65,256,256,0x0000,33,8448,0x00035009,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001201411411022222222220000
+0x00032F41,208705,65,256,256,0x0000,33,8448,0x00035045,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001201400222200000000000000
+0x000330AC,209068,258,68,68,0x0000,129,8772,0x000352F4,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,02014400000000011111444444441666
+0x000330E8,209128,258,68,68,0x0000,129,8772,0x00035330,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,02014400000011111444444444411666
+0x00033124,209188,258,68,68,0x0000,129,8772,0x0003536C,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,02014400001111444444440014411666
+0x00033160,209248,290,64,64,0x0000,145,9280,0x000355A4,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,22014000111144444440000014411666
+0x00034A91,215697,256,64,64,0x0000,128,8192,0x00036A95,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014000116061120012200001166666
+0x00034CB1,216241,258,68,68,0x0000,129,8772,0x00036EF9,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,02014400116061120001111111111111
+0x00034D39,216377,256,68,68,0x0000,128,8704,0x00036F3D,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400116061122221200000000000
+0x00034D7D,216445,256,68,68,0x0000,128,8704,0x00036F81,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400116061120001200000000000
+0x00034DC1,216513,256,68,68,0x0000,128,8704,0x00036FC5,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400116061120001200000000000
+0x00034E05,216581,256,68,68,0x0000,128,8704,0x00037009,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400116041120001200000000000
+0x00034ED1,216785,256,68,68,0x0000,128,8704,0x000370D5,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011011200001200000012222
+0x00034F0A,216842,256,65,65,0x0000,128,8320,0x00036F8E,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014100011110000100000001440001
+0x00034F15,216853,256,68,68,0x0000,128,8704,0x00037119,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011011200001200000122111
+0x00034F59,216921,256,68,68,0x0000,128,8704,0x0003715D,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011011200001200000121000
+0x00034F9D,216989,256,68,68,0x0000,128,8704,0x000371A1,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011011200001200000121000
+0x00034FE1,217057,256,68,68,0x0000,128,8704,0x000371E5,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011011200001200000121000
+0x00035025,217125,256,68,68,0x0000,128,8704,0x00037229,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011011200001200000121000
+0x00035069,217193,256,68,68,0x0000,128,8704,0x0003726D,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011011200001200000121000
+0x000352CE,217806,65,256,256,0x0000,33,8448,0x000373D2,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001101120000120000120010001
+0x0003530E,217870,256,64,64,0x0000,128,8192,0x00037312,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014000010000011061100001200001
+0x00035352,217938,256,64,64,0x0000,128,8192,0x00037356,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014000010000116041111001200001
+0x0003537F,217983,68,256,256,0x0000,34,8704,0x00037583,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001110011111111111111001444
+0x00035396,218006,256,64,64,0x0000,128,8192,0x0003739A,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014000010011144066411111200001
+0x000353DA,218074,256,68,68,0x0000,128,8704,0x000375DE,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011111466066466111200001
+0x0003541E,218142,256,68,68,0x0000,128,8704,0x00037622,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011166466066466611200001
+0x00035462,218210,256,68,68,0x0000,128,8704,0x00037666,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011666466066466611200001
+0x000354A6,218278,256,68,68,0x0000,128,8704,0x000376AA,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400011666466066466611200001
+0x00036FB5,225205,256,68,68,0x0000,128,8704,0x000391B9,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400116646666666664666666666
+0x00036FF9,225273,256,68,68,0x0000,128,8704,0x000391FD,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400116646666666664666666666
+0x0003701E,225310,32,321,321,0x0000,16,5136,0x00038432,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,20004101001111111116666646666666
+0x00037039,225337,32,321,321,0x0000,16,5136,0x0003844D,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,20004101000144401166466666666646
+0x0003736A,226154,320,33,33,0x0000,160,5280,0x0003880E,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40012100000044444411444444444444
+0x000373AE,226222,324,33,33,0x0000,162,5346,0x00038894,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,44012100000004444411666666664666
+0x0003787B,227451,256,65,65,0x0000,128,8320,0x000398FF,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014100116666666664666666666466
+0x00037C1B,228379,528,33,33,0x0000,264,8712,0x00039E27,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,10022100000000000001000010116112
+0x00037C8D,228493,528,33,33,0x0000,264,8712,0x00039E99,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,10022100000000000001000010011112
+0x00037CC6,228550,512,33,33,0x0000,256,8448,0x00039DCA,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00022100000000000001000001000012
+0x00037CFF,228607,512,33,33,0x0000,256,8448,0x00039E03,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00022100000000000001000001111112
+0x00037D38,228664,512,33,33,0x0000,256,8448,0x00039E3C,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00022100000000000001000001444412
+0x00038201,229889,68,256,256,0x0000,34,8704,0x0003A405,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001166404444411200000004114
+0x0003841E,230430,290,66,66,0x0000,145,9570,0x0003A984,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,22014200000000100044444211444114
+0x00038457,230487,290,66,66,0x0000,145,9570,0x0003A9BD,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,22014200000000100444444211444114
+0x0003870F,231183,577,33,33,0x0000,289,9537,0x0003AC54,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41022100000144144441111664666666
+0x000387E8,231400,65,256,256,0x0000,33,8448,0x0003A8EC,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001222222222144444100022210
+0x00038821,231457,65,256,256,0x0000,33,8448,0x0003A925,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001222222222144444100022210
+0x00039496,234646,65,256,256,0x0000,33,8448,0x0003B59A,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001666664666666666466666661
+0x00039708,235272,256,65,65,0x0000,128,8320,0x0003B78C,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014100000116646666666664666661
+0x0003970A,235274,65,256,256,0x0000,33,8448,0x0003B80E,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001166466666666646666611444
+0x00039741,235329,256,65,65,0x0000,128,8320,0x0003B7C5,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014100000116646666666664666661
+0x00039743,235331,65,256,256,0x0000,33,8448,0x0003B847,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001166466666666646666611444
+0x0003977A,235386,256,65,65,0x0000,128,8320,0x0003B7FE,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014100000116646666666664666661
+0x0003977C,235388,65,256,256,0x0000,33,8448,0x0003B880,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001166466666666646666611441
+0x000397B3,235443,256,65,65,0x0000,128,8320,0x0003B837,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014100000011646666666664666661
+0x000397EC,235500,256,68,68,0x0000,128,8704,0x0003B9F0,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000011646666666664666611
+0x00039825,235557,256,68,68,0x0000,128,8704,0x0003BA29,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000011646666666664666611
+0x0003985E,235614,256,64,64,0x0000,128,8192,0x0003B862,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014000000011444444444444444411
+0x0003A054,237652,512,34,34,0x0000,256,8704,0x0003C258,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00022200000114666666112001111144
+0x0003A55C,238940,548,68,68,0x0000,274,18632,0x0003EE28,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,24024400000000000000022140444441
+0x0003A8BC,239804,65,256,256,0x0000,33,8448,0x0003C9C0,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001114441001144444440116466
+0x0003A9D6,240086,529,34,34,0x0000,265,9010,0x0003CD0C,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,11022200044122000014410044444444
+0x0003AFAA,241578,65,256,256,0x0000,33,8448,0x0003D0AE,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001444401144444444110222102
+0x0003B125,241957,530,33,33,0x0000,265,8745,0x0003D352,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,12022100210414666606666112212012
+0x0003C2FD,246525,65,256,256,0x0000,33,8448,0x0003E401,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001122244444441166666646666
+0x0003C33A,246586,65,256,256,0x0000,33,8448,0x0003E43E,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001122224444444116666646666
+0x0003CC70,248944,64,257,257,0x0000,32,8224,0x0003EC94,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000101211211121112111211110020
+0x0003CCAF,249007,68,257,257,0x0000,34,8738,0x0003EED5,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000101212111112121111121111002
+0x0003CE51,249425,65,256,256,0x0000,33,8448,0x0003EF55,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001440000004411660661122000
+0x0003CE53,249427,256,68,68,0x0000,128,8704,0x0003F057,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000044116606611220000000
+0x0003D192,250258,256,68,68,0x0000,128,8704,0x0003F396,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000420144116661144440000
+0x0003D1D1,250321,256,68,68,0x0000,128,8704,0x0003F3D5,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000420144114441144440000
+0x0003D21D,250397,68,256,256,0x0000,34,8704,0x0003F421,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001040404040404041110202021
+0x0003D25C,250460,68,256,256,0x0000,34,8704,0x0003F460,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001404040404040404111020201
+0x0003D29B,250523,68,256,256,0x0000,34,8704,0x0003F49F,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001040404040404040111202021
+0x0003D2DA,250586,68,256,256,0x0000,34,8704,0x0003F4DE,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000001404040404040404111020201
+0x0003D30B,250635,288,68,68,0x0000,144,9792,0x0003F94F,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,20014400000004201411666641144440
+0x0003D6EF,251631,66,256,256,0x0000,33,8448,0x0003F7F3,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,42000001000041144444066666112000
+0x0003D72E,251694,66,256,256,0x0000,33,8448,0x0003F832,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,42000001000041166666066666112000
+0x0003D76D,251757,66,256,256,0x0000,33,8448,0x0003F871,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,42000001000041166666066661112000
+0x0003D7AC,251820,66,256,256,0x0000,33,8448,0x0003F8B0,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,42000001000041166666066661120000
+0x0003D7EB,251883,66,256,256,0x0000,33,8448,0x0003F8EF,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,42000001000041166666066661120000
+0x0003D89A,252058,256,64,64,0x0000,128,8192,0x0003F89E,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,00014000000404444116466661142000
+0x0003D8D3,252115,258,68,68,0x0000,129,8772,0x0003FB1B,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,02014400000000014400000400444411
+0x0003D8D9,252121,256,68,68,0x0000,128,8704,0x0003FADD,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000400444411466661142000
+0x0003D918,252184,256,68,68,0x0000,128,8704,0x0003FB1C,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000400444411466661142000
+0x0003D957,252247,256,68,68,0x0000,128,8704,0x0003FB5B,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,00014400000040444411444441142000
+0x0003DFCE,253902,68,257,257,0x0000,34,8738,0x000401F4,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,44000101166666066666112122200040
+0x0003E00C,253964,64,256,256,0x0000,32,8192,0x00040010,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width,40000001011666660666661122112220
+0x0003E56D,255341,65,256,256,0x0000,33,8448,0x00040671,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,41000001166666664666666666466666
+0x0003ED44,257348,528,32,32,0x0000,264,8448,0x00040E48,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,10022000000000000000040001000116
+0x0003ED83,257411,528,32,32,0x0000,264,8448,0x00040E87,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,10022000000000000000040001001116
+0x0003EDC2,257474,528,32,32,0x0000,264,8448,0x00040EC6,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,10022000000000000000040001001166
+0x0003EE01,257537,529,32,32,0x0000,265,8480,0x00040F25,40,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known height,11022000000000000000040011101166
+0x000680D5,426197,320,200,200,0x0000,160,32000,0x0006FDD9,50,multiple palette indexes; not single-color fill; mostly low/common palette indexes; known/near-known width; known/near-known height,4001C800111111111111111111111111
+0x0006FDF4,458228,149,127,127,0x0000,75,9525,0x0007232D,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,95007F00222222222222222222222222
+0x000776FC,489212,148,127,127,0x0000,74,9398,0x00079BB6,30,multiple palette indexes; not single-color fill; mostly low/common palette indexes,94007F00222222222222222222222222

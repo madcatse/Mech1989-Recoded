@@ -1,0 +1,16 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/HAMPCK_TBL.decoded.bin",
+    "size": 39530,
+    "sha256": "4090451016f33c6fae5c91be156126cf1352e34bfa6dd2eb83ccc9c9ff003652"
+  },
+  "kind": "pck_ref_byte_pair_selected_records",
+  "choice_index": 0,
+  "threshold": 0,
+  "selected_ref_count": 0,
+  "group_count": 0,
+  "entries": [],
+  "groups": []
+}

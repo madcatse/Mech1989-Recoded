@@ -1,0 +1,185 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/MARPCK_TBL.decoded.bin",
+    "size": 50512,
+    "sha256": "fb3d849a3a09cb23e53d88347d1c197e6632f801958167de7c1078abaa144f03"
+  },
+  "kind": "pck_type0_point_cloud_probe",
+  "layout": "three_projection_xy_xz_yz",
+  "max_abs": 10000,
+  "min_points": 3,
+  "entries": [
+    {
+      "object_id": "pck_object_0004",
+      "entry_index": "pck_object_0004",
+      "width": 392,
+      "height": 128,
+      "point_count": 6,
+      "x_min": -240,
+      "x_max": 2048,
+      "y_min": -2037,
+      "y_max": 2568,
+      "z_min": -203,
+      "z_max": 239,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0004_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0004_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0017",
+      "entry_index": "pck_object_0017",
+      "width": 392,
+      "height": 128,
+      "point_count": 43,
+      "x_min": -1772,
+      "x_max": 5376,
+      "y_min": -1026,
+      "y_max": 9998,
+      "z_min": 0,
+      "z_max": 6927,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0017_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0017_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0019",
+      "entry_index": "pck_object_0019",
+      "width": 392,
+      "height": 128,
+      "point_count": 17,
+      "x_min": -2048,
+      "x_max": 2047,
+      "y_min": -1113,
+      "y_max": 1607,
+      "z_min": -1269,
+      "z_max": 2056,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0019_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0019_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0021",
+      "entry_index": "pck_object_0021",
+      "width": 392,
+      "height": 128,
+      "point_count": 19,
+      "x_min": -593,
+      "x_max": 5376,
+      "y_min": -1022,
+      "y_max": 8964,
+      "z_min": -87,
+      "z_max": 1335,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0021_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0021_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0056",
+      "entry_index": "pck_object_0056",
+      "width": 392,
+      "height": 128,
+      "point_count": 40,
+      "x_min": -2043,
+      "x_max": 5376,
+      "y_min": -1954,
+      "y_max": 4352,
+      "z_min": -1500,
+      "z_max": 6927,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0056_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0056_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0057",
+      "entry_index": "pck_object_0057",
+      "width": 392,
+      "height": 128,
+      "point_count": 43,
+      "x_min": -2043,
+      "x_max": 5376,
+      "y_min": -1940,
+      "y_max": 6927,
+      "z_min": -1500,
+      "z_max": 6927,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0057_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0057_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0058",
+      "entry_index": "pck_object_0058",
+      "width": 392,
+      "height": 128,
+      "point_count": 44,
+      "x_min": -2043,
+      "x_max": 5376,
+      "y_min": -2048,
+      "y_max": 6927,
+      "z_min": -6144,
+      "z_max": 6927,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0058_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0058_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0063",
+      "entry_index": "pck_object_0063",
+      "width": 392,
+      "height": 128,
+      "point_count": 46,
+      "x_min": -2048,
+      "x_max": 8192,
+      "y_min": -2003,
+      "y_max": 2433,
+      "z_min": -1818,
+      "z_max": 7696,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0063_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0063_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0065",
+      "entry_index": "pck_object_0065",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 5,
+      "x_max": 9,
+      "y_min": 368,
+      "y_max": 536,
+      "z_min": 514,
+      "z_max": 1921,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0065_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0065_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0067",
+      "entry_index": "pck_object_0067",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": -524,
+      "x_max": 2043,
+      "y_min": -1776,
+      "y_max": 0,
+      "z_min": -406,
+      "z_max": 73,
+      "path": "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0067_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/MARPCK_TBL/MARPCK_TBL_pck_object_0067_type0_probe.png"
+      ]
+    }
+  ]
+}

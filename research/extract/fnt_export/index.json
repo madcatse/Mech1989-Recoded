@@ -1,0 +1,123 @@
+{
+  "tool": "export_fnt",
+  "schema_version": 1,
+  "font_count": 4,
+  "fonts": [
+    {
+      "tool": "export_fnt",
+      "schema_version": 1,
+      "source": {
+        "path": "Sorted Original Files/FNT/6X6.FNT",
+        "size": 580,
+        "sha256": "c0df8daeec521175190e72eb1c868fcb9d2deee3359b480311b83dee3f5115cc"
+      },
+      "wrapper": "raw",
+      "payload_offset": 0,
+      "payload_size": 580,
+      "payload_sha256": "c0df8daeec521175190e72eb1c868fcb9d2deee3359b480311b83dee3f5115cc",
+      "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+      "width": 6,
+      "height": 6,
+      "first_code": 32,
+      "first_code_hex": "0x20",
+      "glyph_count": 96,
+      "last_code": 127,
+      "last_code_hex": "0x7F",
+      "outputs": {
+        "payload": "research/extract/fnt_export/6X6/6X6.payload.bin",
+        "glyphs_csv": "research/extract/fnt_export/6X6/glyphs.csv",
+        "glyphs_jsonl": "research/extract/fnt_export/6X6/glyphs.jsonl",
+        "sheets": [
+          "research/extract/fnt_export/6X6/6X6_6x6_96glyphs.png"
+        ]
+      }
+    },
+    {
+      "tool": "export_fnt",
+      "schema_version": 1,
+      "source": {
+        "path": "Sorted Original Files/FNT/6X6B.FNT",
+        "size": 588,
+        "sha256": "f8e794e6c0484dd8d6c26563a753eb3931fe4cb04ba07f4e6f119c7ef632f2f3"
+      },
+      "wrapper": "FNT:",
+      "payload_offset": 8,
+      "payload_size": 580,
+      "payload_sha256": "e94f33fa608fb1f2abc9ebcce0b31ee68522be1aea563c5701d1cddb168489aa",
+      "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+      "width": 6,
+      "height": 6,
+      "first_code": 32,
+      "first_code_hex": "0x20",
+      "glyph_count": 96,
+      "last_code": 127,
+      "last_code_hex": "0x7F",
+      "outputs": {
+        "payload": "research/extract/fnt_export/6X6B/6X6B.payload.bin",
+        "glyphs_csv": "research/extract/fnt_export/6X6B/glyphs.csv",
+        "glyphs_jsonl": "research/extract/fnt_export/6X6B/glyphs.jsonl",
+        "sheets": [
+          "research/extract/fnt_export/6X6B/6X6B_6x6_96glyphs.png"
+        ]
+      }
+    },
+    {
+      "tool": "export_fnt",
+      "schema_version": 1,
+      "source": {
+        "path": "Sorted Original Files/FNT/8X8B.FNT",
+        "size": 780,
+        "sha256": "ee5e03776c73a5747f6e7d84789e6ef77df52a05e248fe504631c778adcf9003"
+      },
+      "wrapper": "FNT:",
+      "payload_offset": 8,
+      "payload_size": 772,
+      "payload_sha256": "cc66b5175a48ac80a1b992ccf025bd07494499d65a98df65793d0cb4a5023f4e",
+      "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+      "width": 8,
+      "height": 8,
+      "first_code": 32,
+      "first_code_hex": "0x20",
+      "glyph_count": 96,
+      "last_code": 127,
+      "last_code_hex": "0x7F",
+      "outputs": {
+        "payload": "research/extract/fnt_export/8X8B/8X8B.payload.bin",
+        "glyphs_csv": "research/extract/fnt_export/8X8B/glyphs.csv",
+        "glyphs_jsonl": "research/extract/fnt_export/8X8B/glyphs.jsonl",
+        "sheets": [
+          "research/extract/fnt_export/8X8B/8X8B_8x8_96glyphs.png"
+        ]
+      }
+    },
+    {
+      "tool": "export_fnt",
+      "schema_version": 1,
+      "source": {
+        "path": "Sorted Original Files/FNT/FOX88.FNT",
+        "size": 772,
+        "sha256": "0a1d188c6f4eba381aa098a3474a888164392d9492ece3cba06cd05159a505e9"
+      },
+      "wrapper": "raw",
+      "payload_offset": 0,
+      "payload_size": 772,
+      "payload_sha256": "0a1d188c6f4eba381aa098a3474a888164392d9492ece3cba06cd05159a505e9",
+      "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+      "width": 8,
+      "height": 8,
+      "first_code": 32,
+      "first_code_hex": "0x20",
+      "glyph_count": 96,
+      "last_code": 127,
+      "last_code_hex": "0x7F",
+      "outputs": {
+        "payload": "research/extract/fnt_export/FOX88/FOX88.payload.bin",
+        "glyphs_csv": "research/extract/fnt_export/FOX88/glyphs.csv",
+        "glyphs_jsonl": "research/extract/fnt_export/FOX88/glyphs.jsonl",
+        "sheets": [
+          "research/extract/fnt_export/FOX88/FOX88_8x8_96glyphs.png"
+        ]
+      }
+    }
+  ]
+}

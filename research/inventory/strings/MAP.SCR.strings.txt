@@ -1,0 +1,38 @@
+﻿# Strings extracted from Original/MAP.SCR
+# Minimum length: 4 printable ASCII bytes
+# Count: 34
+
+SCR:k
+BIN:c
+>Cfk
+I$IyH
+:QH"
+q-Ed
+(9!{N:9
+#ni'
+pdp$
+]d$l"
+)Uif
+'C	B
+=Q<Q4
+l0`bD
+P"'S
+U,hW
+2q5:Z
+:32_
+f~S@
+o6L,
+&3Ee
+Je)S
+ffF$
+6#Q7
+qjLS
+N5lE
+bhe+f
+]mv_;
+lCOQ
+Gbw;c&8m
+}R`@{
+GT~(
+/9uE
+*0:x

@@ -1,0 +1,95 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MAR.BMP",
+    "size": 3324,
+    "sha256": "0408df3c15c27faa79741fb9f07fffcae4e591842a402045815ac12c6634b12c"
+  },
+  "entries": [
+    {
+      "id": "MAR_0000_BMP_000000",
+      "kind": "tagged_chunk",
+      "offset": 0,
+      "header_size": 8,
+      "payload_offset": 8,
+      "payload_size": 3316,
+      "end_offset": 3324,
+      "depth": 0,
+      "confidence": "high",
+      "tag": "BMP:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "high bit set in length field"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x80000CF4",
+        "has_nested_flag": "yes",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "MAR_0000_INF_000008",
+      "kind": "tagged_chunk",
+      "offset": 8,
+      "header_size": 8,
+      "payload_offset": 16,
+      "payload_size": 6,
+      "end_offset": 22,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "INF:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "INF payload decodes as count + width/height arrays"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000006",
+        "has_nested_flag": "no",
+        "local_index": 0,
+        "inf_layout": "count_widths_heights_u16le",
+        "inf_record_count": 1,
+        "inf_width_min": 152,
+        "inf_width_max": 152,
+        "inf_height_min": 193,
+        "inf_height_max": 193,
+        "inf_dimensions_preview": "152x193"
+      }
+    },
+    {
+      "id": "MAR_0001_BIN_000016",
+      "kind": "tagged_chunk",
+      "offset": 22,
+      "header_size": 8,
+      "payload_offset": 30,
+      "payload_size": 3294,
+      "end_offset": 3324,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "BIN:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "BIN payload starts with codec + decoded-size candidate"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000CDE",
+        "has_nested_flag": "no",
+        "local_index": 1,
+        "bin_header_layout": "u8_codec_u32le_decoded_size",
+        "bin_codec_candidate": 2,
+        "bin_declared_decoded_size": 14668,
+        "bin_payload_body_size": 3289,
+        "bin_declared_to_payload_ratio": "4.4529"
+      }
+    }
+  ]
+}

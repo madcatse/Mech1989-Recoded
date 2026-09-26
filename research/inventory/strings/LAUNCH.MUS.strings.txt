@@ -1,0 +1,6 @@
+﻿# Strings extracted from Original/LAUNCH.MUS
+# Minimum length: 4 printable ASCII bytes
+# Count: 2
+
+MThd
+`MTrk

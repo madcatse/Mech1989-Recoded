@@ -1,0 +1,24 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/LIGHT.SCR",
+    "size": 4703,
+    "sha256": "8fb0dc101b92672967294e43cfca3a4016348a06a03bb57247cf881bbcc24d15"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 32000,
+  "palette": {
+    "kind": "pal_ega_pair_banks_tentative",
+    "path": "Original/ARCTIC.PAL",
+    "bank": 3,
+    "interpretation": "low"
+  },
+  "width": 320,
+  "height": 200,
+  "path": "research/extract/combat_palette_probe/ARCTIC_bank3/LIGHT_320x200.png",
+  "paths": [
+    "research/extract/combat_palette_probe/ARCTIC_bank3/LIGHT_320x200.png"
+  ]
+}

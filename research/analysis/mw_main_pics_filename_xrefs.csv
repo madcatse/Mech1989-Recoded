@@ -1,0 +1,2 @@
+exe,string_file_offset_hex,string_module_offset_hex,string,ref_file_offset_hex,ref_module_offset_hex,ref_context_hex
+Original/MW_MAIN.EXE,0x009AEB,0x96EB,MW_1PICS.BIN,0x008C89,0x8889,104096740C9733C0B9FFFFF2AE8BF7EBEB965F5E8BE55DCA0200558BEC57FF76069A

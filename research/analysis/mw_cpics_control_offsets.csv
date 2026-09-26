@@ -1,0 +1,8 @@
+label,offset_hex,note
+messages_start,0x00034C,first diagnostic string in MW_CPICS.EXE
+mw_cpics_bin_name,0x0004B8,embedded helper/resource file name
+entry_point_file_offset,0x0004C6,MZ header 0x200 + initial IP 0x02C6
+source_lbm_table,0x000A45,first source art path string
+end_marker,0x000DDF,END OF MW_CPICS string
+bmhd_scan_routine,0x00066C,code scans loaded file buffer for BMHD signature
+bmhd_fields_routine,0x0006A0,code reads BMHD-derived width/height/depth-like fields

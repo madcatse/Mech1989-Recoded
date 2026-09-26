@@ -1,0 +1,81 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/DMGPAL.PAL",
+    "size": 314,
+    "sha256": "ffb525e5876c8415b3ed0ef2461bf6d9ce210e697bf7ded6760134d4d7861dbd"
+  },
+  "entries": [
+    {
+      "id": "DMGPAL_0000_PAL_000000",
+      "kind": "tagged_chunk",
+      "offset": 0,
+      "header_size": 8,
+      "payload_offset": 8,
+      "payload_size": 306,
+      "end_offset": 314,
+      "depth": 0,
+      "confidence": "high",
+      "tag": "PAL:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "high bit set in length field"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x80000132",
+        "has_nested_flag": "yes",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "DMGPAL_0000_EGA_000008",
+      "kind": "tagged_chunk",
+      "offset": 8,
+      "header_size": 8,
+      "payload_offset": 16,
+      "payload_size": 128,
+      "end_offset": 144,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "EGA:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000080",
+        "has_nested_flag": "no",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "DMGPAL_0001_CGA_000090",
+      "kind": "tagged_chunk",
+      "offset": 144,
+      "header_size": 8,
+      "payload_offset": 152,
+      "payload_size": 162,
+      "end_offset": 314,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "CGA:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x000000A2",
+        "has_nested_flag": "no",
+        "local_index": 1
+      }
+    }
+  ]
+}

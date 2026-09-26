@@ -1,0 +1,8 @@
+function,call_site,segment_arg,ds_offset,file_offset,string,handle_global,role,ds_to_file_base
+FUN_1000_2366,BTECH.EXE.c:8069,0x1000,0x0705,0x027159,point.bmp,0xD1F8,pointer/cursor sprites,0x026A54
+FUN_1000_2366,BTECH.EXE.c:8071,0x13E5,0x070F,0x027163,sm_mechs.bmp,0xCAF8,small mech silhouettes,0x026A54
+FUN_1000_2366,BTECH.EXE.c:8073,0x13E5,0x071C,0x027170,struts.bmp,0x7D82,strut/cockpit overlay sprites,0x026A54
+FUN_1000_2366,BTECH.EXE.c:8075,0x13E5,0x0727,0x02717B,cockpit.bmp,0xC6F2,cockpit bitmap table,0x026A54
+FUN_1000_2366,BTECH.EXE.c:8081,0x13E5,0x0733,0x027187,hud_cyan.bmp,0xC35E,HUD cyan sprites; branch when video/mech state selects cyan set,0x026A54
+FUN_1000_2366,BTECH.EXE.c:8078,0x13E5,0x0740,0x027194,hud_nums.bmp,0xC35E,HUD numeric sprites; alternate branch,0x026A54
+FUN_1000_1e7f,BTECH.EXE.c:7815,0x13E5,0x064F,0x0270A6,prompt.bmp,0x4F62,prompt/UI bitmap table,0x026A57

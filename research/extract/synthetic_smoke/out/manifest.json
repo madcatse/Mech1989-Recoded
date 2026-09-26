@@ -1,0 +1,38 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "research/extract/synthetic_smoke/synthetic.BMP",
+    "size": 40,
+    "sha256": "562d922d5dc399a76d30efb07f30640b0dd02746aa24e8a22cf12a08f136064c"
+  },
+  "entries": [
+    {
+      "entry_id": "synthetic_0000_BMP_000000",
+      "tag": "BMP:",
+      "depth": 0,
+      "payload_offset": 8,
+      "payload_size": 32,
+      "sha256": "19c23c1fb941fbf60c8d4a085ac00eacab5387db478dcdcb25a6eba3aed5c342",
+      "path": "research/extract/synthetic_smoke/out/chunk_0000_BMP_off_000008_len_32.bin"
+    },
+    {
+      "entry_id": "synthetic_0000_INF_000008",
+      "tag": "INF:",
+      "depth": 1,
+      "payload_offset": 16,
+      "payload_size": 6,
+      "sha256": "e9c0f8b575cbfcb42ab3b78ecc87efa3b011d9a5d10b09fa4e96f240bf6a82f5",
+      "path": "research/extract/synthetic_smoke/out/chunk_0001_INF_off_000010_len_6.bin"
+    },
+    {
+      "entry_id": "synthetic_0001_BIN_000016",
+      "tag": "BIN:",
+      "depth": 1,
+      "payload_offset": 30,
+      "payload_size": 10,
+      "sha256": "84d89877f0d4041efb6bf91a16f0248f2fd573e6af05c19f96bedb9f882f7882",
+      "path": "research/extract/synthetic_smoke/out/chunk_0002_BIN_off_00001E_len_10.bin"
+    }
+  ]
+}

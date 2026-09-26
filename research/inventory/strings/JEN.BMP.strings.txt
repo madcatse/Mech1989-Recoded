@@ -1,0 +1,36 @@
+﻿# Strings extracted from Original/JEN.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 32
+
+BMP:
+INF:
+BIN:
+$]bd
+!?>`
+].9H
+xibyF
+iF6CDN
++`u3
+0<m]
+YYj!<
+b,:&
+B<VDUU
+_\Nu
+O1y|
+!E(E
+gvS`
+8(e3
+nytiOc'
+Kw*R
+Z201
+2AUx
+-iom{
+D	E^
+	Nm$
+BPGb
+8w8D{
+tNGm
+Xc(X{
+g.X}
+=h~7!
+WkA&

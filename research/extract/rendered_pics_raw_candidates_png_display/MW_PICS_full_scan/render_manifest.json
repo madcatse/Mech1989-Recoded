@@ -1,0 +1,2100 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/MW_PICS.BIN",
+    "size": 328171,
+    "sha256": "d11684f462a0af5f89a3c5f018c43f4e21b623ce012a74c9934571f093eccbce"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 997238,
+  "decoded_size": 498619,
+  "palette": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/pics_bin_entries/MW_GPICS/entry_000_off_0000012C_len_48.bin",
+  "entries": [
+    {
+      "offset": 588,
+      "width": 160,
+      "height": 160,
+      "raw_height": 160,
+      "height_flags": 0,
+      "row_stride_bytes": 80,
+      "pixel_data_offset": 592,
+      "pixel_data_size": 12800,
+      "next_offset_without_padding": 13392,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0000024C_160x160.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0000024C_160x160.png"
+      ]
+    },
+    {
+      "offset": 640,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 644,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 32644,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00000280_320x200.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00000280_320x200.png"
+      ]
+    },
+    {
+      "offset": 32649,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 32653,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 64653,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00007F89_320x200.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00007F89_320x200.png"
+      ]
+    },
+    {
+      "offset": 64658,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 64662,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 96662,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0000FC92_320x200.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0000FC92_320x200.png"
+      ]
+    },
+    {
+      "offset": 128677,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 128681,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 160681,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0001F6A5_320x200.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0001F6A5_320x200.png"
+      ]
+    },
+    {
+      "offset": 166366,
+      "width": 161,
+      "height": 70,
+      "raw_height": 70,
+      "height_flags": 0,
+      "row_stride_bytes": 81,
+      "pixel_data_offset": 166370,
+      "pixel_data_size": 5670,
+      "next_offset_without_padding": 172040,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000289DE_161x70.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000289DE_161x70.png"
+      ]
+    },
+    {
+      "offset": 174361,
+      "width": 256,
+      "height": 65,
+      "raw_height": 65,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 174365,
+      "pixel_data_size": 8320,
+      "next_offset_without_padding": 182685,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002A919_256x65.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002A919_256x65.png"
+      ]
+    },
+    {
+      "offset": 181194,
+      "width": 32,
+      "height": 321,
+      "raw_height": 321,
+      "height_flags": 0,
+      "row_stride_bytes": 16,
+      "pixel_data_offset": 181198,
+      "pixel_data_size": 5136,
+      "next_offset_without_padding": 186334,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002C3CA_32x321.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002C3CA_32x321.png"
+      ]
+    },
+    {
+      "offset": 181218,
+      "width": 32,
+      "height": 321,
+      "raw_height": 321,
+      "height_flags": 0,
+      "row_stride_bytes": 16,
+      "pixel_data_offset": 181222,
+      "pixel_data_size": 5136,
+      "next_offset_without_padding": 186358,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002C3E2_32x321.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002C3E2_32x321.png"
+      ]
+    },
+    {
+      "offset": 181755,
+      "width": 324,
+      "height": 32,
+      "raw_height": 32,
+      "height_flags": 0,
+      "row_stride_bytes": 162,
+      "pixel_data_offset": 181759,
+      "pixel_data_size": 5184,
+      "next_offset_without_padding": 186943,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002C5FB_324x32.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002C5FB_324x32.png"
+      ]
+    },
+    {
+      "offset": 181779,
+      "width": 324,
+      "height": 32,
+      "raw_height": 32,
+      "height_flags": 0,
+      "row_stride_bytes": 162,
+      "pixel_data_offset": 181783,
+      "pixel_data_size": 5184,
+      "next_offset_without_padding": 186967,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002C613_324x32.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002C613_324x32.png"
+      ]
+    },
+    {
+      "offset": 184488,
+      "width": 64,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 184492,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 192684,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D0A8_64x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D0A8_64x256.png"
+      ]
+    },
+    {
+      "offset": 184495,
+      "width": 64,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 184499,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 192691,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D0AF_64x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D0AF_64x256.png"
+      ]
+    },
+    {
+      "offset": 184595,
+      "width": 320,
+      "height": 65,
+      "raw_height": 65,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 184599,
+      "pixel_data_size": 10400,
+      "next_offset_without_padding": 194999,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D113_320x65.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D113_320x65.png"
+      ]
+    },
+    {
+      "offset": 185131,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 185135,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 193839,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D32B_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D32B_256x68.png"
+      ]
+    },
+    {
+      "offset": 185133,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 185137,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 193841,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D32D_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002D32D_68x256.png"
+      ]
+    },
+    {
+      "offset": 194976,
+      "width": 288,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 144,
+      "pixel_data_offset": 194980,
+      "pixel_data_size": 9792,
+      "next_offset_without_padding": 204772,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002F9A0_288x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002F9A0_288x68.png"
+      ]
+    },
+    {
+      "offset": 195034,
+      "width": 288,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 144,
+      "pixel_data_offset": 195038,
+      "pixel_data_size": 9792,
+      "next_offset_without_padding": 204830,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002F9DA_288x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002F9DA_288x68.png"
+      ]
+    },
+    {
+      "offset": 195092,
+      "width": 288,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 144,
+      "pixel_data_offset": 195096,
+      "pixel_data_size": 9792,
+      "next_offset_without_padding": 204888,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FA14_288x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FA14_288x68.png"
+      ]
+    },
+    {
+      "offset": 195150,
+      "width": 288,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 144,
+      "pixel_data_offset": 195154,
+      "pixel_data_size": 9792,
+      "next_offset_without_padding": 204946,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FA4E_288x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FA4E_288x68.png"
+      ]
+    },
+    {
+      "offset": 195208,
+      "width": 288,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 144,
+      "pixel_data_offset": 195212,
+      "pixel_data_size": 9792,
+      "next_offset_without_padding": 205004,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FA88_288x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FA88_288x68.png"
+      ]
+    },
+    {
+      "offset": 195740,
+      "width": 528,
+      "height": 32,
+      "raw_height": 32,
+      "height_flags": 0,
+      "row_stride_bytes": 264,
+      "pixel_data_offset": 195744,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 204192,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FC9C_528x32.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FC9C_528x32.png"
+      ]
+    },
+    {
+      "offset": 196505,
+      "width": 512,
+      "height": 34,
+      "raw_height": 34,
+      "height_flags": 0,
+      "row_stride_bytes": 256,
+      "pixel_data_offset": 196509,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 205213,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FF99_512x34.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0002FF99_512x34.png"
+      ]
+    },
+    {
+      "offset": 198142,
+      "width": 577,
+      "height": 18,
+      "raw_height": 18,
+      "height_flags": 0,
+      "row_stride_bytes": 289,
+      "pixel_data_offset": 198146,
+      "pixel_data_size": 5202,
+      "next_offset_without_padding": 203348,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000305FE_577x18.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000305FE_577x18.png"
+      ]
+    },
+    {
+      "offset": 198200,
+      "width": 577,
+      "height": 18,
+      "raw_height": 18,
+      "height_flags": 0,
+      "row_stride_bytes": 289,
+      "pixel_data_offset": 198204,
+      "pixel_data_size": 5202,
+      "next_offset_without_padding": 203406,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00030638_577x18.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00030638_577x18.png"
+      ]
+    },
+    {
+      "offset": 202148,
+      "width": 32,
+      "height": 324,
+      "raw_height": 324,
+      "height_flags": 0,
+      "row_stride_bytes": 16,
+      "pixel_data_offset": 202152,
+      "pixel_data_size": 5184,
+      "next_offset_without_padding": 207336,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000315A4_32x324.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000315A4_32x324.png"
+      ]
+    },
+    {
+      "offset": 202206,
+      "width": 32,
+      "height": 324,
+      "raw_height": 324,
+      "height_flags": 0,
+      "row_stride_bytes": 16,
+      "pixel_data_offset": 202210,
+      "pixel_data_size": 5184,
+      "next_offset_without_padding": 207394,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000315DE_32x324.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000315DE_32x324.png"
+      ]
+    },
+    {
+      "offset": 206521,
+      "width": 257,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 206525,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 215297,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000326B9_257x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000326B9_257x68.png"
+      ]
+    },
+    {
+      "offset": 206581,
+      "width": 257,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 206585,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 215357,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000326F5_257x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000326F5_257x68.png"
+      ]
+    },
+    {
+      "offset": 206641,
+      "width": 257,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 206645,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 215417,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032731_257x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032731_257x68.png"
+      ]
+    },
+    {
+      "offset": 206701,
+      "width": 257,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 206705,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 215477,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003276D_257x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003276D_257x68.png"
+      ]
+    },
+    {
+      "offset": 206703,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 206707,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 215411,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003276F_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003276F_68x256.png"
+      ]
+    },
+    {
+      "offset": 206763,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 206767,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 215471,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000327AB_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000327AB_68x256.png"
+      ]
+    },
+    {
+      "offset": 206823,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 206827,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 215531,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000327E7_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000327E7_68x256.png"
+      ]
+    },
+    {
+      "offset": 206883,
+      "width": 64,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 206887,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 215079,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032823_64x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032823_64x256.png"
+      ]
+    },
+    {
+      "offset": 206943,
+      "width": 64,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 206947,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 215139,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003285F_64x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003285F_64x256.png"
+      ]
+    },
+    {
+      "offset": 207003,
+      "width": 64,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 207007,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 215199,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003289B_64x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003289B_64x256.png"
+      ]
+    },
+    {
+      "offset": 207063,
+      "width": 64,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 207067,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 215259,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000328D7_64x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000328D7_64x256.png"
+      ]
+    },
+    {
+      "offset": 207809,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 207813,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 216517,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032BC1_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032BC1_256x68.png"
+      ]
+    },
+    {
+      "offset": 207869,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 207873,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 216577,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032BFD_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032BFD_256x68.png"
+      ]
+    },
+    {
+      "offset": 207929,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 207933,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 216637,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032C39_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032C39_256x68.png"
+      ]
+    },
+    {
+      "offset": 208358,
+      "width": 64,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 208362,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 216554,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032DE6_64x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032DE6_64x256.png"
+      ]
+    },
+    {
+      "offset": 208645,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 208649,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 217097,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032F05_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032F05_65x256.png"
+      ]
+    },
+    {
+      "offset": 208705,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 208709,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 217157,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032F41_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00032F41_65x256.png"
+      ]
+    },
+    {
+      "offset": 209068,
+      "width": 258,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 209072,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 217844,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000330AC_258x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000330AC_258x68.png"
+      ]
+    },
+    {
+      "offset": 209128,
+      "width": 258,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 209132,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 217904,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000330E8_258x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000330E8_258x68.png"
+      ]
+    },
+    {
+      "offset": 209188,
+      "width": 258,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 209192,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 217964,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00033124_258x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00033124_258x68.png"
+      ]
+    },
+    {
+      "offset": 209248,
+      "width": 290,
+      "height": 64,
+      "raw_height": 64,
+      "height_flags": 0,
+      "row_stride_bytes": 145,
+      "pixel_data_offset": 209252,
+      "pixel_data_size": 9280,
+      "next_offset_without_padding": 218532,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00033160_290x64.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00033160_290x64.png"
+      ]
+    },
+    {
+      "offset": 215697,
+      "width": 256,
+      "height": 64,
+      "raw_height": 64,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 215701,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 223893,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034A91_256x64.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034A91_256x64.png"
+      ]
+    },
+    {
+      "offset": 216241,
+      "width": 258,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 216245,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 225017,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034CB1_258x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034CB1_258x68.png"
+      ]
+    },
+    {
+      "offset": 216377,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216381,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225085,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034D39_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034D39_256x68.png"
+      ]
+    },
+    {
+      "offset": 216445,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216449,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225153,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034D7D_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034D7D_256x68.png"
+      ]
+    },
+    {
+      "offset": 216513,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216517,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225221,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034DC1_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034DC1_256x68.png"
+      ]
+    },
+    {
+      "offset": 216581,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216585,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225289,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034E05_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034E05_256x68.png"
+      ]
+    },
+    {
+      "offset": 216785,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216789,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225493,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034ED1_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034ED1_256x68.png"
+      ]
+    },
+    {
+      "offset": 216842,
+      "width": 256,
+      "height": 65,
+      "raw_height": 65,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216846,
+      "pixel_data_size": 8320,
+      "next_offset_without_padding": 225166,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034F0A_256x65.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034F0A_256x65.png"
+      ]
+    },
+    {
+      "offset": 216853,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216857,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225561,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034F15_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034F15_256x68.png"
+      ]
+    },
+    {
+      "offset": 216921,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216925,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225629,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034F59_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034F59_256x68.png"
+      ]
+    },
+    {
+      "offset": 216989,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 216993,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225697,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034F9D_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034F9D_256x68.png"
+      ]
+    },
+    {
+      "offset": 217057,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 217061,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225765,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034FE1_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00034FE1_256x68.png"
+      ]
+    },
+    {
+      "offset": 217125,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 217129,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225833,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035025_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035025_256x68.png"
+      ]
+    },
+    {
+      "offset": 217193,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 217197,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 225901,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035069_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035069_256x68.png"
+      ]
+    },
+    {
+      "offset": 217806,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 217810,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 226258,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000352CE_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000352CE_65x256.png"
+      ]
+    },
+    {
+      "offset": 217870,
+      "width": 256,
+      "height": 64,
+      "raw_height": 64,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 217874,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 226066,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003530E_256x64.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003530E_256x64.png"
+      ]
+    },
+    {
+      "offset": 217938,
+      "width": 256,
+      "height": 64,
+      "raw_height": 64,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 217942,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 226134,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035352_256x64.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035352_256x64.png"
+      ]
+    },
+    {
+      "offset": 217983,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 217987,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 226691,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003537F_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003537F_68x256.png"
+      ]
+    },
+    {
+      "offset": 218006,
+      "width": 256,
+      "height": 64,
+      "raw_height": 64,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 218010,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 226202,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035396_256x64.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035396_256x64.png"
+      ]
+    },
+    {
+      "offset": 218074,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 218078,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 226782,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000353DA_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000353DA_256x68.png"
+      ]
+    },
+    {
+      "offset": 218142,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 218146,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 226850,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003541E_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003541E_256x68.png"
+      ]
+    },
+    {
+      "offset": 218210,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 218214,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 226918,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035462_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00035462_256x68.png"
+      ]
+    },
+    {
+      "offset": 218278,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 218282,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 226986,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000354A6_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000354A6_256x68.png"
+      ]
+    },
+    {
+      "offset": 225205,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 225209,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 233913,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00036FB5_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00036FB5_256x68.png"
+      ]
+    },
+    {
+      "offset": 225273,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 225277,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 233981,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00036FF9_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00036FF9_256x68.png"
+      ]
+    },
+    {
+      "offset": 225310,
+      "width": 32,
+      "height": 321,
+      "raw_height": 321,
+      "height_flags": 0,
+      "row_stride_bytes": 16,
+      "pixel_data_offset": 225314,
+      "pixel_data_size": 5136,
+      "next_offset_without_padding": 230450,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003701E_32x321.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003701E_32x321.png"
+      ]
+    },
+    {
+      "offset": 225337,
+      "width": 32,
+      "height": 321,
+      "raw_height": 321,
+      "height_flags": 0,
+      "row_stride_bytes": 16,
+      "pixel_data_offset": 225341,
+      "pixel_data_size": 5136,
+      "next_offset_without_padding": 230477,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037039_32x321.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037039_32x321.png"
+      ]
+    },
+    {
+      "offset": 226154,
+      "width": 320,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 226158,
+      "pixel_data_size": 5280,
+      "next_offset_without_padding": 231438,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003736A_320x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003736A_320x33.png"
+      ]
+    },
+    {
+      "offset": 226222,
+      "width": 324,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 162,
+      "pixel_data_offset": 226226,
+      "pixel_data_size": 5346,
+      "next_offset_without_padding": 231572,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000373AE_324x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000373AE_324x33.png"
+      ]
+    },
+    {
+      "offset": 227451,
+      "width": 256,
+      "height": 65,
+      "raw_height": 65,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 227455,
+      "pixel_data_size": 8320,
+      "next_offset_without_padding": 235775,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003787B_256x65.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003787B_256x65.png"
+      ]
+    },
+    {
+      "offset": 228379,
+      "width": 528,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 264,
+      "pixel_data_offset": 228383,
+      "pixel_data_size": 8712,
+      "next_offset_without_padding": 237095,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037C1B_528x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037C1B_528x33.png"
+      ]
+    },
+    {
+      "offset": 228493,
+      "width": 528,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 264,
+      "pixel_data_offset": 228497,
+      "pixel_data_size": 8712,
+      "next_offset_without_padding": 237209,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037C8D_528x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037C8D_528x33.png"
+      ]
+    },
+    {
+      "offset": 228550,
+      "width": 512,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 256,
+      "pixel_data_offset": 228554,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 237002,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037CC6_512x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037CC6_512x33.png"
+      ]
+    },
+    {
+      "offset": 228607,
+      "width": 512,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 256,
+      "pixel_data_offset": 228611,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 237059,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037CFF_512x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037CFF_512x33.png"
+      ]
+    },
+    {
+      "offset": 228664,
+      "width": 512,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 256,
+      "pixel_data_offset": 228668,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 237116,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037D38_512x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00037D38_512x33.png"
+      ]
+    },
+    {
+      "offset": 229889,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 229893,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 238597,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00038201_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00038201_68x256.png"
+      ]
+    },
+    {
+      "offset": 230430,
+      "width": 290,
+      "height": 66,
+      "raw_height": 66,
+      "height_flags": 0,
+      "row_stride_bytes": 145,
+      "pixel_data_offset": 230434,
+      "pixel_data_size": 9570,
+      "next_offset_without_padding": 240004,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003841E_290x66.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003841E_290x66.png"
+      ]
+    },
+    {
+      "offset": 230487,
+      "width": 290,
+      "height": 66,
+      "raw_height": 66,
+      "height_flags": 0,
+      "row_stride_bytes": 145,
+      "pixel_data_offset": 230491,
+      "pixel_data_size": 9570,
+      "next_offset_without_padding": 240061,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00038457_290x66.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00038457_290x66.png"
+      ]
+    },
+    {
+      "offset": 231183,
+      "width": 577,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 289,
+      "pixel_data_offset": 231187,
+      "pixel_data_size": 9537,
+      "next_offset_without_padding": 240724,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003870F_577x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003870F_577x33.png"
+      ]
+    },
+    {
+      "offset": 231400,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 231404,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 239852,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000387E8_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000387E8_65x256.png"
+      ]
+    },
+    {
+      "offset": 231457,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 231461,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 239909,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00038821_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00038821_65x256.png"
+      ]
+    },
+    {
+      "offset": 234646,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 234650,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 243098,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039496_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039496_65x256.png"
+      ]
+    },
+    {
+      "offset": 235272,
+      "width": 256,
+      "height": 65,
+      "raw_height": 65,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 235276,
+      "pixel_data_size": 8320,
+      "next_offset_without_padding": 243596,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039708_256x65.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039708_256x65.png"
+      ]
+    },
+    {
+      "offset": 235274,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 235278,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 243726,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003970A_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003970A_65x256.png"
+      ]
+    },
+    {
+      "offset": 235329,
+      "width": 256,
+      "height": 65,
+      "raw_height": 65,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 235333,
+      "pixel_data_size": 8320,
+      "next_offset_without_padding": 243653,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039741_256x65.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039741_256x65.png"
+      ]
+    },
+    {
+      "offset": 235331,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 235335,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 243783,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039743_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039743_65x256.png"
+      ]
+    },
+    {
+      "offset": 235386,
+      "width": 256,
+      "height": 65,
+      "raw_height": 65,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 235390,
+      "pixel_data_size": 8320,
+      "next_offset_without_padding": 243710,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003977A_256x65.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003977A_256x65.png"
+      ]
+    },
+    {
+      "offset": 235388,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 235392,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 243840,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003977C_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003977C_65x256.png"
+      ]
+    },
+    {
+      "offset": 235443,
+      "width": 256,
+      "height": 65,
+      "raw_height": 65,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 235447,
+      "pixel_data_size": 8320,
+      "next_offset_without_padding": 243767,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000397B3_256x65.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000397B3_256x65.png"
+      ]
+    },
+    {
+      "offset": 235500,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 235504,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 244208,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000397EC_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000397EC_256x68.png"
+      ]
+    },
+    {
+      "offset": 235557,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 235561,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 244265,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039825_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_00039825_256x68.png"
+      ]
+    },
+    {
+      "offset": 235614,
+      "width": 256,
+      "height": 64,
+      "raw_height": 64,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 235618,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 243810,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003985E_256x64.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003985E_256x64.png"
+      ]
+    },
+    {
+      "offset": 237652,
+      "width": 512,
+      "height": 34,
+      "raw_height": 34,
+      "height_flags": 0,
+      "row_stride_bytes": 256,
+      "pixel_data_offset": 237656,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 246360,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003A054_512x34.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003A054_512x34.png"
+      ]
+    },
+    {
+      "offset": 238940,
+      "width": 548,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 274,
+      "pixel_data_offset": 238944,
+      "pixel_data_size": 18632,
+      "next_offset_without_padding": 257576,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003A55C_548x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003A55C_548x68.png"
+      ]
+    },
+    {
+      "offset": 239804,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 239808,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 248256,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003A8BC_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003A8BC_65x256.png"
+      ]
+    },
+    {
+      "offset": 240086,
+      "width": 529,
+      "height": 34,
+      "raw_height": 34,
+      "height_flags": 0,
+      "row_stride_bytes": 265,
+      "pixel_data_offset": 240090,
+      "pixel_data_size": 9010,
+      "next_offset_without_padding": 249100,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003A9D6_529x34.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003A9D6_529x34.png"
+      ]
+    },
+    {
+      "offset": 241578,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 241582,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 250030,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003AFAA_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003AFAA_65x256.png"
+      ]
+    },
+    {
+      "offset": 241957,
+      "width": 530,
+      "height": 33,
+      "raw_height": 33,
+      "height_flags": 0,
+      "row_stride_bytes": 265,
+      "pixel_data_offset": 241961,
+      "pixel_data_size": 8745,
+      "next_offset_without_padding": 250706,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003B125_530x33.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003B125_530x33.png"
+      ]
+    },
+    {
+      "offset": 246525,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 246529,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 254977,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003C2FD_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003C2FD_65x256.png"
+      ]
+    },
+    {
+      "offset": 246586,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 246590,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 255038,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003C33A_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003C33A_65x256.png"
+      ]
+    },
+    {
+      "offset": 248944,
+      "width": 64,
+      "height": 257,
+      "raw_height": 257,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 248948,
+      "pixel_data_size": 8224,
+      "next_offset_without_padding": 257172,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003CC70_64x257.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003CC70_64x257.png"
+      ]
+    },
+    {
+      "offset": 249007,
+      "width": 68,
+      "height": 257,
+      "raw_height": 257,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 249011,
+      "pixel_data_size": 8738,
+      "next_offset_without_padding": 257749,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003CCAF_68x257.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003CCAF_68x257.png"
+      ]
+    },
+    {
+      "offset": 249425,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 249429,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 257877,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003CE51_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003CE51_65x256.png"
+      ]
+    },
+    {
+      "offset": 249427,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 249431,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 258135,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003CE53_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003CE53_256x68.png"
+      ]
+    },
+    {
+      "offset": 250258,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 250262,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 258966,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D192_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D192_256x68.png"
+      ]
+    },
+    {
+      "offset": 250321,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 250325,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 259029,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D1D1_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D1D1_256x68.png"
+      ]
+    },
+    {
+      "offset": 250397,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 250401,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 259105,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D21D_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D21D_68x256.png"
+      ]
+    },
+    {
+      "offset": 250460,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 250464,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 259168,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D25C_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D25C_68x256.png"
+      ]
+    },
+    {
+      "offset": 250523,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 250527,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 259231,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D29B_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D29B_68x256.png"
+      ]
+    },
+    {
+      "offset": 250586,
+      "width": 68,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 250590,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 259294,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D2DA_68x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D2DA_68x256.png"
+      ]
+    },
+    {
+      "offset": 250635,
+      "width": 288,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 144,
+      "pixel_data_offset": 250639,
+      "pixel_data_size": 9792,
+      "next_offset_without_padding": 260431,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D30B_288x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D30B_288x68.png"
+      ]
+    },
+    {
+      "offset": 251631,
+      "width": 66,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 251635,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 260083,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D6EF_66x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D6EF_66x256.png"
+      ]
+    },
+    {
+      "offset": 251694,
+      "width": 66,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 251698,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 260146,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D72E_66x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D72E_66x256.png"
+      ]
+    },
+    {
+      "offset": 251757,
+      "width": 66,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 251761,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 260209,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D76D_66x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D76D_66x256.png"
+      ]
+    },
+    {
+      "offset": 251820,
+      "width": 66,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 251824,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 260272,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D7AC_66x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D7AC_66x256.png"
+      ]
+    },
+    {
+      "offset": 251883,
+      "width": 66,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 251887,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 260335,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D7EB_66x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D7EB_66x256.png"
+      ]
+    },
+    {
+      "offset": 252058,
+      "width": 256,
+      "height": 64,
+      "raw_height": 64,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 252062,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 260254,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D89A_256x64.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D89A_256x64.png"
+      ]
+    },
+    {
+      "offset": 252115,
+      "width": 258,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 129,
+      "pixel_data_offset": 252119,
+      "pixel_data_size": 8772,
+      "next_offset_without_padding": 260891,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D8D3_258x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D8D3_258x68.png"
+      ]
+    },
+    {
+      "offset": 252121,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 252125,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 260829,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D8D9_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D8D9_256x68.png"
+      ]
+    },
+    {
+      "offset": 252184,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 252188,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 260892,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D918_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D918_256x68.png"
+      ]
+    },
+    {
+      "offset": 252247,
+      "width": 256,
+      "height": 68,
+      "raw_height": 68,
+      "height_flags": 0,
+      "row_stride_bytes": 128,
+      "pixel_data_offset": 252251,
+      "pixel_data_size": 8704,
+      "next_offset_without_padding": 260955,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D957_256x68.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003D957_256x68.png"
+      ]
+    },
+    {
+      "offset": 253902,
+      "width": 68,
+      "height": 257,
+      "raw_height": 257,
+      "height_flags": 0,
+      "row_stride_bytes": 34,
+      "pixel_data_offset": 253906,
+      "pixel_data_size": 8738,
+      "next_offset_without_padding": 262644,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003DFCE_68x257.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003DFCE_68x257.png"
+      ]
+    },
+    {
+      "offset": 253964,
+      "width": 64,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 32,
+      "pixel_data_offset": 253968,
+      "pixel_data_size": 8192,
+      "next_offset_without_padding": 262160,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003E00C_64x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003E00C_64x256.png"
+      ]
+    },
+    {
+      "offset": 255341,
+      "width": 65,
+      "height": 256,
+      "raw_height": 256,
+      "height_flags": 0,
+      "row_stride_bytes": 33,
+      "pixel_data_offset": 255345,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 263793,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003E56D_65x256.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003E56D_65x256.png"
+      ]
+    },
+    {
+      "offset": 257348,
+      "width": 528,
+      "height": 32,
+      "raw_height": 32,
+      "height_flags": 0,
+      "row_stride_bytes": 264,
+      "pixel_data_offset": 257352,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 265800,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003ED44_528x32.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003ED44_528x32.png"
+      ]
+    },
+    {
+      "offset": 257411,
+      "width": 528,
+      "height": 32,
+      "raw_height": 32,
+      "height_flags": 0,
+      "row_stride_bytes": 264,
+      "pixel_data_offset": 257415,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 265863,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003ED83_528x32.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003ED83_528x32.png"
+      ]
+    },
+    {
+      "offset": 257474,
+      "width": 528,
+      "height": 32,
+      "raw_height": 32,
+      "height_flags": 0,
+      "row_stride_bytes": 264,
+      "pixel_data_offset": 257478,
+      "pixel_data_size": 8448,
+      "next_offset_without_padding": 265926,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003EDC2_528x32.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003EDC2_528x32.png"
+      ]
+    },
+    {
+      "offset": 257537,
+      "width": 529,
+      "height": 32,
+      "raw_height": 32,
+      "height_flags": 0,
+      "row_stride_bytes": 265,
+      "pixel_data_offset": 257541,
+      "pixel_data_size": 8480,
+      "next_offset_without_padding": 266021,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003EE01_529x32.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0003EE01_529x32.png"
+      ]
+    },
+    {
+      "offset": 426197,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 426201,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 458201,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000680D5_320x200.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000680D5_320x200.png"
+      ]
+    },
+    {
+      "offset": 458228,
+      "width": 149,
+      "height": 127,
+      "raw_height": 127,
+      "height_flags": 0,
+      "row_stride_bytes": 75,
+      "pixel_data_offset": 458232,
+      "pixel_data_size": 9525,
+      "next_offset_without_padding": 467757,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0006FDF4_149x127.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_0006FDF4_149x127.png"
+      ]
+    },
+    {
+      "offset": 489212,
+      "width": 148,
+      "height": 127,
+      "raw_height": 127,
+      "height_flags": 0,
+      "row_stride_bytes": 74,
+      "pixel_data_offset": 489216,
+      "pixel_data_size": 9398,
+      "next_offset_without_padding": 498614,
+      "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000776FC_148x127.png",
+      "paths": [
+        "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/rendered_pics_raw_candidates_png_display/MW_PICS_full_scan/raw_000776FC_148x127.png"
+      ]
+    }
+  ]
+}

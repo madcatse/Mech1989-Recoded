@@ -1,0 +1,123 @@
+table,index,entry_ds_hex,entry_file_offset_hex,raw_hex,value_unsigned,value_signed,value_swapped_unsigned,target_ds_hex,target_file_offset_hex,adjustment,text,status,notes
+mech_pck_base_name_pointer_candidate,0,0x06DF,0x027133,7F06,1663,1663,32518,0x0682,0x0270D6,3,locpck,matches_expected_plus3,Raw word points three bytes before the base-name string; filename builder adjustment is not yet confirmed.
+mech_pck_base_name_pointer_candidate,1,0x06E1,0x027135,8606,1670,1670,34310,0x0689,0x0270DD,3,jenpck,matches_expected_plus3,Raw word points three bytes before the base-name string; filename builder adjustment is not yet confirmed.
+mech_pck_base_name_pointer_candidate,2,0x06E3,0x027137,8D06,1677,1677,36102,0x0690,0x0270E4,3,phapck,matches_expected_plus3,Raw word points three bytes before the base-name string; filename builder adjustment is not yet confirmed.
+mech_pck_base_name_pointer_candidate,3,0x06E5,0x027139,9406,1684,1684,37894,0x0697,0x0270EB,3,shapck,matches_expected_plus3,Raw word points three bytes before the base-name string; filename builder adjustment is not yet confirmed.
+mech_pck_base_name_pointer_candidate,4,0x06E7,0x02713B,9B06,1691,1691,39686,0x069E,0x0270F2,3,rifpck,matches_expected_plus3,Raw word points three bytes before the base-name string; filename builder adjustment is not yet confirmed.
+mech_pck_base_name_pointer_candidate,5,0x06E9,0x02713D,A206,1698,1698,41478,0x06A5,0x0270F9,3,hampck,matches_expected_plus3,Raw word points three bytes before the base-name string; filename builder adjustment is not yet confirmed.
+mech_pck_base_name_pointer_candidate,6,0x06EB,0x02713F,A906,1705,1705,43270,0x06AC,0x027100,3,marpck,matches_expected_plus3,Raw word points three bytes before the base-name string; filename builder adjustment is not yet confirmed.
+mech_pck_base_name_pointer_candidate,7,0x06ED,0x027141,B006,1712,1712,45062,0x06B3,0x027107,3,bmapck,matches_expected_plus3,Raw word points three bytes before the base-name string; filename builder adjustment is not yet confirmed.
+pck_name_fragment,0,0x06BA,0x02710E,74626C00,,,,,,,tbl,fragment_candidate,Nearby null-terminated filename fragment.
+pck_name_fragment,1,0x06BE,0x027112,74657270636B00,,,,,,,terpck,fragment_candidate,Nearby null-terminated filename fragment.
+pck_name_fragment,2,0x06C5,0x027119,676900,,,,,,,gi,fragment_candidate,Nearby null-terminated filename fragment.
+pck_name_fragment,3,0x06D6,0x02712A,70636B00,,,,,,,pck,fragment_candidate,Nearby null-terminated filename fragment.
+pck_name_fragment,4,0x06DA,0x02712E,74626C00,,,,,,,tbl,fragment_candidate,Nearby null-terminated filename fragment.
+scr_name_pointer_table,0,0x0814,0x027268,F407,2036,2036,62471,0x07F4,0x027248,0,light.scr,filename_pointer,"Used near cockpit/status screen selection, not the combat PCK renderer."
+scr_name_pointer_table,1,0x0816,0x02726A,FE07,2046,2046,65031,0x07FE,0x027252,0,medium.scr,filename_pointer,"Used near cockpit/status screen selection, not the combat PCK renderer."
+scr_name_pointer_table,2,0x0818,0x02726C,0908,2057,2057,2312,0x0809,0x02725D,0,heavy.scr,filename_pointer,"Used near cockpit/status screen selection, not the combat PCK renderer."
+drawable_kind_record_8byte_candidate,0,0x0E6E,0x0278C2,0000280006004300,,,,,,,0;40;6;67,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,1,0x0E76,0x0278CA,0100320007001C00,,,,,,,1;50;7;28,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,2,0x0E7E,0x0278D2,0100320008001C00,,,,,,,1;50;8;28,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,3,0x0E86,0x0278DA,0100320009001C00,,,,,,,1;50;9;28,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,4,0x0E8E,0x0278E2,0100020003000400,,,,,,,1;2;3;4,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,5,0x0E96,0x0278EA,0500060007001700,,,,,,,5;6;7;23,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,6,0x0E9E,0x0278F2,080009001700960E,,,,,,,8;9;23;3734,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,7,0x0EA6,0x0278FA,A40E000001000000,,,,,,,3748;0;1;0,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,8,0x0EAE,0x027902,0000010204080000,,,,,,,0;513;2052;0,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,9,0x0EB6,0x02790A,0000010002000300,,,,,,,0;1;2;3,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,10,0x0EBE,0x027912,0400060007000800,,,,,,,4;6;7;8,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,11,0x0EC6,0x02791A,025F00B2001B00B0,,,,,,,24322;-19968;6912;-20480,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,12,0x0ECE,0x027922,020000000300FFFF,,,,,,,2;0;3;-1,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,13,0x0ED6,0x02792A,1E00500001000000,,,,,,,30;80;1;0,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,14,0x0EDE,0x027932,0200030004000100,,,,,,,2;3;4;1,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,15,0x0EE6,0x02793A,09000500FFFF1E00,,,,,,,9;5;-1;30,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,16,0x0EEE,0x027942,F000020000000400,,,,,,,240;2;0;4,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,17,0x0EF6,0x02794A,07000A0001000500,,,,,,,7;10;1;5,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,18,0x0EFE,0x027952,0800FFFF1E008002,,,,,,,8;-1;30;640,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,19,0x0F06,0x02795A,0300000006000B00,,,,,,,3;0;6;11,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,20,0x0F0E,0x027962,1000020002000200,,,,,,,16;2;2;2,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,21,0x0F16,0x02796A,0500020000000100,,,,,,,5;2;0;1,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,22,0x0F1E,0x027972,0000020003000400,,,,,,,0;2;3;4,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+drawable_kind_record_8byte_candidate,23,0x0F26,0x02797A,01000F000A00FFFF,,,,,,,1;15;10;-1,numeric_record_candidate,Referenced by FUN_1000_5998 as fields at +0xE6E/+0xE72/+0xE74.
+param_to_drawable_kind_word_candidate,0,0x232E,0x028D82,0003,768,768,3,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,1,0x2330,0x028D84,0003,768,768,3,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,2,0x2332,0x028D86,0004,1024,1024,4,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,3,0x2334,0x028D88,0004,1024,1024,4,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,4,0x2336,0x028D8A,0004,1024,1024,4,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,5,0x2338,0x028D8C,0005,1280,1280,5,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,6,0x233A,0x028D8E,0005,1280,1280,5,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,7,0x233C,0x028D90,0006,1536,1536,6,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,8,0x233E,0x028D92,0006,1536,1536,6,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,9,0x2340,0x028D94,0000,0,0,0,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,10,0x2342,0x028D96,0053,21248,21248,83,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,11,0x2344,0x028D98,0047,18176,18176,71,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,12,0x2346,0x028D9A,0045,17664,17664,69,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,13,0x2348,0x028D9C,004C,19456,19456,76,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,14,0x234A,0x028D9E,000A,2560,2560,10,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,15,0x234C,0x028DA0,0000,0,0,0,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,16,0x234E,0x028DA2,000B,2816,2816,11,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,17,0x2350,0x028DA4,0000,0,0,0,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,18,0x2352,0x028DA6,000A,2560,2560,10,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,19,0x2354,0x028DA8,000C,3072,3072,12,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,20,0x2356,0x028DAA,0000,0,0,0,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,21,0x2358,0x028DAC,000B,2816,2816,11,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,22,0x235A,0x028DAE,0004,1024,1024,4,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,23,0x235C,0x028DB0,0000,0,0,0,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,24,0x235E,0x028DB2,000A,2560,2560,10,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,25,0x2360,0x028DB4,000E,3584,3584,14,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,26,0x2362,0x028DB6,000C,3072,3072,12,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,27,0x2364,0x028DB8,0000,0,0,0,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,28,0x2366,0x028DBA,000B,2816,2816,11,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,29,0x2368,0x028DBC,000F,3840,3840,15,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,30,0x236A,0x028DBE,0004,1024,1024,4,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+param_to_drawable_kind_word_candidate,31,0x236C,0x028DC0,0000,0,0,0,,,,,numeric_word_candidate,Used as *(param * 2 + 0x232E) before indexing the 8-byte drawable table.
+resource_offset_word_candidate,0,0x2342,0x028D96,0053,21248,21248,83,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,1,0x2344,0x028D98,0047,18176,18176,71,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,2,0x2346,0x028D9A,0045,17664,17664,69,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,3,0x2348,0x028D9C,004C,19456,19456,76,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,4,0x234A,0x028D9E,000A,2560,2560,10,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,5,0x234C,0x028DA0,0000,0,0,0,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,6,0x234E,0x028DA2,000B,2816,2816,11,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,7,0x2350,0x028DA4,0000,0,0,0,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,8,0x2352,0x028DA6,000A,2560,2560,10,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,9,0x2354,0x028DA8,000C,3072,3072,12,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,10,0x2356,0x028DAA,0000,0,0,0,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,11,0x2358,0x028DAC,000B,2816,2816,11,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,12,0x235A,0x028DAE,0004,1024,1024,4,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,13,0x235C,0x028DB0,0000,0,0,0,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,14,0x235E,0x028DB2,000A,2560,2560,10,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,15,0x2360,0x028DB4,000E,3584,3584,14,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,16,0x2362,0x028DB6,000C,3072,3072,12,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,17,0x2364,0x028DB8,0000,0,0,0,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,18,0x2366,0x028DBA,000B,2816,2816,11,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,19,0x2368,0x028DBC,000F,3840,3840,15,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,20,0x236A,0x028DBE,0004,1024,1024,4,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,21,0x236C,0x028DC0,0000,0,0,0,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,22,0x236E,0x028DC2,0020,8192,8192,32,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,23,0x2370,0x028DC4,3530,12341,12341,13616,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,24,0x2372,0x028DC6,3020,8240,8240,12320,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,25,0x2374,0x028DC8,4D00,77,77,19712,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,26,0x2376,0x028DCA,3130,12337,12337,12592,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,27,0x2378,0x028DCC,3030,12336,12336,12336,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,28,0x237A,0x028DCE,204D,19744,19744,8269,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,29,0x237C,0x028DD0,0032,12800,12800,50,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,30,0x237E,0x028DD2,3030,12336,12336,12336,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+resource_offset_word_candidate,31,0x2380,0x028DD4,3020,8240,8240,12320,,,,,numeric_word_candidate,Used as a resource/object offset table in nearby constructors.
+distance_threshold_word_candidate,0,0x271E,0x029172,8000,128,128,32768,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,1,0x2720,0x029174,000E,3584,3584,14,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,2,0x2722,0x029176,0EFF,65294,-242,3839,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,3,0x2724,0x029178,C227,10178,10178,49703,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,4,0x2726,0x02917A,8000,128,128,32768,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,5,0x2728,0x02917C,000E,3584,3584,14,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,6,0x272A,0x02917E,0EFF,65294,-242,3839,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,7,0x272C,0x029180,C627,10182,10182,50727,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,8,0x272E,0x029182,0100,1,1,256,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,9,0x2730,0x029184,0200,2,2,512,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,10,0x2732,0x029186,E627,10214,10214,58919,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,11,0x2734,0x029188,0000,0,0,0,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,12,0x2736,0x02918A,0100,1,1,256,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,13,0x2738,0x02918C,F627,10230,10230,63015,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,14,0x273A,0x02918E,1E00,30,30,7680,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,15,0x273C,0x029190,3200,50,50,12800,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,16,0x273E,0x029192,5000,80,80,20480,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.
+distance_threshold_word_candidate,17,0x2740,0x029194,0000,0,0,0,,,,,numeric_word_candidate,Used by frame choice/distance bucket logic near FUN_1000_ae56.

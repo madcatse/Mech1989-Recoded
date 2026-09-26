@@ -1,0 +1,335 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_MAIN.EXE",
+    "size": 137871,
+    "sha256": "21a69aa79a9404711a8c1396178e6c275bb662cb015c150142d7f82be9f00aa7"
+  },
+  "entries": [
+    {
+      "id": "name_0000_008D10",
+      "kind": "resource_name_string",
+      "offset": 36112,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 36122,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_EGA.EXE",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0001_008D1B",
+      "kind": "resource_name_string",
+      "offset": 36123,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 36135,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_TANDY.EXE",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0002_008ECC",
+      "kind": "resource_name_string",
+      "offset": 36556,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 36567,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "'MW_EGA.EXE",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0003_009AC1",
+      "kind": "resource_name_string",
+      "offset": 39617,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39628,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_PICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0004_009ACD",
+      "kind": "resource_name_string",
+      "offset": 39629,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39641,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_GPICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0005_009ADC",
+      "kind": "resource_name_string",
+      "offset": 39644,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39656,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_CPICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0006_009AEB",
+      "kind": "resource_name_string",
+      "offset": 39659,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39671,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_1PICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0007_009AF8",
+      "kind": "resource_name_string",
+      "offset": 39672,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39684,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_2PICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0008_009B05",
+      "kind": "resource_name_string",
+      "offset": 39685,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39697,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_3PICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0009_009B12",
+      "kind": "resource_name_string",
+      "offset": 39698,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39710,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_TPICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0010_009B1F",
+      "kind": "resource_name_string",
+      "offset": 39711,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39723,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_APICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0011_009B2C",
+      "kind": "resource_name_string",
+      "offset": 39724,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39736,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_FPICS.BIN",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0012_009B3B",
+      "kind": "resource_name_string",
+      "offset": 39739,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39747,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MECH.MUS",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0013_009B44",
+      "kind": "resource_name_string",
+      "offset": 39748,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39759,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MECHBAR.MUS",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0014_009B50",
+      "kind": "resource_name_string",
+      "offset": 39760,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39769,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "DEATH.MUS",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0015_009B5A",
+      "kind": "resource_name_string",
+      "offset": 39770,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39780,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "LAUNCH.MUS",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0016_009B65",
+      "kind": "resource_name_string",
+      "offset": 39781,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39792,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "VICTORY.MUS",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0017_009BF6",
+      "kind": "resource_name_string",
+      "offset": 39926,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 39935,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "BTECH.EXE",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    }
+  ]
+}

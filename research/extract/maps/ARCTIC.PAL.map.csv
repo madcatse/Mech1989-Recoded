@@ -1,0 +1,4 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+ARCTIC_0000_PAL_000000,Original/ARCTIC.PAL,tagged_chunk,PAL:,,0x000000,8,0x000008,306,0x00013A,0,high,ASCII tag; little-endian length fits parent/file; high bit set in length field,,"{""has_nested_flag"": ""yes"", ""local_index"": 0, ""raw_length_hex"": ""0x80000132""}"
+ARCTIC_0000_EGA_000008,Original/ARCTIC.PAL,tagged_chunk,EGA:,,0x000008,8,0x000010,128,0x000090,1,high,ASCII tag; little-endian length fits parent/file,,"{""has_nested_flag"": ""no"", ""local_index"": 0, ""raw_length_hex"": ""0x00000080""}"
+ARCTIC_0001_CGA_000090,Original/ARCTIC.PAL,tagged_chunk,CGA:,,0x000090,8,0x000098,162,0x00013A,1,high,ASCII tag; little-endian length fits parent/file,,"{""has_nested_flag"": ""no"", ""local_index"": 1, ""raw_length_hex"": ""0x000000A2""}"

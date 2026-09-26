@@ -1,0 +1,19 @@
+﻿# Strings extracted from Original/TILE4.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 15
+
+4EI6#
+&;OYQ>+
+*>NSQK<)
+-@IHDA<4$
+-9>;852,$
+3?<.+(%"
+":FC%
+!/@LI+
+ 8JRO2
++BYV; 
+0HTI.
+6OM9 
+%=I>*
++DB/
+2?3 

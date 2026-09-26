@@ -1,0 +1,116 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/TILE7.WLD",
+    "size": 56,
+    "sha256": "d29d85448a5bae860bb09edb0cb2d8fdcd128b388ddde03c05f9e4e2b87bdb61"
+  },
+  "entries": [
+    {
+      "id": "records_4_14",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 56,
+      "end_offset": 56,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 4,
+        "record_count": 14
+      }
+    },
+    {
+      "id": "records_7_8",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 56,
+      "end_offset": 56,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 7,
+        "record_count": 8
+      }
+    },
+    {
+      "id": "records_8_7",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 56,
+      "end_offset": 56,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 8,
+        "record_count": 7
+      }
+    },
+    {
+      "id": "records_14_4",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 56,
+      "end_offset": 56,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 14,
+        "record_count": 4
+      }
+    },
+    {
+      "id": "records_28_2",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 56,
+      "end_offset": 56,
+      "depth": 0,
+      "confidence": "low",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 28,
+        "record_count": 2
+      }
+    }
+  ]
+}

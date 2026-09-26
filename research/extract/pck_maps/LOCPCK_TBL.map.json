@@ -1,0 +1,73 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/LOCPCK.TBL",
+    "size": 26627,
+    "sha256": "39d83df552edd9c87a9c7d17fb852034de449a86d1060f5a38a7f4a4ca8b0589"
+  },
+  "codec": "pck_lzw_segmented",
+  "raw_codec_id": 2,
+  "decoded_size": 38706,
+  "decoded_sha256": "b9ef97d6705384ef0c5b161bd50dcc1b063ee65153b567cc61b2361d04443e2c",
+  "decoded_structure_probe": {
+    "first_u16": 4,
+    "second_u16": 21,
+    "second_u16_times_16": 336,
+    "second_u16_times_16_hex": "0x0150",
+    "leading_pair_count": 84,
+    "leading_pair_bytes": 336,
+    "leading_pair_stop_offset": 338,
+    "leading_pair_stop_offset_hex": "0x0152",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 2394",
+    "boundary_16x_first_16_hex": "0000000080003F010000000000000100"
+  },
+  "segment_count": 3,
+  "segments": [
+    {
+      "id": "pck_segment_000",
+      "index": 0,
+      "codec": 2,
+      "file_offset": 5,
+      "file_offset_hex": "0x000005",
+      "file_end_offset": 13875,
+      "file_end_offset_hex": "0x003633",
+      "body_offset": 0,
+      "body_end_offset": 13870,
+      "gap_before": 0,
+      "compressed_size": 13870,
+      "decoded_size": 19999,
+      "ended_by_code_256": true
+    },
+    {
+      "id": "pck_segment_001",
+      "index": 1,
+      "codec": 2,
+      "file_offset": 13881,
+      "file_offset_hex": "0x003639",
+      "file_end_offset": 13883,
+      "file_end_offset_hex": "0x00363B",
+      "body_offset": 13876,
+      "body_end_offset": 13878,
+      "gap_before": 6,
+      "compressed_size": 2,
+      "decoded_size": 0,
+      "ended_by_code_256": true
+    },
+    {
+      "id": "pck_segment_002",
+      "index": 2,
+      "codec": 2,
+      "file_offset": 13885,
+      "file_offset_hex": "0x00363D",
+      "file_end_offset": 26627,
+      "file_end_offset_hex": "0x006803",
+      "body_offset": 13880,
+      "body_end_offset": 26622,
+      "gap_before": 2,
+      "compressed_size": 12742,
+      "decoded_size": 18707,
+      "ended_by_code_256": false
+    }
+  ]
+}

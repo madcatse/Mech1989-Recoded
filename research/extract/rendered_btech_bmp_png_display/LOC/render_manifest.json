@@ -1,0 +1,23 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/LOC.BMP",
+    "size": 3033,
+    "sha256": "5cd240f5748222cdf016ded95761dc8454fad8502d651dcf2adf73ca31c17007"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 14668,
+  "entries": [
+    {
+      "index": 0,
+      "width": 152,
+      "height": 193,
+      "path": "research/extract/rendered_btech_bmp_png_display/LOC/LOC_000_152x193.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/LOC/LOC_000_152x193.png"
+      ]
+    }
+  ]
+}

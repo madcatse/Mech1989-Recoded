@@ -1,0 +1,32 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/TILE14.GRD",
+    "size": 4089,
+    "sha256": "c5697fc67adba4b7a84aaa37ef8ff99bed6c18d2d9e971124e5ec834b53897af"
+  },
+  "entries": [
+    {
+      "id": "records_3_1363",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 4089,
+      "end_offset": 4089,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 3,
+        "record_count": 1363
+      }
+    }
+  ]
+}

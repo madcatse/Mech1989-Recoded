@@ -1,0 +1,55 @@
+﻿# Strings extracted from Original/8X8B.FNT
+# Minimum length: 4 printable ASCII bytes
+# Count: 51
+
+FNT:
+((|(|((
+4HH4
+8DDDDD8
+ @xDD8
+8DD8DD8
+8DD<
+8DLTL@<
+8DD|DDD
+xDDxDDx
+$@@@$
+pHDDDHp
+|@@p@@|
+|@@p@@@
+8D@@LD<
+DDD|DDD
+DHP`PHD
+@@@@@@|
+DlTDDDD
+DDdTLDD
+8DDDDD8
+xDDx@@@
+8DDDDT8
+xDDxDDD
+8D@8
+DDDDDD8
+DDDDD(
+DDDDTlD
+DDD8
+8     8
+@@xDDDx
+8D@D8
+<DDD<
+8D|@<
+( p   
+<DD<
+x@@xDDDD
+D8@@DHpHD
+xTTTT
+xDDDD
+8DDD8
+xDDx@@
+<DD<
+Xd@@@
+  p   
+DDDD8
+DDD(
+DDTTl
+DDD<
+  @  
+(DDD|

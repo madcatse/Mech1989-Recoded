@@ -1,0 +1,1262 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/DMGPAL.PAL",
+    "size": 314,
+    "sha256": "ffb525e5876c8415b3ed0ef2461bf6d9ce210e697bf7ded6760134d4d7861dbd"
+  },
+  "chunks": {
+    "ega_count": 1,
+    "cga_count": 1
+  },
+  "ega": {
+    "layout": "ega_pair_banks_tentative",
+    "payload_size": 128,
+    "pair_count": 64,
+    "duplicate_pair_count": 64,
+    "banks": [
+      {
+        "bank": 0,
+        "colors": [
+          {
+            "index": 0,
+            "raw": 0,
+            "raw_hex": "0x00",
+            "low_nibble": 0,
+            "high_nibble": 0,
+            "low_rgb": [
+              0,
+              0,
+              0
+            ],
+            "high_rgb": [
+              0,
+              0,
+              0
+            ],
+            "pair_hex": "0000",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 1,
+            "raw": 17,
+            "raw_hex": "0x11",
+            "low_nibble": 1,
+            "high_nibble": 1,
+            "low_rgb": [
+              0,
+              0,
+              170
+            ],
+            "high_rgb": [
+              0,
+              0,
+              170
+            ],
+            "pair_hex": "1111",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 2,
+            "raw": 34,
+            "raw_hex": "0x22",
+            "low_nibble": 2,
+            "high_nibble": 2,
+            "low_rgb": [
+              0,
+              170,
+              0
+            ],
+            "high_rgb": [
+              0,
+              170,
+              0
+            ],
+            "pair_hex": "2222",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 3,
+            "raw": 0,
+            "raw_hex": "0x00",
+            "low_nibble": 0,
+            "high_nibble": 0,
+            "low_rgb": [
+              0,
+              0,
+              0
+            ],
+            "high_rgb": [
+              0,
+              0,
+              0
+            ],
+            "pair_hex": "0000",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 4,
+            "raw": 68,
+            "raw_hex": "0x44",
+            "low_nibble": 4,
+            "high_nibble": 4,
+            "low_rgb": [
+              170,
+              0,
+              0
+            ],
+            "high_rgb": [
+              170,
+              0,
+              0
+            ],
+            "pair_hex": "4444",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 5,
+            "raw": 51,
+            "raw_hex": "0x33",
+            "low_nibble": 3,
+            "high_nibble": 3,
+            "low_rgb": [
+              0,
+              170,
+              170
+            ],
+            "high_rgb": [
+              0,
+              170,
+              170
+            ],
+            "pair_hex": "3333",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 6,
+            "raw": 102,
+            "raw_hex": "0x66",
+            "low_nibble": 6,
+            "high_nibble": 6,
+            "low_rgb": [
+              170,
+              85,
+              0
+            ],
+            "high_rgb": [
+              170,
+              85,
+              0
+            ],
+            "pair_hex": "6666",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 7,
+            "raw": 119,
+            "raw_hex": "0x77",
+            "low_nibble": 7,
+            "high_nibble": 7,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7777",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 8,
+            "raw": 136,
+            "raw_hex": "0x88",
+            "low_nibble": 8,
+            "high_nibble": 8,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8888",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 9,
+            "raw": 153,
+            "raw_hex": "0x99",
+            "low_nibble": 9,
+            "high_nibble": 9,
+            "low_rgb": [
+              85,
+              85,
+              255
+            ],
+            "high_rgb": [
+              85,
+              85,
+              255
+            ],
+            "pair_hex": "9999",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 10,
+            "raw": 170,
+            "raw_hex": "0xAA",
+            "low_nibble": 10,
+            "high_nibble": 10,
+            "low_rgb": [
+              85,
+              255,
+              85
+            ],
+            "high_rgb": [
+              85,
+              255,
+              85
+            ],
+            "pair_hex": "AAAA",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 11,
+            "raw": 187,
+            "raw_hex": "0xBB",
+            "low_nibble": 11,
+            "high_nibble": 11,
+            "low_rgb": [
+              85,
+              255,
+              255
+            ],
+            "high_rgb": [
+              85,
+              255,
+              255
+            ],
+            "pair_hex": "BBBB",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 12,
+            "raw": 204,
+            "raw_hex": "0xCC",
+            "low_nibble": 12,
+            "high_nibble": 12,
+            "low_rgb": [
+              255,
+              85,
+              85
+            ],
+            "high_rgb": [
+              255,
+              85,
+              85
+            ],
+            "pair_hex": "CCCC",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 13,
+            "raw": 221,
+            "raw_hex": "0xDD",
+            "low_nibble": 13,
+            "high_nibble": 13,
+            "low_rgb": [
+              255,
+              85,
+              255
+            ],
+            "high_rgb": [
+              255,
+              85,
+              255
+            ],
+            "pair_hex": "DDDD",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 14,
+            "raw": 238,
+            "raw_hex": "0xEE",
+            "low_nibble": 14,
+            "high_nibble": 14,
+            "low_rgb": [
+              255,
+              255,
+              85
+            ],
+            "high_rgb": [
+              255,
+              255,
+              85
+            ],
+            "pair_hex": "EEEE",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 15,
+            "raw": 255,
+            "raw_hex": "0xFF",
+            "low_nibble": 15,
+            "high_nibble": 15,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "FFFF",
+            "pair_duplicate": "yes"
+          }
+        ]
+      },
+      {
+        "bank": 1,
+        "colors": [
+          {
+            "index": 0,
+            "raw": 247,
+            "raw_hex": "0xF7",
+            "low_nibble": 7,
+            "high_nibble": 15,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "F7F7",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 1,
+            "raw": 7,
+            "raw_hex": "0x07",
+            "low_nibble": 7,
+            "high_nibble": 0,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              0,
+              0,
+              0
+            ],
+            "pair_hex": "0707",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 2,
+            "raw": 119,
+            "raw_hex": "0x77",
+            "low_nibble": 7,
+            "high_nibble": 7,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7777",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 3,
+            "raw": 136,
+            "raw_hex": "0x88",
+            "low_nibble": 8,
+            "high_nibble": 8,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8888",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 4,
+            "raw": 143,
+            "raw_hex": "0x8F",
+            "low_nibble": 15,
+            "high_nibble": 8,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8F8F",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 5,
+            "raw": 255,
+            "raw_hex": "0xFF",
+            "low_nibble": 15,
+            "high_nibble": 15,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "FFFF",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 6,
+            "raw": 56,
+            "raw_hex": "0x38",
+            "low_nibble": 8,
+            "high_nibble": 3,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              0,
+              170,
+              170
+            ],
+            "pair_hex": "3838",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 7,
+            "raw": 127,
+            "raw_hex": "0x7F",
+            "low_nibble": 15,
+            "high_nibble": 7,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7F7F",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 8,
+            "raw": 135,
+            "raw_hex": "0x87",
+            "low_nibble": 7,
+            "high_nibble": 8,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8787",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 9,
+            "raw": 120,
+            "raw_hex": "0x78",
+            "low_nibble": 8,
+            "high_nibble": 7,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7878",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 10,
+            "raw": 112,
+            "raw_hex": "0x70",
+            "low_nibble": 0,
+            "high_nibble": 7,
+            "low_rgb": [
+              0,
+              0,
+              0
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7070",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 11,
+            "raw": 255,
+            "raw_hex": "0xFF",
+            "low_nibble": 15,
+            "high_nibble": 15,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "FFFF",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 12,
+            "raw": 143,
+            "raw_hex": "0x8F",
+            "low_nibble": 15,
+            "high_nibble": 8,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8F8F",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 13,
+            "raw": 55,
+            "raw_hex": "0x37",
+            "low_nibble": 7,
+            "high_nibble": 3,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              0,
+              170,
+              170
+            ],
+            "pair_hex": "3737",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 14,
+            "raw": 131,
+            "raw_hex": "0x83",
+            "low_nibble": 3,
+            "high_nibble": 8,
+            "low_rgb": [
+              0,
+              170,
+              170
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8383",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 15,
+            "raw": 127,
+            "raw_hex": "0x7F",
+            "low_nibble": 15,
+            "high_nibble": 7,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7F7F",
+            "pair_duplicate": "yes"
+          }
+        ]
+      },
+      {
+        "bank": 2,
+        "colors": [
+          {
+            "index": 0,
+            "raw": 0,
+            "raw_hex": "0x00",
+            "low_nibble": 0,
+            "high_nibble": 0,
+            "low_rgb": [
+              0,
+              0,
+              0
+            ],
+            "high_rgb": [
+              0,
+              0,
+              0
+            ],
+            "pair_hex": "0000",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 1,
+            "raw": 17,
+            "raw_hex": "0x11",
+            "low_nibble": 1,
+            "high_nibble": 1,
+            "low_rgb": [
+              0,
+              0,
+              170
+            ],
+            "high_rgb": [
+              0,
+              0,
+              170
+            ],
+            "pair_hex": "1111",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 2,
+            "raw": 34,
+            "raw_hex": "0x22",
+            "low_nibble": 2,
+            "high_nibble": 2,
+            "low_rgb": [
+              0,
+              170,
+              0
+            ],
+            "high_rgb": [
+              0,
+              170,
+              0
+            ],
+            "pair_hex": "2222",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 3,
+            "raw": 0,
+            "raw_hex": "0x00",
+            "low_nibble": 0,
+            "high_nibble": 0,
+            "low_rgb": [
+              0,
+              0,
+              0
+            ],
+            "high_rgb": [
+              0,
+              0,
+              0
+            ],
+            "pair_hex": "0000",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 4,
+            "raw": 68,
+            "raw_hex": "0x44",
+            "low_nibble": 4,
+            "high_nibble": 4,
+            "low_rgb": [
+              170,
+              0,
+              0
+            ],
+            "high_rgb": [
+              170,
+              0,
+              0
+            ],
+            "pair_hex": "4444",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 5,
+            "raw": 51,
+            "raw_hex": "0x33",
+            "low_nibble": 3,
+            "high_nibble": 3,
+            "low_rgb": [
+              0,
+              170,
+              170
+            ],
+            "high_rgb": [
+              0,
+              170,
+              170
+            ],
+            "pair_hex": "3333",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 6,
+            "raw": 102,
+            "raw_hex": "0x66",
+            "low_nibble": 6,
+            "high_nibble": 6,
+            "low_rgb": [
+              170,
+              85,
+              0
+            ],
+            "high_rgb": [
+              170,
+              85,
+              0
+            ],
+            "pair_hex": "6666",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 7,
+            "raw": 119,
+            "raw_hex": "0x77",
+            "low_nibble": 7,
+            "high_nibble": 7,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7777",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 8,
+            "raw": 136,
+            "raw_hex": "0x88",
+            "low_nibble": 8,
+            "high_nibble": 8,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8888",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 9,
+            "raw": 153,
+            "raw_hex": "0x99",
+            "low_nibble": 9,
+            "high_nibble": 9,
+            "low_rgb": [
+              85,
+              85,
+              255
+            ],
+            "high_rgb": [
+              85,
+              85,
+              255
+            ],
+            "pair_hex": "9999",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 10,
+            "raw": 170,
+            "raw_hex": "0xAA",
+            "low_nibble": 10,
+            "high_nibble": 10,
+            "low_rgb": [
+              85,
+              255,
+              85
+            ],
+            "high_rgb": [
+              85,
+              255,
+              85
+            ],
+            "pair_hex": "AAAA",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 11,
+            "raw": 187,
+            "raw_hex": "0xBB",
+            "low_nibble": 11,
+            "high_nibble": 11,
+            "low_rgb": [
+              85,
+              255,
+              255
+            ],
+            "high_rgb": [
+              85,
+              255,
+              255
+            ],
+            "pair_hex": "BBBB",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 12,
+            "raw": 204,
+            "raw_hex": "0xCC",
+            "low_nibble": 12,
+            "high_nibble": 12,
+            "low_rgb": [
+              255,
+              85,
+              85
+            ],
+            "high_rgb": [
+              255,
+              85,
+              85
+            ],
+            "pair_hex": "CCCC",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 13,
+            "raw": 221,
+            "raw_hex": "0xDD",
+            "low_nibble": 13,
+            "high_nibble": 13,
+            "low_rgb": [
+              255,
+              85,
+              255
+            ],
+            "high_rgb": [
+              255,
+              85,
+              255
+            ],
+            "pair_hex": "DDDD",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 14,
+            "raw": 238,
+            "raw_hex": "0xEE",
+            "low_nibble": 14,
+            "high_nibble": 14,
+            "low_rgb": [
+              255,
+              255,
+              85
+            ],
+            "high_rgb": [
+              255,
+              255,
+              85
+            ],
+            "pair_hex": "EEEE",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 15,
+            "raw": 255,
+            "raw_hex": "0xFF",
+            "low_nibble": 15,
+            "high_nibble": 15,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "FFFF",
+            "pair_duplicate": "yes"
+          }
+        ]
+      },
+      {
+        "bank": 3,
+        "colors": [
+          {
+            "index": 0,
+            "raw": 127,
+            "raw_hex": "0x7F",
+            "low_nibble": 15,
+            "high_nibble": 7,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7F7F",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 1,
+            "raw": 112,
+            "raw_hex": "0x70",
+            "low_nibble": 0,
+            "high_nibble": 7,
+            "low_rgb": [
+              0,
+              0,
+              0
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7070",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 2,
+            "raw": 119,
+            "raw_hex": "0x77",
+            "low_nibble": 7,
+            "high_nibble": 7,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7777",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 3,
+            "raw": 136,
+            "raw_hex": "0x88",
+            "low_nibble": 8,
+            "high_nibble": 8,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8888",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 4,
+            "raw": 248,
+            "raw_hex": "0xF8",
+            "low_nibble": 8,
+            "high_nibble": 15,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "F8F8",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 5,
+            "raw": 255,
+            "raw_hex": "0xFF",
+            "low_nibble": 15,
+            "high_nibble": 15,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "FFFF",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 6,
+            "raw": 131,
+            "raw_hex": "0x83",
+            "low_nibble": 3,
+            "high_nibble": 8,
+            "low_rgb": [
+              0,
+              170,
+              170
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8383",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 7,
+            "raw": 247,
+            "raw_hex": "0xF7",
+            "low_nibble": 7,
+            "high_nibble": 15,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "F7F7",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 8,
+            "raw": 120,
+            "raw_hex": "0x78",
+            "low_nibble": 8,
+            "high_nibble": 7,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7878",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 9,
+            "raw": 135,
+            "raw_hex": "0x87",
+            "low_nibble": 7,
+            "high_nibble": 8,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              85,
+              85,
+              85
+            ],
+            "pair_hex": "8787",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 10,
+            "raw": 7,
+            "raw_hex": "0x07",
+            "low_nibble": 7,
+            "high_nibble": 0,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              0,
+              0,
+              0
+            ],
+            "pair_hex": "0707",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 11,
+            "raw": 255,
+            "raw_hex": "0xFF",
+            "low_nibble": 15,
+            "high_nibble": 15,
+            "low_rgb": [
+              255,
+              255,
+              255
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "FFFF",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 12,
+            "raw": 248,
+            "raw_hex": "0xF8",
+            "low_nibble": 8,
+            "high_nibble": 15,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "F8F8",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 13,
+            "raw": 115,
+            "raw_hex": "0x73",
+            "low_nibble": 3,
+            "high_nibble": 7,
+            "low_rgb": [
+              0,
+              170,
+              170
+            ],
+            "high_rgb": [
+              170,
+              170,
+              170
+            ],
+            "pair_hex": "7373",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 14,
+            "raw": 56,
+            "raw_hex": "0x38",
+            "low_nibble": 8,
+            "high_nibble": 3,
+            "low_rgb": [
+              85,
+              85,
+              85
+            ],
+            "high_rgb": [
+              0,
+              170,
+              170
+            ],
+            "pair_hex": "3838",
+            "pair_duplicate": "yes"
+          },
+          {
+            "index": 15,
+            "raw": 247,
+            "raw_hex": "0xF7",
+            "low_nibble": 7,
+            "high_nibble": 15,
+            "low_rgb": [
+              170,
+              170,
+              170
+            ],
+            "high_rgb": [
+              255,
+              255,
+              255
+            ],
+            "pair_hex": "F7F7",
+            "pair_duplicate": "yes"
+          }
+        ]
+      }
+    ]
+  },
+  "cga": {
+    "layout": "unknown",
+    "payload_size": 162,
+    "first_32_hex": "03000000000055550000AAAA0000000077775555000055550000AAAA0000FFFF"
+  }
+}

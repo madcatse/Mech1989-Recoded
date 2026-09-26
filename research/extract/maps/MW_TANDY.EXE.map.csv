@@ -1,0 +1,6 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+name_0000_00091E,Original/MW_TANDY.EXE,resource_name_string,,6X6.FNT,0x00091E,0,0x000000,0,0x000925,0,medium,file-name-like ASCII string,,{}
+name_0001_000926,Original/MW_TANDY.EXE,resource_name_string,,88C64.FNT,0x000926,0,0x000000,0,0x00092F,0,medium,file-name-like ASCII string,,{}
+name_0002_000930,Original/MW_TANDY.EXE,resource_name_string,,8X8.FNT,0x000930,0,0x000000,0,0x000937,0,medium,file-name-like ASCII string,,{}
+name_0003_000938,Original/MW_TANDY.EXE,resource_name_string,,FOX88.FNT,0x000938,0,0x000000,0,0x000941,0,medium,file-name-like ASCII string,,{}
+name_0004_000942,Original/MW_TANDY.EXE,resource_name_string,,PROM88.FNT,0x000942,0,0x000000,0,0x00094C,0,medium,file-name-like ASCII string,,{}

@@ -1,0 +1,23 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/SHA.BMP",
+    "size": 3864,
+    "sha256": "4e31d965ab1f4e957272befe0b6edb62fb1ff96361be22080c531ecf119f6757"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 14668,
+  "entries": [
+    {
+      "index": 0,
+      "width": 152,
+      "height": 193,
+      "path": "research/extract/rendered_btech_bmp_png_display/SHA/SHA_000_152x193.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/SHA/SHA_000_152x193.png"
+      ]
+    }
+  ]
+}

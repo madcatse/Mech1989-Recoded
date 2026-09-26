@@ -1,0 +1,21 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/6X6.FNT",
+    "size": 580,
+    "sha256": "c0df8daeec521175190e72eb1c868fcb9d2deee3359b480311b83dee3f5115cc"
+  },
+  "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+  "width": 6,
+  "height": 6,
+  "first_code": 32,
+  "first_code_hex": "0x20",
+  "glyph_count": 96,
+  "last_code": 127,
+  "last_code_hex": "0x7F",
+  "path": "research/extract/rendered_fnt_png_display/6X6/6X6_6x6_96glyphs.png",
+  "paths": [
+    "research/extract/rendered_fnt_png_display/6X6/6X6_6x6_96glyphs.png"
+  ]
+}

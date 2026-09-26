@@ -1,0 +1,151 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/TERPCK_TBL.decoded.bin",
+    "size": 11270,
+    "sha256": "88e0760854181816ed8d3ec64cd15f84b80054bb60d7435086df22611e743b0f"
+  },
+  "kind": "pck_type0_point_cloud_probe",
+  "layout": "three_projection_xy_xz_yz",
+  "max_abs": 10000,
+  "min_points": 3,
+  "entries": [
+    {
+      "object_id": "pck_object_0002",
+      "entry_index": "pck_object_0002",
+      "width": 392,
+      "height": 128,
+      "point_count": 41,
+      "x_min": -1000,
+      "x_max": 7900,
+      "y_min": -2500,
+      "y_max": 6420,
+      "z_min": -1500,
+      "z_max": 6273,
+      "path": "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0002_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0002_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0004",
+      "entry_index": "pck_object_0004",
+      "width": 392,
+      "height": 128,
+      "point_count": 4,
+      "x_min": 770,
+      "x_max": 6273,
+      "y_min": -252,
+      "y_max": 6168,
+      "z_min": 515,
+      "z_max": 2326,
+      "path": "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0004_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0004_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0005",
+      "entry_index": "pck_object_0005",
+      "width": 392,
+      "height": 128,
+      "point_count": 35,
+      "x_min": -845,
+      "x_max": 9044,
+      "y_min": -1377,
+      "y_max": 4076,
+      "z_min": -2000,
+      "z_max": 6420,
+      "path": "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0005_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0005_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0008",
+      "entry_index": "pck_object_0008",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 2,
+      "x_max": 9,
+      "y_min": 296,
+      "y_max": 452,
+      "z_min": -1500,
+      "z_max": 0,
+      "path": "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0008_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0008_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0009",
+      "entry_index": "pck_object_0009",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 6,
+      "x_max": 8,
+      "y_min": 302,
+      "y_max": 506,
+      "z_min": -3000,
+      "z_max": 2000,
+      "path": "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0009_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0009_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0010",
+      "entry_index": "pck_object_0010",
+      "width": 392,
+      "height": 128,
+      "point_count": 29,
+      "x_min": -6400,
+      "x_max": 8200,
+      "y_min": -8685,
+      "y_max": 3842,
+      "z_min": -2620,
+      "z_max": 6144,
+      "path": "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0010_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0010_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0014",
+      "entry_index": "pck_object_0014",
+      "width": 392,
+      "height": 128,
+      "point_count": 22,
+      "x_min": -1000,
+      "x_max": 6144,
+      "y_min": -5892,
+      "y_max": 9600,
+      "z_min": 0,
+      "z_max": 6912,
+      "path": "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0014_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0014_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0017",
+      "entry_index": "pck_object_0017",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 1,
+      "x_max": 9300,
+      "y_min": 0,
+      "y_max": 944,
+      "z_min": -500,
+      "z_max": 0,
+      "path": "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0017_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/TERPCK_TBL/TERPCK_TBL_pck_object_0017_type0_probe.png"
+      ]
+    }
+  ]
+}

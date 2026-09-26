@@ -1,0 +1,72 @@
+﻿# Strings extracted from Original/RIF.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 68
+
+BMP:
+INF:
+BIN:
+	#2|H1!
+*UJ3
+3p4v
+M<ST
+M:"O
+7Cf8
+tVZj
+1(PL\
+w!Q1
+""eX
+^>@Zy
+3h:\&
+Be[-
+gggz
+IFw_`K
+LVJS
+bLDC
+0jpxO
+85+c
+51aa
+1&Gf
+a$h)
+*f.m
+N:Z6
+UM37
+h>rH`#4X
+bY6#
+x~"/q
+ME	X
+e,(R$S
+7w1d,
+ rVKN
+XGq^
+ibbu
+l/rK)o{
+.7ER
+lE&SO
+:|-t
+LH=v
+=1^O
+/VGL
+kDl6
+|u'(
+`h,(7
+z4h%
++V(.
+=G8w
+(82Xx
++Y*-
+6.kA
+ 3	!
+CWg9
+bb<h
+xSO(
+Yqh$
+q'Haa
+TG%6
+yb'{
+6jtB
++pOq
+&zowv2u
+iq]J
+	!ld
+Q\uS|
+yvwD2

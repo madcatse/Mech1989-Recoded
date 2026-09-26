@@ -1,0 +1,50 @@
+﻿# Strings extracted from Original/SM_MECHS.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 46
+
+BMP:
+INF:&
+BIN:
+1paC
++ov,:
+hUytx
+b{CF
+Dded
+8WFx=
+zo]IdI1
+aOZH
+TeQN
+tdFm
+*ZlB2
+nmaj
+#m`L3qJ
+^{9$vj
+g~zs
+n7ew
+/7|^
+e}B+
+$pF9
+Nvt 
+ &.E
+H:*S
+4mke1t
+!hkq
+hlp-
+GvY[H
+*JWz3
+6QMI:
+5%yZ"u
+mZ./y
+|B.i
+l^,n
+.;jS
+5=qF
+k=gX
+}(y/
+\Ka;
+f0	x
+<xg0K
+W+vQ
+frm$
+7r0#
+(oeX5

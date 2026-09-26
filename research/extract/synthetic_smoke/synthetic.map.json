@@ -1,0 +1,81 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "research/extract/synthetic_smoke/synthetic.BMP",
+    "size": 40,
+    "sha256": "562d922d5dc399a76d30efb07f30640b0dd02746aa24e8a22cf12a08f136064c"
+  },
+  "entries": [
+    {
+      "id": "synthetic_0000_BMP_000000",
+      "kind": "tagged_chunk",
+      "offset": 0,
+      "header_size": 8,
+      "payload_offset": 8,
+      "payload_size": 32,
+      "end_offset": 40,
+      "depth": 0,
+      "confidence": "high",
+      "tag": "BMP:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "high bit set in length field"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x80000020",
+        "has_nested_flag": "yes",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "synthetic_0000_INF_000008",
+      "kind": "tagged_chunk",
+      "offset": 8,
+      "header_size": 8,
+      "payload_offset": 16,
+      "payload_size": 6,
+      "end_offset": 22,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "INF:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000006",
+        "has_nested_flag": "no",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "synthetic_0001_BIN_000016",
+      "kind": "tagged_chunk",
+      "offset": 22,
+      "header_size": 8,
+      "payload_offset": 30,
+      "payload_size": 10,
+      "end_offset": 40,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "BIN:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x0000000A",
+        "has_nested_flag": "no",
+        "local_index": 1
+      }
+    }
+  ]
+}

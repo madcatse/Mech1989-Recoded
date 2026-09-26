@@ -1,0 +1,27 @@
+category,suggested_id,first_line,string_file_offset_hex,string_module_offset_hex,xref_count,xref_file_offsets,xref_module_offsets
+contract_ui,mw_main.contract.00d54f,REQUEST MISSION,0x00D54F,0xD14F,0,,
+contract_ui,mw_main.contract.00d564,LEAVE,0x00D564,0xD164,0,,
+contract_ui,mw_main.contract.00d575,5MNH,0x00D575,0xD175,0,,
+contract_ui,mw_main.contract.00d590,MERCENARY CONTRACT,0x00D590,0xD190,2,0x00586D 0x007158,0x546D 0x6D58
+contract_ui,mw_main.contract.00d6f9,ACCEPT,0x00D6F9,0xD2F9,0,,
+contract_ui,mw_main.contract.00d705,NEXT,0x00D705,0xD305,0,,
+contract_ui,mw_main.contract.00d70f,LEAVE,0x00D70F,0xD30F,0,,
+contract_ui,mw_main.contract.00d769,sJzJ,0x00D769,0xD369,0,,
+contract_ui,mw_main.contract.00d772,JKURITA,0x00D772,0xD372,1,0x006A60,0x6660
+contract_ui,mw_main.contract.00d77a,STEINER,0x00D77A,0xD37A,0,,
+contract_ui,mw_main.contract.00d782,MARIK,0x00D782,0xD382,0,,
+contract_ui,mw_main.contract.00d788,LIAO,0x00D788,0xD388,0,,
+contract_ui,mw_main.contract.00d78d,DAVION,0x00D78D,0xD38D,0,,
+contract_ui,mw_main.contract.00d7ab,"KJANUARY,",0x00D7AB,0xD3AB,0,,
+contract_ui,mw_main.contract.00d7b6,"FEBRUARY,",0x00D7B6,0xD3B6,0,,
+contract_ui,mw_main.contract.00d7e5,"AUGUST,",0x00D7E5,0xD3E5,0,,
+contract_ui,mw_main.contract.00d7ee,"SEPTEMBER,",0x00D7EE,0xD3EE,0,,
+contract_ui,mw_main.contract.00d7fa,"OCTOBER,",0x00D7FA,0xD3FA,0,,
+contract_ui,mw_main.contract.00d804,"NOVEMBER,",0x00D804,0xD404,2,0x0058A6 0x01145B,0x54A6 0x1105B
+contract_ui,mw_main.contract.00d80f,"DECEMBER,",0x00D80F,0xD40F,0,,
+contract_ui,mw_main.contract.00d835,SUBMITACCEPT,0x00D835,0xD435,0,,
+contract_ui,mw_main.contract.00d8b4,>CMVAAFOXG=EPYS?JQZ,0x00D8B4,0xD4B4,0,,
+contract_ui,mw_main.contract.00d8fa,NO CONTRACTS ARE AVAILABLE,0x00D8FA,0xD4FA,0,,
+contract_ui,mw_main.contract.00d925,YOUR OFFER IS UNACCEPTABLE!,0x00D925,0xD525,0,,
+contract_ui,mw_main.contract.00d96c,YOUR CONTRACT IS ACCEPTED.,0x00D96C,0xD56C,0,,
+contract_ui,mw_main.contract.00d987,BECAUSE OF YOUR MANY ACTIONS,0x00D987,0xD587,0,,

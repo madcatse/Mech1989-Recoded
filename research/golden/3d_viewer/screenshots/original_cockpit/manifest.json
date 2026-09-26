@@ -1,0 +1,48 @@
+{
+  "contract_version": 1,
+  "description": "Original combat/cockpit reference screenshots for the C++ OpenGL battle engine phase 0.",
+  "entries": [
+    {
+      "assumed_source_resolution": "320x200",
+      "file": "combat_cockpit_desert_mech_center.png",
+      "height": 1200,
+      "kind": "original_combat_cockpit_reference",
+      "mode": "RGB",
+      "observed_capture_resolution": "1600x1200",
+      "scale_note": "1600x1200 captures appear to be 5x6 integer scaling of the original 320x200 combat screen.",
+      "scene": "desert biome, mech centered in viewport",
+      "sha256": "01e4e6e3c94b004ca74c75f2a4226e2dc0d5351b710a9df15d0f18c0308254f6",
+      "source": "user-provided VMware/DOSBox capture",
+      "use": "terrain horizon, enemy mech scale, radar/weapon panel state",
+      "width": 1600
+    },
+    {
+      "assumed_source_resolution": "320x200",
+      "file": "combat_cockpit_snow_mech_left.png",
+      "height": 1200,
+      "kind": "original_combat_cockpit_reference",
+      "mode": "RGB",
+      "observed_capture_resolution": "1600x1200",
+      "scale_note": "1600x1200 captures appear to be 5x6 integer scaling of the original 320x200 combat screen.",
+      "scene": "snow biome, mech left of center",
+      "sha256": "adedf068ea042115cfca446181cb10105f58347a2dad30b3c2b4b63474acef9e",
+      "source": "user-provided VMware/DOSBox capture",
+      "use": "viewport composition, mech silhouette scale, cockpit overlay placement",
+      "width": 1600
+    },
+    {
+      "assumed_source_resolution": "320x200",
+      "file": "combat_cockpit_snow_target_left.png",
+      "height": 1200,
+      "kind": "original_combat_cockpit_reference",
+      "mode": "RGB",
+      "observed_capture_resolution": "1600x1200",
+      "scale_note": "1600x1200 captures appear to be 5x6 integer scaling of the original 320x200 combat screen.",
+      "scene": "snow biome, enemy/target visible left of center",
+      "sha256": "eec1bdb54a54b40383a79f50f81f651f6fdcaf0ba3f03bff596a20505499fead",
+      "source": "user-provided VMware/DOSBox capture",
+      "use": "cockpit frame layout, snow terrain colors, target scale, compass/HUD placement",
+      "width": 1600
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+﻿# Strings extracted from Original/BTECHSND.SND
+# Minimum length: 4 printable ASCII bytes
+# Count: 3
+
+SND:
+INF:
+IBM:

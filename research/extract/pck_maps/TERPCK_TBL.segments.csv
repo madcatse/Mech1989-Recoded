@@ -1,0 +1,2 @@
+source_file,id,index,codec,file_offset_hex,file_end_offset_hex,gap_before,compressed_size,decoded_size,ended_by_code_256
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/TERPCK.TBL,pck_segment_000,0,pck_lzw_segmented,0x000005,0x002065,0,8288,11270,False

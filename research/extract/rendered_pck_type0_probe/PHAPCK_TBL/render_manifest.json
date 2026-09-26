@@ -1,0 +1,559 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/PHAPCK_TBL.decoded.bin",
+    "size": 40640,
+    "sha256": "4731956773ac2684e897722dce9fff492dd1b36ff0b90a665af17b72f2d7618f"
+  },
+  "kind": "pck_type0_point_cloud_probe",
+  "layout": "three_projection_xy_xz_yz",
+  "max_abs": 10000,
+  "min_points": 3,
+  "entries": [
+    {
+      "object_id": "pck_object_0001",
+      "entry_index": "pck_object_0001",
+      "width": 392,
+      "height": 128,
+      "point_count": 22,
+      "x_min": 0,
+      "x_max": 4608,
+      "y_min": 0,
+      "y_max": 6656,
+      "z_min": 0,
+      "z_max": 7168,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0001_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0001_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0003",
+      "entry_index": "pck_object_0003",
+      "width": 392,
+      "height": 128,
+      "point_count": 56,
+      "x_min": -1846,
+      "x_max": 9216,
+      "y_min": -9212,
+      "y_max": 9758,
+      "z_min": -1971,
+      "z_max": 6400,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0003_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0003_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0011",
+      "entry_index": "pck_object_0011",
+      "width": 392,
+      "height": 128,
+      "point_count": 140,
+      "x_min": -2048,
+      "x_max": 6158,
+      "y_min": -2048,
+      "y_max": 5902,
+      "z_min": -2048,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0011_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0011_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0013",
+      "entry_index": "pck_object_0013",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": 641,
+      "x_max": 897,
+      "y_min": 771,
+      "y_max": 1284,
+      "z_min": 1541,
+      "z_max": 3331,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0013_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0013_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0016",
+      "entry_index": "pck_object_0016",
+      "width": 392,
+      "height": 128,
+      "point_count": 45,
+      "x_min": -2046,
+      "x_max": 5902,
+      "y_min": -190,
+      "y_max": 5376,
+      "z_min": -2048,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0016_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0016_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0018",
+      "entry_index": "pck_object_0018",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": 641,
+      "x_max": 897,
+      "y_min": 771,
+      "y_max": 1284,
+      "z_min": 1279,
+      "z_max": 3331,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0018_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0018_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0019",
+      "entry_index": "pck_object_0019",
+      "width": 392,
+      "height": 128,
+      "point_count": 59,
+      "x_min": -2048,
+      "x_max": 5902,
+      "y_min": -915,
+      "y_max": 6144,
+      "z_min": -2048,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0019_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0019_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0021",
+      "entry_index": "pck_object_0021",
+      "width": 392,
+      "height": 128,
+      "point_count": 35,
+      "x_min": -2048,
+      "x_max": 7424,
+      "y_min": -9212,
+      "y_max": 3328,
+      "z_min": -2048,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0021_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0021_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0026",
+      "entry_index": "pck_object_0026",
+      "width": 392,
+      "height": 128,
+      "point_count": 25,
+      "x_min": -1893,
+      "x_max": 5888,
+      "y_min": -2048,
+      "y_max": 5376,
+      "z_min": -1563,
+      "z_max": 5888,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0026_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0026_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0034",
+      "entry_index": "pck_object_0034",
+      "width": 392,
+      "height": 128,
+      "point_count": 26,
+      "x_min": -1000,
+      "x_max": 2040,
+      "y_min": -310,
+      "y_max": 6400,
+      "z_min": -321,
+      "z_max": 6912,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0034_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0034_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0042",
+      "entry_index": "pck_object_0042",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 4,
+      "x_max": 10,
+      "y_min": 284,
+      "y_max": 482,
+      "z_min": 354,
+      "z_max": 503,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0042_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0042_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0045",
+      "entry_index": "pck_object_0045",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 4,
+      "x_max": 10,
+      "y_min": 260,
+      "y_max": 458,
+      "z_min": 436,
+      "z_max": 6681,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0045_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0045_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0049",
+      "entry_index": "pck_object_0049",
+      "width": 392,
+      "height": 128,
+      "point_count": 65,
+      "x_min": -1756,
+      "x_max": 5902,
+      "y_min": -1436,
+      "y_max": 1282,
+      "z_min": -253,
+      "z_max": 3072,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0049_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0049_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0053",
+      "entry_index": "pck_object_0053",
+      "width": 392,
+      "height": 128,
+      "point_count": 53,
+      "x_min": -2048,
+      "x_max": 5902,
+      "y_min": -1986,
+      "y_max": 5902,
+      "z_min": -2039,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0053_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0053_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0057",
+      "entry_index": "pck_object_0057",
+      "width": 392,
+      "height": 128,
+      "point_count": 158,
+      "x_min": -1756,
+      "x_max": 5902,
+      "y_min": -2048,
+      "y_max": 5902,
+      "z_min": -2048,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0057_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0057_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0059",
+      "entry_index": "pck_object_0059",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": 641,
+      "x_max": 897,
+      "y_min": 771,
+      "y_max": 1284,
+      "z_min": 1541,
+      "z_max": 3331,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0059_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0059_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0062",
+      "entry_index": "pck_object_0062",
+      "width": 392,
+      "height": 128,
+      "point_count": 53,
+      "x_min": -2048,
+      "x_max": 5902,
+      "y_min": -2048,
+      "y_max": 5902,
+      "z_min": -2048,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0062_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0062_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0065",
+      "entry_index": "pck_object_0065",
+      "width": 392,
+      "height": 128,
+      "point_count": 112,
+      "x_min": -2048,
+      "x_max": 7424,
+      "y_min": -9212,
+      "y_max": 6144,
+      "z_min": -2048,
+      "z_max": 6912,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0065_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0065_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0070",
+      "entry_index": "pck_object_0070",
+      "width": 392,
+      "height": 128,
+      "point_count": 42,
+      "x_min": -9216,
+      "x_max": 6144,
+      "y_min": -2048,
+      "y_max": 7430,
+      "z_min": -2048,
+      "z_max": 3840,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0070_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0070_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0072",
+      "entry_index": "pck_object_0072",
+      "width": 392,
+      "height": 128,
+      "point_count": 33,
+      "x_min": -2048,
+      "x_max": 6144,
+      "y_min": -2048,
+      "y_max": 2048,
+      "z_min": -1099,
+      "z_max": 7168,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0072_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0072_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0078",
+      "entry_index": "pck_object_0078",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 4,
+      "x_max": 10,
+      "y_min": 260,
+      "y_max": 458,
+      "z_min": 897,
+      "z_max": 6681,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0078_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0078_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0082",
+      "entry_index": "pck_object_0082",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 4,
+      "x_max": 10,
+      "y_min": 260,
+      "y_max": 458,
+      "z_min": 897,
+      "z_max": 6681,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0082_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0082_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0084",
+      "entry_index": "pck_object_0084",
+      "width": 392,
+      "height": 128,
+      "point_count": 68,
+      "x_min": -1549,
+      "x_max": 3072,
+      "y_min": -1434,
+      "y_max": 1865,
+      "z_min": -1430,
+      "z_max": 3072,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0084_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0084_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0088",
+      "entry_index": "pck_object_0088",
+      "width": 392,
+      "height": 128,
+      "point_count": 44,
+      "x_min": -1000,
+      "x_max": 3328,
+      "y_min": -2048,
+      "y_max": 2177,
+      "z_min": -1677,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0088_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0088_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0091",
+      "entry_index": "pck_object_0091",
+      "width": 392,
+      "height": 128,
+      "point_count": 135,
+      "x_min": -2048,
+      "x_max": 5902,
+      "y_min": -2048,
+      "y_max": 5902,
+      "z_min": -2041,
+      "z_max": 5902,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0091_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0091_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0093",
+      "entry_index": "pck_object_0093",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": 770,
+      "x_max": 2177,
+      "y_min": 8,
+      "y_max": 1287,
+      "z_min": 1541,
+      "z_max": 3328,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0093_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0093_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0097",
+      "entry_index": "pck_object_0097",
+      "width": 392,
+      "height": 128,
+      "point_count": 117,
+      "x_min": -2048,
+      "x_max": 5646,
+      "y_min": -2042,
+      "y_max": 6400,
+      "z_min": -2048,
+      "z_max": 6912,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0097_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0097_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0099",
+      "entry_index": "pck_object_0099",
+      "width": 392,
+      "height": 128,
+      "point_count": 5,
+      "x_min": 770,
+      "x_max": 2177,
+      "y_min": 8,
+      "y_max": 1287,
+      "z_min": 1279,
+      "z_max": 3328,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0099_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0099_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0100",
+      "entry_index": "pck_object_0100",
+      "width": 392,
+      "height": 128,
+      "point_count": 19,
+      "x_min": -2048,
+      "x_max": 7424,
+      "y_min": -9212,
+      "y_max": 6400,
+      "z_min": -4864,
+      "z_max": 6912,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0100_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0100_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0106",
+      "entry_index": "pck_object_0106",
+      "width": 392,
+      "height": 128,
+      "point_count": 25,
+      "x_min": -2048,
+      "x_max": 1599,
+      "y_min": -310,
+      "y_max": 6400,
+      "z_min": -915,
+      "z_max": 6912,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0106_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0106_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0110",
+      "entry_index": "pck_object_0110",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 4,
+      "x_max": 10,
+      "y_min": 260,
+      "y_max": 458,
+      "z_min": 337,
+      "z_max": 6681,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0110_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0110_type0_probe.png"
+      ]
+    },
+    {
+      "object_id": "pck_object_0114",
+      "entry_index": "pck_object_0114",
+      "width": 392,
+      "height": 128,
+      "point_count": 3,
+      "x_min": 4,
+      "x_max": 10,
+      "y_min": 260,
+      "y_max": 458,
+      "z_min": 337,
+      "z_max": 6681,
+      "path": "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0114_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/PHAPCK_TBL/PHAPCK_TBL_pck_object_0114_type0_probe.png"
+      ]
+    }
+  ]
+}

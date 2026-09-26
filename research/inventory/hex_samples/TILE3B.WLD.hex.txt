@@ -1,0 +1,4 @@
+﻿# Hex sample for Original/TILE3B.WLD
+# Size: 14 bytes
+# First 256 bytes
+00000000  17 00 FB CD FF FF DA 3F 00 00 00 00 00 00        .......?......

@@ -1,0 +1,3 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+name_0000_000A43,Original/MW.EXE,resource_name_string,,MW_MAIN.EXE,0x000A43,0,0x000000,0,0x000A4E,0,medium,file-name-like ASCII string,,{}
+name_0001_000A4F,Original/MW.EXE,resource_name_string,,BTECH.EXE,0x000A4F,0,0x000000,0,0x000A58,0,medium,file-name-like ASCII string,,{}

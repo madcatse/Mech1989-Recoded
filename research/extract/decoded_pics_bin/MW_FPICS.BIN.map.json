@@ -1,0 +1,559 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_FPICS.BIN",
+    "size": 13644,
+    "sha256": "25f711906b33e00eb1051b7b57ce432160607f527f4df1417a46410eec37028b"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 73950,
+  "decoded_size": 36975,
+  "decoded_sha256": "6e6a91564c8503dac099c6b58bf57fc949fabe6016f7e93b845eeb601fb2771e",
+  "decoded_header_candidate": {
+    "header_layout": "offset_table_then_u16le_size_table",
+    "header_size": 300,
+    "header_entry_count": 50,
+    "nonzero_offset_count": 10,
+    "nonzero_size_count": 10,
+    "monotonic_nonzero_offsets": "yes",
+    "first_offsets_hex": "0x0000012C 0x0000015C 0x00000651 0x00000FEA 0x00002031 0x0000375F 0x00005E74 0x00007B8F 0x000080AA 0x000085C5 0x00000000 0x00000000",
+    "first_sizes": "48 1269 2457 4167 5934 10005 7451 1307 1307 2729 0 0"
+  },
+  "entries": [
+    {
+      "index": 0,
+      "offset": 300,
+      "size": 48,
+      "end_offset": 348,
+      "status": "active",
+      "sha256": "9b37f840db54aa616a350db4d08999badd7049aa764768c24eced8eaef51d204",
+      "fields": {
+        "role": "palette_rgb_16_dac6",
+        "palette_color_count": 16
+      }
+    },
+    {
+      "index": 1,
+      "offset": 348,
+      "size": 1269,
+      "end_offset": 1617,
+      "status": "active",
+      "sha256": "85a9c3be309ca1a9482cee31656898e332345dcd2f1a50e67c20a1404aaf225d",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 72,
+        "height": 35,
+        "pixel_data_offset": 352,
+        "pixel_data_size": 1260,
+        "row_stride_bytes": 36,
+        "trailing_size": 5,
+        "trailing_hex": "EC021983C4"
+      }
+    },
+    {
+      "index": 2,
+      "offset": 1617,
+      "size": 2457,
+      "end_offset": 4074,
+      "status": "active",
+      "sha256": "d2e29ff4f451587c47575e816f555fbec00d12913df2346d4c7bb5ad4f7100a0",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 101,
+        "height": 48,
+        "pixel_data_offset": 1621,
+        "pixel_data_size": 2448,
+        "row_stride_bytes": 51,
+        "trailing_size": 5,
+        "trailing_hex": "483AFF76FC"
+      }
+    },
+    {
+      "index": 3,
+      "offset": 4074,
+      "size": 4167,
+      "end_offset": 8241,
+      "status": "active",
+      "sha256": "24eb1eda6b153dd8ff3523b282bdb6b8b5e7f8d265663782f5da8feb8275e94e",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 131,
+        "height": 63,
+        "pixel_data_offset": 4078,
+        "pixel_data_size": 4158,
+        "row_stride_bytes": 66,
+        "trailing_size": 5,
+        "trailing_hex": "02E8490481"
+      }
+    },
+    {
+      "index": 4,
+      "offset": 8241,
+      "size": 5934,
+      "end_offset": 14175,
+      "status": "active",
+      "sha256": "9c291e56bee3742cab1fe4555d27d74c1059ece70be4dc01200d47a3b54ffb67",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 157,
+        "height": 75,
+        "pixel_data_offset": 8245,
+        "pixel_data_size": 5925,
+        "row_stride_bytes": 79,
+        "trailing_size": 5,
+        "trailing_hex": "2BC099A380"
+      }
+    },
+    {
+      "index": 5,
+      "offset": 14175,
+      "size": 10005,
+      "end_offset": 24180,
+      "status": "active",
+      "sha256": "6d8ce87670ebbbfa585274c59d35055635e2239af7563e7dcdd9835ee84779d2",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 203,
+        "height": 98,
+        "pixel_data_offset": 14179,
+        "pixel_data_size": 9996,
+        "row_stride_bytes": 102,
+        "trailing_size": 5,
+        "trailing_hex": "436F707972"
+      }
+    },
+    {
+      "index": 6,
+      "offset": 24180,
+      "size": 7451,
+      "end_offset": 31631,
+      "status": "active",
+      "sha256": "1dc5908ac6e3823c04ee5a36e5cf3faeb96cdc59f71fa4614b219948889d7fd7",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 243,
+        "height": 61,
+        "pixel_data_offset": 24184,
+        "pixel_data_size": 7442,
+        "row_stride_bytes": 122,
+        "trailing_size": 5,
+        "trailing_hex": "0000000000"
+      }
+    },
+    {
+      "index": 7,
+      "offset": 31631,
+      "size": 1307,
+      "end_offset": 32938,
+      "status": "active",
+      "sha256": "4c28b50f4ba9ae094b0b1dd0fc110fe1ff94e9ec854323a9c21743c4c5e9a427",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 43,
+        "height": 59,
+        "pixel_data_offset": 31635,
+        "pixel_data_size": 1298,
+        "row_stride_bytes": 22,
+        "trailing_size": 5,
+        "trailing_hex": "BBB5B11000"
+      }
+    },
+    {
+      "index": 8,
+      "offset": 32938,
+      "size": 1307,
+      "end_offset": 34245,
+      "status": "active",
+      "sha256": "e785b00328ec57bba4c100a706cab2bb44469514594d58743d6321791d48db02",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 43,
+        "height": 59,
+        "pixel_data_offset": 32942,
+        "pixel_data_size": 1298,
+        "row_stride_bytes": 22,
+        "trailing_size": 5,
+        "trailing_hex": "BBB5B11000"
+      }
+    },
+    {
+      "index": 9,
+      "offset": 34245,
+      "size": 2729,
+      "end_offset": 36974,
+      "status": "active",
+      "sha256": "ca15e4a57f32021fc754cebfec534c576a9a0d0221e3dac4f708de00889afc7f",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 320,
+        "height": 17,
+        "pixel_data_offset": 34249,
+        "pixel_data_size": 2720,
+        "row_stride_bytes": 160,
+        "trailing_size": 5,
+        "trailing_hex": "3333332222"
+      }
+    },
+    {
+      "index": 10,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 11,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 12,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 13,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 14,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 15,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 16,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 17,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 18,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 19,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 20,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 21,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 22,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 23,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 24,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 25,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 26,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 27,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 28,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 29,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 30,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 31,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 32,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 33,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 34,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 35,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 36,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 37,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 38,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 39,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 40,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 41,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 42,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 43,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 44,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 45,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 46,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 47,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 48,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 49,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    }
+  ]
+}

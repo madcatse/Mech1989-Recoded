@@ -1,0 +1,8 @@
+source_file,byte_pair_key,shape_ref_hex,shape_ref_low_byte,shape_ref_high_byte,frame_type,transform_index,count,object_count,objects,dx_min,dx_max,dy_min,dy_max,threshold_min,threshold_max
+SHAPCK_TBL.decoded.bin,03:04,0x0403,3,4,2,,1,1,pck_object_0004,2,2,2,2,34,34
+SHAPCK_TBL.decoded.bin,08:04,0x0408,8,4,2,,1,1,pck_object_0004,-127,-127,8,8,198,198
+SHAPCK_TBL.decoded.bin,08:07,0x0708,8,7,2,,1,1,pck_object_0004,15,15,15,15,74,74
+SHAPCK_TBL.decoded.bin,17:0F,0x0F17,23,15,2,,1,1,pck_object_0004,2,2,2,2,140,140
+SHAPCK_TBL.decoded.bin,2D:2E,0x2E2D,45,46,3,47,1,1,pck_object_0004,44,44,44,44,49,49
+SHAPCK_TBL.decoded.bin,37:05,0x0537,55,5,3,255,1,1,pck_object_0004,8,8,8,8,115,115
+SHAPCK_TBL.decoded.bin,3D:3E,0x3E3D,61,62,3,63,1,1,pck_object_0004,60,60,60,60,197,197

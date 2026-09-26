@@ -1,0 +1,54 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/SHAPCK.TBL",
+    "size": 40544,
+    "sha256": "63abc05e37d544c0c9c74593a0e1cb33ee0c5cba7267c86bd8206f5b8818e7f9"
+  },
+  "codec": "pck_lzw_segmented",
+  "raw_codec_id": 2,
+  "encoded_size": 40539,
+  "decoded_size": 56772,
+  "decoded_sha256": "f4bef508110949ebcc8a5888e2c0663cb30f22037373ca461c2d0d50c84d2307",
+  "decoded_structure_probe": {
+    "first_u16": 4,
+    "second_u16": 30,
+    "second_u16_times_16": 480,
+    "second_u16_times_16_hex": "0x01E0",
+    "leading_pair_count": 120,
+    "leading_pair_bytes": 480,
+    "leading_pair_stop_offset": 482,
+    "leading_pair_stop_offset_hex": "0x01E2",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 3520",
+    "boundary_16x_first_16_hex": "0000000080002F010000000000000200"
+  },
+  "segment_count": 3,
+  "segments": [
+    {
+      "body_offset": 0,
+      "gap_before": 0,
+      "compressed_size": 13621,
+      "body_end_offset": 13621,
+      "decoded_size": 20005,
+      "ended_by_code_256": true
+    },
+    {
+      "body_offset": 13628,
+      "gap_before": 7,
+      "compressed_size": 14429,
+      "body_end_offset": 28057,
+      "decoded_size": 20002,
+      "ended_by_code_256": true
+    },
+    {
+      "body_offset": 28060,
+      "gap_before": 3,
+      "compressed_size": 12479,
+      "body_end_offset": 40539,
+      "decoded_size": 16765,
+      "ended_by_code_256": false
+    }
+  ],
+  "output": "research/extract/decoded_pck/SHAPCK_TBL.decoded.bin"
+}

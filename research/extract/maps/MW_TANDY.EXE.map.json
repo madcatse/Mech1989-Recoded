@@ -1,0 +1,101 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_TANDY.EXE",
+    "size": 5009,
+    "sha256": "2f8e1c74cf99fedc41f4bd322e510c7563d01a674ddced0601eeb2772efe4618"
+  },
+  "entries": [
+    {
+      "id": "name_0000_00091E",
+      "kind": "resource_name_string",
+      "offset": 2334,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2341,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "6X6.FNT",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0001_000926",
+      "kind": "resource_name_string",
+      "offset": 2342,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2351,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "88C64.FNT",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0002_000930",
+      "kind": "resource_name_string",
+      "offset": 2352,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2359,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "8X8.FNT",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0003_000938",
+      "kind": "resource_name_string",
+      "offset": 2360,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2369,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "FOX88.FNT",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0004_000942",
+      "kind": "resource_name_string",
+      "offset": 2370,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2380,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "PROM88.FNT",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    }
+  ]
+}

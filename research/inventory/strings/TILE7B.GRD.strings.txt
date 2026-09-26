@@ -1,0 +1,21 @@
+﻿# Strings extracted from Original/TILE7B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 17
+
+ #&&
+#&(+.0364-&
+$'$ 
+!%),048;>ACFB;-
+	 36420-+)*.26:>AEIMPTUPA2#
+4<=:9<=:8<@CGIKMPSWYZRD7(
++)'),0369=>@BCEGHJKMLH>4*
+")034679;<>@?=;2(
+ '(*,-/021/.,%
+ !#$#" 
+ :E@4(
+7RWF7%
+7]XA.
+>kZ7%
+Om[9
++`y];
+#o|O!

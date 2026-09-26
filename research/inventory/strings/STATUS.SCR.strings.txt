@@ -1,0 +1,23 @@
+﻿# Strings extracted from Original/STATUS.SCR
+# Minimum length: 4 printable ASCII bytes
+# Count: 19
+
+SCR:1
+BIN:)
++W|Z
+L3qX
+]'as
+"d,z
+`@n$
+fco86
+(%o<
+{=}X
+q?vpO
+9c{R
+7B> 
+e,eI
+AQ*S
+(Dh	
+t}+8
+&e	b
+#h?B

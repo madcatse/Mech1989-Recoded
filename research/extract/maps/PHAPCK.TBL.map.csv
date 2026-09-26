@@ -1,0 +1,2 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+offs_0000_0003E0,Original/PHAPCK.TBL,possible_offset_table,,,0x0003E0,0,0x0016F8,18793,0x0003E8,0,medium,monotonic little-endian offsets; offsets fit file; payload starts after table,,"{""entry_count"": 4, ""entry_width"": 2, ""first_value"": 5880, ""last_value"": 14628}"

@@ -1,0 +1,24 @@
+﻿# Strings extracted from Original/TILE3B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 20
+
+6<7/
+#DTI7&
+,M[L<*
+4RQE5%
+9NG;.
+ >J=1$
+%B@3'
+(<6)
++>5(
+3E8*
+:J<-
+BM?0!
+)JQB3%
+5QTE5%
+	"<WUE4$
+7OUD3"
+,EPC2!
+	":KB1 
+0GB1 
+&=A0

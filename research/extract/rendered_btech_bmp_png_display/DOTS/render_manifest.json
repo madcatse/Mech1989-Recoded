@@ -1,0 +1,176 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/DOTS.BMP",
+    "size": 127,
+    "sha256": "ae8b401a7cca4ad68b70e5d149ed981b507ed739bb1de5dd4610d15d4b62091d"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 72,
+  "entries": [
+    {
+      "index": 0,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_000_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_000_8x1.png"
+      ]
+    },
+    {
+      "index": 1,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_001_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_001_8x1.png"
+      ]
+    },
+    {
+      "index": 2,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_002_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_002_8x1.png"
+      ]
+    },
+    {
+      "index": 3,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_003_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_003_8x1.png"
+      ]
+    },
+    {
+      "index": 4,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_004_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_004_8x1.png"
+      ]
+    },
+    {
+      "index": 5,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_005_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_005_8x1.png"
+      ]
+    },
+    {
+      "index": 6,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_006_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_006_8x1.png"
+      ]
+    },
+    {
+      "index": 7,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_007_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_007_8x1.png"
+      ]
+    },
+    {
+      "index": 8,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_008_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_008_8x1.png"
+      ]
+    },
+    {
+      "index": 9,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_009_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_009_8x1.png"
+      ]
+    },
+    {
+      "index": 10,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_010_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_010_8x1.png"
+      ]
+    },
+    {
+      "index": 11,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_011_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_011_8x1.png"
+      ]
+    },
+    {
+      "index": 12,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_012_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_012_8x1.png"
+      ]
+    },
+    {
+      "index": 13,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_013_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_013_8x1.png"
+      ]
+    },
+    {
+      "index": 14,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_014_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_014_8x1.png"
+      ]
+    },
+    {
+      "index": 15,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_015_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_015_8x1.png"
+      ]
+    },
+    {
+      "index": 16,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_016_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_016_8x1.png"
+      ]
+    },
+    {
+      "index": 17,
+      "width": 8,
+      "height": 1,
+      "path": "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_017_8x1.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/DOTS/DOTS_017_8x1.png"
+      ]
+    }
+  ]
+}

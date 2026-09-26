@@ -1,0 +1,7 @@
+source_file,byte_pair_key,shape_ref_hex,shape_ref_low_byte,shape_ref_high_byte,frame_type,transform_index,count,object_count,objects,dx_min,dx_max,dy_min,dy_max,threshold_min,threshold_max
+MARPCK_TBL.decoded.bin,12:13,0x1312,18,19,2,,2,2,pck_object_0069;pck_object_0070,3,17,3,17,116,118
+MARPCK_TBL.decoded.bin,04:00,0x0004,4,0,2,,1,1,pck_object_0066,-127,-127,9,9,227,227
+MARPCK_TBL.decoded.bin,04:04,0x0404,4,4,2,,1,1,pck_object_0069,-127,-127,9,9,224,224
+MARPCK_TBL.decoded.bin,08:00,0x0008,8,0,2,,1,1,pck_object_0070,-127,-127,7,7,228,228
+MARPCK_TBL.decoded.bin,08:08,0x0808,8,8,2,,1,1,pck_object_0019,-127,-127,7,7,225,225
+MARPCK_TBL.decoded.bin,13:14,0x1413,19,20,2,,1,1,pck_object_0066,18,18,18,18,110,110

@@ -1,0 +1,58 @@
+﻿# Strings extracted from Original/PHO.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 54
+
+BMP:
+INF:
+BIN:
+	#2|H1!
+y^=B
+0 2I
+3N/e
+fI;0
+)[3n
+.%hQ
+0<{(Q
+9[]rW8D
+CO$g
+ 0j-
+5MuiH
+U4!-
+$F22Q
+dWP5
+JwoKK,
+@<Fiw
+eblC'
+(WxQgq
+,a,!
+eus;ZL
+ZfPR
+jinR
+\(6#
+s#,]vR'
+p^,b
+.Tv\
+.6G	
+a9L&n
+V"Yy
+V(}bK{P7
+ya,>$[
+kg$$U
+Q?X7
+_&;Kk
+Bq,WD.r
+gmN32xvi
+QjB^
+VS^r
+3UeN
+d8 )
+dhHq>
+";!"
+-A hR
+My14
+PB/R
+H$Za
+Ka^TT
+Q\As
+t6"cD
+&+)&mb

@@ -1,0 +1,1 @@
+source_file,id,source_block_id,source_block_index,source_block_offset_hex,object_offset_hex,prefix_size,flags_hex,has_high_bit,palette_or_kind,base_id_hex,unknown_04,unknown_06,unknown_08,header_word_0c,part_count,parts_offset,parts_abs_hex,issues,first_32_hex_from_object

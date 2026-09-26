@@ -1,0 +1,21 @@
+﻿# Strings extracted from Original/TILE0B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 17
+
+&67$
+0EOE2
+#7JT[J7$
+&9KPNKC2 
+'<DEB>;4,
+)@=852/,$
+/FC7-%"
+"5LI=0%
+	"0=SPD6)
++FYVJ=/"
+4MVPC5(
+	#<QQD8-!
+*CLE9-!
+1GF:-!
+ 8B;."
+%<</#
+*71$

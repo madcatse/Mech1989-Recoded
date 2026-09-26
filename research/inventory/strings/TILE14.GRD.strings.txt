@@ -1,0 +1,47 @@
+﻿# Strings extracted from Original/TILE14.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 43
+
+%5B;(
+.HWJ1
+6OXC(
+%>SK6
+,EM=(
+3HA.
+":C2
+'>7#
+3EM<(
+%:MWVC0
+)<MQPK?-
++?GFC@<4(
++>=:741,$
+2DA4,'$!
+"8JG:-$
+"/>PM@3&
+3KWTF9,
+"<\YM?2%
++QjTB6+
+FwlN6+
+}`B%
+UrlO1
+FQO1
+$(*'#
+$*.253/+'#
+(28<@?;73-&
+#,6?GKKGC;3)
+'0:CMUWQK@6+ 
+"+5>GQY\XMC8-#
+&/9BJSWZRJB:0%
+ *3=DMUWTOF=5-%
+%.6>GOSTOJA91) 
+'08@IQQOID=5-$
+!*2:CKNNID?90( 
+$,4=ELLID>94,$
+&.7?GJIC>94.( 
+ (19AFIC>93.)$
+"+3;DFC>93.)#
+%-5>BC>83.(#
+'07@@=83.(#
+(1:==83-(#
+'0750+&!
+&,*%!

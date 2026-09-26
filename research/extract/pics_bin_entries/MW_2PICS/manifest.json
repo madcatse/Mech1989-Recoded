@@ -1,0 +1,74 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_2PICS.BIN",
+    "size": 21348,
+    "sha256": "55ca122298548b28d73804c3510f9e95cf188f4abd93eb7b6bb3d083850057ea"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 72133,
+  "decoded_size": 36066,
+  "decoded_sha256": "880deb9d45b053562ade1d4a3d663986c8d209d433c7e8feae5585b14c67b793",
+  "decoded_header_candidate": {
+    "header_layout": "offset_table_then_u16le_size_table",
+    "header_size": 120,
+    "header_entry_count": 20,
+    "nonzero_offset_count": 7,
+    "nonzero_size_count": 7,
+    "monotonic_nonzero_offsets": "yes",
+    "first_offsets_hex": "0x00000078 0x000000A8 0x00001807 0x00002F66 0x000046C5 0x00005E24 0x00007583 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+    "first_sizes": "48 5983 5983 5983 5983 5983 5983 0 0 0 0 0"
+  },
+  "entries": [
+    {
+      "entry_index": 0,
+      "offset": 120,
+      "size": 48,
+      "sha256": "9b37f840db54aa616a350db4d08999badd7049aa764768c24eced8eaef51d204",
+      "path": "research/extract/pics_bin_entries/MW_2PICS/entry_000_off_00000078_len_48.bin"
+    },
+    {
+      "entry_index": 1,
+      "offset": 168,
+      "size": 5983,
+      "sha256": "84fe0cc8f56849114c2f6235354a52af327f832687c9788d7fa4dc0074dda389",
+      "path": "research/extract/pics_bin_entries/MW_2PICS/entry_001_off_000000A8_len_5983.bin"
+    },
+    {
+      "entry_index": 2,
+      "offset": 6151,
+      "size": 5983,
+      "sha256": "dfa720a6037573417a44a617d478440e9cde462fd25a9c7e9aad0c0320ff8c21",
+      "path": "research/extract/pics_bin_entries/MW_2PICS/entry_002_off_00001807_len_5983.bin"
+    },
+    {
+      "entry_index": 3,
+      "offset": 12134,
+      "size": 5983,
+      "sha256": "9b6d595e8d86cc8cc3fbda690bd73b35300b5eb93e001b38bc58b41234945da7",
+      "path": "research/extract/pics_bin_entries/MW_2PICS/entry_003_off_00002F66_len_5983.bin"
+    },
+    {
+      "entry_index": 4,
+      "offset": 18117,
+      "size": 5983,
+      "sha256": "45acb43d2f57ef3435431a83f026276c733902ea17b7933461fe5e8a869df714",
+      "path": "research/extract/pics_bin_entries/MW_2PICS/entry_004_off_000046C5_len_5983.bin"
+    },
+    {
+      "entry_index": 5,
+      "offset": 24100,
+      "size": 5983,
+      "sha256": "15c69f9152b1228b8cef2b5fea326da27454d0f812d831c919d67b1746c07aed",
+      "path": "research/extract/pics_bin_entries/MW_2PICS/entry_005_off_00005E24_len_5983.bin"
+    },
+    {
+      "entry_index": 6,
+      "offset": 30083,
+      "size": 5983,
+      "sha256": "5507134602d440921917da9c0a1d1eebc943da2c871dc13366be03eb962ee2c1",
+      "path": "research/extract/pics_bin_entries/MW_2PICS/entry_006_off_00007583_len_5983.bin"
+    }
+  ]
+}

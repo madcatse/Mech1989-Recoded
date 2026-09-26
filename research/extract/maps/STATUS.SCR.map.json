@@ -1,0 +1,64 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/STATUS.SCR",
+    "size": 1593,
+    "sha256": "32041ea193465e452733b62a558cf7e12f6eeb2f6836fb01cd7a89082097d6f9"
+  },
+  "entries": [
+    {
+      "id": "STATUS_0000_SCR_000000",
+      "kind": "tagged_chunk",
+      "offset": 0,
+      "header_size": 8,
+      "payload_offset": 8,
+      "payload_size": 1585,
+      "end_offset": 1593,
+      "depth": 0,
+      "confidence": "high",
+      "tag": "SCR:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "high bit set in length field"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x80000631",
+        "has_nested_flag": "yes",
+        "local_index": 0
+      }
+    },
+    {
+      "id": "STATUS_0000_BIN_000008",
+      "kind": "tagged_chunk",
+      "offset": 8,
+      "header_size": 8,
+      "payload_offset": 16,
+      "payload_size": 1577,
+      "end_offset": 1593,
+      "depth": 1,
+      "confidence": "high",
+      "tag": "BIN:",
+      "name": "",
+      "evidence": [
+        "ASCII tag",
+        "little-endian length fits parent/file",
+        "BIN payload starts with codec + decoded-size candidate"
+      ],
+      "warnings": [],
+      "fields": {
+        "raw_length_hex": "0x00000629",
+        "has_nested_flag": "no",
+        "local_index": 0,
+        "bin_header_layout": "u8_codec_u32le_decoded_size",
+        "bin_codec_candidate": 2,
+        "bin_declared_decoded_size": 32000,
+        "bin_payload_body_size": 1572,
+        "bin_declared_to_payload_ratio": "20.2917"
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+﻿# Strings extracted from Original/TILE14B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 23
+
+%5B;(
+.HWJ1
+6OXC(
+%>SK6
+,EM=(
+3HA.
+":C2
+'>7#
+3EM<(
+%:MWVC0
+)<MQPK?-
++?GFC@<4(
++>=:741,$
+2DA4,'$!
+"8JG:-$
+"/>PM@3&
+3KWTF9,
+"<\YM?2%
++QjTB6+
+FwlN6+
+}`B%
+UrlO1
+FQO1

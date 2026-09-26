@@ -1,0 +1,53 @@
+﻿# Strings extracted from Original/6X6B.FNT
+# Minimum length: 4 printable ASCII bytes
+# Count: 49
+
+FNT:D
+0P`p
+ @@@ 
+@   @
+0HHH0
+ `  p
+x@xHx
+xHxHx
+x0HxHH
+pHpHp
+8@@@8
+pHHHp
+x@p@x
+x@p@@
+x@XHx
+HHxHH
+p   p
+HP`PH
+@@@@x
+HhXHH
+0HHH0
+pHp@@
+0HHP(
+pHpHH
+    
+HHHH0
+HHH00
+HH0HH
+0   0
+8HH8
+@pHHp
+8@@8
+8HH8
+0X`8
+0 p  
+p@pHHH
+P @@P`P
+     
+pHHH
+0HH0
+pHHp@
+8HH8
+Ph@@
+ p   
+HHH0
+HHP`
+DTTl
+H00H
+xxxx

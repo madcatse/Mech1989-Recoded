@@ -1,0 +1,47 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW.EXE",
+    "size": 4096,
+    "sha256": "c9ea35f8247c46890279edfd99e7d08c1d2bcd84f855453259c78b5428c97089"
+  },
+  "entries": [
+    {
+      "id": "name_0000_000A43",
+      "kind": "resource_name_string",
+      "offset": 2627,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2638,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "MW_MAIN.EXE",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    },
+    {
+      "id": "name_0001_000A4F",
+      "kind": "resource_name_string",
+      "offset": 2639,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 0,
+      "end_offset": 2648,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "BTECH.EXE",
+      "evidence": [
+        "file-name-like ASCII string"
+      ],
+      "warnings": [],
+      "fields": {}
+    }
+  ]
+}

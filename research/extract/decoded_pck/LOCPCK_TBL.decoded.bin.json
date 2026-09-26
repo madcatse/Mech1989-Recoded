@@ -1,0 +1,54 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/LOCPCK.TBL",
+    "size": 26627,
+    "sha256": "39d83df552edd9c87a9c7d17fb852034de449a86d1060f5a38a7f4a4ca8b0589"
+  },
+  "codec": "pck_lzw_segmented",
+  "raw_codec_id": 2,
+  "encoded_size": 26622,
+  "decoded_size": 38706,
+  "decoded_sha256": "b9ef97d6705384ef0c5b161bd50dcc1b063ee65153b567cc61b2361d04443e2c",
+  "decoded_structure_probe": {
+    "first_u16": 4,
+    "second_u16": 21,
+    "second_u16_times_16": 336,
+    "second_u16_times_16_hex": "0x0150",
+    "leading_pair_count": 84,
+    "leading_pair_bytes": 336,
+    "leading_pair_stop_offset": 338,
+    "leading_pair_stop_offset_hex": "0x0152",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 2394",
+    "boundary_16x_first_16_hex": "0000000080003F010000000000000100"
+  },
+  "segment_count": 3,
+  "segments": [
+    {
+      "body_offset": 0,
+      "gap_before": 0,
+      "compressed_size": 13870,
+      "body_end_offset": 13870,
+      "decoded_size": 19999,
+      "ended_by_code_256": true
+    },
+    {
+      "body_offset": 13876,
+      "gap_before": 6,
+      "compressed_size": 2,
+      "body_end_offset": 13878,
+      "decoded_size": 0,
+      "ended_by_code_256": true
+    },
+    {
+      "body_offset": 13880,
+      "gap_before": 2,
+      "compressed_size": 12742,
+      "body_end_offset": 26622,
+      "decoded_size": 18707,
+      "ended_by_code_256": false
+    }
+  ],
+  "output": "research/extract/decoded_pck/LOCPCK_TBL.decoded.bin"
+}

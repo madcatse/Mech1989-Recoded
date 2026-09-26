@@ -1,0 +1,82 @@
+﻿# Strings extracted from Original/MW_FPICS.BIN
+# Minimum length: 4 printable ASCII bytes
+# Count: 78
+
+?0!OP
+VUOVe
+D?13?
+2o23
+!"?!
+jQUf
+fVUa
+!"!"
+ "_1"
+(O!"
+.!"O
+A43?
+""?13D
+D"23?
+_`va
+/"2?
+3#"1O
+D43_
+	qva
+/o2?
+/_23?
+7o2!"?
+?#"1_
+	A_A?
+q?vo
+FKoef
+eafoE
+?Qgoa
+ZqoaG?
+3#"3
+3#"?
+._13
+O?43_
+/"?A
+%o1D
+31113
+cafaf
+cafaf
+	?QU
+(O13
+5?21
+1"?!
+$A1A1A1A1A1
+A1A1A1A1A1
+1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A
+*_A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1_
+A1A1A1A1A1A1A1A1A1A1A1A1A1A1
+:!"3
+3C111111111111A3
+111111
+AoAO
+1OAAA1O
+O1?A
+DoCA
+AqA_
+C?Ao
+D1A?
+1OAAA1O
+O1?A
+D1A1
+oAA?
+D1A1
+5OAAA1O
+D1A1
+D1A1
+4oAA1O
+D1A?
+O13D
+D?A_
+D1A1
+D1A?
+A1A?
+qfAA
+DAA?
+DAo1
+avo1O
+LDAOA
+OqgA?A

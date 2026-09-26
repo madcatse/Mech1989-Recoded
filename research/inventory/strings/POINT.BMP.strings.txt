@@ -1,0 +1,7 @@
+﻿# Strings extracted from Original/POINT.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 3
+
+BMP:
+INF:
+BIN:

@@ -1,0 +1,61 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/LOCPCK.TBL",
+    "size": 26627,
+    "sha256": "39d83df552edd9c87a9c7d17fb852034de449a86d1060f5a38a7f4a4ca8b0589"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_00006A",
+      "kind": "possible_offset_table",
+      "offset": 106,
+      "header_size": 0,
+      "payload_offset": 10245,
+      "payload_size": 16382,
+      "end_offset": 114,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 10245,
+        "last_value": 20503
+      }
+    },
+    {
+      "id": "offs_0001_0000A6",
+      "kind": "possible_offset_table",
+      "offset": 166,
+      "header_size": 0,
+      "payload_offset": 197,
+      "payload_size": 26430,
+      "end_offset": 174,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 197,
+        "last_value": 24992
+      }
+    }
+  ]
+}

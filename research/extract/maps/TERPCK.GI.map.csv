@@ -1,0 +1,8 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+records_3_5012,Original/TERPCK.GI,possible_fixed_records,,,0x000000,0,0x000000,15036,0x003ABC,0,medium,file size divisible by record size,,"{""record_count"": 5012, ""record_size"": 3}"
+records_4_3759,Original/TERPCK.GI,possible_fixed_records,,,0x000000,0,0x000000,15036,0x003ABC,0,medium,file size divisible by record size,,"{""record_count"": 3759, ""record_size"": 4}"
+records_6_2506,Original/TERPCK.GI,possible_fixed_records,,,0x000000,0,0x000000,15036,0x003ABC,0,medium,file size divisible by record size,,"{""record_count"": 2506, ""record_size"": 6}"
+records_7_2148,Original/TERPCK.GI,possible_fixed_records,,,0x000000,0,0x000000,15036,0x003ABC,0,medium,file size divisible by record size,,"{""record_count"": 2148, ""record_size"": 7}"
+records_12_1253,Original/TERPCK.GI,possible_fixed_records,,,0x000000,0,0x000000,15036,0x003ABC,0,medium,file size divisible by record size,,"{""record_count"": 1253, ""record_size"": 12}"
+records_14_1074,Original/TERPCK.GI,possible_fixed_records,,,0x000000,0,0x000000,15036,0x003ABC,0,medium,file size divisible by record size,,"{""record_count"": 1074, ""record_size"": 14}"
+records_28_537,Original/TERPCK.GI,possible_fixed_records,,,0x000000,0,0x000000,15036,0x003ABC,0,medium,file size divisible by record size,,"{""record_count"": 537, ""record_size"": 28}"

@@ -1,0 +1,46 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_TPICS.BIN",
+    "size": 32593,
+    "sha256": "33f8ea2e502b740a19d8471c47781b2985508654f138ba346f4a9d97d8ef7c99"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 128735,
+  "decoded_size": 64367,
+  "decoded_sha256": "5a3bb3c9bba164bf2eb0ed31f66fbe54591788ff6d77b3d1578f2ff0e2adac7d",
+  "decoded_header_candidate": {
+    "header_layout": "offset_table_then_u16le_size_table",
+    "header_size": 300,
+    "header_entry_count": 50,
+    "nonzero_offset_count": 3,
+    "nonzero_size_count": 3,
+    "monotonic_nonzero_offsets": "yes",
+    "first_offsets_hex": "0x0000012C 0x0000015C 0x00007E65 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+    "first_sizes": "48 32009 32009 0 0 0 0 0 0 0 0 0"
+  },
+  "entries": [
+    {
+      "entry_index": 0,
+      "offset": 300,
+      "size": 48,
+      "sha256": "9b37f840db54aa616a350db4d08999badd7049aa764768c24eced8eaef51d204",
+      "path": "research/extract/pics_bin_entries/MW_TPICS/entry_000_off_0000012C_len_48.bin"
+    },
+    {
+      "entry_index": 1,
+      "offset": 348,
+      "size": 32009,
+      "sha256": "6b5ad97762fee1ac6aa100ce840393079cd7c9c113585ddcebfa01bb15f5ccc7",
+      "path": "research/extract/pics_bin_entries/MW_TPICS/entry_001_off_0000015C_len_32009.bin"
+    },
+    {
+      "entry_index": 2,
+      "offset": 32357,
+      "size": 32009,
+      "sha256": "fa2896c85e6e60c8080e6e8c887c4af6c89f7db2ea0144bbec7661d2b45042ed",
+      "path": "research/extract/pics_bin_entries/MW_TPICS/entry_002_off_00007E65_len_32009.bin"
+    }
+  ]
+}

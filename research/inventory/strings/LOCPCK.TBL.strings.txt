@@ -1,0 +1,251 @@
+﻿# Strings extracted from Original/LOCPCK.TBL
+# Minimum length: 4 printable ASCII bytes
+# Count: 247
+
++@BlL
+I@B^
+$b f
+s  '
+d-Q"`%
+ZdAv ,$
+|dvA
+H1:&
+&j 8
+EG0%r$
+nf3;G
+-\=Y5
+Eg	nZ
+-6P	
+E0E2
+D@4k
+Wb'P
+<|PaAX
+x@@u
+u^7va
+uawvi'wl
+vp'wtw2g
+Y\dq
+!bGN+
+*(r"8
+R#)"
+:"#=
+@>,q
+)0"#7
+xvrP
+*Cu)
+{G!^
+*v+{
+$S9y
+)0!E
+m'2"
+nsf-
+ |[(
+CP6.1F
+6`E;0
+]Y8&
+?Qnb
+IM)}
+0FUg%
+qc4J
+upx#
+bhB`AQ`}
+PA #2
+A2Ju)N
+CL#Cq
+C`#6
+Gh@G
+PA #2
+A2Ju)N
+CL#Cq
+C`#6
+a^,t
+zmP@
+0XP@
+0F6q
+50!Y
+GB>i
+A` j
+&pj"!
+0	@9
+ip)~
+f=!0
+f=!0
+j[ ju
+c U,
+Wp^Vb
+=L]ub]
+0`#@
+00}XV
+je ju1
+E0!90
+5	OF
+tb UU
+Xp)m"V
+bgVND	
+tb0U
+2uA@
+VxEs
+0`#@
+f:p	k
+6Pe-`
+j[ juA
+G0!J
+S;u)>
+TT+"
+1p^Vb
+0`#@
+6Pe-`
+f1Pi
+?0!T
+UZ5W^
+?%RVg
+l5Vo
+0`#@
+)F^_Pb
+c`qdD&
+3`'/0
+0s}pd
+o1Q/
+x$`b
+cp^Vb
+=L]ub]
+f8p	o
+6Pe-`
+A0!' 
+A0!t
+A0!;0
+A0!n
+ReVq
+]p)*
+00}XV
+ [ ju
+o p@
+|{N@*
+	A/C
+YWf@
+J7[(
+7@G:
+}(D#*
+NQ+Z
+(8@)
+|=!*
+:RYLv0
+k@_$7
+?$KY
+,hEKZ
+k\#w
+<w2(
+YPR'
+[`=V6
+1u7b
+w&75
+`WxE
+WUXgs
+\dG\f
+QEfQ
+guvg
+oE<sVg
+^y`m~
+@R%00
+T<xqB
+GuSHX
+DWch
+pxXsX
+6xs	nv9nyy
+zws|
+.Q~A
+^i`m
+xAAx
+n&x$((o? 
+p4Jp
+*]@k
+db5k
+)gP[
+kA_;d
+\r&`
+T`7?
+%  o:?
+"o $
+T?H#`
+~n$N
+q4|V
+&00J
+|wC[a#
+`k 0
+|wC[a#
+400T
+`k&p
+Aem}g
+,^9#
+[L>k
+R`BO
+(PzZ
+Aem}g
+q4|V
+>"d;
+V?H 
+\?H&
+E00Z
+ ?QC
+ <.A	
+a4@0h1=
+89eT;
+P@FUpF
+"B"&
+=5H'
+$P"%Tb%X
+{E1@
+ppMuP(z
+G=0M
+K /C
+"oB 
+~dF5
+iC	B
+900l\
+"!@?I`nIA+"$b"J
+%RB%V
+A$31H,
+oP(t
+MQa-
+K /C
+I00v
+I00&@1P
+PfS+
+5NA*Y
+='$?w
+"B"&
+J! K
+$P"%Tb%X
+@M}2H8
+B.@`.
+1`0|q
+.@1Q
+W4G35K
+@9a#
+sS7w
+na=/
+s(?/
+50E= 
+"!@?I`nIA+"$b"J_
+4H&01
+$P"%Tb%X
+B.@`.
+Qpdso0Gv
+0Qpd
+&@1Qpd
+<e,	p4
+o=(#
+'YYw
+YIPe
+l@FqpF
+"!@?I`nIA+"$b"J
+PJ  
+%RB%V
+83!oA
+@M}2H8
+B.@`.
+A.ac
+^WUQ
+$qoeqB.
+-M;~P9
+sdpP9b

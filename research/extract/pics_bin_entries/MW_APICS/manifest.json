@@ -1,0 +1,39 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_APICS.BIN",
+    "size": 5013,
+    "sha256": "de30de978c3caa0185ee3c27c278babe069b329718ede911e216ba5d95901aa2"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 28459,
+  "decoded_size": 14229,
+  "decoded_sha256": "14ae510bcad8a58066ac2bbebd655ece71f4c6eb82948c72ef60d043681c0d57",
+  "decoded_header_candidate": {
+    "header_layout": "offset_table_then_u16le_size_table",
+    "header_size": 300,
+    "header_entry_count": 50,
+    "nonzero_offset_count": 2,
+    "nonzero_size_count": 2,
+    "monotonic_nonzero_offsets": "yes",
+    "first_offsets_hex": "0x0000012C 0x0000015C 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+    "first_sizes": "48 13880 0 0 0 0 0 0 0 0 0 0"
+  },
+  "entries": [
+    {
+      "entry_index": 0,
+      "offset": 300,
+      "size": 48,
+      "sha256": "9b37f840db54aa616a350db4d08999badd7049aa764768c24eced8eaef51d204",
+      "path": "research/extract/pics_bin_entries/MW_APICS/entry_000_off_0000012C_len_48.bin"
+    },
+    {
+      "entry_index": 1,
+      "offset": 348,
+      "size": 13880,
+      "sha256": "5eab49a0d664462c87b93d8d2d2f46eb96c64ebff140322395aaa3ff0d5f1e2d",
+      "path": "research/extract/pics_bin_entries/MW_APICS/entry_001_off_0000015C_len_13880.bin"
+    }
+  ]
+}

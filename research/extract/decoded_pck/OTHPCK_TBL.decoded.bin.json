@@ -1,0 +1,38 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/OTHPCK.TBL",
+    "size": 2182,
+    "sha256": "1450ece44914d1383294df6ae7d396230bdc92464701794d59532cd2db8a95e3"
+  },
+  "codec": "pck_lzw_segmented",
+  "raw_codec_id": 2,
+  "encoded_size": 2177,
+  "decoded_size": 3359,
+  "decoded_sha256": "0669fde1d78580c04376e373714e97aa479845cf41d0144ac0680c7e526eb5b4",
+  "decoded_structure_probe": {
+    "first_u16": 0,
+    "second_u16": 6,
+    "second_u16_times_16": 96,
+    "second_u16_times_16_hex": "0x0060",
+    "leading_pair_count": 23,
+    "leading_pair_bytes": 92,
+    "leading_pair_stop_offset": 94,
+    "leading_pair_stop_offset_hex": "0x005E",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 207",
+    "boundary_16x_first_16_hex": "80003D0000000000000001000E00000B"
+  },
+  "segment_count": 1,
+  "segments": [
+    {
+      "body_offset": 0,
+      "gap_before": 0,
+      "compressed_size": 2177,
+      "body_end_offset": 2177,
+      "decoded_size": 3359,
+      "ended_by_code_256": false
+    }
+  ],
+  "output": "research/extract/decoded_pck/OTHPCK_TBL.decoded.bin"
+}

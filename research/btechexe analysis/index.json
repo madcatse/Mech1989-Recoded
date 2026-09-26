@@ -1,0 +1,27 @@
+{
+  "title": "BTECH.EXE reverse engineering documentation",
+  "document_count": 21,
+  "files": [
+    "00_README.md",
+    "01_battle_loop.md",
+    "02_combatant_model.md",
+    "03_fixed_point_math.md",
+    "04_mech_movement_and_controls.md",
+    "05_mech_runtime_state.md",
+    "06_heat_model.md",
+    "07_weapons_ammo_cooldowns.md",
+    "08_projectiles_and_effects.md",
+    "09_enemy_ai.md",
+    "10_collision_and_visibility.md",
+    "11_shape_resources_and_model_assembly.md",
+    "12_current_viewer_errors.md",
+    "13_renderer_and_camera.md",
+    "14_animation_system.md",
+    "15_practical_value_of_btech.md",
+    "16_further_reverse_engineering.md",
+    "17_development_strategy.md",
+    "18_opengl_engine_implementation_plan.md",
+    "19_source_architecture.md",
+    "20_risks_and_compatibility.md"
+  ]
+}

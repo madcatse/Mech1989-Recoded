@@ -1,0 +1,90 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_PICS.BIN",
+    "size": 328171,
+    "sha256": "d11684f462a0af5f89a3c5f018c43f4e21b623ce012a74c9934571f093eccbce"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 997238,
+  "decoded_size": 498619,
+  "palette": "research/extract/pics_bin_entries/MW_GPICS/entry_000_off_0000012C_len_48.bin",
+  "entries": [
+    {
+      "offset": 640,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 644,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 32644,
+      "path": "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_00000280_320x200.png",
+      "paths": [
+        "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_00000280_320x200.png"
+      ]
+    },
+    {
+      "offset": 32649,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 32653,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 64653,
+      "path": "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_00007F89_320x200.png",
+      "paths": [
+        "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_00007F89_320x200.png"
+      ]
+    },
+    {
+      "offset": 64658,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 64662,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 96662,
+      "path": "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_0000FC92_320x200.png",
+      "paths": [
+        "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_0000FC92_320x200.png"
+      ]
+    },
+    {
+      "offset": 128677,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 128681,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 160681,
+      "path": "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_0001F6A5_320x200.png",
+      "paths": [
+        "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_0001F6A5_320x200.png"
+      ]
+    },
+    {
+      "offset": 426197,
+      "width": 320,
+      "height": 200,
+      "raw_height": 200,
+      "height_flags": 0,
+      "row_stride_bytes": 160,
+      "pixel_data_offset": 426201,
+      "pixel_data_size": 32000,
+      "next_offset_without_padding": 458201,
+      "path": "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_000680D5_320x200.png",
+      "paths": [
+        "research/extract/rendered_pics_raw_png_display/MW_PICS/raw_000680D5_320x200.png"
+      ]
+    }
+  ]
+}

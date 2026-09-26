@@ -1,0 +1,2 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+records_7_2,Original/TILE0B.WLD,possible_fixed_records,,,0x000000,0,0x000000,14,0x00000E,0,low,file size divisible by record size,,"{""record_count"": 2, ""record_size"": 7}"

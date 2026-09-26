@@ -1,0 +1,6 @@
+﻿# Hex sample for Original/TILE15.WLD
+# Size: 42 bytes
+# First 256 bytes
+00000000  0D 00 8E 9C 00 00 82 A7 FF FF 00 00 00 00 1D 00  \r...............
+00000010  9E 86 00 00 72 E4 FF FF 00 00 00 00 09 00 16 57  ....r.......\t..W
+00000020  00 00 B0 D3 FF FF 00 00 00 00                    ..........

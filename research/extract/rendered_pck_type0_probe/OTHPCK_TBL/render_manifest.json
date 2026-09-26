@@ -1,0 +1,32 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/OTHPCK_TBL.decoded.bin",
+    "size": 3359,
+    "sha256": "0669fde1d78580c04376e373714e97aa479845cf41d0144ac0680c7e526eb5b4"
+  },
+  "kind": "pck_type0_point_cloud_probe",
+  "layout": "three_projection_xy_xz_yz",
+  "max_abs": 10000,
+  "min_points": 3,
+  "entries": [
+    {
+      "object_id": "pck_object_0012",
+      "entry_index": "pck_object_0012",
+      "width": 392,
+      "height": 128,
+      "point_count": 12,
+      "x_min": -2700,
+      "x_max": 6400,
+      "y_min": -1035,
+      "y_max": 765,
+      "z_min": -1250,
+      "z_max": 2433,
+      "path": "research/extract/rendered_pck_type0_probe/OTHPCK_TBL/OTHPCK_TBL_pck_object_0012_type0_probe.png",
+      "paths": [
+        "research/extract/rendered_pck_type0_probe/OTHPCK_TBL/OTHPCK_TBL_pck_object_0012_type0_probe.png"
+      ]
+    }
+  ]
+}

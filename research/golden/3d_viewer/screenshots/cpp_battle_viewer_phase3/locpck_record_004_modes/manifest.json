@@ -1,0 +1,37 @@
+{
+  "captured_at": "2026-08-08",
+  "source": "mw_battle_viewer",
+  "resource": "LOCPCK.TBL",
+  "record": 4,
+  "validation": "manual visual confirmation by user",
+  "files": [
+    {
+      "name": "LOCPCK_record_004_stored_solid_000.bmp",
+      "mode": "solid",
+      "shade_mode": "stored",
+      "size_bytes": 2586726,
+      "sha256": "7C513E26D35FF87374973CE54AAD195F4819C0DB200CD4E4B9398D70A212D92F"
+    },
+    {
+      "name": "LOCPCK_record_004_lit_solid_001.bmp",
+      "mode": "solid",
+      "shade_mode": "lit",
+      "size_bytes": 2586726,
+      "sha256": "9E0A1BCB2BD3A09FCD2161BA449D04549BD208D517B509CFDDE6C1697D398BAB"
+    },
+    {
+      "name": "LOCPCK_record_004_ega_solid_002.bmp",
+      "mode": "solid",
+      "shade_mode": "ega",
+      "size_bytes": 2586726,
+      "sha256": "8718DD054F3A127A2349C9E109A696384327A28117A6F0E82AE6CF62B90DD35B"
+    },
+    {
+      "name": "LOCPCK_record_004_stored_wire_003.bmp",
+      "mode": "wire",
+      "shade_mode": "stored",
+      "size_bytes": 2586726,
+      "sha256": "AB16106CF085D0779FDA5A3BFE963350E2147A92F771ED507361BC0010B26C55"
+    }
+  ]
+}

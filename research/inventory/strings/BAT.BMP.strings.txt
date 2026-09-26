@@ -1,0 +1,73 @@
+﻿# Strings extracted from Original/BAT.BMP
+# Minimum length: 4 printable ASCII bytes
+# Count: 69
+
+BMP:0
+INF:
+BIN:
+ /~d
+"'GN
+4	n8
+	hbL
+@[Vr
+^g<z
+)ghLMp
+kk0<
+)a8h,
+/pzCD
+4O@	
+P@$|`eb6
+)gpC
+j\Y.
+.5X'4
+JT@P
+Te%A
+Kej"
+{\K`]
+5Nm(a
+elYS
+Me]r
+(Dlm
+m	&Z
+O	JP
+.oev3|
+)RJR
+yQ}kKc
+3K[T
+U2BV
+ezpn+ZO
+i,p<u
+|=KQ
+	h]O3
+xY6>
+#^H^
+nL+nu
+e _$-
+'(S3]
+S.xW3
+@%Fh
+;[H%
+6|8A
+s9u%
+e2bX
+RbUC%
+c\ysZ
+Imq!
+pbUj
+3h26
+m>h!
+/U&^<
+'n# v
+SYY}ku
+Ph$`.
+9\j3&
+%F%I
+An/Znj
+Gr&R
+7da:A
+n=2s:
+F"Bm
+*cR:
+d\P$
+1d,,>
+;LS0

@@ -1,0 +1,778 @@
+﻿# Strings extracted from Original/BTECH.EXE
+# Minimum length: 4 printable ASCII bytes
+# Count: 774
+
+Gl;Gn~
+`O+G
+`O+G
+dO@@P
+dO@@9F
+w*b*
+*~*i*
+t(=2
+t*=3
+&8@;t
+9<uT
+=l\~
+:S9F
+:S+F
+:S+F
+:S9F
+:S9F
+8S9F
+8S+F
+8S+F
+8S9F
+8S9F
+E +F
+Pw+G
+Pw+G
+Rw^]
+RP9V
+Rw@@
+Rw@@P
+Pw+G
+Pw+G
+Pw+G
+Pw+G
+Pw+G
+Gl;Gn~
+Pw+G
+9G	|	
+G<@@
+9G:|
+G09F
+G<@@
+9G<tzP
+Pw+G
+Pw+G
+?WHH
+%WHH
+.T+G
+0T+G
+Rw;GSu
+H9GSu
+Rw;GSu
+f&H;
+f&H;
+2T~,)
+Pw+G
+Pw+G
+Pw+G
+Pw+G
+Pw+G
+@T^_
+G	@@= 
+Xo9F
+Xo9F
+\(@%
+^(@%
+\}wK
+^}|A
+\}r9
+`}w'
+,u	+
+,u	+
+,u	+
+9U	|
+QSRP
+f}9V
+,v^_
+N.)F
+N.;F
+~I;~
+>N.;~
++>N.
+N.;F
+hK@Ky
+ uSF
+hK@t
+u+;V
+AG9<w
+u);V
+SWV3
+WVS3
+aKt)
+tkGN
+tX<"t$<\t
+t'<"t
+?CCN
+t^<"t'<\t
+t*<"t
+<;Ct
+hK t
+t(=r
+hK t
+hK@t
+hK@t
+tBH;
+Jr59
+6>KHt
+6>K3
+hK@t
+0<9v
+0OuK
+}j9G
+,O9F
+N+9F
+*H;F
+= Nv
+.)H;F
+x	x	
+	(	(	(	(	(	(	.
+L+9F
+PSQR
+W.|@
+.X?U
+?_^]
+].t#
+RQSU
+?Htx
+N3Q2
+\?X_Z[2
+.X_Z[2
+\?Z[
+N3FYIt
+N3Q2
+\?X_Z[2
+.X_Z[2
+\?Z[
+N3NYIt
+U.@+
+Y.@+
+[.P2
+HPSVS
+YCIx
+HPVP
+Y[Ix
+N3SQ
+\?Y[_FM~
+N3SQ
+\?Y[MX
+N3SQ
+N3Mu
+A@t7H+
+At-+
+PSQRU
+]ZY[
+]ZY[X.
+;D<u
+;T>u
+T>^_
+9D:}	
+D:)F
+9D:~
+;D<u
+;T>u
+;TBw
+;D@w
+9D8t
+tB^_]
+tBt5
+PSQR
+H<+u
+t#, 
+<t	AA;
+ZY[X
+PSQRWVU
+]^_ZY[X
+CC&;
+xbQS
+G ^_
+G  u
+UVW+
+@tM+
+uB&9W
+>wu.
+t,;E*r
+UWVRQSP
+X[YZ^_]
+ X[YZ^_]
+vo9F
+t$=*
+t/=1
+Xpxq
+d,9F
+,tj2
+tqF<
+F</t
+t#9|
+t)9|
+`}rw
+^}|t
+\}vl
+b}|A
+`}v9
+^}|t
+\}vl
+b}|A
+`}v9
+ptVW
+8u&;G
++2.+
+#:.+
+&\.$
+mH[=
+~IUP+
+@PSQ
+VWSQ
+W.t,
+@PSQ
+@PSQ
+ZY[X;
+W.PFV
+mH[PS
+mH[=
+@PSQ
+@PSQ
+@PSQ
+?~?{?x?t?q?n?j?g?d?`?]?Y?U?R?N?J?G?C???;?7?3?/?+?'?#?
+>|>w>q>l>f>a>[>U>P>J>D>>>8>3>->'>!>
+=~=w=p=i=b=[=T=M=E=>=7=/=(=!=
+<|<t<l<c<[<S<J<B<9<1<(< <
+;u;l;c;Y;P;G;=;4;*; ;
+:x:m:c:Y:O:D:::/:%:
+9x9m9b9W9L9A959*9
+8}8q8e8Y8M8A858)8
+7}7q7d7W7K7>717%7
+6|6o6b6T6G6:6,6
+5|5n5`5R5D565(5
+4~4p4a4S4D464'4
+3v3g3X3I3:3+3
+2t2d2U2E262&2
+1y1i1Y1I181(1
+0v0e0U0D040#0
+/|/k/Z/I/8/(/
+.|.k.Z.H.7.%.
+-v-d-R-A-/-
+,|,j,W,E,3,!,
++|+j+W+E+2+ +
+*w*e*R*?*,*
+)n)Z)G)4)!)
+(r(_(K(8($(
+'s'_'L'8'$'
+&p&\&H&4&
+%}%i%T%@%,%
+$s$^$I$4$ $
+#y#d#O#:#%#
+"}"g"R"="("
+!}!h!R!=!'!
+ { e O 9 $ 
+	|	d	K	2	
+hxSVW
+ t)$
+].:&^.t
+SURP
+&\.$
+)6QS
+)6QS
+[WRQ
+[WRQ
+)6.+
+)6RP
+)6RP.
+-2.+
+-2RP
+SQPR
+)6RP.
+%:.+
+%:RP
+SQPR
+tqQ.
+/F.+
+/FRP
+/FRP.
+SQPR
+toQ.
+/F.+
+/FRP
+/FRP.
+SQPR
+tqQ.
+GRP.
+SQPR
+toQ.
+GRP.
+SQPR
+)6.+
+-2.+
+%:.+
+tdQ.
+/F.+
+tbQ.
+/F.+
+tdQ.
+tbQ.
+DPQW
+DPQW
+Y.v	
+U.@%
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+_^Z6
+GPQW
+-GMt
+X_^]
+(GH~
+m._^
+& %&
+6"&y.
+6"&y.
+6"&y.
+6"&y.
+ItS&
+It2&
+6>G+
+6>G+
+It(&
+ItS&
+It2&
+6>G+
+6>G+
+It(&
+Y.v	
+& '&
+&tG2
+Mt$2
+B	s$
+& %&
+6"&y.
+6"&y.
+6"&y.
+6"&y.
+W.9F
+W.+F
+Y.)F
+S.~4
+BI&#
+BI&#
+BI&#
+BI&#
+BI&"
+>IH.
+BI&#
+BI&#
+BI&"
+BI&#
+BI&#
+BI&#
+BI&#
+BI&#
+BI&#
+BI&#
+BI&#
+BI&"
+>VJ&
+>VJ&
+>VJ&
+>VJ&
+Itz&
+>VJ&
+ItG&
+>VJ&
+>VJ&
+>VJ&
+6RJ+
+>VJ&
+6RJ+
+>VJ&
+It<&
+>VJ&
+>VJ&
+&ZJ2
+Mt$2
+& '&
+KBGCC|?
+8b5c2
+KCGCC}?
+8c5d2
+MS Run-Time Library - Copyright (c) 1988, Microsoft Corp
+ZOOM X
+FUSION REACTOR SHUT DOWN
+SIMULATION
+PAUSED
+no memory for map buffer.
+map.scr
+ACT ON OWN   
+AMBUSH       
+DEFEND       
+ATTACK ENEMY 
+MOVE (ATTACK)
+MOVE (AVOID) 
+RETREATED    
+UNENGAGED    
+AVOIDING     
+CHARGING     
+TRACKING     
+FLEEING      
+WANDERING    
+CHARGING BASE
+DEFENDING    
+RETREATING   
+DAMAGE STATUS
+  EXTERNAL
+  INTERNAL
+   ENGINE
+    GYRO
+   SENSORS
+  L SUPPORT
+SLAS
+MLAS
+LLAS
+  MG
+ PPC
+ AC5
+LRM5
+SRM2
+SRM4
+SRM6
+WEAPON STATUS
+SELECT ORDER:
+LOCATION    
+BASE
+DAMAGE
+WEAPONS
+loc.bmp
+jen.bmp
+pho.bmp
+sha.bmp
+rif.bmp
+war.bmp
+mar.bmp
+bat.bmp
+FUNCTIONAL
+LHT DAMAGE
+MED DAMAGE
+HVY DAMAGE
+DAMAGED   
+DESTROYED 
+I - VIEW INTERNAL DAMAGE
+E - VIEW EXTERNAL DAMAGE
+Q - RETURN TO COCKPIT   
+C - GO TO COMMAND SCREEN
+INTERNAL DAMAGE
+EXTERNAL DAMAGE
+ LA ACTUATOR:
+ RA ACTUATOR:
+ LL ACTUATOR:
+ RL ACTUATOR:
+not enough memory for shape
+      ENGINE:
+       GYROS:
+     SENSORS:
+LIFE SUPPORT:
+  HEAT SINKS:
+   JUMP JETS:
+WPN    LOC  CONDITION
+snario.dat
+No scenario file found...
+snario.dat
+No scenario file found...
+desert.pal
+arctic.pal
+tropic.pal
+dmgpal.pal
+6x6b.fnt
+prompt.bmp
+btechsnd.snd
+Sound file not found...
+locpck
+jenpck
+phapck
+shapck
+rifpck
+hampck
+marpck
+bmapck
+terpck
+terpck
+othpck
+card not found
+point.bmp
+sm_mechs.bmp
+struts.bmp
+cockpit.bmp
+hud_cyan.bmp
+hud_nums.bmp
+TILE
+.WLD
+.GRD
+Can't find 3space tile data...
+Can't find grid data...
+light.scr
+medium.scr
+heavy.scr
+PLEASE INSERT
+DISK #
+DO YOU WANT TO
+RETREAT (Y/N)
+Could not create demo data file ..
+Could not open demo file
+NO DEMO FILE FOUND
+G. BRAVER
+mw.exe
+GARRISON DUTY
+GENERAL SECURITY DUTY
+DEFENSE OF A WATER FACTORY
+DEFENSE OF A WEAPONS FACTORY
+DEFENSE OF A FUEL DUMP
+DEFENSE OF FIELD COM UNIT
+DEFENSE OF A SUPPLY DEPOT
+DEFENSE OF PORT FACILITIES
+SUPPRESSION OF REBELLION
+TEMPORARY RELIEF OF FORCES
+RESCUE OF A KIDNAP VICTIM
+RESCUE OF HOSTAGES
+RETRIEVAL OF STOLEN PROPERTY
+RETRIEVAL OF CAPTURED MECHS
+AN EXTENDED OFFENSIVE CAMPAIGN
+AN EXTENDED DEFENSIVE CAMPAIGN
+A PLANETARY ASSAULT
+AN EXTENDED SIEGE CAMPAIGN
+RELIEF OF ENGAGED FORCES
+A RECONNAISSANCE RAID
+A DIVERSIONARY RAID
+CONTAINMENT OF SECURITY FORCES
+DESTRUCTION OF A WATER FACTORY
+DISABLING OF A WEAPONS FACTORY
+DESTRUCTION OF A FUEL DUMP
+DESTRUCTION OF AN AMMO DUMP
+DISABLING OF A FIELD COM CENTER
+ELIMINATION OF GARRISON FORCES
+DESTROYING STOLEN PROTOTYPES
+DESTRUCTION OF MECH FACILITIES
+ELIMINATION OF SECURITY FORCES
+DESTRUCTION OF LANDING FACILITIES
+CAPTURE OF AMMO AND MECH PARTS
+PARTICIPATING IN HOSTAGE RAID
+status.scr
+YOUR NEXT MISSION:
+CREW STATUS:
+MECH STATUS:
+JUNK
+S LAS
+M LAS
+L LAS
+MG   
+PPC  
+AC/5 
+LRM5 
+SRM2 
+SRM4 
+SRM6 
+    
+LOCUST      
+JENNER      
+PHOENIX HAWK
+SHADOW HAWK 
+RIFLEMAN    
+WARHAMMER   
+MARAUDER    
+BATTLEMASTER
+G. BRAVER 
+ELLI GUJAR
+KAREN BLAK
+TARIS REN 
+D. SAJAK  
+PAM NORTH 
+TARA ELLIS
+A. MORRIS 
+ILSA MARN 
+ARA       
+S. MILLER 
+ROSE ARTZ 
+JJ KITTER 
+EMMA MEYER
+ERIN FALLS
+A. CHU LAI
+ZERA TITH 
+CHANEY TI 
+BOB TRUE  
+TED HEGEL 
+TIM SEERS 
+Z. RODGERS
+T.D. BENTE
+T. RICH   
+JOHN ZOE  
+KELLY T.  
+KINJI TSI 
+BILLY CHOW
+ALEX VEER 
+PETE RYAN 
+B. HENDRIK
+A. COOPER 
+TRICKY NIK
+KILLER    
+R. TORSAK 
+G. LOFALL 
+DARC HORSE
+JIM EAGLE 
+TANK SMITH
+KEVIN CALL
+J. HOLMAAS
+NASTY BILL
+ " ( . 4 : @ E R _ l y 
+!&!1!<!G!R!]!h!s!~!
+"#"."9"D"O"Z"e"p"{"
+no shells left to allocate
+ 500 M
+1000 M
+2000 M
+4000 M
+*T,T,T*T,T*T*T,T
+$f$^$n$r$x$
+%N%~%.&
+Could not allocate object
+Max objects already allocated
+Could not allocate dynamic object...
+Could not allocate laser object...
+BA\^
+SND:INF:
+SND:IBM:
+SND:TAN:
+SND:8SV:
+SND:ROL:
+SND:ITM:
+MUS:INF:
+MUS:ROL:
+MUS:ROL:
+MUS:TAN:
+MUS:IBM:
+too many edges
+offset != 0
+malloc failed
+bad bitmap list
+bitmaps already loaded
+bad bitmap list
+malloc failed
+bad shape list
+offset != 0
+bad shape list
+shapes already loaded
+bad shape list
+bad shpno
+too many points in part
+too many points in part
+fopen
+pkopen
+fopen
+pkopen
+pk read size mismatch
+halloc
+bad sky shades
+BMP:INF:
+BMP:BIN:
+BMP:VGA:
+SCR:BIN:
+SCR:VGA:
+FNT:
+.fnt
+PAL:CGA:
+PAL:EGA:
+PAL:EGA:
+PAL:CGA:
+PAL:VGA:
+PAL:AMG:
+PAL:AST:
+PAL:VGA:
+.pal
+hAiArA{A
+1234567890-=
+	qwertyuiop[]
+asdfghjkl;'`
+\zxcvbnm,./
+!@#$%^&*()_+
+QWERTYUIOP{}
+ASDFGHJKL:"~
+|ZXCVBNM<>?
+789-456+1230.
+YZUT)X+JNVWWXRFHGKPMS
+andy
+!&"-"&"
+<#&"=#&"_#&"q
+s$B	s$
+s$=#&"
+J&=#&"9
+q8s8u8Q8X8Z8Q8H8Z8Q8H8<8
+L4S*
+J;C_FILE_INFO
+K>(C
+(((((
+'<<NMSG>>
+R6000
+- stack overflow
+R6003
+- integer divide by 0
+R6009
+- not enough space for environment
+run-time error 
+R6002
+- floating point not loaded
+R6001
+- null pointer assignment
+!Packed file is corrupt6
+~	1	
+#y#l#d#[#S#9#)#
+"r"d"Z"Q"
+*C*/* *
+2S=,=
+<dCPC
+BuBWB@B
+eje5e
+d~dfd
+h}h+h
+mZm8m
+r]qup
+oL|B
+"g"O"7"
+!f!A!
+*q/^/N/
+-w-k-X-I-
+2k2Y2
+0^030$0
+5e5-5
+4C4 4
+3S3t7,7
+6z:S:@:
+8P;u;
+;"<0<F<
+>(?-?2?7?r@&AbC
+P\P7P#P
+OkOWO?O&O
+MpM\M
+QxQXQGQ#Q
+TwTWTCT.T
+SlSTS8S$S
+YiYHY,Y Y
+Z][m[Q\u\
+^n^b^N^>^&^
+c<d~eSf
+iKj_jqj(k
+xPx4xF~
+|'|V{
+WGfG
+e"ewA
+Y	Z=Z$[
+bLcZchcvc
+wExpx

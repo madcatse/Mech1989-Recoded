@@ -1,0 +1,23 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/RIF.BMP",
+    "size": 4293,
+    "sha256": "feed4012ecfea7b765e0bf81961a6e40d273c6d5b5e21360f94fbecd3ae5e4c1"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 14668,
+  "entries": [
+    {
+      "index": 0,
+      "width": 152,
+      "height": 193,
+      "path": "research/extract/rendered_btech_bmp_png_display/RIF/RIF_000_152x193.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/RIF/RIF_000_152x193.png"
+      ]
+    }
+  ]
+}

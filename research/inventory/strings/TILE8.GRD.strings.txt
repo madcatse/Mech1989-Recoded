@@ -1,0 +1,17 @@
+﻿# Strings extracted from Original/TILE8.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 13
+
++:<2%
+*:EB70#
+#:JNF9-& 
+#<LRH</"
+%5DC?1%
+%-+'#
+"--!
+'5=5(
+%5EB:2'
+5EMI=0'"
+5IRL?2%
+!1AD@5(
+!/-)%

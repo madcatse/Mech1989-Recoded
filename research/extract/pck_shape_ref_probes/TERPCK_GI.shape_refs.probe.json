@@ -1,0 +1,12 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/TERPCK_GI.decoded.bin",
+    "size": 19264,
+    "sha256": "c55c849b0e1f15b23c1ebcf4e4200322956b75c20847dd9612a2cb9f3245040b"
+  },
+  "kind": "pck_shape_ref_probe",
+  "entry_count": 0,
+  "entries": []
+}

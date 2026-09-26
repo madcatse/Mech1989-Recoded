@@ -1,0 +1,285 @@
+﻿# Strings extracted from Original/JENPCK.TBL
+# Minimum length: 4 printable ASCII bytes
+# Count: 281
+
+C@B)
+6Wg^
+0r*@qV
+@@7$
+y('w
+%C''
+@ <2e
+cVX8~
+4_;n
+ogBi
+`jU#
+@CiW=
+<"%o
+[A |
+bOjE3Q
+^jO?]
+:T	(
+%@^S
+9ct]
+\+,"
+YLgH
+@v3?
+~E'-
+2qOh-
+|Xvp
+?yD@+s
+&"DB
+@diS
+;bDF
+p?GY3
+zcO|
+jUFP
+/zGy
+@`:EPD
+-hC4
+Vzb	
+@4SP4T
+sbj0
+@mr?
+KPz?f[B
+*2CJ4E
+`aG	
+{?^*
+IIbG
+$E1g
+WZB,
+CPD|
+1@*-"C
+ 2'F-'3
+J^*2
+x2"}2
+]Ba;
+x9TzyC~
+ka>c
+]1#=2
+9z1<
+w"24|2
+L<LJ
+2	-?
+T3b^@`
+E>=G
+*5Tc5
+|>ml
+&|1)
+,~jIR
+DO%pO=Y
+!5R%
+<a5V
+PVgu
+0WiaWx%^
+XM!G
+,~PJ
+=(C:(0
+R#UB
+uR)%
+<a5V
+PVgu
+8P^C!
+>P^CA
+P^C!
+,zPJ
+L	v2
+0QRaP
+P2um
+!5R%
+<a5V
+PVgu
+4P^C!
+:P^CA
+P^C!
+a>.`
+uP-eO
+<a5V
+PVgu
+W}%X
+X^C!
+L	v2
+0QRaP
+P2um
+!5R%
+S%ZQuU
+EXztX
+P2um
+8!5R%
+`Wx%^
+EXztX
+`'SL	
+R#UB
+uR)%
+Td!Z
+s+ZQ%
+`Wx%^
+EXztX
+P2um
+Q{ft
+UB %R
+@R aR
+P6eL
+K%ZQ
+`Wx%^
+EXztX
+0P^C!
+b"Fb~2
+!m9F%
+ &b$
+tb~"L+&c0&cMA
+cTB%@%o*
+),zw"`yQ`
+&*Caa
+ &b$
+'Kvb~
+d+&c0&cM
+v m9F%
+b"Fb~bb(
+cTB%
+0(Hv
+w"`yQ`
+&*Caa
+ &b$
+'Kvb~
+d+&c0&cMAz
+z m9F%
+RT2`
+b"Fb~"L'
+8F%T
+C817s
+b"Fb~
+`w"`yQ`
+b"Fb~bb(
+6&m9F%
+	0dHv
+FFd'
+(5A)5
+ C1d
+_Wfs
+Bl*Y
+vbw''
+Gf8wf
+Jj5qf5Aq
+0bxu
+o9m6_
++p[i
+>'.?Ls
+31_6l
+7rTC7
+;t7r$
+Dw#GL
+p6##
+,8~)G
+VK"SKD
+9$Gz
+w#GLA
+w#GLA
+& 8 
+$0 A
+P@$ 
+bD4QE
+RRK5
+TTMQe
+XJYJ
+dS@l
+58RI'
+Q$Ju
+(Hyo
+rgif
+J_`+
+@_tq
+0!@_
+BC2qet:|a
+M8Dc
+z0*8
+/e)W
+ZdY9
+1-KL(
+j%xZ
+VY!#
+V(f1
+Lb#+
+k4L- i
+^lc3
+,QB_
+;l'0H
+"Fpt
+:f 1
+q7wo
+CF# 
+*`|+@w
+GF-`
+xtIG
+GquF
+	wrGw
+-Iwf
+u/Zu
+pi+`|,@w
+AXy/Z
+.:ux
+&*_E
+@7dd
+7#5p
+b"7R
+If0N
+4Jw.
+p/{N
+@wGPYOp
+.Q(w
+CP73
+0#a@k
+RQQ.r
+jAum_
+HY#![S!
+26CQ6#r6&B
+Jxa	
+#ra	
+#=tm_
+&tRDG
+;NuM
+e@HTcf
+e3"gc"
+II9r
+;NuM
+k@HTcf
+e3"gc"
+=tm_
+(T{aj
+0	]B7>
+HY#![S!
+26CQ6#r6&B
+%DCr18=tm_
+9[1	
+pe\A
+g@HTcf
+e3"gc"
+NfTcf
+EQsV`u&Ym
+J}a	
+%CTDGdc
+9DB9
+b?DT
+D[a	
+i@HTcf
+EQsV`u&Y
+%0#g0
+b?DT
+NfTcf
+EQsV`u&Y
+'+%&
+P#}Q
+@qq 
+G0#U
+G0#o
+{1Rq
+@qk 
+U0#L
+U0#]0|0P
+\ 11P
+kx 0z
+vJF,
+LAF.
+>Iy5	
+=jQQ
+xqm %

@@ -1,0 +1,21 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Sorted Original Files/SCR/STATUS.SCR",
+    "size": 1593,
+    "sha256": "32041ea193465e452733b62a558cf7e12f6eeb2f6836fb01cd7a89082097d6f9"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 32000,
+  "palette": {
+    "kind": "ega_default"
+  },
+  "width": 320,
+  "height": 200,
+  "path": "research/extract/phase9_cockpit_scr/STATUS/STATUS_320x200.png",
+  "paths": [
+    "research/extract/phase9_cockpit_scr/STATUS/STATUS_320x200.png"
+  ]
+}

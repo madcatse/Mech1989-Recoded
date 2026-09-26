@@ -1,0 +1,36 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/PHAPCK.TBL",
+    "size": 24673,
+    "sha256": "49d3051dfb09e3a643ad5cf4204cd26189070b591d0ea3a2b5fa1738e5a1272d"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_0003E0",
+      "kind": "possible_offset_table",
+      "offset": 992,
+      "header_size": 0,
+      "payload_offset": 5880,
+      "payload_size": 18793,
+      "end_offset": 1000,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 5880,
+        "last_value": 14628
+      }
+    }
+  ]
+}

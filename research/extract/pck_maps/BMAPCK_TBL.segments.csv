@@ -1,0 +1,4 @@
+source_file,id,index,codec,file_offset_hex,file_end_offset_hex,gap_before,compressed_size,decoded_size,ended_by_code_256
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/BMAPCK.TBL,pck_segment_000,0,pck_lzw_segmented,0x000005,0x003B82,0,15229,19999,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/BMAPCK.TBL,pck_segment_001,1,pck_lzw_segmented,0x003B89,0x0079DF,7,15958,20000,True
+C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/BMAPCK.TBL,pck_segment_002,2,pck_lzw_segmented,0x0079E9,0x00889D,10,3764,4939,False

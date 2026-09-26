@@ -1,0 +1,29 @@
+{
+  "tool": "export_fnt",
+  "schema_version": 1,
+  "source": {
+    "path": "Sorted Original Files/FNT/FOX88.FNT",
+    "size": 772,
+    "sha256": "0a1d188c6f4eba381aa098a3474a888164392d9492ece3cba06cd05159a505e9"
+  },
+  "wrapper": "raw",
+  "payload_offset": 0,
+  "payload_size": 772,
+  "payload_sha256": "0a1d188c6f4eba381aa098a3474a888164392d9492ece3cba06cd05159a505e9",
+  "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+  "width": 8,
+  "height": 8,
+  "first_code": 32,
+  "first_code_hex": "0x20",
+  "glyph_count": 96,
+  "last_code": 127,
+  "last_code_hex": "0x7F",
+  "outputs": {
+    "payload": "research/extract/fnt_export/FOX88/FOX88.payload.bin",
+    "glyphs_csv": "research/extract/fnt_export/FOX88/glyphs.csv",
+    "glyphs_jsonl": "research/extract/fnt_export/FOX88/glyphs.jsonl",
+    "sheets": [
+      "research/extract/fnt_export/FOX88/FOX88_8x8_96glyphs.png"
+    ]
+  }
+}

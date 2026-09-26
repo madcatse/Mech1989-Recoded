@@ -1,0 +1,21 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/8X8B.FNT",
+    "size": 780,
+    "sha256": "ee5e03776c73a5747f6e7d84789e6ef77df52a05e248fe504631c778adcf9003"
+  },
+  "layout": "u8_width_u8_height_u8_first_code_u8_glyph_count_rows_1bpp",
+  "width": 8,
+  "height": 8,
+  "first_code": 32,
+  "first_code_hex": "0x20",
+  "glyph_count": 96,
+  "last_code": 127,
+  "last_code_hex": "0x7F",
+  "path": "research/extract/codex_verify_fnt/8X8B_8x8_96glyphs.ppm",
+  "paths": [
+    "research/extract/codex_verify_fnt/8X8B_8x8_96glyphs.ppm"
+  ]
+}

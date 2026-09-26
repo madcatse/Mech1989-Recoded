@@ -1,0 +1,170 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_FPICS.BIN",
+    "size": 13644,
+    "sha256": "25f711906b33e00eb1051b7b57ce432160607f527f4df1417a46410eec37028b"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_000086",
+      "kind": "possible_offset_table",
+      "offset": 134,
+      "header_size": 0,
+      "payload_offset": 3893,
+      "payload_size": 9751,
+      "end_offset": 142,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 3893,
+        "last_value": 5407
+      }
+    },
+    {
+      "id": "offs_0001_000194",
+      "kind": "possible_offset_table",
+      "offset": 404,
+      "header_size": 0,
+      "payload_offset": 4362,
+      "payload_size": 9282,
+      "end_offset": 412,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 4362,
+        "last_value": 12275
+      }
+    },
+    {
+      "id": "offs_0002_0003CC",
+      "kind": "possible_offset_table",
+      "offset": 972,
+      "header_size": 0,
+      "payload_offset": 1008,
+      "payload_size": 12636,
+      "end_offset": 980,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 1008,
+        "last_value": 7521
+      }
+    },
+    {
+      "id": "records_3_4548",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 13644,
+      "end_offset": 13644,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 3,
+        "record_count": 4548
+      }
+    },
+    {
+      "id": "records_4_3411",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 13644,
+      "end_offset": 13644,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 4,
+        "record_count": 3411
+      }
+    },
+    {
+      "id": "records_6_2274",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 13644,
+      "end_offset": 13644,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 6,
+        "record_count": 2274
+      }
+    },
+    {
+      "id": "records_12_1137",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 13644,
+      "end_offset": 13644,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 12,
+        "record_count": 1137
+      }
+    }
+  ]
+}

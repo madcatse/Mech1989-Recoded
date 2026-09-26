@@ -1,0 +1,4 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+records_7_10,Original/TILE11.WLD,possible_fixed_records,,,0x000000,0,0x000000,70,0x000046,0,medium,file size divisible by record size,,"{""record_count"": 10, ""record_size"": 7}"
+records_10_7,Original/TILE11.WLD,possible_fixed_records,,,0x000000,0,0x000000,70,0x000046,0,medium,file size divisible by record size,,"{""record_count"": 7, ""record_size"": 10}"
+records_14_5,Original/TILE11.WLD,possible_fixed_records,,,0x000000,0,0x000000,70,0x000046,0,medium,file size divisible by record size,,"{""record_count"": 5, ""record_size"": 14}"

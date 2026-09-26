@@ -1,0 +1,16 @@
+﻿# Strings extracted from Original/TILE9B.GRD
+# Minimum length: 4 printable ASCII bytes
+# Count: 12
+
+%/1"
+$5=-
+#5>5%
+!3E=-
+3GF5%
+3GN>,
+3GQF3!
+2FVN:)
+0FZT>$	
++AVN4
+&<C=*
+!0-&

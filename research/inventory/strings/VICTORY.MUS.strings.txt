@@ -1,0 +1,9 @@
+﻿# Strings extracted from Original/VICTORY.MUS
+# Minimum length: 4 printable ASCII bytes
+# Count: 5
+
+MThd
+`MTrk
+O8	P:
+O5	P=
+O8	P@

@@ -1,0 +1,1436 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_PICS.BIN",
+    "size": 328171,
+    "sha256": "d11684f462a0af5f89a3c5f018c43f4e21b623ce012a74c9934571f093eccbce"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_00000E",
+      "kind": "possible_offset_table",
+      "offset": 14,
+      "header_size": 0,
+      "payload_offset": 600,
+      "payload_size": 327571,
+      "end_offset": 30,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 600,
+        "last_value": 121182
+      }
+    },
+    {
+      "id": "offs_0001_000032",
+      "kind": "possible_offset_table",
+      "offset": 50,
+      "header_size": 0,
+      "payload_offset": 31069,
+      "payload_size": 297102,
+      "end_offset": 66,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 31069,
+        "last_value": 108197
+      }
+    },
+    {
+      "id": "offs_0002_000042",
+      "kind": "possible_offset_table",
+      "offset": 66,
+      "header_size": 0,
+      "payload_offset": 49325,
+      "payload_size": 278846,
+      "end_offset": 82,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 49325,
+        "last_value": 195077
+      }
+    },
+    {
+      "id": "offs_0003_00005A",
+      "kind": "possible_offset_table",
+      "offset": 90,
+      "header_size": 0,
+      "payload_offset": 17548,
+      "payload_size": 310623,
+      "end_offset": 106,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 17548,
+        "last_value": 150682
+      }
+    },
+    {
+      "id": "offs_0004_00006A",
+      "kind": "possible_offset_table",
+      "offset": 106,
+      "header_size": 0,
+      "payload_offset": 20921,
+      "payload_size": 307250,
+      "end_offset": 122,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 20921,
+        "last_value": 154391
+      }
+    },
+    {
+      "id": "offs_0005_00006E",
+      "kind": "possible_offset_table",
+      "offset": 110,
+      "header_size": 0,
+      "payload_offset": 131072,
+      "payload_size": 197099,
+      "end_offset": 126,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 131072,
+        "last_value": 155417
+      }
+    },
+    {
+      "id": "offs_0006_000072",
+      "kind": "possible_offset_table",
+      "offset": 114,
+      "header_size": 0,
+      "payload_offset": 153305,
+      "payload_size": 174866,
+      "end_offset": 130,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 153305,
+        "last_value": 156483
+      }
+    },
+    {
+      "id": "offs_0007_000076",
+      "kind": "possible_offset_table",
+      "offset": 118,
+      "header_size": 0,
+      "payload_offset": 154391,
+      "payload_size": 173780,
+      "end_offset": 134,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 154391,
+        "last_value": 157710
+      }
+    },
+    {
+      "id": "offs_0008_00007A",
+      "kind": "possible_offset_table",
+      "offset": 122,
+      "header_size": 0,
+      "payload_offset": 155417,
+      "payload_size": 172754,
+      "end_offset": 138,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 155417,
+        "last_value": 159630
+      }
+    },
+    {
+      "id": "offs_0009_00007E",
+      "kind": "possible_offset_table",
+      "offset": 126,
+      "header_size": 0,
+      "payload_offset": 156483,
+      "payload_size": 171688,
+      "end_offset": 142,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 156483,
+        "last_value": 161531
+      }
+    },
+    {
+      "id": "offs_0010_000082",
+      "kind": "possible_offset_table",
+      "offset": 130,
+      "header_size": 0,
+      "payload_offset": 157710,
+      "payload_size": 170461,
+      "end_offset": 146,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 157710,
+        "last_value": 163380
+      }
+    },
+    {
+      "id": "offs_0011_000086",
+      "kind": "possible_offset_table",
+      "offset": 134,
+      "header_size": 0,
+      "payload_offset": 159630,
+      "payload_size": 168541,
+      "end_offset": 150,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 159630,
+        "last_value": 165475
+      }
+    },
+    {
+      "id": "offs_0012_00008A",
+      "kind": "possible_offset_table",
+      "offset": 138,
+      "header_size": 0,
+      "payload_offset": 161531,
+      "payload_size": 166640,
+      "end_offset": 154,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 161531,
+        "last_value": 167621
+      }
+    },
+    {
+      "id": "offs_0013_00008E",
+      "kind": "possible_offset_table",
+      "offset": 142,
+      "header_size": 0,
+      "payload_offset": 163380,
+      "payload_size": 164791,
+      "end_offset": 158,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 163380,
+        "last_value": 168753
+      }
+    },
+    {
+      "id": "offs_0014_000092",
+      "kind": "possible_offset_table",
+      "offset": 146,
+      "header_size": 0,
+      "payload_offset": 165475,
+      "payload_size": 162696,
+      "end_offset": 162,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 165475,
+        "last_value": 169670
+      }
+    },
+    {
+      "id": "offs_0015_000096",
+      "kind": "possible_offset_table",
+      "offset": 150,
+      "header_size": 0,
+      "payload_offset": 167621,
+      "payload_size": 160550,
+      "end_offset": 166,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 167621,
+        "last_value": 170609
+      }
+    },
+    {
+      "id": "offs_0016_00009A",
+      "kind": "possible_offset_table",
+      "offset": 154,
+      "header_size": 0,
+      "payload_offset": 168753,
+      "payload_size": 159418,
+      "end_offset": 170,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 168753,
+        "last_value": 171522
+      }
+    },
+    {
+      "id": "offs_0017_00009E",
+      "kind": "possible_offset_table",
+      "offset": 158,
+      "header_size": 0,
+      "payload_offset": 169670,
+      "payload_size": 158501,
+      "end_offset": 174,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 169670,
+        "last_value": 172489
+      }
+    },
+    {
+      "id": "offs_0018_0000A2",
+      "kind": "possible_offset_table",
+      "offset": 162,
+      "header_size": 0,
+      "payload_offset": 170609,
+      "payload_size": 157562,
+      "end_offset": 178,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 170609,
+        "last_value": 173704
+      }
+    },
+    {
+      "id": "offs_0019_0000A6",
+      "kind": "possible_offset_table",
+      "offset": 166,
+      "header_size": 0,
+      "payload_offset": 171522,
+      "payload_size": 156649,
+      "end_offset": 182,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 171522,
+        "last_value": 174877
+      }
+    },
+    {
+      "id": "offs_0020_0000AA",
+      "kind": "possible_offset_table",
+      "offset": 170,
+      "header_size": 0,
+      "payload_offset": 172489,
+      "payload_size": 155682,
+      "end_offset": 186,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 172489,
+        "last_value": 176108
+      }
+    },
+    {
+      "id": "offs_0021_0000AE",
+      "kind": "possible_offset_table",
+      "offset": 174,
+      "header_size": 0,
+      "payload_offset": 173704,
+      "payload_size": 154467,
+      "end_offset": 190,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 173704,
+        "last_value": 177441
+      }
+    },
+    {
+      "id": "offs_0022_0000B2",
+      "kind": "possible_offset_table",
+      "offset": 178,
+      "header_size": 0,
+      "payload_offset": 174877,
+      "payload_size": 153294,
+      "end_offset": 194,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 174877,
+        "last_value": 178772
+      }
+    },
+    {
+      "id": "offs_0023_0000B6",
+      "kind": "possible_offset_table",
+      "offset": 182,
+      "header_size": 0,
+      "payload_offset": 176108,
+      "payload_size": 152063,
+      "end_offset": 198,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 176108,
+        "last_value": 182478
+      }
+    },
+    {
+      "id": "offs_0024_0000BA",
+      "kind": "possible_offset_table",
+      "offset": 186,
+      "header_size": 0,
+      "payload_offset": 177441,
+      "payload_size": 150730,
+      "end_offset": 202,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 177441,
+        "last_value": 186579
+      }
+    },
+    {
+      "id": "offs_0025_0000BE",
+      "kind": "possible_offset_table",
+      "offset": 190,
+      "header_size": 0,
+      "payload_offset": 178772,
+      "payload_size": 149399,
+      "end_offset": 206,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 178772,
+        "last_value": 190623
+      }
+    },
+    {
+      "id": "offs_0026_0000C2",
+      "kind": "possible_offset_table",
+      "offset": 194,
+      "header_size": 0,
+      "payload_offset": 182478,
+      "payload_size": 145693,
+      "end_offset": 210,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 182478,
+        "last_value": 260063
+      }
+    },
+    {
+      "id": "offs_0027_0000D2",
+      "kind": "possible_offset_table",
+      "offset": 210,
+      "header_size": 0,
+      "payload_offset": 198454,
+      "payload_size": 129717,
+      "end_offset": 226,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 198454,
+        "last_value": 209652
+      }
+    },
+    {
+      "id": "offs_0028_0000D6",
+      "kind": "possible_offset_table",
+      "offset": 214,
+      "header_size": 0,
+      "payload_offset": 202218,
+      "payload_size": 125953,
+      "end_offset": 230,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 202218,
+        "last_value": 213389
+      }
+    },
+    {
+      "id": "offs_0029_0000DA",
+      "kind": "possible_offset_table",
+      "offset": 218,
+      "header_size": 0,
+      "payload_offset": 205667,
+      "payload_size": 122504,
+      "end_offset": 234,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 205667,
+        "last_value": 217611
+      }
+    },
+    {
+      "id": "offs_0030_0000DE",
+      "kind": "possible_offset_table",
+      "offset": 222,
+      "header_size": 0,
+      "payload_offset": 209652,
+      "payload_size": 118519,
+      "end_offset": 238,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 209652,
+        "last_value": 222375
+      }
+    },
+    {
+      "id": "offs_0031_0000E2",
+      "kind": "possible_offset_table",
+      "offset": 226,
+      "header_size": 0,
+      "payload_offset": 213389,
+      "payload_size": 114782,
+      "end_offset": 242,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 213389,
+        "last_value": 225813
+      }
+    },
+    {
+      "id": "offs_0032_0000E6",
+      "kind": "possible_offset_table",
+      "offset": 230,
+      "header_size": 0,
+      "payload_offset": 217611,
+      "payload_size": 110560,
+      "end_offset": 246,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 217611,
+        "last_value": 229600
+      }
+    },
+    {
+      "id": "offs_0033_0000EA",
+      "kind": "possible_offset_table",
+      "offset": 234,
+      "header_size": 0,
+      "payload_offset": 222375,
+      "payload_size": 105796,
+      "end_offset": 250,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 222375,
+        "last_value": 233236
+      }
+    },
+    {
+      "id": "offs_0034_0000EE",
+      "kind": "possible_offset_table",
+      "offset": 238,
+      "header_size": 0,
+      "payload_offset": 225813,
+      "payload_size": 102358,
+      "end_offset": 254,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 225813,
+        "last_value": 233246
+      }
+    },
+    {
+      "id": "offs_0035_0000F2",
+      "kind": "possible_offset_table",
+      "offset": 242,
+      "header_size": 0,
+      "payload_offset": 229600,
+      "payload_size": 98571,
+      "end_offset": 258,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 229600,
+        "last_value": 238293
+      }
+    },
+    {
+      "id": "offs_0036_0000F6",
+      "kind": "possible_offset_table",
+      "offset": 246,
+      "header_size": 0,
+      "payload_offset": 233236,
+      "payload_size": 94935,
+      "end_offset": 262,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 233236,
+        "last_value": 242426
+      }
+    },
+    {
+      "id": "offs_0037_0000FA",
+      "kind": "possible_offset_table",
+      "offset": 250,
+      "header_size": 0,
+      "payload_offset": 233246,
+      "payload_size": 94925,
+      "end_offset": 266,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 233246,
+        "last_value": 247783
+      }
+    },
+    {
+      "id": "offs_0038_0000FE",
+      "kind": "possible_offset_table",
+      "offset": 254,
+      "header_size": 0,
+      "payload_offset": 238293,
+      "payload_size": 89878,
+      "end_offset": 270,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 238293,
+        "last_value": 252055
+      }
+    },
+    {
+      "id": "offs_0039_000102",
+      "kind": "possible_offset_table",
+      "offset": 258,
+      "header_size": 0,
+      "payload_offset": 242426,
+      "payload_size": 85745,
+      "end_offset": 274,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 242426,
+        "last_value": 257056
+      }
+    },
+    {
+      "id": "offs_0040_000106",
+      "kind": "possible_offset_table",
+      "offset": 262,
+      "header_size": 0,
+      "payload_offset": 247783,
+      "payload_size": 80388,
+      "end_offset": 278,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 247783,
+        "last_value": 326743
+      }
+    },
+    {
+      "id": "offs_0041_000116",
+      "kind": "possible_offset_table",
+      "offset": 278,
+      "header_size": 0,
+      "payload_offset": 265529,
+      "payload_size": 62642,
+      "end_offset": 294,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 265529,
+        "last_value": 277188
+      }
+    },
+    {
+      "id": "offs_0042_00011A",
+      "kind": "possible_offset_table",
+      "offset": 282,
+      "header_size": 0,
+      "payload_offset": 269308,
+      "payload_size": 58863,
+      "end_offset": 298,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 269308,
+        "last_value": 282669
+      }
+    },
+    {
+      "id": "offs_0043_00011E",
+      "kind": "possible_offset_table",
+      "offset": 286,
+      "header_size": 0,
+      "payload_offset": 273508,
+      "payload_size": 54663,
+      "end_offset": 302,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 273508,
+        "last_value": 297358
+      }
+    },
+    {
+      "id": "offs_0044_000122",
+      "kind": "possible_offset_table",
+      "offset": 290,
+      "header_size": 0,
+      "payload_offset": 277188,
+      "payload_size": 50983,
+      "end_offset": 306,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 277188,
+        "last_value": 297368
+      }
+    },
+    {
+      "id": "offs_0045_000126",
+      "kind": "possible_offset_table",
+      "offset": 294,
+      "header_size": 0,
+      "payload_offset": 282669,
+      "payload_size": 45502,
+      "end_offset": 310,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 282669,
+        "last_value": 297378
+      }
+    },
+    {
+      "id": "offs_0046_00012A",
+      "kind": "possible_offset_table",
+      "offset": 298,
+      "header_size": 0,
+      "payload_offset": 297358,
+      "payload_size": 30813,
+      "end_offset": 314,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 4,
+        "entry_count": 4,
+        "first_value": 297358,
+        "last_value": 304827
+      }
+    },
+    {
+      "id": "offs_0047_0001CA",
+      "kind": "possible_offset_table",
+      "offset": 458,
+      "header_size": 0,
+      "payload_offset": 1026,
+      "payload_size": 327145,
+      "end_offset": 466,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 1026,
+        "last_value": 1920
+      }
+    },
+    {
+      "id": "offs_0048_000270",
+      "kind": "possible_offset_table",
+      "offset": 624,
+      "header_size": 0,
+      "payload_offset": 32664,
+      "payload_size": 295507,
+      "end_offset": 632,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 32664,
+        "last_value": 59886
+      }
+    },
+    {
+      "id": "offs_0049_0002C4",
+      "kind": "possible_offset_table",
+      "offset": 708,
+      "header_size": 0,
+      "payload_offset": 10531,
+      "payload_size": 317640,
+      "end_offset": 716,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 10531,
+        "last_value": 58094
+      }
+    },
+    {
+      "id": "offs_0050_0002E4",
+      "kind": "possible_offset_table",
+      "offset": 740,
+      "header_size": 0,
+      "payload_offset": 13283,
+      "payload_size": 314888,
+      "end_offset": 748,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 13283,
+        "last_value": 59886
+      }
+    },
+    {
+      "id": "offs_0051_0002FA",
+      "kind": "possible_offset_table",
+      "offset": 762,
+      "header_size": 0,
+      "payload_offset": 26473,
+      "payload_size": 301698,
+      "end_offset": 770,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 26473,
+        "last_value": 38774
+      }
+    },
+    {
+      "id": "offs_0052_00033E",
+      "kind": "possible_offset_table",
+      "offset": 830,
+      "header_size": 0,
+      "payload_offset": 11127,
+      "payload_size": 317044,
+      "end_offset": 838,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 11127,
+        "last_value": 59881
+      }
+    },
+    {
+      "id": "offs_0053_000340",
+      "kind": "possible_offset_table",
+      "offset": 832,
+      "header_size": 0,
+      "payload_offset": 58350,
+      "payload_size": 269821,
+      "end_offset": 840,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 58350,
+        "last_value": 61081
+      }
+    },
+    {
+      "id": "offs_0054_000354",
+      "kind": "possible_offset_table",
+      "offset": 852,
+      "header_size": 0,
+      "payload_offset": 14633,
+      "payload_size": 313538,
+      "end_offset": 860,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 14633,
+        "last_value": 59711
+      }
+    },
+    {
+      "id": "offs_0055_0003C0",
+      "kind": "possible_offset_table",
+      "offset": 960,
+      "header_size": 0,
+      "payload_offset": 11186,
+      "payload_size": 316985,
+      "end_offset": 968,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 11186,
+        "last_value": 60969
+      }
+    },
+    {
+      "id": "offs_0056_0003E4",
+      "kind": "possible_offset_table",
+      "offset": 996,
+      "header_size": 0,
+      "payload_offset": 9065,
+      "payload_size": 319106,
+      "end_offset": 1004,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 9065,
+        "last_value": 63129
+      }
+    }
+  ]
+}

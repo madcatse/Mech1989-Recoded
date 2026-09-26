@@ -1,0 +1,67 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_FPICS.BIN",
+    "size": 13644,
+    "sha256": "25f711906b33e00eb1051b7b57ce432160607f527f4df1417a46410eec37028b"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "palette": "ega_default",
+  "entries": [
+    {
+      "entry_index": 1,
+      "width": 72,
+      "height": 35,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_001_72x35.ppm"
+    },
+    {
+      "entry_index": 2,
+      "width": 101,
+      "height": 48,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_002_101x48.ppm"
+    },
+    {
+      "entry_index": 3,
+      "width": 131,
+      "height": 63,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_003_131x63.ppm"
+    },
+    {
+      "entry_index": 4,
+      "width": 157,
+      "height": 75,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_004_157x75.ppm"
+    },
+    {
+      "entry_index": 5,
+      "width": 203,
+      "height": 98,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_005_203x98.ppm"
+    },
+    {
+      "entry_index": 6,
+      "width": 243,
+      "height": 61,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_006_243x61.ppm"
+    },
+    {
+      "entry_index": 7,
+      "width": 43,
+      "height": 59,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_007_43x59.ppm"
+    },
+    {
+      "entry_index": 8,
+      "width": 43,
+      "height": 59,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_008_43x59.ppm"
+    },
+    {
+      "entry_index": 9,
+      "width": 320,
+      "height": 17,
+      "path": "research/extract/rendered_pics_bin/MW_FPICS/entry_009_320x17.ppm"
+    }
+  ]
+}

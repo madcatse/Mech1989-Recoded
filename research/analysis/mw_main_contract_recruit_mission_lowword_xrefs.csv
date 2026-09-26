@@ -1,0 +1,77 @@
+category,suggested_id,first_line,string_file_offset_hex,loaded_offset_hex,low_word_hex,xref_count,xref_file_offsets,xref_module_offsets
+contract_ui,mw_main.contract.00d54f,REQUEST MISSION,0x00D54F,0x0D14F,0xD14F,0,,
+contract_ui,mw_main.contract.00d564,LEAVE,0x00D564,0x0D164,0xD164,0,,
+contract_ui,mw_main.contract.00d575,5MNH,0x00D575,0x0D175,0xD175,0,,
+contract_ui,mw_main.contract.00d590,MERCENARY CONTRACT,0x00D590,0x0D190,0xD190,2,0x00586D 0x007158,0x0546D 0x06D58
+contract_ui,mw_main.contract.00d6f9,ACCEPT,0x00D6F9,0x0D2F9,0xD2F9,0,,
+contract_ui,mw_main.contract.00d705,NEXT,0x00D705,0x0D305,0xD305,0,,
+contract_ui,mw_main.contract.00d70f,LEAVE,0x00D70F,0x0D30F,0xD30F,0,,
+contract_ui,mw_main.contract.00d769,sJzJ,0x00D769,0x0D369,0xD369,0,,
+contract_ui,mw_main.contract.00d772,JKURITA,0x00D772,0x0D372,0xD372,1,0x006A60,0x06660
+contract_ui,mw_main.contract.00d77a,STEINER,0x00D77A,0x0D37A,0xD37A,0,,
+contract_ui,mw_main.contract.00d782,MARIK,0x00D782,0x0D382,0xD382,0,,
+contract_ui,mw_main.contract.00d788,LIAO,0x00D788,0x0D388,0xD388,0,,
+contract_ui,mw_main.contract.00d78d,DAVION,0x00D78D,0x0D38D,0xD38D,0,,
+contract_ui,mw_main.contract.00d7ab,"KJANUARY,",0x00D7AB,0x0D3AB,0xD3AB,0,,
+contract_ui,mw_main.contract.00d7b6,"FEBRUARY,",0x00D7B6,0x0D3B6,0xD3B6,0,,
+contract_ui,mw_main.contract.00d7e5,"AUGUST,",0x00D7E5,0x0D3E5,0xD3E5,0,,
+contract_ui,mw_main.contract.00d7ee,"SEPTEMBER,",0x00D7EE,0x0D3EE,0xD3EE,0,,
+contract_ui,mw_main.contract.00d7fa,"OCTOBER,",0x00D7FA,0x0D3FA,0xD3FA,0,,
+contract_ui,mw_main.contract.00d804,"NOVEMBER,",0x00D804,0x0D404,0xD404,2,0x0058A6 0x01145B,0x054A6 0x1105B
+contract_ui,mw_main.contract.00d80f,"DECEMBER,",0x00D80F,0x0D40F,0xD40F,0,,
+contract_ui,mw_main.contract.00d835,SUBMITACCEPT,0x00D835,0x0D435,0xD435,0,,
+contract_ui,mw_main.contract.00d8b4,>CMVAAFOXG=EPYS?JQZ,0x00D8B4,0x0D4B4,0xD4B4,0,,
+contract_ui,mw_main.contract.00d8fa,NO CONTRACTS ARE AVAILABLE,0x00D8FA,0x0D4FA,0xD4FA,0,,
+contract_ui,mw_main.contract.00d925,YOUR OFFER IS UNACCEPTABLE!,0x00D925,0x0D525,0xD525,0,,
+contract_ui,mw_main.contract.00d96c,YOUR CONTRACT IS ACCEPTED.,0x00D96C,0x0D56C,0xD56C,0,,
+contract_ui,mw_main.contract.00d987,BECAUSE OF YOUR MANY ACTIONS,0x00D987,0x0D587,0xD587,0,,
+mission_name,mw_main.mission.01176b,GARRISON DUTY,0x01176B,0x1136B,0x136B,0,,
+mission_name,mw_main.mission.01177b,GENERAL SECURITY DUTY,0x01177B,0x1137B,0x137B,0,,
+mission_name,mw_main.mission.011793,DEFENSE OF A WATER FACTORY,0x011793,0x11393,0x1393,1,0x021160,0x20D60
+mission_name,mw_main.mission.0117b0,DEFENSE OF A WEAPONS FACTORY,0x0117B0,0x113B0,0x13B0,0,,
+mission_name,mw_main.mission.0117cf,DEFENSE OF A FUEL DUMP,0x0117CF,0x113CF,0x13CF,0,,
+mission_name,mw_main.mission.0117e8,DEFENSE OF FIELD COM UNIT,0x0117E8,0x113E8,0x13E8,4,0x001898 0x001A68 0x002CD8 0x0047A9,0x01498 0x01668 0x028D8 0x043A9
+mission_name,mw_main.mission.011804,DEFENSE OF A SUPPLY DEPOT,0x011804,0x11404,0x1404,1,0x00C876,0x0C476
+mission_name,mw_main.mission.011820,DEFENSE OF LANDING FACILITIES,0x011820,0x11420,0x1420,0,,
+mission_name,mw_main.mission.011840,SUPPRESSION OF REBELLION,0x011840,0x11440,0x1440,0,,
+mission_name,mw_main.mission.01185b,TEMPORARY RELIEF OF FORCES,0x01185B,0x1145B,0x145B,0,,
+mission_name,mw_main.mission.011878,RESCUE OF A KIDNAP VICTIM,0x011878,0x11478,0x1478,0,,
+mission_name,mw_main.mission.011894,RESCUE OF HOSTAGES,0x011894,0x11494,0x1494,0,,
+mission_name,mw_main.mission.0118a9,RETRIEVAL OF STOLEN PROPERTY,0x0118A9,0x114A9,0x14A9,0,,
+mission_name,mw_main.mission.0118c8,RETRIEVAL OF CAPTURED MECHS,0x0118C8,0x114C8,0x14C8,0,,
+mission_name,mw_main.mission.0118e6,AN EXTENDED OFFENSIVE CAMPAIGN,0x0118E6,0x114E6,0x14E6,0,,
+mission_name,mw_main.mission.011907,AN EXTENDED DEFENSIVE CAMPAIGN,0x011907,0x11507,0x1507,0,,
+mission_name,mw_main.mission.011928,A PLANETARY ASSUALT,0x011928,0x11528,0x1528,1,0x00A197,0x09D97
+mission_name,mw_main.mission.01193e,AN EXTENDED SIEGE CAMPAIGN,0x01193E,0x1153E,0x153E,0,,
+mission_name,mw_main.mission.01195b,RELIEF OF ENGAGED FORCES,0x01195B,0x1155B,0x155B,1,0x00F845,0x0F445
+mission_name,mw_main.mission.011976,A RECONNAISSANCE RAID,0x011976,0x11576,0x1576,0,,
+mission_name,mw_main.mission.01198e,A DIVERSIONARY RAID,0x01198E,0x1158E,0x158E,0,,
+mission_name,mw_main.mission.0119a4,CONTAINMENT OF SECURITY FORCES,0x0119A4,0x115A4,0x15A4,0,,
+mission_name,mw_main.mission.0119c5,DESTRUCTION OF A WATER FACTORY,0x0119C5,0x115C5,0x15C5,0,,
+mission_name,mw_main.mission.0119e6,DISABLING OF A WEAPONS FACTORY,0x0119E6,0x115E6,0x15E6,0,,
+mission_name,mw_main.mission.011a07,DESTRUCTION OF A FUEL DUMP,0x011A07,0x11607,0x1607,1,0x008848,0x08448
+mission_name,mw_main.mission.011a24,DESTRUCTION OF AN AMMO DUMP,0x011A24,0x11624,0x1624,0,,
+mission_name,mw_main.mission.011a42,DISABLING OF A FIELD COM CENTER,0x011A42,0x11642,0x1642,0,,
+mission_name,mw_main.mission.011a64,ELIMINATION OF GARRISON FORCES,0x011A64,0x11664,0x1664,0,,
+mission_name,mw_main.mission.011a85,DESTROYING STOLEN PROTOTYPES,0x011A85,0x11685,0x1685,0,,
+mission_name,mw_main.mission.011aa4,DESTRUCTION OF MECH FACILITIES,0x011AA4,0x116A4,0x16A4,0,,
+mission_name,mw_main.mission.011ac5,ELIMINATION OF SECURITY FORCES,0x011AC5,0x116C5,0x16C5,3,0x0089C2 0x0089D7 0x008C2D,0x085C2 0x085D7 0x0882D
+mission_name,mw_main.mission.011ae6,DESTRUCTION OF PORT FACILITIES,0x011AE6,0x116E6,0x16E6,0,,
+mission_name,mw_main.mission.011b07,CAPTURE OF AMMO AND MECH PARTS,0x011B07,0x11707,0x1707,0,,
+mission_name,mw_main.mission.011b28,PARTICIPATING IN HOSTAGE RAID,0x011B28,0x11728,0x1728,0,,
+crew_recruitment,mw_main.crew.011d31,RECRUIT CREW,0x011D31,0x11931,0x1931,0,,
+crew_recruitment,mw_main.crew.011d43,LEAVE,0x011D43,0x11943,0x1943,0,,
+crew_recruitment,mw_main.crew.011d91,HEARD YOU MIGHT,0x011D91,0x11991,0x1991,0,,
+crew_recruitment,mw_main.crew.011e06,NAME,0x011E06,0x11A06,0x1A06,7,0x000B29 0x000B4E 0x000BA7 0x001333 0x001359 0x001368 0x0078E3,0x00729 0x0074E 0x007A7 0x00F33 0x00F59 0x00F68 0x074E3
+crew_recruitment,mw_main.crew.011e7a,ELLI GUJAR,0x011E7A,0x11A7A,0x1A7A,0,,
+crew_recruitment,mw_main.crew.011e85,I'M JUST STARTING,0x011E85,0x11A85,0x1A85,0,,
+crew_recruitment,mw_main.crew.011ebd,KAREN BLAK,0x011EBD,0x11ABD,0x1ABD,0,,
+crew_recruitment,mw_main.crew.011ec8,DON'T HAVE MUCH,0x011EC8,0x11AC8,0x1AC8,0,,
+crew_recruitment,mw_main.crew.011f00,TARIS REN,0x011F00,0x11B00,0x1B00,14,0x000525 0x00B064 0x00B8A8 0x00CB63 0x00CB6B 0x00DA73 0x00DA75 0x00DA77 0x00DA79 0x00DA7B 0x00E997 0x00EBC2 0x00FA99 0x011A3F,0x00125 0x0AC64 0x0B4A8 0x0C763 0x0C76B 0x0D673 0x0D675 0x0D677 0x0D679 0x0D67B 0x0E597 0x0E7C2 0x0F699 0x1163F
+crew_recruitment,mw_main.crew.011f0b,I SAY NO JOB'S,0x011F0B,0x11B0B,0x1B0B,1,0x012E6D,0x12A6D
+crew_recruitment,mw_main.crew.011f47,JUST SHOW ME WHERE,0x011F47,0x11B47,0x1B47,0,,
+crew_recruitment,mw_main.crew.011f7c,D. SAJAK,0x011F7C,0x11B7C,0x1B7C,0,,
+crew_recruitment,mw_main.crew.011f87,D IS FOR DESIRE.,0x011F87,0x11B87,0x1B87,0,,
+crew_recruitment,mw_main.crew.011fba,PAM NORTH,0x011FBA,0x11BBA,0x1BBA,1,0x0006BF,0x002BF
+crew_recruitment,mw_main.crew.011fc5,MY LAST TOUR WAS,0x011FC5,0x11BC5,0x1BC5,0,,
+crew_recruitment,mw_main.crew.011ff6,TARA ELLIS,0x011FF6,0x11BF6,0x1BF6,0,,

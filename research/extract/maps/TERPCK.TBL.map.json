@@ -1,0 +1,10 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/TERPCK.TBL",
+    "size": 8293,
+    "sha256": "6b7a399e0711b9944069e0206c1bcf4bc33097809b34518a1cd886087e4c0414"
+  },
+  "entries": []
+}

@@ -1,0 +1,262 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_2PICS.BIN",
+    "size": 21348,
+    "sha256": "55ca122298548b28d73804c3510f9e95cf188f4abd93eb7b6bb3d083850057ea"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 72133,
+  "decoded_size": 36066,
+  "decoded_sha256": "880deb9d45b053562ade1d4a3d663986c8d209d433c7e8feae5585b14c67b793",
+  "decoded_header_candidate": {
+    "header_layout": "offset_table_then_u16le_size_table",
+    "header_size": 120,
+    "header_entry_count": 20,
+    "nonzero_offset_count": 7,
+    "nonzero_size_count": 7,
+    "monotonic_nonzero_offsets": "yes",
+    "first_offsets_hex": "0x00000078 0x000000A8 0x00001807 0x00002F66 0x000046C5 0x00005E24 0x00007583 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+    "first_sizes": "48 5983 5983 5983 5983 5983 5983 0 0 0 0 0"
+  },
+  "entries": [
+    {
+      "index": 0,
+      "offset": 120,
+      "size": 48,
+      "end_offset": 168,
+      "status": "active",
+      "sha256": "9b37f840db54aa616a350db4d08999badd7049aa764768c24eced8eaef51d204",
+      "fields": {
+        "role": "palette_rgb_16_dac6",
+        "palette_color_count": 16
+      }
+    },
+    {
+      "index": 1,
+      "offset": 168,
+      "size": 5983,
+      "end_offset": 6151,
+      "status": "active",
+      "sha256": "84fe0cc8f56849114c2f6235354a52af327f832687c9788d7fa4dc0074dda389",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 206,
+        "height": 58,
+        "pixel_data_offset": 172,
+        "pixel_data_size": 5974,
+        "row_stride_bytes": 103,
+        "trailing_size": 5,
+        "trailing_hex": "75CBEB178B"
+      }
+    },
+    {
+      "index": 2,
+      "offset": 6151,
+      "size": 5983,
+      "end_offset": 12134,
+      "status": "active",
+      "sha256": "dfa720a6037573417a44a617d478440e9cde462fd25a9c7e9aad0c0320ff8c21",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 206,
+        "height": 58,
+        "pixel_data_offset": 6155,
+        "pixel_data_size": 5974,
+        "row_stride_bytes": 103,
+        "trailing_size": 5,
+        "trailing_hex": "75CBEB178B"
+      }
+    },
+    {
+      "index": 3,
+      "offset": 12134,
+      "size": 5983,
+      "end_offset": 18117,
+      "status": "active",
+      "sha256": "9b6d595e8d86cc8cc3fbda690bd73b35300b5eb93e001b38bc58b41234945da7",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 206,
+        "height": 58,
+        "pixel_data_offset": 12138,
+        "pixel_data_size": 5974,
+        "row_stride_bytes": 103,
+        "trailing_size": 5,
+        "trailing_hex": "75CBEB178B"
+      }
+    },
+    {
+      "index": 4,
+      "offset": 18117,
+      "size": 5983,
+      "end_offset": 24100,
+      "status": "active",
+      "sha256": "45acb43d2f57ef3435431a83f026276c733902ea17b7933461fe5e8a869df714",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 206,
+        "height": 58,
+        "pixel_data_offset": 18121,
+        "pixel_data_size": 5974,
+        "row_stride_bytes": 103,
+        "trailing_size": 5,
+        "trailing_hex": "75CBEB178B"
+      }
+    },
+    {
+      "index": 5,
+      "offset": 24100,
+      "size": 5983,
+      "end_offset": 30083,
+      "status": "active",
+      "sha256": "15c69f9152b1228b8cef2b5fea326da27454d0f812d831c919d67b1746c07aed",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 206,
+        "height": 58,
+        "pixel_data_offset": 24104,
+        "pixel_data_size": 5974,
+        "row_stride_bytes": 103,
+        "trailing_size": 5,
+        "trailing_hex": "75CBEB178B"
+      }
+    },
+    {
+      "index": 6,
+      "offset": 30083,
+      "size": 5983,
+      "end_offset": 36066,
+      "status": "active",
+      "sha256": "5507134602d440921917da9c0a1d1eebc943da2c871dc13366be03eb962ee2c1",
+      "fields": {
+        "role": "image_4bpp_packed",
+        "width": 206,
+        "height": 58,
+        "pixel_data_offset": 30087,
+        "pixel_data_size": 5974,
+        "row_stride_bytes": 103,
+        "trailing_size": 5,
+        "trailing_hex": "75CBEB178B"
+      }
+    },
+    {
+      "index": 7,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 8,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 9,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 10,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 11,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 12,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 13,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 14,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 15,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 16,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 17,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 18,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    },
+    {
+      "index": 19,
+      "offset": 0,
+      "size": 0,
+      "end_offset": 0,
+      "status": "empty",
+      "sha256": "",
+      "fields": {}
+    }
+  ]
+}

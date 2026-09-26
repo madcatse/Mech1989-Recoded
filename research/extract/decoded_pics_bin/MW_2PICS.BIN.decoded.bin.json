@@ -1,0 +1,24 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/MW_2PICS.BIN",
+    "size": 21348,
+    "sha256": "55ca122298548b28d73804c3510f9e95cf188f4abd93eb7b6bb3d083850057ea"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "decoded_nibble_count": 72133,
+  "decoded_size": 36066,
+  "decoded_sha256": "880deb9d45b053562ade1d4a3d663986c8d209d433c7e8feae5585b14c67b793",
+  "decoded_header_candidate": {
+    "header_layout": "offset_table_then_u16le_size_table",
+    "header_size": 120,
+    "header_entry_count": 20,
+    "nonzero_offset_count": 7,
+    "nonzero_size_count": 7,
+    "monotonic_nonzero_offsets": "yes",
+    "first_offsets_hex": "0x00000078 0x000000A8 0x00001807 0x00002F66 0x000046C5 0x00005E24 0x00007583 0x00000000 0x00000000 0x00000000 0x00000000 0x00000000",
+    "first_sizes": "48 5983 5983 5983 5983 5983 5983 0 0 0 0 0"
+  },
+  "output": "research/extract/decoded_pics_bin/MW_2PICS.BIN.decoded.bin"
+}

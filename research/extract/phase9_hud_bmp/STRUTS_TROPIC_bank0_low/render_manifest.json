@@ -1,0 +1,128 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Sorted Original Files/BMP/STRUTS.BMP",
+    "size": 1135,
+    "sha256": "a2b9d2cd714d8d9573fae54703a13cdf32c77c3c7bb5115c0ae987bba98fd9db"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 3404,
+  "palette": {
+    "kind": "pal_ega_pair_banks_tentative",
+    "path": "Sorted Original Files/PAL/TROPIC.PAL",
+    "bank": 0,
+    "interpretation": "low"
+  },
+  "entries": [
+    {
+      "index": 0,
+      "width": 24,
+      "height": 15,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_000_24x15.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_000_24x15.png"
+      ]
+    },
+    {
+      "index": 1,
+      "width": 24,
+      "height": 15,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_001_24x15.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_001_24x15.png"
+      ]
+    },
+    {
+      "index": 2,
+      "width": 40,
+      "height": 30,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_002_40x30.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_002_40x30.png"
+      ]
+    },
+    {
+      "index": 3,
+      "width": 40,
+      "height": 30,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_003_40x30.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_003_40x30.png"
+      ]
+    },
+    {
+      "index": 4,
+      "width": 80,
+      "height": 9,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_004_80x9.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_004_80x9.png"
+      ]
+    },
+    {
+      "index": 5,
+      "width": 16,
+      "height": 14,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_005_16x14.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_005_16x14.png"
+      ]
+    },
+    {
+      "index": 6,
+      "width": 16,
+      "height": 14,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_006_16x14.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_006_16x14.png"
+      ]
+    },
+    {
+      "index": 7,
+      "width": 16,
+      "height": 14,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_007_16x14.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_007_16x14.png"
+      ]
+    },
+    {
+      "index": 8,
+      "width": 16,
+      "height": 14,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_008_16x14.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_008_16x14.png"
+      ]
+    },
+    {
+      "index": 9,
+      "width": 32,
+      "height": 27,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_009_32x27.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_009_32x27.png"
+      ]
+    },
+    {
+      "index": 10,
+      "width": 32,
+      "height": 28,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_010_32x28.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_010_32x28.png"
+      ]
+    },
+    {
+      "index": 11,
+      "width": 104,
+      "height": 3,
+      "path": "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_011_104x3.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/STRUTS_TROPIC_bank0_low/STRUTS_011_104x3.png"
+      ]
+    }
+  ]
+}

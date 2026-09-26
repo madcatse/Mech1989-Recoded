@@ -1,0 +1,280 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/research/extract/decoded_pck/OTHPCK_TBL.decoded.bin",
+    "size": 3359,
+    "sha256": "0669fde1d78580c04376e373714e97aa479845cf41d0144ac0680c7e526eb5b4"
+  },
+  "kind": "pck_decoded_blocks",
+  "layout_candidate": "pck_decoded_16byte_index_rows",
+  "decoded_structure_probe": {
+    "first_u16": 0,
+    "second_u16": 6,
+    "second_u16_times_16": 96,
+    "second_u16_times_16_hex": "0x0060",
+    "leading_pair_count": 23,
+    "leading_pair_bytes": 92,
+    "leading_pair_stop_offset": 94,
+    "leading_pair_stop_offset_hex": "0x005E",
+    "leading_pair_stop_reason": "right_not_monotonic:0< 207",
+    "boundary_16x_first_16_hex": "80003D0000000000000001000E00000B"
+  },
+  "block_count": 23,
+  "extracted_count": 23,
+  "entries": [
+    {
+      "block_id": "pck_block_0000",
+      "index": 0,
+      "offset": 96,
+      "offset_hex": "0x000060",
+      "size": 160,
+      "role_candidate": "shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "cc693b678e196adf9db18e78793819bba328a6d54d123339ef319aa373bf0ef0",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0000_off_000060_len_160.bin"
+    },
+    {
+      "block_id": "pck_block_0001",
+      "index": 1,
+      "offset": 256,
+      "offset_hex": "0x000100",
+      "size": 1040,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "a277527f8f1faac9b0201f5dd69c15f0d256fe0a211fed8b6495f2f5f7f5750a",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0001_off_000100_len_1040.bin"
+    },
+    {
+      "block_id": "pck_block_0002",
+      "index": 2,
+      "offset": 1296,
+      "offset_hex": "0x000510",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "baf151ee2ec95d031dc9d30cc025b0c2c2b728a4a5ab60064376071f123f1548",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0002_off_000510_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0003",
+      "index": 3,
+      "offset": 1344,
+      "offset_hex": "0x000540",
+      "size": 96,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "285a6fd6affb2dc69e1d881df4c5f0e97188fa22627b74263b93303047df1bcf",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0003_off_000540_len_96.bin"
+    },
+    {
+      "block_id": "pck_block_0004",
+      "index": 4,
+      "offset": 1440,
+      "offset_hex": "0x0005A0",
+      "size": 96,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "3ceaaaadd3523ce301546082a0be6d8bdb3f38e03f069d47b9d61b847083addf",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0004_off_0005A0_len_96.bin"
+    },
+    {
+      "block_id": "pck_block_0005",
+      "index": 5,
+      "offset": 1536,
+      "offset_hex": "0x000600",
+      "size": 96,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "47e5c227682c1c34cb3c613420f7257256e89b26e5a8a9b3732e0d1da4b5136b",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0005_off_000600_len_96.bin"
+    },
+    {
+      "block_id": "pck_block_0006",
+      "index": 6,
+      "offset": 1632,
+      "offset_hex": "0x000660",
+      "size": 96,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "e876b0ff958f2e579b8dff2db2fa67e497ce3d2511394897720fc3cb97d5d894",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0006_off_000660_len_96.bin"
+    },
+    {
+      "block_id": "pck_block_0007",
+      "index": 7,
+      "offset": 1728,
+      "offset_hex": "0x0006C0",
+      "size": 96,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "d4a96bef125a18015c9a9303ea638276ff6fc165587c9dbdd7c861d0693744f7",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0007_off_0006C0_len_96.bin"
+    },
+    {
+      "block_id": "pck_block_0008",
+      "index": 8,
+      "offset": 1824,
+      "offset_hex": "0x000720",
+      "size": 160,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "3298175a6d70dd16ca2ddee3b11cbd6dc0b1943708330418929829ffd19f938b",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0008_off_000720_len_160.bin"
+    },
+    {
+      "block_id": "pck_block_0009",
+      "index": 9,
+      "offset": 1984,
+      "offset_hex": "0x0007C0",
+      "size": 192,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "42b5e307f568a7e557d6d9cac49e1e171d81e582cef9a461b0d121cab6a17a3d",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0009_off_0007C0_len_192.bin"
+    },
+    {
+      "block_id": "pck_block_0010",
+      "index": 10,
+      "offset": 2176,
+      "offset_hex": "0x000880",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "3e79eabd43fa2e3f48906a215c72d43fa02d370c24d03b1175f1b149df1b1607",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0010_off_000880_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0011",
+      "index": 11,
+      "offset": 2224,
+      "offset_hex": "0x0008B0",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "954784180f85c3e105c7d50e9ea54cfc9dfbb597607441ffa2f1f04ac87b1e8e",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0011_off_0008B0_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0012",
+      "index": 12,
+      "offset": 2272,
+      "offset_hex": "0x0008E0",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "547dd2994100d1f7df8bf4ca22ad641e442e7b2fa719d70c59e0bb06062df2af",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0012_off_0008E0_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0013",
+      "index": 13,
+      "offset": 2320,
+      "offset_hex": "0x000910",
+      "size": 32,
+      "role_candidate": "shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "707b01ccf83832f278868192b3b1dea146c216e0de8c6aa87e9f9295eacff9bc",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0013_off_000910_len_32.bin"
+    },
+    {
+      "block_id": "pck_block_0014",
+      "index": 14,
+      "offset": 2352,
+      "offset_hex": "0x000930",
+      "size": 624,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "4e51b24db45b22123e41d5c041be905178c44d9015bf2e69fd4f3bb48188f298",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0014_off_000930_len_624.bin"
+    },
+    {
+      "block_id": "pck_block_0015",
+      "index": 15,
+      "offset": 2976,
+      "offset_hex": "0x000BA0",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "7c9197c6f55b575c984c2fb7e5da3be18d323b41ddd9b4efc50a78a101e017dc",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0015_off_000BA0_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0016",
+      "index": 16,
+      "offset": 3024,
+      "offset_hex": "0x000BD0",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "f44353a230b1fa1664b407edbc00cb7337eb662f9404f3288402f8a1a11b2439",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0016_off_000BD0_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0017",
+      "index": 17,
+      "offset": 3072,
+      "offset_hex": "0x000C00",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "ede1660fc8d337d6d01001f6e3ee0b37716aac83c9018135e1033cb042c1b6d6",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0017_off_000C00_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0018",
+      "index": 18,
+      "offset": 3120,
+      "offset_hex": "0x000C30",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "ade80c334d550e4aa3327eaeb44ecfc567e6d6e51a61dafc31187b755224c8b4",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0018_off_000C30_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0019",
+      "index": 19,
+      "offset": 3168,
+      "offset_hex": "0x000C60",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "1f07e1a233c4d1f6a422a8cc67bebf3ae34406b1c36da0c079f8292193e46873",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0019_off_000C60_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0020",
+      "index": 20,
+      "offset": 3216,
+      "offset_hex": "0x000C90",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "069b9ac94d06e047e10145833273e1303a7ca44b0687c1bf7ae305c2583c064c",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0020_off_000C90_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0021",
+      "index": 21,
+      "offset": 3264,
+      "offset_hex": "0x000CC0",
+      "size": 48,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "2e383ab9169f3a6c5e56bd0d2cc764785d929cf9f9a35856ca0d4fd9e0785197",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0021_off_000CC0_len_48.bin"
+    },
+    {
+      "block_id": "pck_block_0022",
+      "index": 22,
+      "offset": 3312,
+      "offset_hex": "0x000CF0",
+      "size": 47,
+      "role_candidate": "prefixed_shape_command_candidate",
+      "reference_count": 1,
+      "sha256": "f7680ebc43e6e6b0572dd40a1edc81d6beb75791400df3d5277008c22887e9fe",
+      "path": "research/extract/pck_decoded_blocks/OTHPCK_TBL/block_0022_off_000CF0_len_47.bin"
+    }
+  ]
+}

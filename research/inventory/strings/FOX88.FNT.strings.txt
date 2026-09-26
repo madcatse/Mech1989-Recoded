@@ -1,0 +1,7 @@
+﻿# Strings extracted from Original/FOX88.FNT
+# Minimum length: 4 printable ASCII bytes
+# Count: 3
+
+0@@@0
+p@@@p
+      

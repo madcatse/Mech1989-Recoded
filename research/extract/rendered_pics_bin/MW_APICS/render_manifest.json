@@ -1,0 +1,19 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_APICS.BIN",
+    "size": 5013,
+    "sha256": "de30de978c3caa0185ee3c27c278babe069b329718ede911e216ba5d95901aa2"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "palette": "ega_default",
+  "entries": [
+    {
+      "entry_index": 1,
+      "width": 286,
+      "height": 97,
+      "path": "research/extract/rendered_pics_bin/MW_APICS/entry_001_286x97.ppm"
+    }
+  ]
+}

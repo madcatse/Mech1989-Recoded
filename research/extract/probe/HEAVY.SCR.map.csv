@@ -1,0 +1,3 @@
+id,source_file,kind,tag,name,offset_hex,header_size,payload_offset_hex,payload_size,end_offset_hex,depth,confidence,evidence,warnings,fields
+HEAVY_0000_SCR_000000,Original/HEAVY.SCR,tagged_chunk,SCR:,,0x000000,8,0x000008,3467,0x000D93,0,high,ASCII tag; little-endian length fits parent/file; high bit set in length field,,"{""has_nested_flag"": ""yes"", ""local_index"": 0, ""raw_length_hex"": ""0x80000D8B""}"
+HEAVY_0000_BIN_000008,Original/HEAVY.SCR,tagged_chunk,BIN:,,0x000008,8,0x000010,3459,0x000D93,1,high,ASCII tag; little-endian length fits parent/file,,"{""has_nested_flag"": ""no"", ""local_index"": 0, ""raw_length_hex"": ""0x00000D83""}"

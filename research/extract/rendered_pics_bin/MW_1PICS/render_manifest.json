@@ -1,0 +1,25 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/MW_1PICS.BIN",
+    "size": 26662,
+    "sha256": "803b4bdedbf48f5168393075f3e64821020dd51f1814070cc640e30869893a03"
+  },
+  "codec": "mw_pics_nibble_rle",
+  "palette": "ega_default",
+  "entries": [
+    {
+      "entry_index": 1,
+      "width": 320,
+      "height": 200,
+      "path": "research/extract/rendered_pics_bin/MW_1PICS/entry_001_320x200.ppm"
+    },
+    {
+      "entry_index": 2,
+      "width": 320,
+      "height": 200,
+      "path": "research/extract/rendered_pics_bin/MW_1PICS/entry_002_320x200.ppm"
+    }
+  ]
+}

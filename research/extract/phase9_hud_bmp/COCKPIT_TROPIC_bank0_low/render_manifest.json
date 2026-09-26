@@ -1,0 +1,128 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Sorted Original Files/BMP/COCKPIT.BMP",
+    "size": 767,
+    "sha256": "7077105462f3fc8c89245f5261699a82bccc794a1b5b79b3c3227711d2198405"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 2232,
+  "palette": {
+    "kind": "pal_ega_pair_banks_tentative",
+    "path": "Sorted Original Files/PAL/TROPIC.PAL",
+    "bank": 0,
+    "interpretation": "low"
+  },
+  "entries": [
+    {
+      "index": 0,
+      "width": 8,
+      "height": 7,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_000_8x7.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_000_8x7.png"
+      ]
+    },
+    {
+      "index": 1,
+      "width": 8,
+      "height": 7,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_001_8x7.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_001_8x7.png"
+      ]
+    },
+    {
+      "index": 2,
+      "width": 8,
+      "height": 3,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_002_8x3.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_002_8x3.png"
+      ]
+    },
+    {
+      "index": 3,
+      "width": 8,
+      "height": 3,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_003_8x3.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_003_8x3.png"
+      ]
+    },
+    {
+      "index": 4,
+      "width": 16,
+      "height": 9,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_004_16x9.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_004_16x9.png"
+      ]
+    },
+    {
+      "index": 5,
+      "width": 16,
+      "height": 9,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_005_16x9.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_005_16x9.png"
+      ]
+    },
+    {
+      "index": 6,
+      "width": 48,
+      "height": 11,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_006_48x11.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_006_48x11.png"
+      ]
+    },
+    {
+      "index": 7,
+      "width": 48,
+      "height": 15,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_007_48x15.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_007_48x15.png"
+      ]
+    },
+    {
+      "index": 8,
+      "width": 40,
+      "height": 19,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_008_40x19.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_008_40x19.png"
+      ]
+    },
+    {
+      "index": 9,
+      "width": 48,
+      "height": 11,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_009_48x11.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_009_48x11.png"
+      ]
+    },
+    {
+      "index": 10,
+      "width": 48,
+      "height": 15,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_010_48x15.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_010_48x15.png"
+      ]
+    },
+    {
+      "index": 11,
+      "width": 40,
+      "height": 19,
+      "path": "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_011_40x19.png",
+      "paths": [
+        "research/extract/phase9_hud_bmp/COCKPIT_TROPIC_bank0_low/COCKPIT_011_40x19.png"
+      ]
+    }
+  ]
+}

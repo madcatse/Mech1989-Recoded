@@ -1,0 +1,15 @@
+﻿# Strings extracted from Original/DESERT.PAL
+# Minimum length: 4 printable ASCII bytes
+# Count: 11
+
+PAL:2
+EGA:
+DD33ffww
+vvDD
+66vv
+xxpp
+DD33ffww
+HHggDDhhnnccgghh
+CGA:
+3333
+""ff""

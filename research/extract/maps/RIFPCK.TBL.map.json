@@ -1,0 +1,107 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "Original/RIFPCK.TBL",
+    "size": 32775,
+    "sha256": "622866d77ba6f8b55a5b6916c95222298baa6e74dc2b6699bd10c2b85dab8473"
+  },
+  "entries": [
+    {
+      "id": "offs_0000_0000BC",
+      "kind": "possible_offset_table",
+      "offset": 188,
+      "header_size": 0,
+      "payload_offset": 8198,
+      "payload_size": 24577,
+      "end_offset": 196,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 8198,
+        "last_value": 30109
+      }
+    },
+    {
+      "id": "offs_0001_000196",
+      "kind": "possible_offset_table",
+      "offset": 406,
+      "header_size": 0,
+      "payload_offset": 11162,
+      "payload_size": 21613,
+      "end_offset": 414,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 11162,
+        "last_value": 26189
+      }
+    },
+    {
+      "id": "offs_0002_0003D2",
+      "kind": "possible_offset_table",
+      "offset": 978,
+      "header_size": 0,
+      "payload_offset": 5322,
+      "payload_size": 27453,
+      "end_offset": 986,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "monotonic little-endian offsets",
+        "offsets fit file",
+        "payload starts after table"
+      ],
+      "warnings": [],
+      "fields": {
+        "entry_width": 2,
+        "entry_count": 4,
+        "first_value": 5322,
+        "last_value": 11599
+      }
+    },
+    {
+      "id": "records_3_10925",
+      "kind": "possible_fixed_records",
+      "offset": 0,
+      "header_size": 0,
+      "payload_offset": 0,
+      "payload_size": 32775,
+      "end_offset": 32775,
+      "depth": 0,
+      "confidence": "medium",
+      "tag": "",
+      "name": "",
+      "evidence": [
+        "file size divisible by record size"
+      ],
+      "warnings": [],
+      "fields": {
+        "record_size": 3,
+        "record_count": 10925
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "tool": "mw_extract",
+  "schema_version": 1,
+  "source": {
+    "path": "C:/Users/MadCat/Documents/GitHub/MechwarriorRecomp/Original/MAR.BMP",
+    "size": 3324,
+    "sha256": "0408df3c15c27faa79741fb9f07fffcae4e591842a402045815ac12c6634b12c"
+  },
+  "codec": 2,
+  "decoded_layout": "packed_4bpp_high_low_nibbles",
+  "decoded_size": 14668,
+  "entries": [
+    {
+      "index": 0,
+      "width": 152,
+      "height": 193,
+      "path": "research/extract/rendered_btech_bmp_png_display/MAR/MAR_000_152x193.png",
+      "paths": [
+        "research/extract/rendered_btech_bmp_png_display/MAR/MAR_000_152x193.png"
+      ]
+    }
+  ]
+}
