@@ -12,6 +12,7 @@
 #include <fstream>
 #include <iterator>
 #include <limits>
+#include <optional>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -22,6 +23,15 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include "battle/battle_module.h"
+#include "battle/battle_setup.h"
+#include "battle/battle_world.h"
+#include "battle/campaign_ammunition.h"
+#include "legacy3d/terrain_parser.h"
+#include "mech3d/mech_catalog.h"
+#include "presentation/campaign_battle_gl_viewport.h"
+#include "presentation/campaign_cockpit_compositor.h"
 
 namespace fs = std::filesystem;
 
@@ -212,6 +222,66 @@ static const uint8_t kPicsSourceToGamePaletteIndex[16] = {
     2, 14, 6, 13,
 };
 
+struct BattleMechStatusMaskRegistration {
+    bool valid = false;
+    int x = 0;
+    int y = 0;
+    size_t matchingWhitePixels = 0;
+};
+
+uint8_t image4bppPixelIndex(const Image4bpp& image, int x, int y) {
+    const uint8_t packed = image.pixels[
+        static_cast<size_t>(y) * static_cast<size_t>(image.rowStride) +
+        static_cast<size_t>(x / 2)];
+    return (x % 2 == 0)
+        ? static_cast<uint8_t>((packed >> 4u) & 0x0fu)
+        : static_cast<uint8_t>(packed & 0x0fu);
+}
+
+BattleMechStatusMaskRegistration registerBattleMechStatusMask(
+    const Image4bpp& mwPicsImage,
+    const Image4bpp& battleBmpImage) {
+    BattleMechStatusMaskRegistration best;
+    std::vector<std::pair<int, int>> sourceWhitePixels;
+    for (int y = 0; y < mwPicsImage.height; ++y) {
+        for (int x = 0; x < mwPicsImage.width; ++x) {
+            if (kPicsSourceToGamePaletteIndex[image4bppPixelIndex(mwPicsImage, x, y)] == 15u) {
+                sourceWhitePixels.emplace_back(x, y);
+            }
+        }
+    }
+    if (sourceWhitePixels.empty() ||
+        battleBmpImage.width < mwPicsImage.width ||
+        battleBmpImage.height < mwPicsImage.height) {
+        return best;
+    }
+
+    for (int offsetY = 0;
+         offsetY <= battleBmpImage.height - mwPicsImage.height;
+         ++offsetY) {
+        for (int offsetX = 0;
+             offsetX <= battleBmpImage.width - mwPicsImage.width;
+             ++offsetX) {
+            size_t matching = 0;
+            for (const auto [sourceX, sourceY] : sourceWhitePixels) {
+                if (image4bppPixelIndex(
+                        battleBmpImage,
+                        sourceX + offsetX,
+                        sourceY + offsetY) == 15u) {
+                    ++matching;
+                }
+            }
+            if (matching > best.matchingWhitePixels) {
+                best.x = offsetX;
+                best.y = offsetY;
+                best.matchingWhitePixels = matching;
+            }
+        }
+    }
+    best.valid = best.matchingWhitePixels == sourceWhitePixels.size();
+    return best;
+}
+
 uint16_t readU16Le(const std::vector<uint8_t>& data, size_t offset) {
     if (offset + 2 > data.size()) {
         throw std::runtime_error("unexpected end of data while reading u16");
@@ -241,6 +311,15 @@ std::wstring widen(std::string_view text) {
     result.reserve(text.size());
     for (char ch : text) {
         result.push_back(static_cast<unsigned char>(ch));
+    }
+    return result;
+}
+
+std::string narrowAscii(std::wstring_view text) {
+    std::string result;
+    result.reserve(text.size());
+    for (wchar_t ch : text) {
+        result.push_back(ch >= 0 && ch <= 0x7F ? static_cast<char>(ch) : '?');
     }
     return result;
 }
@@ -829,6 +908,7 @@ public:
     }
 
     ~App() {
+        campaignBattleGlViewport_.shutdown();
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
         debugTools_.shutdown();
 #endif
@@ -854,13 +934,14 @@ public:
             return false;
         }
 
+        constexpr DWORD windowStyle = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
         RECT rect{0, 0, kDefaultDisplayWidth, kDefaultDisplayHeight};
-        AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+        AdjustWindowRect(&rect, windowStyle, FALSE);
         hwnd_ = CreateWindowExW(
             0,
             wc.lpszClassName,
             L"MW_MAIN replacement engine",
-            WS_OVERLAPPEDWINDOW,
+            windowStyle,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
             rect.right - rect.left,
@@ -876,7 +957,7 @@ public:
 
         ShowWindow(hwnd_, showCommand);
         UpdateWindow(hwnd_);
-        SetTimer(hwnd_, 1, 16, nullptr);
+        SetTimer(hwnd_, 1, kCampaignBattleRenderStepMs, nullptr);
         return true;
     }
 
@@ -963,7 +1044,7 @@ private:
         uint32_t wage = 0;
         int portraitEntry = -1;
         int recruitIndex = -1;
-        uint8_t missionExperience = 0;
+        uint16_t missionExperience = 0;
     };
 
     struct MissionParticipant {
@@ -973,6 +1054,75 @@ private:
         std::wstring mechName;
         int armorPercent = 100;
         bool killed = false;
+    };
+
+    struct CampaignPersistentStateSnapshot {
+        bool valid = false;
+        uint64_t fingerprint = 0;
+        uint64_t wealth = 0;
+        uint16_t reputationPoints = 0;
+        uint8_t reputationTier = 0;
+        int year = 0;
+        int month = 0;
+        int day = 0;
+        size_t ownedMechCount = 0;
+    };
+
+    struct CampaignBattleStateGuard {
+        bool valid = false;
+        bool unchanged = false;
+        CampaignPersistentStateSnapshot before;
+        CampaignPersistentStateSnapshot after;
+    };
+
+    struct CampaignBattleRuntimeSession {
+        bool active = false;
+        std::optional<mw::battle::BattleWorld> world;
+        mw::battle::BattleSnapshot startSnapshot;
+        mw::battle::BattleSnapshot previousPresentationSnapshot;
+        mw::battle::BattleSnapshot currentPresentationSnapshot;
+        bool presentationSnapshotsValid = false;
+        std::optional<uint64_t> diagnosticTickLimit;
+        uint64_t ticksExecuted = 0;
+        DWORD lastStepTick = 0;
+        DWORD simulationStepMs = 50;
+        DWORD lastRenderTick = 0;
+        uint64_t renderFrameIndex = 0;
+        double renderInterpolationAlpha = 1.0;
+        fs::path renderAssetRoot;
+        mw::battle::CampaignBattlePresentationMode presentationMode =
+            mw::battle::CampaignBattlePresentationMode::MissionStatus;
+        size_t cockpitHudColorIndex = 3u;
+        int cockpitZoomLevel = 1;
+        double throttleCommand = 0.0;
+        int pendingTorsoYawStepDelta = 0;
+        int pendingAimPitchStepDelta = 0;
+        bool pendingJumpJetToggle = false;
+        bool pendingFireWeapon = false;
+        int pendingWeaponSelectionStep = 0;
+        uint32_t pendingWeaponInstanceId = 0;
+        bool pendingCockpitRadarToggle = false;
+        bool pendingCockpitRadarRangeCycle = false;
+        bool pendingTargetScanCycle = false;
+        bool fireRequestDiagnosticLogged = false;
+        uint64_t lastLoggedFireRequestTickIndex = 0;
+        uint64_t lastLoggedCollisionSequence = 0;
+        uint64_t lastLoggedTargetScanSequence = 0;
+        uint64_t lastPlayedMajorSystemWarningSequence = 0;
+        bool mechStatusVisible = false;
+        std::vector<int> mechStatusOwnedMechIndexes;
+        std::vector<mw::battle::CampaignBattlePersistentRosterBinding>
+            persistentRosterBindings;
+        size_t missionParticipantCount = 0;
+        CampaignPersistentStateSnapshot persistentStateBefore;
+    };
+
+    struct CampaignBattleMapProjection {
+        bool valid = false;
+        double minX = 0.0;
+        double maxX = 0.0;
+        double minZ = 0.0;
+        double maxZ = 0.0;
     };
 
     enum class DamageState {
@@ -1075,6 +1225,7 @@ private:
         uint8_t gunnerySkill = 0;
         uint8_t pilotingSkill = 0;
         uint32_t monthlyWage = 0;
+        uint16_t missionExperience = 0;
     };
 
     struct PlanetRecruitPool {
@@ -1132,14 +1283,24 @@ private:
     struct ContractMissionDefinition {
         std::wstring_view name;
         std::wstring_view family;
+        uint8_t originalMissionClass = 1;
         bool extended = false;
     };
 
     struct ContractOffer {
+        size_t generationSlot = std::numeric_limits<size_t>::max();
         uint8_t employerHouse = 0;
         uint8_t targetHouse = 0;
         bool hasHostileTargetHouse = true;
+        int targetPlanetIndex = -1;
         std::wstring targetPlanet;
+        uint8_t targetPlanetTerrainCode = 0;
+        std::optional<int> targetEnvironmentId;
+        uint8_t targetCategory = 0;
+        uint8_t originalMissionClass = 1;
+        uint8_t originalMissionId = 0;
+        uint16_t targetPlanetTableOrder = 0;
+        size_t terrainScenarioIndex = 2;
         std::wstring_view missionName;
         int heavyCount = 0;
         int mediumCount = 0;
@@ -1152,6 +1313,29 @@ private:
         int houseAdvancePercent = 0;
         int negotiationRounds = 0;
         bool termsModified = false;
+    };
+
+    enum class MissionSequenceKind : uint8_t {
+        None,
+        ExtendedCampaign,
+        FinalBattle,
+    };
+
+    struct MissionSequenceState {
+        MissionSequenceKind kind = MissionSequenceKind::None;
+        size_t stageIndex = 0;
+        size_t stageCount = 0;
+        std::array<uint8_t, 3> missionIds{};
+        std::vector<mw::battle::BattleCombatantLaunchState> playerCarryover;
+
+        bool active() const {
+            return kind != MissionSequenceKind::None &&
+                stageCount > 0u && stageIndex < stageCount;
+        }
+
+        bool hasNextStage() const {
+            return active() && stageIndex + 1u < stageCount;
+        }
     };
 
     struct MechDefinition {
@@ -1217,12 +1401,15 @@ private:
     static constexpr size_t kGamOffsetMechChassisList = 0x00EA;
     static constexpr size_t kGamOffsetMechRecords = 0x0102;
     static constexpr size_t kGamMechRecordStride = 0x1D;
-    static constexpr size_t kGamOffsetMechAmmo = 0x025E;
     static constexpr size_t kGamOffsetExtraAmmo = 0x02EE;
     static constexpr size_t kGamOffsetSoundDisabled = 0x05E2;
+    // MW_MAIN DS:0A8D; pilot ids are one-based, so byte zero is unused.
+    static constexpr size_t kGamOffsetRecruitMissionExperience = 0x0645;
     static constexpr size_t kGamOffsetMessageFlags = 0x0672;
     static constexpr size_t kGamKnownMessageFlagCount = 0x8C;
     static constexpr size_t kGamOffsetDetailLevel = 0x070D;
+    // MW_MAIN DS:0B5A, the commander's separate word-sized mission counter.
+    static constexpr size_t kGamOffsetPlayerMissionExperience = 0x0712;
     static constexpr int kCommanderBirthYear = 3006;
     static constexpr int kCommanderBirthMonth = 4;
     static constexpr int kCommanderBirthDay = 8;
@@ -1301,7 +1488,9 @@ private:
     static constexpr int kArmorDamageMaxLevel = 3;
     static constexpr int kArmorDamageDenominator =
         static_cast<int>(kArmorSectionCount) * kArmorDamageMaxLevel;
-    static constexpr int kMechAmmoMaxPacks = 25;
+    // Wasp/Wolverine do not have supported BTECH 3D catalog rows. Preserve
+    // their old campaign-only bridge until their separate mapping is proven.
+    static constexpr int kUnsupportedMechAmmoCompatibilityMaximum = 25;
     static constexpr RectI kMechStatusRepairButtonRect{58, 146, 74, 12};
     static constexpr RectI kMechStatusDoneButtonRect{58, 176, 74, 12};
     static constexpr RectI kMechRepairDoneButtonRect{72, 161, 74, 12};
@@ -1370,6 +1559,11 @@ private:
     static constexpr RectI kBattleStubWinButtonRect{82, 72, 156, 16};
     static constexpr RectI kBattleStubLoseButtonRect{82, 96, 156, 16};
     static constexpr RectI kBattleStubRunButtonRect{82, 120, 156, 16};
+    static constexpr RectI kBattleRuntimeContinueButtonRect{82, 164, 156, 16};
+    static constexpr RectI kCampaignBattlePanelRect{12, 10, 296, 180};
+    static constexpr RectI kCampaignBattleMapRect{24, 42, 176, 132};
+    static constexpr DWORD kCampaignBattleRenderStepMs = 16;
+    static constexpr double kCampaignBattleThrottleStep = 0.25;
     static constexpr RectI kDeathPlayAgainRect{42, 103, 92, 10};
     static constexpr RectI kDeathQuitRect{42, 114, 52, 10};
     static constexpr int kMissionResultDeathImageEntry = 0;
@@ -1454,41 +1648,62 @@ private:
         }},
     }};
     static constexpr std::array<ContractMissionDefinition, 34> kContractMissionDefinitions = {{
-        {L"GARRISON DUTY", L"Defense", false},
-        {L"GENERAL SECURITY DUTY", L"Defense", false},
-        {L"DEFENSE OF A WATER FACTORY", L"Defense", false},
-        {L"DEFENSE OF A WEAPONS FACTORY", L"Defense", false},
-        {L"DEFENSE OF A FUEL DUMP", L"Defense", false},
-        {L"DEFENSE OF FIELD COM UNIT", L"Defense", false},
-        {L"DEFENSE OF A SUPPLY DEPOT", L"Defense", false},
-        {L"DEFENSE OF LANDING FACILITIES", L"Defense", false},
-        {L"SUPPRESSION OF REBELLION", L"Deathmatch", false},
-        {L"TEMPORARY RELIEF OF FORCES", L"Sprint", false},
-        {L"RESCUE OF A KIDNAP VICTIM", L"Retrieval", false},
-        {L"RESCUE OF HOSTAGES", L"Retrieval", false},
-        {L"RETRIEVAL OF STOLEN PROPERTY", L"Retrieval", false},
-        {L"RETRIEVAL OF CAPTURED MECHS", L"Retrieval", false},
-        {L"AN EXTENDED OFFENSIVE CAMPAIGN", L"Extended", true},
-        {L"AN EXTENDED DEFENSIVE CAMPAIGN", L"Extended", true},
-        {L"A PLANETARY ASSUALT", L"Deathmatch", false},
-        {L"AN EXTENDED SIEGE CAMPAIGN", L"Extended", true},
-        {L"RELIEF OF ENGAGED FORCES", L"Sprint", false},
-        {L"A RECONNAISSANCE RAID", L"Deathmatch", false},
-        {L"A DIVERSIONARY RAID", L"Deathmatch", false},
-        {L"CONTAINMENT OF SECURITY FORCES", L"Sprint", false},
-        {L"DESTRUCTION OF A WATER FACTORY", L"Assault", false},
-        {L"DISABLING OF A WEAPONS FACTORY", L"Assault", false},
-        {L"DESTRUCTION OF A FUEL DUMP", L"Assault", false},
-        {L"DESTRUCTION OF AN AMMO DUMP", L"Assault", false},
-        {L"DISABLING OF A FIELD COM CENTER", L"Assault", false},
-        {L"ELIMINATION OF GARRISON FORCES", L"Deathmatch", false},
-        {L"DESTROYING STOLEN PROTOTYPES", L"Assault", false},
-        {L"DESTRUCTION OF MECH FACILITIES", L"Assault", false},
-        {L"ELIMINATION OF SECURITY FORCES", L"Deathmatch", false},
-        {L"DESTRUCTION OF PORT FACILITIES", L"Assault", false},
-        {L"CAPTURE OF AMMO AND MECH PARTS", L"Retrieval", false},
-        {L"PARTICIPATING IN HOSTAGE RAID", L"Retrieval", false},
+        {L"GARRISON DUTY", L"Defense", 1, false},
+        {L"GENERAL SECURITY DUTY", L"Defense", 1, false},
+        {L"DEFENSE OF A WATER FACTORY", L"Defense", 1, false},
+        {L"DEFENSE OF A WEAPONS FACTORY", L"Defense", 1, false},
+        {L"DEFENSE OF A FUEL DUMP", L"Defense", 1, false},
+        {L"DEFENSE OF FIELD COM UNIT", L"Defense", 1, false},
+        {L"DEFENSE OF A SUPPLY DEPOT", L"Defense", 1, false},
+        {L"DEFENSE OF LANDING FACILITIES", L"Defense", 1, false},
+        {L"SUPPRESSION OF REBELLION", L"Deathmatch", 1, false},
+        {L"TEMPORARY RELIEF OF FORCES", L"Sprint", 1, false},
+        {L"RESCUE OF A KIDNAP VICTIM", L"Retrieval", 2, false},
+        {L"RESCUE OF HOSTAGES", L"Retrieval", 2, false},
+        {L"RETRIEVAL OF STOLEN PROPERTY", L"Retrieval", 2, false},
+        {L"RETRIEVAL OF CAPTURED MECHS", L"Retrieval", 2, false},
+        {L"AN EXTENDED OFFENSIVE CAMPAIGN", L"Extended", 4, true},
+        {L"AN EXTENDED DEFENSIVE CAMPAIGN", L"Extended", 4, true},
+        {L"A PLANETARY ASSUALT", L"Deathmatch", 4, false},
+        {L"AN EXTENDED SIEGE CAMPAIGN", L"Extended", 4, true},
+        {L"RELIEF OF ENGAGED FORCES", L"Sprint", 4, false},
+        {L"A RECONNAISSANCE RAID", L"Deathmatch", 3, false},
+        {L"A DIVERSIONARY RAID", L"Deathmatch", 3, false},
+        {L"CONTAINMENT OF SECURITY FORCES", L"Sprint", 3, false},
+        {L"DESTRUCTION OF A WATER FACTORY", L"Assault", 3, false},
+        {L"DISABLING OF A WEAPONS FACTORY", L"Assault", 3, false},
+        {L"DESTRUCTION OF A FUEL DUMP", L"Assault", 3, false},
+        {L"DESTRUCTION OF AN AMMO DUMP", L"Assault", 3, false},
+        {L"DISABLING OF A FIELD COM CENTER", L"Assault", 3, false},
+        {L"ELIMINATION OF GARRISON FORCES", L"Deathmatch", 3, false},
+        {L"DESTROYING STOLEN PROTOTYPES", L"Assault", 3, false},
+        {L"DESTRUCTION OF MECH FACILITIES", L"Assault", 3, false},
+        {L"ELIMINATION OF SECURITY FORCES", L"Deathmatch", 3, false},
+        {L"DESTRUCTION OF PORT FACILITIES", L"Assault", 3, false},
+        {L"CAPTURE OF AMMO AND MECH PARTS", L"Retrieval", 3, false},
+        {L"PARTICIPATING IN HOSTAGE RAID", L"Retrieval", 3, false},
     }};
+    // MW_MAIN DS:0A02, indexed by employer House and target category.  Zero
+    // makes a category unavailable; nonzero is the maximum mission class used
+    // by FUN_101b_4f6e before its original quarter-range randomization.
+    static constexpr std::array<std::array<uint8_t, 8>, 5>
+        kOriginalContractCategoryMissionClass = {{
+            {{0, 4, 2, 2, 4, 0, 2, 2}},
+            {{4, 0, 4, 3, 0, 2, 2, 0}},
+            {{2, 4, 0, 2, 3, 2, 0, 0}},
+            {{2, 3, 2, 0, 4, 0, 0, 0}},
+            {{4, 0, 3, 4, 0, 0, 0, 1}},
+        }};
+    // MW_MAIN DS:8E9A..8FD9.  Class-1 missions and special categories 5..7
+    // choose one of these one-based target planet table orders directly.
+    static constexpr std::array<std::array<std::array<uint8_t, 8>, 8>, 5>
+        kOriginalClassOneTargetPlanetTableOrders = {{
+            {{{{255,255,255,255,255,255,255,255}},{{16,17,18,20,23,26,27,15}},{{13,16,13,16,13,16,13,16}},{{13,16,13,16,13,16,13,16}},{{7,8,9,10,15,12,13,14}},{{255,255,255,255,255,255,255,255}},{{3,4,5,30,3,4,5,30}},{{3,4,5,30,3,4,5,30}}}},
+            {{{{43,45,46,47,49,52,58,59}},{{255,255,255,255,255,255,255,255}},{{35,41,44,54,55,56,58,42}},{{44,58,44,58,44,58,44,58}},{{39,44,58,39,44,58,39,44}},{{35,57,36,35,57,36,35,57}},{{50,51,50,51,50,51,50,51}},{{255,255,255,255,255,255,255,255}}}},
+            {{{{66,76,80,66,76,80,66,76}},{{66,74,75,76,80,85,86,90}},{{255,255,255,255,255,255,255,255}},{{65,66,68,69,76,81,82,83}},{{66,76,80,66,76,80,66,76}},{{64,73,86,64,73,86,64,73}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}}}},
+            {{{{99,100,101,99,100,101,99,100}},{{99,100,101,99,100,101,99,100}},{{92,93,96,103,106,107,110,111}},{{255,255,255,255,255,255,255,255}},{{95,97,102,105,108,112,113,114}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}}}},
+            {{{{119,121,126,126,129,133,134,143}},{{121,133,121,133,121,133,121,133}},{{133,133,133,133,133,133,133,133}},{{121,123,131,133,138,139,140,143}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}},{{124,132,137,124,132,137,124,132}}}},
+        }};
     static constexpr MwMainTextRef kCampaignIntroText{
         "mw_main.endgame.020c12",
         0x020C12u,
@@ -2268,6 +2483,28 @@ private:
         return used;
     }
 
+    static std::array<int, 6> ammunitionCapacityForMech(
+        const OwnedMech& mech) {
+        std::array<int, 6> result{};
+        if (const std::optional<std::string> preset =
+                battleMechPresetForChassis(mech.chassis)) {
+            const mw::mech3d::MechCatalogAmmunitionProfile profile =
+                mw::mech3d::catalogAmmunitionProfile(*preset);
+            for (size_t pool = 0; pool < result.size(); ++pool) {
+                result[pool] = static_cast<int>(profile.maximumByPool[pool]);
+            }
+            return result;
+        }
+
+        const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
+        for (size_t pool = 0; pool < result.size(); ++pool) {
+            if (ammoTypes[pool]) {
+                result[pool] = kUnsupportedMechAmmoCompatibilityMaximum;
+            }
+        }
+        return result;
+    }
+
     static OwnedMech makeMech(ChassisId chassis, int assignedCrewSlot = -1) {
         const MechDefinition& definition = mechDefinition(chassis);
         OwnedMech mech;
@@ -2288,12 +2525,7 @@ private:
         mech.armorPercent = 100;
         mech.armorDamage = {};
         mech.weapons = definition.weapons;
-        const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
-        for (size_t i = 0; i < ammoTypes.size(); ++i) {
-            if (ammoTypes[i]) {
-                mech.ammoPacks[i] = kMechAmmoMaxPacks;
-            }
-        }
+        mech.ammoPacks = ammunitionCapacityForMech(mech);
         return mech;
     }
 
@@ -2320,10 +2552,19 @@ private:
 
     LRESULT handleMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {
-        case WM_TIMER:
-            update();
+        case WM_TIMER: {
+            const DWORD now = GetTickCount();
+            update(now);
+            const bool campaignBattleRenderDue = updateCampaignBattleRenderCadence(now);
             render();
+            if (campaignBattleRenderDue) {
+                updateCampaignBattleGlViewport();
+            }
             InvalidateRect(hwnd, nullptr, FALSE);
+            return 0;
+        }
+        case WM_SIZE:
+            updateCampaignBattleGlViewport();
             return 0;
         case WM_KEYDOWN:
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
@@ -2331,7 +2572,9 @@ private:
                 return 0;
             }
 #endif
+            currentKeyDownRepeat_ = (lParam & (1ll << 30)) != 0;
             handleKey(wParam);
+            currentKeyDownRepeat_ = false;
             return 0;
         case WM_CHAR:
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
@@ -2353,6 +2596,7 @@ private:
         case WM_ERASEBKGND:
             return 1;
         case WM_DESTROY:
+            campaignBattleGlViewport_.shutdown();
             PostQuitMessage(0);
             return 0;
         default:
@@ -2519,7 +2763,7 @@ private:
 
         debugLog(L"> " + widen(command));
 
-        const std::array<CheatDefinition, 19> cheats = {{
+        const std::array<CheatDefinition, 27> cheats = {{
             {"money", &App::cheatMoney},
             {"exp1", &App::cheatPilotSkillPoor},
             {"exp2", &App::cheatPilotSkillAverage},
@@ -2539,6 +2783,14 @@ private:
             {"rep3", &App::cheatReputationVeteran},
             {"rep4", &App::cheatReputationElite},
             {"month", &App::cheatNextMonth},
+            {"battle_test", &App::cheatBattleTest},
+            {"battle_test_medium", &App::cheatBattleTestMedium},
+            {"battle_test_heavy", &App::cheatBattleTestHeavy},
+            {"battle_test_defeat", &App::cheatBattleTestDefeat},
+            {"battle_test_withdraw", &App::cheatBattleTestWithdraw},
+            {"battle_test_unsupported", &App::cheatBattleTestUnsupported},
+            {"battle_test_final", &App::cheatBattleTestFinal},
+            {"battle_test_final_result", &App::cheatBattleTestFinalResult},
         }};
 
         for (const CheatDefinition& cheat : cheats) {
@@ -2613,6 +2865,8 @@ private:
                     changeState(ScreenState::MechLabMenu);
                 } else if (state_ == ScreenState::MissionDebrief && missionDebriefOutcome_ == MissionOutcome::Death) {
                     return;
+                } else if (state_ == ScreenState::MissionDebrief) {
+                    dismissMissionDebrief();
                 } else if (state_ == ScreenState::StatusMenu ||
                            state_ == ScreenState::ContractMenu ||
                            state_ == ScreenState::MechLabMenu ||
@@ -3486,6 +3740,10 @@ private:
             return;
         }
 
+        mw::battle::beginCampaignContractVisit(
+            completedContractVisitLedger_,
+            currentPlanetVisitSerial_);
+
         std::mt19937 rng(contractGenerationSeed(currentPlanet));
         size_t offerCount = 2u + static_cast<size_t>(rng() % 3u);
         if (currentYear_ == 3028 && currentMonth_ >= 7) {
@@ -3496,7 +3754,30 @@ private:
 
         activeContracts_.reserve(offerCount);
         for (size_t slot = 0; slot < offerCount; ++slot) {
-            activeContracts_.push_back(generateContractOffer(currentPlanet, slot, rng));
+            ContractOffer offer = generateContractOffer(currentPlanet, slot, rng);
+            if (!mw::battle::campaignContractOfferAvailableForVisit(
+                    completedContractVisitLedger_,
+                    currentPlanetVisitSerial_,
+                    slot)) {
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+                debugLog(
+                    L"Contract route: slot=" + std::to_wstring(slot) +
+                    L" hidden because it was completed during this planet visit");
+#endif
+                continue;
+            }
+            activeContracts_.push_back(std::move(offer));
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+            const ContractOffer& loggedOffer = activeContracts_.back();
+            debugLog(
+                L"Contract route: slot=" + std::to_wstring(slot) +
+                L", employer=" + std::to_wstring(loggedOffer.employerHouse) +
+                L", category=" + std::to_wstring(loggedOffer.targetCategory) +
+                L", class=" + std::to_wstring(loggedOffer.originalMissionClass) +
+                L", target_table_order=" + std::to_wstring(loggedOffer.targetPlanetTableOrder) +
+                L", scenario=" + std::to_wstring(loggedOffer.terrainScenarioIndex) +
+                L", mission=" + std::wstring(loggedOffer.missionName));
+#endif
         }
     }
 
@@ -3513,21 +3794,55 @@ private:
 
     ContractOffer generateContractOffer(const PlanetRecord& currentPlanet, size_t slot, std::mt19937& rng) const {
         ContractOffer offer;
+        offer.generationSlot = slot;
         offer.employerHouse = std::min<uint8_t>(currentPlanet.houseId, 4);
-        offer.targetHouse = static_cast<uint8_t>(rng() % 5u);
-        offer.targetPlanet = contractTargetPlanetName(offer.targetHouse, rng);
-
-        const bool lateCampaign = currentYear_ > 3028 || (currentYear_ == 3028 && currentMonth_ >= 7);
-        const bool canUseExtended = lateCampaign && ownedMechs_.size() >= 4;
-        const ContractMissionDefinition& mission = chooseContractMission(canUseExtended, rng);
+        offer.targetCategory =
+            chooseOriginalContractTargetCategory(offer.employerHouse, rng);
+        offer.originalMissionClass = chooseOriginalContractMissionClass(
+            offer.employerHouse,
+            offer.targetCategory,
+            rng);
+        const bool hasExtendedCapacity = ownedMechs_.size() >= 4u;
+        const ContractMissionDefinition& mission = chooseContractMissionFromClass(
+            offer.originalMissionClass,
+            hasExtendedCapacity,
+            rng);
+        offer.originalMissionClass = mission.originalMissionClass;
+        offer.originalMissionId = static_cast<uint8_t>(
+            static_cast<size_t>(&mission - kContractMissionDefinitions.data()) + 1u);
         offer.missionName = mission.name;
         offer.hasHostileTargetHouse = contractMissionHasHostileTargetHouse(mission);
+
+        offer.targetPlanetIndex = contractTargetPlanetIndex(
+            offer.employerHouse,
+            offer.targetCategory,
+            offer.originalMissionClass,
+            rng);
+        if (offer.targetPlanetIndex >= 0 &&
+            static_cast<size_t>(offer.targetPlanetIndex) < planets_.size()) {
+            const PlanetRecord& targetPlanet = planets_[static_cast<size_t>(offer.targetPlanetIndex)];
+            offer.targetHouse = std::min<uint8_t>(targetPlanet.houseId, 4);
+            offer.targetPlanet = widen(targetPlanet.name);
+            offer.targetPlanetTerrainCode = targetPlanet.terrainCode;
+            offer.targetEnvironmentId = battleEnvironmentIdForTerrainCode(targetPlanet.terrainCode);
+            offer.targetPlanetTableOrder = targetPlanet.tableOrder;
+            offer.terrainScenarioIndex =
+                mw::battle::campaignBattleTerrainScenarioIndexFromTargetPlanetTableOrder(
+                    targetPlanet.tableOrder);
+        } else {
+            offer.targetPlanet = currentPlanetName();
+            offer.targetHouse = offer.employerHouse;
+            offer.targetPlanetTableOrder = currentPlanet.tableOrder;
+            offer.terrainScenarioIndex =
+                mw::battle::campaignBattleTerrainScenarioIndexFromTargetPlanetTableOrder(
+                    currentPlanet.tableOrder);
+        }
 
         int score = contractForceScore();
         if (slot == 1u || slot == 4u) {
             score = score + score / 2;
         } else if (slot == 2u || slot == 5u) {
-            score = std::max(1, score / 2);
+            score /= 2;
         }
         assignContractEnemyCounts(score, offer, static_cast<uint32_t>(rng()));
         if (mission.extended) {
@@ -3688,12 +4003,7 @@ private:
         const uint32_t cost = reloadCost(*mech);
         if (cost > 0 && playerWealth_ >= cost) {
             playerWealth_ -= cost;
-            const std::array<bool, 6> ammoTypes = ammoTypesForMech(*mech);
-            for (size_t i = 0; i < ammoTypes.size(); ++i) {
-                if (ammoTypes[i]) {
-                    mech->ammoPacks[i] = kMechAmmoMaxPacks;
-                }
-            }
+            mech->ammoPacks = ammunitionCapacityForMech(*mech);
         }
 
         mechStatusMenuIndex_ = 0;
@@ -4715,6 +5025,17 @@ private:
         case StoryAction::FinalAttack:
             finalMissionStubActive_ = true;
             battleStubButtonIndex_ = 0;
+            missionParticipants_ = currentMissionParticipants();
+            beginFinalMissionSequence();
+            pendingBattleStartParams_ = battleStartParamsForDarkWingFinalMission();
+            missionLaunchPending_ = false;
+            acceptedBattleOutcome_ = {};
+            acceptedBattleConsequencePlan_ = {};
+            acceptedBattlePersistenceReport_ = {};
+            acceptedBattleDamageTranslationPlan_ = {};
+            acceptedBattleStateGuard_ = {};
+            campaignBattleRuntime_ = {};
+            beginCampaignBattleRuntime();
             changeState(ScreenState::MissionBattleStub);
             break;
         case StoryAction::FinalDelay:
@@ -4944,6 +5265,7 @@ private:
         slot->wage = pilot.monthlyWage;
         slot->portraitEntry = pilot.portraitEntry;
         slot->recruitIndex = static_cast<int>(recruitIndex);
+        slot->missionExperience = pilot.missionExperience;
         return true;
     }
 
@@ -5431,11 +5753,11 @@ private:
         writeU16Le(data, kGamOffsetMechCount, static_cast<uint16_t>(mechCount));
         for (size_t slot = 0; slot < kMaxOwnedMechs; ++slot) {
             const size_t chassisOffset = kGamOffsetMechChassisList + slot * 2u;
-            const size_t ammoOffset = kGamOffsetMechAmmo + slot * 2u;
             const size_t recordOffset = kGamOffsetMechRecords + slot * kGamMechRecordStride;
             if (slot >= mechCount) {
                 writeU16Le(data, chassisOffset, 0xFFFF);
-                writeU16Le(data, ammoOffset, 0);
+                mw::battle::encodeOriginalGamOwnedMechAmmunition(
+                    data, slot, {}, {});
                 std::fill(data.begin() + static_cast<std::ptrdiff_t>(recordOffset),
                           data.begin() + static_cast<std::ptrdiff_t>(recordOffset + kGamMechRecordStride),
                           uint8_t{0});
@@ -5445,7 +5767,10 @@ private:
             const OwnedMech& mech = ownedMechs_[slot];
             writeU16Le(data, chassisOffset, gamChassisId(mech.chassis));
             writeGamMechRecord(data, recordOffset, mech);
-            writeU16Le(data, ammoOffset, static_cast<uint16_t>(std::clamp(gamAmmoCount(mech), 0, 65535)));
+            const std::array<int, 6> capacities =
+                ammunitionCapacityForMech(mech);
+            mw::battle::encodeOriginalGamOwnedMechAmmunition(
+                data, slot, capacities, mech.ammoPacks);
         }
 
         for (size_t i = 0; i < extraAmmoInHold_.size(); ++i) {
@@ -5520,11 +5845,11 @@ private:
             }
             OwnedMech mech = makeMech(chassis, ownedMechs_.empty() ? 0 : -1);
             readGamMechRecord(data, kGamOffsetMechRecords + slot * kGamMechRecordStride, mech);
-            const int ammoCount = static_cast<int>(readGamU16Le(data, kGamOffsetMechAmmo + slot * 2u));
-            const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
-            for (size_t i = 0; i < ammoTypes.size(); ++i) {
-                mech.ammoPacks[i] = ammoTypes[i] ? std::clamp(ammoCount, 0, kMechAmmoMaxPacks) : 0;
-            }
+            const std::array<int, 6> capacities =
+                ammunitionCapacityForMech(mech);
+            mech.ammoPacks =
+                mw::battle::decodeOriginalGamOwnedMechAmmunition(
+                    data, slot, capacities);
             finalizeLoadedMech(mech);
             ownedMechs_.push_back(std::move(mech));
         }
@@ -5539,6 +5864,15 @@ private:
         }
         activeContracts_.clear();
         acceptedContract_ = {};
+        acceptedBattleContract_ = {};
+        pendingBattleStartParams_.reset();
+        acceptedBattleOutcome_ = {};
+        acceptedBattleConsequencePlan_ = {};
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleStateGuard_ = {};
+        campaignBattleRuntime_ = {};
+        missionSequence_ = {};
         contractAccepted_ = false;
         missionLaunchPending_ = false;
         finalMissionStubActive_ = false;
@@ -5567,6 +5901,19 @@ private:
     void writeRuntimeCrewRosterToGamSave(std::vector<uint8_t>& data) const {
         const uint16_t crewCount = static_cast<uint16_t>(std::clamp<int>(hiredCrewCount(), 1, 4));
         writeU16Le(data, kGamOffsetCrewCount, crewCount);
+        writeU16Le(
+            data,
+            kGamOffsetPlayerMissionExperience,
+            crewMembers_.front().missionExperience);
+        for (size_t recruitIndex = 0; recruitIndex < recruitPilots_.size(); ++recruitIndex) {
+            const size_t experienceOffset =
+                kGamOffsetRecruitMissionExperience + recruitIndex + 1u;
+            if (experienceOffset < data.size()) {
+                data[experienceOffset] = static_cast<uint8_t>(std::min<uint16_t>(
+                    recruitPilots_[recruitIndex].missionExperience,
+                    std::numeric_limits<uint8_t>::max()));
+            }
+        }
 
         for (size_t slot = 0; slot < crewMembers_.size(); ++slot) {
             const CrewMember& member = crewMembers_[slot];
@@ -5581,6 +5928,13 @@ private:
                 piloting = skillRank(member.piloting);
                 if (slot > 0 && member.recruitIndex >= 0) {
                     pilotId = static_cast<uint16_t>(member.recruitIndex + 1);
+                    const size_t experienceOffset =
+                        kGamOffsetRecruitMissionExperience + pilotId;
+                    if (experienceOffset < data.size()) {
+                        data[experienceOffset] = static_cast<uint8_t>(std::min<uint16_t>(
+                            member.missionExperience,
+                            std::numeric_limits<uint8_t>::max()));
+                    }
                 }
 
                 const int mechIndex = assignedMechIndexForCrewSlot(slot);
@@ -5598,6 +5952,14 @@ private:
 
     void applyGamCrewRosterToRuntime(const std::vector<uint8_t>& data) {
         resetCrewRosterForLoadedMechs();
+        crewMembers_.front().missionExperience =
+            readGamU16Le(data, kGamOffsetPlayerMissionExperience);
+        for (size_t recruitIndex = 0; recruitIndex < recruitPilots_.size(); ++recruitIndex) {
+            const size_t experienceOffset =
+                kGamOffsetRecruitMissionExperience + recruitIndex + 1u;
+            recruitPilots_[recruitIndex].missionExperience =
+                experienceOffset < data.size() ? data[experienceOffset] : 0;
+        }
 
         const size_t crewCount = std::clamp<size_t>(
             static_cast<size_t>(readGamU16Le(data, kGamOffsetCrewCount)),
@@ -5615,7 +5977,7 @@ private:
                 continue;
             }
 
-            const RecruitPilot& pilot = recruitPilots_[recruitIndex];
+            RecruitPilot& pilot = recruitPilots_[recruitIndex];
             const uint8_t gunnery = static_cast<uint8_t>(std::clamp<int>(
                 readGamU16Le(data, kGamOffsetCrewGunnerySkills + slot * 2u),
                 0,
@@ -5630,10 +5992,13 @@ private:
             member.name = std::wstring_view(pilot.name);
             member.gunnery = skillLabel(gunnery);
             member.piloting = skillLabel(piloting);
+            pilot.gunnerySkill = gunnery;
+            pilot.pilotingSkill = piloting;
+            pilot.monthlyWage = monthlyWageForGunnery(gunnery);
             member.wage = monthlyWageForGunnery(gunnery);
             member.portraitEntry = pilot.portraitEntry;
             member.recruitIndex = static_cast<int>(recruitIndex);
-            member.missionExperience = 0;
+            member.missionExperience = pilot.missionExperience;
         }
 
         for (OwnedMech& mech : ownedMechs_) {
@@ -5833,16 +6198,6 @@ private:
         default:
             return DamageState::Functional;
         }
-    }
-
-    static int gamAmmoCount(const OwnedMech& mech) {
-        const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
-        for (size_t i = 0; i < ammoTypes.size(); ++i) {
-            if (ammoTypes[i]) {
-                return mech.ammoPacks[i];
-            }
-        }
-        return 0;
     }
 
     static void writeGamMechRecord(std::vector<uint8_t>& data, size_t offset, const OwnedMech& mech) {
@@ -6063,6 +6418,136 @@ private:
             rebuildNewsNetMessages();
         }
         debugLog(L"Cheat month applied. Date: " + campaignDateLabel());
+    }
+
+    enum class DebugBattleTestOutcome {
+        Interactive,
+        Defeat,
+        Withdraw,
+        Unsupported,
+    };
+
+    void cheatBattleTestPreset(
+        const std::string& playerMechPresetId,
+        DebugBattleTestOutcome outcome = DebugBattleTestOutcome::Interactive) {
+        ContractOffer offer;
+        offer.employerHouse = 4;
+        offer.targetHouse = 3;
+        offer.hasHostileTargetHouse = true;
+        offer.targetPlanet = L"WARLOCK";
+        offer.targetPlanetTerrainCode = 11;
+        offer.targetEnvironmentId = 1;
+        offer.originalMissionId = 11;
+        offer.missionName = L"RESCUE OF A KIDNAP VICTIM";
+        offer.lightCount = 1;
+        offer.priceK = 150;
+        offer.salvagePercent = 5;
+        offer.advancePercent = 5;
+        acceptedContract_ = offer;
+        acceptedBattleContract_ = battleContractMetadataFromOffer(acceptedContract_);
+        contractAccepted_ = true;
+        pendingBattleStartParams_ = battleStartParamsForAcceptedContract();
+        if (pendingBattleStartParams_.has_value()) {
+            pendingBattleStartParams_->playerMechPresetId = playerMechPresetId;
+            if (outcome == DebugBattleTestOutcome::Defeat) {
+                pendingBattleStartParams_->combatAiPolicy =
+                    mw::battle::BattleCombatAiPolicy::Phase10CompatibilityFsm;
+                pendingBattleStartParams_->deterministicCombatRuntimeEnabled = true;
+                pendingBattleStartParams_->mechSystemsSnapshotEnabled = true;
+                pendingBattleStartParams_->weaponRange = 700.0;
+                pendingBattleStartParams_->enemyAttackRange = 650.0;
+                pendingBattleStartParams_->weaponCooldownTicks = 3;
+                pendingBattleStartParams_->weaponDamagePerHit = 1;
+                pendingBattleStartParams_->mechSystemMaxDamage = 3;
+                if (!pendingBattleStartParams_->combatantLaunchStates.empty()) {
+                    pendingBattleStartParams_->combatantLaunchStates.front().startTransform =
+                        mw::battle::Transform{
+                            pendingBattleStartParams_->playerStartTransform.x + 200.0,
+                            0.0,
+                            pendingBattleStartParams_->playerStartTransform.z,
+                            0.0};
+                }
+            } else if (outcome == DebugBattleTestOutcome::Withdraw) {
+                pendingBattleStartParams_->playerStartTransform =
+                    mw::battle::Transform{1.0, 0.0, 20000.0, -1.5707963267948966};
+            }
+        }
+        acceptedBattleOutcome_ = {};
+        acceptedBattleConsequencePlan_ = {};
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleStateGuard_ = {};
+        campaignBattleRuntime_ = {};
+        missionLaunchPending_ = false;
+        finalMissionStubActive_ = false;
+        beginCampaignBattleRuntime();
+        if (campaignBattleRuntime_.active) {
+            if (outcome == DebugBattleTestOutcome::Defeat) {
+                campaignBattleRuntime_.diagnosticTickLimit = 12;
+            } else if (outcome == DebugBattleTestOutcome::Withdraw) {
+                campaignBattleRuntime_.diagnosticTickLimit = 4;
+                campaignBattleRuntime_.throttleCommand = 1.0;
+            } else if (outcome == DebugBattleTestOutcome::Unsupported) {
+                campaignBattleRuntime_.diagnosticTickLimit = 1;
+            }
+        }
+        debugConsoleOpen_ = false;
+        changeState(ScreenState::MissionBattleStub);
+        debugLog(
+            L"Cheat battle_test launched the Phase 11 live runtime with " +
+            widen(playerMechPresetId) + L".");
+    }
+
+    void cheatBattleTest() {
+        cheatBattleTestPreset("locust");
+    }
+
+    void cheatBattleTestMedium() {
+        cheatBattleTestPreset("phoenix_hawk");
+    }
+
+    void cheatBattleTestHeavy() {
+        cheatBattleTestPreset("battlemaster");
+    }
+
+    void cheatBattleTestDefeat() {
+        cheatBattleTestPreset("locust", DebugBattleTestOutcome::Defeat);
+    }
+
+    void cheatBattleTestWithdraw() {
+        cheatBattleTestPreset("locust", DebugBattleTestOutcome::Withdraw);
+    }
+
+    void cheatBattleTestUnsupported() {
+        cheatBattleTestPreset("locust", DebugBattleTestOutcome::Unsupported);
+    }
+
+    void cheatBattleTestFinal() {
+        contractAccepted_ = false;
+        acceptedContract_ = {};
+        acceptedBattleContract_ = {};
+        missionParticipants_ = currentMissionParticipants();
+        finalMissionStubActive_ = true;
+        beginFinalMissionSequence();
+        pendingBattleStartParams_ = battleStartParamsForDarkWingFinalMission();
+        missionLaunchPending_ = false;
+        acceptedBattleOutcome_ = {};
+        acceptedBattleConsequencePlan_ = {};
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleStateGuard_ = {};
+        campaignBattleRuntime_ = {};
+        beginCampaignBattleRuntime();
+        debugConsoleOpen_ = false;
+        changeState(ScreenState::MissionBattleStub);
+        debugLog(L"Cheat battle_test_final launched the proven Dark Wing final roster.");
+    }
+
+    void cheatBattleTestFinalResult() {
+        cheatBattleTestFinal();
+        if (campaignBattleRuntime_.active) {
+            campaignBattleRuntime_.diagnosticTickLimit = 1;
+        }
     }
 #endif
 
@@ -6311,7 +6796,7 @@ private:
                 return;
             } else if (state_ == ScreenState::MissionDebrief) {
                 if (missionDebriefOutcome_ != MissionOutcome::Death) {
-                    changeState(ScreenState::MainMenu);
+                    dismissMissionDebrief();
                 }
             } else {
                 DestroyWindow(hwnd_);
@@ -6390,6 +6875,11 @@ private:
 
         if (state_ == ScreenState::Starmap) {
             handleStarmapKey(key);
+            return;
+        }
+
+        if (state_ == ScreenState::MissionBattleStub) {
+            handleBattleStubKey(key);
             return;
         }
 
@@ -6613,18 +7103,6 @@ private:
             }
             return;
         }
-
-        if (state_ == ScreenState::MissionBattleStub) {
-            if (key == VK_UP || key == VK_LEFT) {
-                battleStubButtonIndex_ = (battleStubButtonIndex_ + 2u) % 3u;
-            } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
-                battleStubButtonIndex_ = (battleStubButtonIndex_ + 1u) % 3u;
-            } else if (key == VK_RETURN || key == VK_SPACE) {
-                activateBattleStubSelection();
-            }
-            return;
-        }
-
         if (state_ == ScreenState::MissionDebrief) {
             if (missionDebriefOutcome_ == MissionOutcome::Death) {
                 if (key == VK_UP || key == VK_LEFT || key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
@@ -6637,7 +7115,7 @@ private:
                     }
                 }
             } else if (key == VK_RETURN || key == VK_SPACE || key == VK_ESCAPE) {
-                changeState(ScreenState::MainMenu);
+                dismissMissionDebrief();
             }
             return;
         }
@@ -6739,6 +7217,15 @@ private:
         activeNewsNetMessageIndexes_.clear();
         activeContracts_.clear();
         acceptedContract_ = {};
+        acceptedBattleContract_ = {};
+        pendingBattleStartParams_.reset();
+        acceptedBattleOutcome_ = {};
+        acceptedBattleConsequencePlan_ = {};
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleStateGuard_ = {};
+        campaignBattleRuntime_ = {};
+        missionSequence_ = {};
         contractAccepted_ = false;
         missionLaunchPending_ = false;
         finalMissionStubActive_ = false;
@@ -7026,6 +7513,99 @@ private:
                     true,
                     definition.statusImage.nibblePhase));
         }
+        loadBattleMechStatusArt();
+    }
+
+    void loadBattleMechStatusArt() {
+        struct BattleStatusBmpSpec {
+            ChassisId chassis;
+            const wchar_t* fileName;
+        };
+        static constexpr std::array<BattleStatusBmpSpec, 8> specs = {{
+            {ChassisId::Locust, L"LOC.BMP"},
+            {ChassisId::Jenner, L"JEN.BMP"},
+            {ChassisId::PhoenixHawk, L"PHO.BMP"},
+            {ChassisId::ShadowHawk, L"SHA.BMP"},
+            {ChassisId::Rifleman, L"RIF.BMP"},
+            {ChassisId::Warhammer, L"WAR.BMP"},
+            {ChassisId::Marauder, L"MAR.BMP"},
+            {ChassisId::Battlemaster, L"BAT.BMP"},
+        }};
+
+        battleMechStatusArchive_ = {};
+        battleMechStatusArchive_.palette.resize(16);
+        for (size_t sourceIndex = 0; sourceIndex < 16u; ++sourceIndex) {
+            battleMechStatusArchive_.palette[
+                kPicsSourceToGamePaletteIndex[sourceIndex]] = kEgaPalette[sourceIndex];
+        }
+        battleMechStatusMaskRegistrations_ = {};
+
+        for (const BattleStatusBmpSpec& spec : specs) {
+            const MechDefinition& definition = mechDefinition(spec.chassis);
+            const auto sourceIt = std::find_if(
+                mechStatusArchive_.images.begin(),
+                mechStatusArchive_.images.end(),
+                [&definition](const Image4bpp& image) {
+                    return image.entryIndex == definition.statusImage.entry;
+                });
+            if (sourceIt == mechStatusArchive_.images.end()) {
+                throw std::runtime_error("MW_PICS status image missing for battle BMP registration");
+            }
+
+            const mw::presentation::CampaignIndexedSpriteArchive decoded =
+                mw::presentation::loadCampaignIndexedSpriteArchive(
+                    resourceRoot_ / spec.fileName);
+            if (!decoded.valid || decoded.sprites.size() != 1u) {
+                throw std::runtime_error(
+                    "battle status BMP decode failed: " + decoded.reason);
+            }
+            const mw::presentation::CampaignIndexedSprite& sprite =
+                decoded.sprites.front();
+            if (sprite.width != 152 || sprite.height != 193) {
+                throw std::runtime_error(
+                    "battle status BMP does not have original 152x193 dimensions");
+            }
+
+            Image4bpp battleImage;
+            battleImage.entryIndex = definition.statusImage.entry;
+            battleImage.width = sprite.width;
+            battleImage.height = sprite.height;
+            battleImage.rowStride = sprite.rowStride;
+            battleImage.pixels = sprite.packedPixels;
+
+            BattleMechStatusMaskRegistration registration =
+                registerBattleMechStatusMask(*sourceIt, battleImage);
+            if (!registration.valid) {
+                throw std::runtime_error(
+                    "battle status BMP could not be registered exactly to MW_PICS armor masks");
+            }
+            size_t sourceArmorPixels = 0;
+            size_t matchingBattleArmorPixels = 0;
+            for (int sourceY = 0; sourceY < sourceIt->height; ++sourceY) {
+                for (int sourceX = 0; sourceX < sourceIt->width; ++sourceX) {
+                    const uint8_t sourceColor = kPicsSourceToGamePaletteIndex[
+                        image4bppPixelIndex(*sourceIt, sourceX, sourceY)];
+                    if (sourceColor != 5u && sourceColor != 13u) {
+                        continue;
+                    }
+                    ++sourceArmorPixels;
+                    if (image4bppPixelIndex(
+                            battleImage,
+                            sourceX + registration.x,
+                            sourceY + registration.y) == 0u) {
+                        ++matchingBattleArmorPixels;
+                    }
+                }
+            }
+            if (sourceArmorPixels == 0u ||
+                matchingBattleArmorPixels != sourceArmorPixels) {
+                throw std::runtime_error(
+                    "battle status BMP black armor stencil does not exactly match MW_PICS purple armor pixels");
+            }
+            battleMechStatusMaskRegistrations_[armorOverlayIndex(spec.chassis)] =
+                registration;
+            battleMechStatusArchive_.images.push_back(std::move(battleImage));
+        }
     }
 
     void resetCrewRoster() {
@@ -7059,6 +7639,10 @@ private:
         recruitmentSeed_ = makeRecruitmentSeed();
         planetVisitSerialCounter_ = 1;
         currentPlanetVisitSerial_ = planetVisitSerialCounter_;
+        completedContractVisitLedger_ = {};
+        mw::battle::beginCampaignContractVisit(
+            completedContractVisitLedger_,
+            currentPlanetVisitSerial_);
     }
 
     static uint32_t makeRecruitmentSeed() {
@@ -7133,8 +7717,7 @@ private:
         return kSkillLabels[std::min<size_t>(skill, kSkillLabels.size() - 1u)];
     }
 
-    void update() {
-        const DWORD now = GetTickCount();
+    void update(DWORD now) {
         const DWORD elapsed = now - stateStartedTick_;
         if (state_ == ScreenState::ActivisionSplash && elapsed > 2200) {
             changeState(ScreenState::IntroText);
@@ -7150,6 +7733,8 @@ private:
             changeState(ScreenState::TravelAnimation);
         } else if (state_ == ScreenState::TravelAnimation) {
             updateTravelAnimation(elapsed);
+        } else if (state_ == ScreenState::MissionBattleStub) {
+            updateCampaignBattleRuntime(now);
         }
     }
 
@@ -7163,7 +7748,7 @@ private:
         }
 
         if (missionLaunchPending_) {
-            missionLaunchPending_ = false;
+            beginCampaignBattleRuntime();
             battleStubButtonIndex_ = 0;
             changeState(ScreenState::MissionBattleStub);
             return;
@@ -7182,6 +7767,9 @@ private:
             currentPlanetIndex_ = std::clamp(pendingTravelPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
             selectedPlanetIndex_ = currentPlanetIndex_;
             currentPlanetVisitSerial_ = ++planetVisitSerialCounter_;
+            mw::battle::beginCampaignContractVisit(
+                completedContractVisitLedger_,
+                currentPlanetVisitSerial_);
             barDialogState_ = BarDialogState::None;
             activeRecruitIndex_ = -1;
         }
@@ -8076,6 +8664,190 @@ private:
         drawMechStatusImage(mech);
     }
 
+    const OwnedMech* campaignBattleMechStatusMech() const {
+        if (campaignBattleRuntime_.mechStatusOwnedMechIndexes.empty()) {
+            return nullptr;
+        }
+        const int mechIndex = campaignBattleRuntime_.mechStatusOwnedMechIndexes.front();
+        if (mechIndex < 0 || static_cast<size_t>(mechIndex) >= ownedMechs_.size()) {
+            return nullptr;
+        }
+        return &ownedMechs_[static_cast<size_t>(mechIndex)];
+    }
+
+    std::optional<OwnedMech> campaignBattleMechStatusRuntimeMech() const {
+        const OwnedMech* entryMech = campaignBattleMechStatusMech();
+        if (entryMech == nullptr) {
+            return std::nullopt;
+        }
+        OwnedMech mech = *entryMech;
+        const mw::battle::CombatantSnapshot* player = playerCombatantSnapshot(
+            campaignBattleRuntime_.currentPresentationSnapshot);
+        if (player == nullptr || !player->detailedDamage.valid) {
+            return mech;
+        }
+        const auto damageState = [](uint8_t condition,
+                                    int battleDamage,
+                                    bool functional) {
+            switch (mw::presentation::campaignDetailedDamageDisplayStatus(
+                condition,
+                battleDamage,
+                functional)) {
+            case mw::battle::BattleMechSystemStatus::Destroyed:
+                return DamageState::Junk;
+            case mw::battle::BattleMechSystemStatus::Offline:
+                return DamageState::HeavyDamage;
+            case mw::battle::BattleMechSystemStatus::Degraded:
+                return DamageState::LightDamage;
+            case mw::battle::BattleMechSystemStatus::Online:
+            default:
+                return DamageState::Functional;
+            }
+        };
+        for (size_t index = 0; index < mech.armorDamage.size(); ++index) {
+            const auto status =
+                mw::presentation::campaignDetailedArmorDisplayStatus(
+                    player->detailedDamage,
+                    static_cast<mw::mech3d::MechArmorSectionId>(index));
+            mech.armorDamage[index] =
+                status == mw::battle::BattleMechSystemStatus::Destroyed ? 3 :
+                status == mw::battle::BattleMechSystemStatus::Offline ? 2 :
+                status == mw::battle::BattleMechSystemStatus::Degraded ? 1 : 0;
+        }
+        updateArmorPercent(mech);
+        const auto critical = [player, &damageState](
+                                  mw::mech3d::MechCriticalComponentId id) {
+            const auto& component = player->detailedDamage.criticalComponents[
+                static_cast<size_t>(id)];
+            return damageState(
+                component.condition,
+                component.battleDamage,
+                component.functional);
+        };
+        mech.engine = critical(mw::mech3d::MechCriticalComponentId::Engine);
+        mech.gyros = critical(mw::mech3d::MechCriticalComponentId::Gyros);
+        mech.sensors = critical(mw::mech3d::MechCriticalComponentId::Sensors);
+        mech.lifeSupport =
+            critical(mw::mech3d::MechCriticalComponentId::LifeSupport);
+        mech.leftArmActuator =
+            critical(mw::mech3d::MechCriticalComponentId::LeftArmActuator);
+        mech.rightArmActuator =
+            critical(mw::mech3d::MechCriticalComponentId::RightArmActuator);
+        mech.leftLegActuator =
+            critical(mw::mech3d::MechCriticalComponentId::LeftLegActuator);
+        mech.rightLegActuator =
+            critical(mw::mech3d::MechCriticalComponentId::RightLegActuator);
+        const auto& heatSinks = player->detailedDamage.criticalComponents[
+            static_cast<size_t>(mw::mech3d::MechCriticalComponentId::HeatSinks)];
+        mech.heatSinksWorking = heatSinks.workingCount;
+        mech.heatSinksTotal = heatSinks.totalCount;
+        const auto& jumpJets = player->detailedDamage.criticalComponents[
+            static_cast<size_t>(mw::mech3d::MechCriticalComponentId::JumpJets)];
+        mech.jumpJetsWorking = jumpJets.workingCount;
+        mech.jumpJetsTotal = jumpJets.totalCount;
+        for (size_t index = 0; index < mech.weapons.size(); ++index) {
+            const auto& weapon = player->detailedDamage.installedWeapons[index];
+            mech.weapons[index].condition = damageState(
+                weapon.condition,
+                weapon.battleDamage,
+                weapon.functional);
+        }
+        return mech;
+    }
+
+    void renderCampaignBattleMechStatus() {
+        constexpr int kBattleStatusImageX = 162;
+        constexpr int kBattleStatusImageY = 3;
+        const std::optional<OwnedMech> runtimeMech =
+            campaignBattleMechStatusRuntimeMech();
+        const OwnedMech* mech = runtimeMech ? &*runtimeMech : nullptr;
+        fillRect(0, 0, kScreenWidth, kScreenHeight, 0);
+        drawBox(0, 0, kScreenWidth, kScreenHeight, 10);
+        fillRect(157, 1, 1, kScreenHeight - 2, 10);
+        if (mech == nullptr) {
+            drawMechStatusTextCentered(0, 92, 157, L"MECH STATUS UNAVAILABLE", 12);
+            return;
+        }
+
+        drawMechStatusTextCentered(0, 4, 157, mech->name, 12);
+        const auto drawComponent = [this](
+                                       int lineY,
+                                       std::wstring_view label,
+                                       DamageState condition) {
+            const uint8_t color = damageLevelConditionColor(condition);
+            drawMechStatusTextRightAligned(4, lineY, 80, label, color);
+            drawMechStatusText(88, lineY, damageLabel(condition), color);
+        };
+        const auto drawCount = [this](
+                                   int lineY,
+                                   std::wstring_view label,
+                                   int working,
+                                   int total) {
+            const uint8_t color = damageLevelCountColor(working, total);
+            drawMechStatusTextRightAligned(4, lineY, 80, label, color);
+            drawMechStatusText(
+                88,
+                lineY,
+                std::to_wstring(working) + L" OF " + std::to_wstring(total),
+                color);
+        };
+        int y = kMechRepairFirstLineY;
+        drawComponent(y, L"ENGINE:", mech->engine);
+        y += kMechRepairComponentLineStep;
+        drawComponent(y, L"GYROS:", mech->gyros);
+        y += kMechRepairComponentLineStep;
+        drawComponent(y, L"SENSORS:", mech->sensors);
+        y += kMechRepairComponentLineStep;
+        drawComponent(y, L"LIFE SUPPORT:", mech->lifeSupport);
+        y += kMechRepairComponentLineStep;
+        drawCount(y, L"HEAT SINKS:", mech->heatSinksWorking, mech->heatSinksTotal);
+        y += kMechRepairComponentLineStep;
+        drawComponent(y, L"LA ACTUATOR:", mech->leftArmActuator);
+        y += kMechRepairComponentLineStep;
+        drawComponent(y, L"RA ACTUATOR:", mech->rightArmActuator);
+        y += kMechRepairComponentLineStep;
+        drawComponent(y, L"LL ACTUATOR:", mech->leftLegActuator);
+        y += kMechRepairComponentLineStep;
+        drawComponent(y, L"RL ACTUATOR:", mech->rightLegActuator);
+        y += kMechRepairComponentLineStep;
+        drawCount(y, L"JUMP JETS:", mech->jumpJetsWorking, mech->jumpJetsTotal);
+
+        drawMechStatusText(4, kMechRepairWeaponHeaderY, L"WPN", 7);
+        drawMechStatusText(46, kMechRepairWeaponHeaderY, L"LOC", 7);
+        drawMechStatusText(76, kMechRepairWeaponHeaderY, L"CONDITION", 7);
+        y = kMechRepairWeaponFirstRowY;
+        for (const MechWeaponStatus& weapon : mech->weapons) {
+            if (weapon.weapon.empty()) {
+                continue;
+            }
+            const uint8_t color = damageLevelConditionColor(weapon.condition);
+            drawMechStatusText(4, y, weapon.weapon, color);
+            drawMechStatusText(46, y, weapon.location, color);
+            drawMechStatusText(76, y, damageLabel(weapon.condition), color);
+            y += kMechRepairComponentLineStep;
+        }
+        drawMechStatusText(4, 176, L"Q - RETURN TO COCKPIT", 7);
+        drawMechStatusText(4, 184, L"C - GO TO COMMAND SCREEN", 7);
+
+        drawImageAt(
+            battleMechStatusArchive_,
+            mech->statusImageEntry,
+            kBattleStatusImageX,
+            kBattleStatusImageY,
+            false);
+        drawCampaignBattleArmorOverlay(
+            *mech,
+            kBattleStatusImageX,
+            kBattleStatusImageY);
+        finalizeCampaignBattleStatusStencil(
+            kBattleStatusImageX,
+            kBattleStatusImageY,
+            152,
+            193);
+        drawBox(0, 0, kScreenWidth, kScreenHeight, 10);
+        fillRect(157, 1, 1, kScreenHeight - 2, 10);
+    }
+
     void renderMechBuyMessage(std::wstring_view line1, std::wstring_view line2 = {}) {
         drawGpPanel(
             kMechBuyMessagePanelRect.x,
@@ -8468,8 +9240,1487 @@ private:
             false);
     }
 
+    static CampaignBattleMapProjection campaignBattleMapProjection(
+        const mw::battle::BattleSnapshot& snapshot) {
+        CampaignBattleMapProjection projection;
+        if (snapshot.battlefieldBoundary.valid) {
+            projection.valid = true;
+            projection.minX = snapshot.battlefieldBoundary.worldMinX;
+            projection.maxX = snapshot.battlefieldBoundary.worldMaxX;
+            projection.minZ = snapshot.battlefieldBoundary.worldMinZ;
+            projection.maxZ = snapshot.battlefieldBoundary.worldMaxZ;
+        } else if (snapshot.terrain.scenarioLoaded) {
+            projection.valid = true;
+            projection.minX = snapshot.terrain.boundsMinX;
+            projection.maxX = snapshot.terrain.boundsMaxX;
+            projection.minZ = snapshot.terrain.boundsMinZ;
+            projection.maxZ = snapshot.terrain.boundsMaxZ;
+        }
+
+        for (const mw::battle::CombatantSnapshot& combatant : snapshot.combatants) {
+            if (combatant.missionStatus ==
+                mw::battle::CombatantMissionStatus::Escaped) {
+                continue;
+            }
+            if (!projection.valid) {
+                projection.valid = true;
+                projection.minX = projection.maxX = combatant.transform.x;
+                projection.minZ = projection.maxZ = combatant.transform.z;
+            } else {
+                projection.minX = std::min(projection.minX, combatant.transform.x);
+                projection.maxX = std::max(projection.maxX, combatant.transform.x);
+                projection.minZ = std::min(projection.minZ, combatant.transform.z);
+                projection.maxZ = std::max(projection.maxZ, combatant.transform.z);
+            }
+        }
+
+        if (snapshot.objective.valid) {
+            if (!projection.valid) {
+                projection.valid = true;
+                projection.minX = projection.maxX = snapshot.objective.transform.x;
+                projection.minZ = projection.maxZ = snapshot.objective.transform.z;
+            } else {
+                projection.minX = std::min(projection.minX, snapshot.objective.transform.x);
+                projection.maxX = std::max(projection.maxX, snapshot.objective.transform.x);
+                projection.minZ = std::min(projection.minZ, snapshot.objective.transform.z);
+                projection.maxZ = std::max(projection.maxZ, snapshot.objective.transform.z);
+            }
+        }
+
+        if (projection.valid) {
+            if (projection.maxX - projection.minX < 1.0) {
+                projection.minX -= 1.0;
+                projection.maxX += 1.0;
+            }
+            if (projection.maxZ - projection.minZ < 1.0) {
+                projection.minZ -= 1.0;
+                projection.maxZ += 1.0;
+            }
+        }
+        return projection;
+    }
+
+    static int campaignBattleMapX(
+        const RectI& rect,
+        const CampaignBattleMapProjection& projection,
+        double worldX) {
+        const double t = std::clamp(
+            (worldX - projection.minX) / (projection.maxX - projection.minX),
+            0.0,
+            1.0);
+        return rect.x + 1 + static_cast<int>(t * static_cast<double>(rect.width - 3) + 0.5);
+    }
+
+    static int campaignBattleMapY(
+        const RectI& rect,
+        const CampaignBattleMapProjection& projection,
+        double worldZ) {
+        const double t = std::clamp(
+            (projection.maxZ - worldZ) / (projection.maxZ - projection.minZ),
+            0.0,
+            1.0);
+        return rect.y + 1 + static_cast<int>(t * static_cast<double>(rect.height - 3) + 0.5);
+    }
+
+    static std::wstring campaignBattlePresentationName(
+        mw::battle::CampaignBattlePresentationMode mode) {
+        return widen(mw::battle::campaignBattlePresentationModeName(mode));
+    }
+
+    void drawCampaignBattleMapPlayerMarker(
+        int x,
+        int y,
+        const mw::presentation::CampaignBattleMapPlayerMarker& marker,
+        uint8_t color) {
+        if (marker.contrastOutline) {
+            for (size_t pixel = 0; pixel < marker.pixels.size(); ++pixel) {
+                if (marker.pixels[pixel] == 0u) {
+                    continue;
+                }
+                const int markerX =
+                    x + static_cast<int>(pixel % 3u) - 1;
+                const int markerY =
+                    y + static_cast<int>(pixel / 3u) - 1;
+                for (int offsetY = -1; offsetY <= 1; ++offsetY) {
+                    for (int offsetX = -1; offsetX <= 1; ++offsetX) {
+                        drawPixel(markerX + offsetX, markerY + offsetY, 0);
+                    }
+                }
+            }
+        }
+        for (size_t pixel = 0; pixel < marker.pixels.size(); ++pixel) {
+            if (marker.pixels[pixel] != 0u) {
+                drawPixel(
+                    x + static_cast<int>(pixel % 3u) - 1,
+                    y + static_cast<int>(pixel / 3u) - 1,
+                    color);
+            }
+        }
+    }
+
+    void drawCampaignBattleMapBlip(int x, int y, uint8_t color) {
+        fillRect(x - 1, y - 1, 3, 3, color);
+    }
+
+    void drawCampaignBattleObjectiveBlip(int x, int y) {
+        drawPixel(x, y - 2, 11);
+        drawPixel(x - 1, y - 1, 11);
+        drawPixel(x + 1, y - 1, 11);
+        drawPixel(x - 2, y, 11);
+        drawPixel(x, y, 11);
+        drawPixel(x + 2, y, 11);
+        drawPixel(x - 1, y + 1, 11);
+        drawPixel(x + 1, y + 1, 11);
+        drawPixel(x, y + 2, 11);
+    }
+
+    void drawCampaignBattleBoundaryDashes(const RectI& rect, uint8_t allowedExitMask) {
+        drawBox(rect.x, rect.y, rect.width, rect.height, 7);
+        constexpr int dash = 5;
+        constexpr int gap = 3;
+        const auto edgeColor = [allowedExitMask](mw::battle::BattlefieldBoundaryEdge edge) -> uint8_t {
+            return (allowedExitMask & mw::battle::battlefieldBoundaryEdgeMask(edge)) != 0 ? 14 : 7;
+        };
+        for (int x = rect.x + 2; x < rect.x + rect.width - 2; x += dash + gap) {
+            fillRect(
+                x,
+                rect.y,
+                std::min(dash, rect.x + rect.width - 1 - x),
+                1,
+                edgeColor(mw::battle::BattlefieldBoundaryEdge::North));
+            fillRect(
+                x,
+                rect.y + rect.height - 1,
+                std::min(dash, rect.x + rect.width - 1 - x),
+                1,
+                edgeColor(mw::battle::BattlefieldBoundaryEdge::South));
+        }
+        for (int y = rect.y + 2; y < rect.y + rect.height - 2; y += dash + gap) {
+            fillRect(
+                rect.x,
+                y,
+                1,
+                std::min(dash, rect.y + rect.height - 1 - y),
+                edgeColor(mw::battle::BattlefieldBoundaryEdge::West));
+            fillRect(
+                rect.x + rect.width - 1,
+                y,
+                1,
+                std::min(dash, rect.y + rect.height - 1 - y),
+                edgeColor(mw::battle::BattlefieldBoundaryEdge::East));
+        }
+    }
+
+    void renderCampaignBattleTacticalMap(const mw::battle::BattleSnapshot& snapshot, const RectI& rect) {
+        fillRect(rect.x, rect.y, rect.width, rect.height, 0);
+        const CampaignBattleMapProjection projection = campaignBattleMapProjection(snapshot);
+        if (!projection.valid) {
+            drawBox(rect.x, rect.y, rect.width, rect.height, 7);
+            drawNewsNetText5x5(rect.x + 8, rect.y + 58, L"NO MAP DATA", 7, rect.width - 16);
+            return;
+        }
+
+        const uint8_t allowedExitMask = snapshot.battlefieldBoundary.valid
+            ? snapshot.battlefieldBoundary.playerAllowedExitMask
+            : 0;
+        drawCampaignBattleBoundaryDashes(rect, allowedExitMask);
+
+        if (snapshot.objective.valid) {
+            drawCampaignBattleObjectiveBlip(
+                campaignBattleMapX(rect, projection, snapshot.objective.transform.x),
+                campaignBattleMapY(rect, projection, snapshot.objective.transform.z));
+        }
+
+        for (const mw::battle::CombatantSnapshot& combatant : snapshot.combatants) {
+            if (combatant.missionStatus ==
+                mw::battle::CombatantMissionStatus::Escaped) {
+                continue;
+            }
+            const bool player = combatant.playerControlled ||
+                                combatant.roster.team == mw::battle::BattleTeam::Player;
+            uint8_t color = 12;
+            if (combatant.missionStatus != mw::battle::CombatantMissionStatus::Active ||
+                combatant.mechDestroyed) {
+                color = 8;
+            } else if (combatant.roster.team != mw::battle::BattleTeam::Player &&
+                       combatant.roster.team != mw::battle::BattleTeam::Opposing) {
+                color = 7;
+            }
+            const int x = campaignBattleMapX(
+                rect, projection, combatant.transform.x);
+            const int y = campaignBattleMapY(
+                rect, projection, combatant.transform.z);
+            if (player) {
+                const int lanceSlot =
+                    mw::presentation::campaignBattlePlayerLanceSlot(
+                        combatant.roster.sourceSlot,
+                        combatant.playerControlled);
+                const mw::presentation::CampaignBattleMapPlayerMarker marker =
+                    mw::presentation::campaignBattleMapPlayerMarker(
+                        lanceSlot,
+                        mw::battle::CampaignBattlePresentationMode::TacticalMap,
+                        snapshot.terrain.environmentId);
+                drawCampaignBattleMapPlayerMarker(
+                    x,
+                    y,
+                    marker,
+                    color == 8u ? color : marker.egaIndex);
+            } else {
+                drawCampaignBattleMapBlip(x, y, color);
+            }
+        }
+    }
+
+    bool ensureCampaignCockpitBackdrop(
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        if (campaignCockpitBackdrop_.sourcePath == renderScene.cockpit.backdropPath &&
+            campaignCockpitBackdrop_.palettePath == renderScene.cockpit.palettePath) {
+            return campaignCockpitBackdrop_.valid;
+        }
+        campaignCockpitBackdrop_ =
+            mw::presentation::loadCampaignCockpitBackdrop(renderScene.cockpit);
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+        if (!campaignCockpitBackdrop_.valid) {
+            debugLog(
+                L"Phase 11 campaign cockpit backdrop blocked: " +
+                widen(campaignCockpitBackdrop_.reason));
+        }
+#endif
+        return campaignCockpitBackdrop_.valid;
+    }
+
+    bool ensureCampaignCockpitDynamicLayers(
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        std::ostringstream signature;
+        signature << renderScene.cockpit.palettePath.string() << ':'
+                  << renderScene.cockpit.strutsPath.string() << ':'
+                  << renderScene.cockpit.widgetsPath.string() << ':'
+                  << renderScene.cockpit.hudNumbersPath.string() << ':'
+                  << renderScene.cockpit.hudFontPath.string();
+        if (signature.str() == campaignCockpitDynamicLayerSignature_) {
+            return campaignCockpitDynamicLayers_.valid;
+        }
+        campaignCockpitDynamicLayerSignature_ = signature.str();
+        campaignCockpitDynamicLayers_ =
+            mw::presentation::loadCampaignCockpitDynamicLayers(renderScene.cockpit);
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+        if (!campaignCockpitDynamicLayers_.valid) {
+            debugLog(
+                L"Phase 11 campaign cockpit dynamic layers blocked: " +
+                widen(campaignCockpitDynamicLayers_.reason));
+        }
+#endif
+        return campaignCockpitDynamicLayers_.valid;
+    }
+
+    bool ensureCampaignCockpitTargetScanSprites(
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        const std::string signature =
+            renderScene.cockpit.smallMechsPath.string();
+        if (signature == campaignCockpitTargetScanSpriteSignature_) {
+            return campaignCockpitTargetScanSprites_.valid;
+        }
+        campaignCockpitTargetScanSpriteSignature_ = signature;
+        campaignCockpitTargetScanSprites_ =
+            mw::presentation::loadCampaignIndexedSpriteArchive(
+                renderScene.cockpit.smallMechsPath);
+        return campaignCockpitTargetScanSprites_.valid;
+    }
+
+    bool ensureCampaignBattleMapPalette(
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        const std::string signature = renderScene.terrain.palettePath.string();
+        if (signature == campaignBattleMapPaletteSignature_) {
+            return campaignBattleMapPalette_.valid;
+        }
+        campaignBattleMapPaletteSignature_ = signature;
+        campaignBattleMapPalette_ =
+            mw::presentation::loadCampaignEgaPaletteColors(
+                renderScene.terrain.palettePath);
+        return campaignBattleMapPalette_.valid;
+    }
+
+    bool ensureCampaignCockpitMinimapTerrain(
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        std::ostringstream out;
+        out << renderScene.terrain.boundsMinX << ':'
+            << renderScene.terrain.boundsMaxX << ':'
+            << renderScene.terrain.boundsMinZ << ':'
+            << renderScene.terrain.boundsMaxZ;
+        out << ':' << renderScene.terrain.terrainShapePath.string();
+        for (const fs::path& path : renderScene.terrain.worldPaths) {
+            out << ':' << path.string();
+        }
+        if (out.str() == campaignCockpitMinimapTerrainSignature_) {
+            return campaignCockpitMinimapTerrain_.valid;
+        }
+        campaignCockpitMinimapTerrainSignature_ = out.str();
+        campaignCockpitMinimapTerrain_ =
+            mw::presentation::loadCampaignCockpitMinimapTerrain(
+                renderScene.terrain);
+        return campaignCockpitMinimapTerrain_.valid;
+    }
+
+    void fillRectBgra(int x, int y, int width, int height, uint32_t bgra) {
+        const int x0 = std::max(0, x);
+        const int y0 = std::max(0, y);
+        const int x1 = std::min(kScreenWidth, x + width);
+        const int y1 = std::min(kScreenHeight, y + height);
+        for (int destinationY = y0; destinationY < y1; ++destinationY) {
+            auto row = framebuffer_.begin() + static_cast<size_t>(destinationY) * kScreenWidth;
+            std::fill(row + x0, row + x1, bgra);
+        }
+    }
+
+    void drawCampaignCockpitLineBgra(
+        int x0,
+        int y0,
+        int x1,
+        int y1,
+        uint32_t bgra) {
+        const int deltaX = std::abs(x1 - x0);
+        const int stepX = x0 < x1 ? 1 : -1;
+        const int deltaY = -std::abs(y1 - y0);
+        const int stepY = y0 < y1 ? 1 : -1;
+        int error = deltaX + deltaY;
+        for (;;) {
+            fillRectBgra(x0, y0, 1, 1, bgra);
+            if (x0 == x1 && y0 == y1) {
+                break;
+            }
+            const int doubledError = error * 2;
+            if (doubledError >= deltaY) {
+                error += deltaY;
+                x0 += stepX;
+            }
+            if (doubledError <= deltaX) {
+                error += deltaX;
+                y0 += stepY;
+            }
+        }
+    }
+
+    static uint8_t campaignBattleMapAllowedExitMask(
+        const mw::battle::BattleSnapshot& snapshot) {
+        if (!snapshot.battlefieldBoundary.valid ||
+            !snapshot.battlefieldBoundary.exitMaskSemanticsProven ||
+            !snapshot.setup.valid) {
+            return 0;
+        }
+        uint8_t mask = 0;
+        if (snapshot.setup.playerMode == 1) {
+            mask = snapshot.battlefieldBoundary.playerAllowedExitMask;
+        }
+        if (snapshot.setup.opposingMode == 1) {
+            mask = snapshot.battlefieldBoundary.opposingAllowedExitMask;
+        }
+        return mask;
+    }
+
+    void drawCampaignBattleBoundaryDashesBgra(
+        int left,
+        int right,
+        int top,
+        int bottom,
+        const RectI& clip,
+        uint8_t allowedExitMask,
+        uint64_t tickIndex,
+        uint32_t ordinary,
+        uint32_t allowed) {
+        if (left > right || top > bottom || clip.width <= 0 || clip.height <= 0) {
+            return;
+        }
+        const auto edgeColor = [&](mw::battle::BattlefieldBoundaryEdge edge) {
+            return (allowedExitMask & mw::battle::battlefieldBoundaryEdgeMask(edge)) != 0u
+                       ? allowed
+                       : ordinary;
+        };
+        const auto drawClipped = [&](int x, int y, int width, int height,
+                                     const RectI& edgeClip, uint32_t color) {
+            const int clippedLeft = std::max({x, clip.x, edgeClip.x});
+            const int clippedTop = std::max({y, clip.y, edgeClip.y});
+            const int clippedRight = std::min({x + width, clip.x + clip.width,
+                                               edgeClip.x + edgeClip.width});
+            const int clippedBottom = std::min({y + height, clip.y + clip.height,
+                                                edgeClip.y + edgeClip.height});
+            if (clippedLeft < clippedRight && clippedTop < clippedBottom) {
+                fillRectBgra(clippedLeft, clippedTop,
+                             clippedRight - clippedLeft,
+                             clippedBottom - clippedTop, color);
+            }
+        };
+        const int phase = static_cast<int>(tickIndex & 7u) - 4;
+        const RectI topEdge{left, top, right - left + 1, 1};
+        const RectI bottomEdge{left, bottom, right - left + 1, 1};
+        const RectI westEdge{left, top, 1, bottom - top + 1};
+        const RectI eastEdge{right, top, 1, bottom - top + 1};
+        for (int x = left + phase; x <= right; x += 8) {
+            drawClipped(x, top, 5, 1, topEdge,
+                        edgeColor(mw::battle::BattlefieldBoundaryEdge::North));
+        }
+        for (int x = right - phase; x >= left; x -= 8) {
+            drawClipped(x - 4, bottom, 5, 1, bottomEdge,
+                        edgeColor(mw::battle::BattlefieldBoundaryEdge::South));
+        }
+        for (int y = top + phase - 5; y <= bottom; y += 8) {
+            drawClipped(right, y, 1, 5, eastEdge,
+                        edgeColor(mw::battle::BattlefieldBoundaryEdge::East));
+        }
+        for (int y = bottom - phase + 5; y >= top; y -= 8) {
+            drawClipped(left, y - 4, 1, 5, westEdge,
+                        edgeColor(mw::battle::BattlefieldBoundaryEdge::West));
+        }
+    }
+
+    void drawCampaignCockpitFontText(
+        const mw::presentation::CampaignCockpitFont& font,
+        const std::string& text,
+        int x,
+        int y,
+        uint32_t bgra) {
+        int destinationX = x;
+        for (char ch : text) {
+            if (font.contains(ch)) {
+                const size_t glyph = static_cast<size_t>(
+                    static_cast<unsigned char>(ch) - font.firstCode);
+                for (int row = 0; row < font.height; ++row) {
+                    const uint8_t bits = font.rows[glyph * static_cast<size_t>(font.height) + row];
+                    for (int column = 0; column < font.width; ++column) {
+                        if (((bits >> (7 - column)) & 1u) != 0u) {
+                            const int pixelX = destinationX + column;
+                            const int pixelY = y + row;
+                            if (pixelX >= 0 && pixelX < kScreenWidth &&
+                                pixelY >= 0 && pixelY < kScreenHeight) {
+                                framebuffer_[static_cast<size_t>(pixelY) * kScreenWidth + pixelX] = bgra;
+                            }
+                        }
+                    }
+                }
+            }
+            destinationX += font.width;
+        }
+    }
+
+    void drawCampaignCockpitWeaponText5x5(
+        const std::string& text,
+        int x,
+        int y,
+        int rightExclusive,
+        uint32_t bgra) {
+        if (smallFont_.rows.empty()) {
+            return;
+        }
+        int destinationX = x;
+        for (char ch : text) {
+            if (destinationX + 5 > rightExclusive) {
+                break;
+            }
+            if (smallFont_.contains(ch)) {
+                const int glyph =
+                    static_cast<unsigned char>(ch) - smallFont_.firstCode;
+                const int rows = std::min(5, smallFont_.height);
+                const int columns = std::min(5, smallFont_.width);
+                for (int row = 0; row < rows; ++row) {
+                    const uint8_t bits = smallFont_.rows[
+                        static_cast<size_t>(glyph) * smallFont_.height + row];
+                    for (int column = 0; column < columns; ++column) {
+                        if (((bits >> (7 - column)) & 1u) == 0u) {
+                            continue;
+                        }
+                        const int pixelX = destinationX + column;
+                        const int pixelY = y + row;
+                        if (pixelX >= 0 && pixelX < kScreenWidth &&
+                            pixelY >= 0 && pixelY < kScreenHeight) {
+                            framebuffer_[static_cast<size_t>(pixelY) *
+                                             kScreenWidth +
+                                         pixelX] = bgra;
+                        }
+                    }
+                }
+            }
+            destinationX += 6;
+        }
+    }
+
+    static int campaignCockpitWeaponTextWidth5x5(
+        const std::string& text) {
+        return text.empty() ? 0 : static_cast<int>(text.size()) * 6 - 1;
+    }
+
+    void renderCampaignCockpitWeaponPanel(
+        const mw::battle::BattleSnapshot& snapshot,
+        mw::battle::CampaignCockpitFamily family) {
+        constexpr uint32_t kBrightBlue = 0xff5555ffu;
+        constexpr uint32_t kBrightGreen = 0xff55ff55u;
+        const mw::presentation::CampaignCockpitWeaponPanelLayout& panel =
+            mw::presentation::campaignCockpitWeaponPanelLayout(family);
+
+        // LIGHT/MEDIUM/HEAVY.SCR bakes in a green first-row marker. Restore all
+        // marker interiors before applying the snapshot-owned selection.
+        for (size_t row = 0; row < panel.rowCapacity; ++row) {
+            fillRectBgra(
+                panel.statusX,
+                mw::presentation::campaignCockpitWeaponPanelRowY(panel, row),
+                panel.statusWidth,
+                panel.statusHeight,
+                kBrightBlue);
+        }
+
+        const mw::battle::CombatantSnapshot* player =
+            playerCombatantSnapshot(snapshot);
+        if (player == nullptr) {
+            return;
+        }
+        const size_t rowCount =
+            std::min(panel.rowCapacity, player->weapons.size());
+        for (size_t row = 0; row < rowCount; ++row) {
+            const mw::battle::BattleWeaponInstanceState& weapon =
+                player->weapons[row];
+            const int y = mw::presentation::campaignCockpitWeaponPanelRowY(
+                panel,
+                row);
+            if (weapon.selected) {
+                fillRectBgra(
+                    panel.statusX,
+                    y,
+                    panel.statusWidth,
+                    panel.statusHeight,
+                    kBrightGreen);
+            }
+
+            const mw::presentation::CampaignCockpitWeaponTextColors colors =
+                mw::presentation::campaignCockpitWeaponTextColors(
+                    family,
+                    weapon.readiness,
+                    mw::presentation::campaignCockpitWeaponRangeIndicatorActive(
+                        snapshot,
+                        weapon),
+                    weapon.cooldownTicksRemaining != 0u);
+            drawCampaignCockpitWeaponText5x5(
+                weapon.displayName,
+                panel.nameX,
+                y,
+                panel.ammunitionRightExclusive - 1,
+                colors.nameBgra);
+
+            if (weapon.ammunitionOwnership ==
+                    mw::battle::BattleWeaponAmmunitionOwnership::
+                        SharedAmmunitionPool &&
+                weapon.ammunitionStateKnown) {
+                const std::string ammunition =
+                    std::to_string(std::max(0, weapon.ammunitionRemaining));
+                const int ammunitionX =
+                    panel.ammunitionRightExclusive -
+                    campaignCockpitWeaponTextWidth5x5(ammunition);
+                drawCampaignCockpitWeaponText5x5(
+                    ammunition,
+                    ammunitionX,
+                    y,
+                    panel.ammunitionRightExclusive,
+                    kBrightGreen);
+            }
+
+            drawCampaignCockpitWeaponText5x5(
+                std::string(1, weapon.displayRangeClass),
+                panel.rangeClassX,
+                y,
+                panel.rangeClassX + 5,
+                colors.rangeBgra);
+        }
+    }
+
+    void renderCampaignCockpitSystemIndicators(
+        const mw::battle::BattleSnapshot& snapshot,
+        const mw::presentation::CampaignCockpitDynamicLayers& layers) {
+        const auto widget = std::find_if(
+            layers.widgets.begin(),
+            layers.widgets.end(),
+            [](const mw::presentation::CampaignCockpitSprite& sprite) {
+                return sprite.index == 0;
+            });
+        if (widget == layers.widgets.end() || widget->rgbaPixels.empty()) {
+            return;
+        }
+        const size_t center =
+            (static_cast<size_t>(widget->height / 2) * widget->width + widget->width / 2) * 4u;
+        if (center + 2u >= widget->rgbaPixels.size()) {
+            return;
+        }
+        const uint32_t online =
+            0xff000000u |
+            (static_cast<uint32_t>(widget->rgbaPixels[center]) << 16u) |
+            (static_cast<uint32_t>(widget->rgbaPixels[center + 1u]) << 8u) |
+            static_cast<uint32_t>(widget->rgbaPixels[center + 2u]);
+        const mw::battle::CombatantSnapshot* player = nullptr;
+        for (const mw::battle::CombatantSnapshot& combatant : snapshot.combatants) {
+            if (combatant.playerControlled ||
+                combatant.roster.team == mw::battle::BattleTeam::Player) {
+                player = &combatant;
+                break;
+            }
+        }
+        const auto criticalStatus = [player](
+                                        mw::mech3d::MechCriticalComponentId id) {
+            if (player == nullptr || !player->detailedDamage.valid) {
+                return mw::battle::BattleMechSystemStatus::Online;
+            }
+            const auto& component = player->detailedDamage.criticalComponents[
+                static_cast<size_t>(id)];
+            return mw::presentation::campaignDetailedDamageDisplayStatus(
+                       component.condition,
+                       component.battleDamage,
+                       component.functional);
+        };
+        struct Indicator {
+            int x;
+            char label;
+            mw::battle::BattleMechSystemStatus status;
+        };
+        const std::array<Indicator, 4> indicators{{
+            {136, 'S', criticalStatus(
+                           mw::mech3d::MechCriticalComponentId::Sensors)},
+            {146, 'G', criticalStatus(
+                           mw::mech3d::MechCriticalComponentId::Gyros)},
+            {156, 'E', criticalStatus(
+                           mw::mech3d::MechCriticalComponentId::Engine)},
+            {166, 'L', criticalStatus(
+                           mw::mech3d::MechCriticalComponentId::LifeSupport)},
+        }};
+        for (const Indicator& indicator : indicators) {
+            const uint32_t color =
+                indicator.status == mw::battle::BattleMechSystemStatus::Destroyed
+                    ? 0xff000000u
+                    : indicator.status == mw::battle::BattleMechSystemStatus::Offline
+                          ? 0xffff5555u
+                          : indicator.status == mw::battle::BattleMechSystemStatus::Degraded
+                                ? 0xffffff55u
+                                : online;
+            fillRectBgra(
+                indicator.x,
+                107,
+                widget->width,
+                widget->height,
+                color);
+            drawCampaignCockpitFontText(
+                layers.font,
+                std::string(1u, indicator.label),
+                indicator.x + 1,
+                108,
+                0xff000000u);
+        }
+    }
+
+    void renderCampaignCockpitGauges(
+        const mw::battle::BattleSnapshot& snapshot,
+        mw::battle::CampaignCockpitFamily family) {
+        const mw::battle::CombatantSnapshot* player = playerCombatantSnapshot(snapshot);
+        if (player == nullptr) {
+            return;
+        }
+        const mw::presentation::CampaignCockpitGaugeState gauge =
+            mw::presentation::campaignCockpitGaugeState(*player, family);
+        constexpr int barHeight = 7;
+        constexpr int barStride = 2;
+        constexpr int zeroIndex = 9;
+        const auto drawSpeedBar = [this, &gauge](
+                                      int barIndex,
+                                      uint32_t body,
+                                      uint32_t highlight) {
+            const int x = gauge.speedX + barIndex * barStride;
+            fillRectBgra(x, gauge.speedY, 1, 1, highlight);
+            fillRectBgra(x, gauge.speedY + 1, 1, barHeight - 1, body);
+        };
+        for (int i = 1; i <= gauge.reverseBars; ++i) {
+            drawSpeedBar(zeroIndex - i, 0xffaa0000u, 0xffff5555u);
+        }
+        for (int i = 1; i <= gauge.forwardBars; ++i) {
+            drawSpeedBar(zeroIndex + i, 0xff00d900u, 0xff55ff55u);
+        }
+        drawSpeedBar(zeroIndex, 0xffffff55u, 0xffffffffu);
+
+        for (int i = 0; i < gauge.heatBars; ++i) {
+            const int y = gauge.heatBottomY - i * 2;
+            fillRectBgra(gauge.heatX, y, 11, 1, 0xffaa0000u);
+            fillRectBgra(gauge.heatX + 3, y, 1, 1, 0xffff5555u);
+            fillRectBgra(gauge.heatX + 9, y, 2, 1, 0xffff5555u);
+        }
+
+        if (!gauge.jumpGaugeVisible || !player->jumpCapable) {
+            return;
+        }
+        if (gauge.jumpFuelFillHeight > 0) {
+            const int fillY = gauge.jumpGauge.y + gauge.jumpGauge.height -
+                              gauge.jumpFuelFillHeight;
+            fillRectBgra(
+                gauge.jumpGauge.x,
+                fillY,
+                6,
+                gauge.jumpFuelFillHeight,
+                0xff474fffu);
+            fillRectBgra(
+                gauge.jumpGauge.x + 6,
+                fillY,
+                1,
+                gauge.jumpFuelFillHeight,
+                0xff40ffffu);
+        }
+        fillRectBgra(
+            gauge.jumpGauge.x - 1,
+            gauge.jumpActivationThresholdY,
+            gauge.jumpGauge.width + 1,
+            1,
+            0xff850000u);
+        fillRectBgra(
+            gauge.jumpGauge.x + gauge.jumpGauge.width,
+            gauge.jumpActivationThresholdY,
+            1,
+            1,
+            0xffff1f1fu);
+        if (!player->jumpJetReady) {
+            for (int y = 0; y < gauge.jumpReadyLight.height; ++y) {
+                for (int x = 0; x < gauge.jumpReadyLight.width; ++x) {
+                    const bool highlight = (x == 2 && y <= 1) || (x == 1 && y == 0);
+                    fillRectBgra(
+                        gauge.jumpReadyLight.x + x,
+                        gauge.jumpReadyLight.y + y,
+                        1,
+                        1,
+                        highlight ? 0xffff3838u : 0xffa60000u);
+                }
+            }
+        }
+    }
+
+    void renderCampaignCockpitMinimap(
+        const mw::battle::BattleSnapshot& snapshot,
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        const mw::presentation::CampaignCockpitRect sourceRect =
+            mw::presentation::campaignCockpitMinimapRect();
+        const RectI rect{
+            sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height};
+        fillRectBgra(rect.x, rect.y, rect.width, rect.height, 0xff009400u);
+
+        const mw::battle::CombatantSnapshot* player = playerCombatantSnapshot(snapshot);
+        if (player == nullptr) {
+            return;
+        }
+        if (player->majorSystems.enabled &&
+            !player->majorSystems.topographicMapVisible) {
+            return;
+        }
+        const int centerX = rect.x + rect.width / 2;
+        const int centerY = rect.y + rect.height / 2;
+        constexpr double scale =
+            mw::presentation::campaignBattleMapWorldUnitsPerPixel();
+        const auto mapPoint = [&](double worldX, double worldZ) {
+            return std::pair<int, int>{
+                centerX + static_cast<int>(std::lround(
+                              (worldX - player->transform.x) / scale)),
+                centerY + static_cast<int>(std::lround(
+                              (worldZ - player->transform.z) / scale)),
+            };
+        };
+        const auto drawMapPixel = [&](int x, int y, uint32_t color) {
+            if (x >= rect.x && x < rect.x + rect.width &&
+                y >= rect.y && y < rect.y + rect.height) {
+                fillRectBgra(x, y, 1, 1, color);
+            }
+        };
+
+        if (ensureCampaignCockpitMinimapTerrain(renderScene)) {
+            constexpr std::array<uint32_t, 4> terrainColors{
+                0xff55ff55u,
+                0xffffff55u,
+                0xffff5555u,
+                0xffaa0000u,
+            };
+            for (const mw::presentation::CampaignCockpitMinimapTerrainSample& sample :
+                 campaignCockpitMinimapTerrain_.samples) {
+                const auto [x, y] = mapPoint(sample.worldX, sample.worldZ);
+                drawMapPixel(x, y, terrainColors[std::min<size_t>(sample.colorBand, 3u)]);
+            }
+        }
+
+        for (const mw::battle::CombatantSnapshot& combatant : snapshot.combatants) {
+            if (combatant.roster.team != mw::battle::BattleTeam::Opposing ||
+                combatant.missionStatus ==
+                    mw::battle::CombatantMissionStatus::Escaped) {
+                continue;
+            }
+            const auto [x, y] = mapPoint(combatant.transform.x, combatant.transform.z);
+            const bool disabled =
+                combatant.missionStatus != mw::battle::CombatantMissionStatus::Active ||
+                combatant.mechDestroyed;
+            drawMapPixel(x, y, disabled ? 0xff6b0000u : 0xffdb0000u);
+        }
+        for (const mw::battle::CombatantSnapshot& combatant : snapshot.combatants) {
+            if (combatant.playerControlled ||
+                combatant.roster.team != mw::battle::BattleTeam::Player ||
+                combatant.missionStatus != mw::battle::CombatantMissionStatus::Active ||
+                combatant.mechDestroyed) {
+                continue;
+            }
+            const auto [x, y] = mapPoint(
+                combatant.transform.x,
+                combatant.transform.z);
+            drawMapPixel(
+                x,
+                y,
+                mw::presentation::campaignCockpitMinimapPlayerBlipBgra(false));
+        }
+        if (snapshot.objective.valid) {
+            const auto [x, y] = mapPoint(
+                snapshot.objective.transform.x,
+                snapshot.objective.transform.z);
+            drawMapPixel(x, y, 0xff00dbdbu);
+        }
+        drawMapPixel(
+            centerX,
+            centerY,
+            mw::presentation::campaignCockpitMinimapPlayerBlipBgra(true));
+
+        if (snapshot.battlefieldBoundary.valid &&
+            snapshot.battlefieldBoundary.mapProjectionProven) {
+            const auto [left, top] = mapPoint(
+                snapshot.battlefieldBoundary.worldMinX,
+                snapshot.battlefieldBoundary.worldMinZ);
+            const auto [right, bottom] = mapPoint(
+                snapshot.battlefieldBoundary.worldMaxX,
+                snapshot.battlefieldBoundary.worldMaxZ);
+            const int environment = renderScene.terrain.environmentId.value_or(1);
+            const size_t ordinaryIndex = environment == 0 ? 15u : (environment == 2 ? 8u : 15u);
+            const size_t allowedIndex = environment == 0 ? 4u : (environment == 2 ? 14u : 11u);
+            const bool paletteReady = ensureCampaignBattleMapPalette(renderScene);
+            const uint32_t ordinary = paletteReady
+                                          ? campaignBattleMapPalette_.bgra[ordinaryIndex]
+                                          : 0xffffffffu;
+            const uint32_t allowed = paletteReady
+                                         ? campaignBattleMapPalette_.bgra[allowedIndex]
+                                         : 0xffffff55u;
+            drawCampaignBattleBoundaryDashesBgra(
+                left,
+                right,
+                top,
+                bottom,
+                rect,
+                campaignBattleMapAllowedExitMask(snapshot),
+                snapshot.tickIndex,
+                ordinary,
+                allowed);
+        }
+    }
+
+    void renderCampaignCockpitRadar(
+        const mw::battle::BattleSnapshot& snapshot) {
+        constexpr uint32_t background = 0xff55ff55u;
+        constexpr uint32_t sector = 0xff00aa00u;
+        constexpr uint32_t enemyContact = 0xffff5555u;
+        constexpr uint32_t alliedContact = 0xff5555ffu;
+        const mw::presentation::CampaignCockpitRadarGeometry geometry =
+            mw::presentation::campaignCockpitRadarGeometry();
+        fillRectBgra(
+            geometry.rect.x,
+            geometry.rect.y,
+            geometry.rect.width,
+            geometry.rect.height,
+            background);
+        const mw::battle::CombatantSnapshot* player =
+            playerCombatantSnapshot(snapshot);
+        if (player != nullptr && player->majorSystems.enabled &&
+            !player->majorSystems.radarContactsVisible) {
+            return;
+        }
+        drawCampaignCockpitLineBgra(
+            geometry.leftX,
+            geometry.topY,
+            geometry.apexX,
+            geometry.apexY,
+            sector);
+        drawCampaignCockpitLineBgra(
+            geometry.rightX,
+            geometry.topY,
+            geometry.apexX,
+            geometry.apexY,
+            sector);
+
+        if (player != nullptr) {
+            for (const mw::battle::CombatantSnapshot& combatant :
+                 snapshot.combatants) {
+                if (combatant.id == player->id ||
+                    combatant.missionStatus !=
+                        mw::battle::CombatantMissionStatus::Active ||
+                    combatant.mechDestroyed) {
+                    continue;
+                }
+                uint32_t color = 0;
+                if (combatant.roster.team == mw::battle::BattleTeam::Opposing) {
+                    color = enemyContact;
+                } else if (combatant.roster.team == mw::battle::BattleTeam::Player) {
+                    color = alliedContact;
+                } else {
+                    continue;
+                }
+                const mw::presentation::CampaignCockpitRadarContactProjection contact =
+                    mw::presentation::campaignCockpitRadarContactProjection(
+                        player->transform,
+                        combatant.transform,
+                        snapshot.cockpitRadar.rangeMeters);
+                if (contact.visible) {
+                    fillRectBgra(contact.x, contact.y, 1, 1, color);
+                }
+            }
+        }
+
+        const std::string rangeLabel =
+            mw::presentation::campaignCockpitRadarRangeLabel(
+                snapshot.cockpitRadar.rangeMeters);
+        const int labelWidth = static_cast<int>(rangeLabel.size()) *
+            campaignCockpitDynamicLayers_.font.width;
+        drawCampaignCockpitFontText(
+            campaignCockpitDynamicLayers_.font,
+            rangeLabel,
+            geometry.rect.x + (geometry.rect.width - labelWidth) / 2,
+            geometry.labelY,
+            sector);
+    }
+
+    void renderCampaignCockpitTargetScan(
+        const mw::battle::BattleSnapshot& snapshot,
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        if (!mw::battle::battleTargetScanHasSelection(snapshot.targetScan) ||
+            !ensureCampaignCockpitTargetScanSprites(renderScene) ||
+            !ensureCampaignBattleMapPalette(renderScene)) {
+            return;
+        }
+        const bool objectiveSelected =
+            snapshot.targetScan.selectedTargetKind ==
+            mw::battle::BattleTargetScanTargetKind::Objective;
+        const mw::battle::CombatantSnapshot* target = nullptr;
+        int spriteIndex =
+            mw::presentation::campaignCockpitTargetScanObjectiveSpriteIndex();
+        if (!objectiveSelected) {
+            const auto found = std::find_if(
+                snapshot.combatants.begin(),
+                snapshot.combatants.end(),
+                [&snapshot](const mw::battle::CombatantSnapshot& combatant) {
+                    return combatant.id ==
+                        snapshot.targetScan.selectedTargetEntityId;
+                });
+            if (found == snapshot.combatants.end()) {
+                return;
+            }
+            target = &*found;
+            spriteIndex =
+                mw::presentation::campaignCockpitTargetScanSpriteIndex(
+                    target->mechPresetId);
+        }
+        if (spriteIndex < 0 ||
+            static_cast<size_t>(spriteIndex) >=
+                campaignCockpitTargetScanSprites_.sprites.size()) {
+            return;
+        }
+        const mw::presentation::CampaignIndexedSprite& sprite =
+            campaignCockpitTargetScanSprites_.sprites[
+                static_cast<size_t>(spriteIndex)];
+        if (sprite.width != 56 || sprite.height != 49) {
+            return;
+        }
+        const mw::presentation::CampaignCockpitTargetMfdGeometry geometry =
+            mw::presentation::campaignCockpitTargetMfdGeometry(
+                renderScene.cockpit.family);
+        const auto objectiveStatus = [&snapshot]() {
+            if (snapshot.objective.depleted) {
+                return mw::battle::BattleMechSystemStatus::Destroyed;
+            }
+            if (snapshot.objective.maxDamage > 0 &&
+                snapshot.objective.damage > 0) {
+                return mw::battle::BattleMechSystemStatus::Degraded;
+            }
+            return mw::battle::BattleMechSystemStatus::Online;
+        }();
+        const auto statusForSection = [target, objectiveSelected, objectiveStatus](
+                                          std::optional<
+                                              mw::mech3d::MechArmorSectionId>
+                                              section) {
+            if (objectiveSelected || target == nullptr) {
+                return objectiveStatus;
+            }
+            if (!section || !target->detailedDamage.valid) {
+                return mw::battle::BattleMechSystemStatus::Online;
+            }
+            return mw::presentation::campaignDetailedArmorDisplayStatus(
+                target->detailedDamage,
+                *section);
+        };
+        for (int y = 0; y < geometry.rect.height; ++y) {
+            for (int x = 0; x < geometry.rect.width; ++x) {
+                const int sourceX = geometry.sourceX + x;
+                const uint8_t packed = sprite.packedPixels[
+                    static_cast<size_t>(y) * sprite.rowStride + sourceX / 2];
+                uint8_t colorIndex = sourceX % 2 == 0
+                    ? static_cast<uint8_t>((packed >> 4u) & 0x0fu)
+                    : static_cast<uint8_t>(packed & 0x0fu);
+                const mw::battle::BattleMechSystemRole role = objectiveSelected
+                    ? mw::battle::BattleMechSystemRole::Core
+                    : mw::presentation::campaignCockpitTargetScanPixelRole(
+                          spriteIndex,
+                          sourceX,
+                          y);
+                const std::optional<mw::mech3d::MechArmorSectionId> section =
+                    objectiveSelected
+                    ? std::nullopt
+                    : mw::presentation::
+                          campaignCockpitTargetScanPixelArmorSection(
+                              spriteIndex,
+                              sourceX,
+                              y);
+                colorIndex =
+                    mw::presentation::campaignCockpitTargetScanDisplayColorIndex(
+                        colorIndex,
+                        role,
+                        statusForSection(section),
+                        objectiveSelected
+                            ? snapshot.objective.depleted
+                            : target->mechDestroyed);
+                framebuffer_[
+                    static_cast<size_t>(geometry.rect.y + y) * kScreenWidth +
+                    geometry.rect.x + x] =
+                    campaignBattleMapPalette_.bgra[colorIndex];
+            }
+        }
+    }
+
+    void renderCampaignBattleCommandMapBackdrop(
+        const mw::battle::BattleSnapshot& snapshot,
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        if (!ensureCampaignCockpitBackdrop(renderScene) ||
+            !ensureCampaignCockpitDynamicLayers(renderScene) ||
+            campaignCockpitBackdrop_.bgraPixels.size() != framebuffer_.size()) {
+            fillRect(0, 0, kScreenWidth, kScreenHeight, 0);
+            drawNewsNetText5x5(72, 94, L"COMMAND MAP BLOCKED", 12, 176);
+            return;
+        }
+        framebuffer_ = campaignCockpitBackdrop_.bgraPixels;
+        if (renderScene.mode ==
+                mw::battle::CampaignBattlePresentationMode::MissionStatus &&
+            snapshot.mission.valid) {
+            constexpr uint32_t missionText = 0xffffff55u;
+            drawCampaignCockpitFontText(
+                campaignCockpitDynamicLayers_.font,
+                "YOUR NEXT MISSION:",
+                24,
+                146,
+                missionText);
+            drawCampaignCockpitFontText(
+                campaignCockpitDynamicLayers_.font,
+                snapshot.mission.title,
+                32,
+                164,
+                missionText);
+        }
+    }
+
+    void renderCampaignBattleCockpitPresentation(
+        const mw::battle::BattleSnapshot& snapshot,
+        const mw::battle::CampaignBattlePresentationPackage& presentation,
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        if (!ensureCampaignCockpitBackdrop(renderScene) ||
+            !ensureCampaignCockpitDynamicLayers(renderScene) ||
+            campaignCockpitBackdrop_.bgraPixels.size() != framebuffer_.size()) {
+            fillRect(0, 0, kScreenWidth, kScreenHeight, 0);
+            drawNewsNetText5x5(72, 94, L"COCKPIT BACKDROP BLOCKED", 12, 176);
+            return;
+        }
+        framebuffer_ = campaignCockpitBackdrop_.bgraPixels;
+
+        if (snapshot.cockpitRadar.active) {
+            renderCampaignCockpitRadar(snapshot);
+        } else {
+            renderCampaignCockpitMinimap(snapshot, renderScene);
+        }
+        renderCampaignCockpitSystemIndicators(snapshot, campaignCockpitDynamicLayers_);
+        renderCampaignCockpitWeaponPanel(snapshot, renderScene.cockpit.family);
+        renderCampaignCockpitTargetScan(snapshot, renderScene);
+        (void)presentation;
+        renderCampaignCockpitGauges(snapshot, renderScene.cockpit.family);
+    }
+
+    void renderCampaignBattleExternalPresentation(
+        const mw::battle::BattleSnapshot& snapshot,
+        const mw::battle::CampaignBattlePresentationPackage& presentation,
+        const mw::battle::CampaignBattleRenderScenePackage& renderScene) {
+        drawNewsNetText5x5(26, 32, L"SNAPSHOT EXTERNAL PRESENTATION", 7, 168);
+        renderCampaignBattleTacticalMap(snapshot, RectI{24, 42, 176, 132});
+
+        constexpr int textX = 210;
+        drawNewsNetText5x5(textX, 46, L"EXTERNAL", 14, 84);
+        drawNewsNetText5x5(textX, 60, L"SIM " + std::to_wstring(snapshot.tickIndex), 7, 84);
+        drawNewsNetText5x5(textX, 70, L"FRAME " + std::to_wstring(campaignBattleRuntime_.renderFrameIndex), 7, 84);
+        drawNewsNetText5x5(textX, 80, L"ALPHA " + std::to_wstring(static_cast<int>(std::lround(campaignBattleRuntime_.renderInterpolationAlpha * 100.0))), 7, 84);
+        drawNewsNetText5x5(textX, 92, L"BODY " + std::to_wstring(presentation.playerHeadingDegrees), 7, 84);
+        drawNewsNetText5x5(textX, 102, L"CAM " + std::to_wstring(presentation.cameraHeadingDegrees), 7, 84);
+        drawNewsNetText5x5(
+            textX,
+            116,
+            L"X " + std::to_wstring(static_cast<int>(presentation.playerX)),
+            7,
+            84);
+        drawNewsNetText5x5(
+            textX,
+            126,
+            L"Z " + std::to_wstring(static_cast<int>(presentation.playerZ)),
+            7,
+            84);
+        drawNewsNetText5x5(textX, 140, L"F3 COCKPIT", 7, 84);
+        drawNewsNetText5x5(textX, 150, L"C MAP", 7, 84);
+        drawNewsNetText5x5(
+            textX,
+            164,
+            campaignBattleGlViewport_.ready()
+                ? L"OPENGL ACTIVE"
+                : (renderScene.valid
+                       ? L"SCENE " + std::to_wstring(renderScene.combatantVisuals.size())
+                       : L"SCENE BLOCKED"),
+            campaignBattleGlViewport_.ready() ? 11 : (renderScene.valid ? 14 : 12),
+            84);
+    }
+
+    RECT campaignBattleGlViewportBounds(
+        mw::battle::CampaignBattlePresentationMode mode,
+        mw::battle::CampaignCockpitFamily cockpitFamily) const {
+        RECT client{};
+        GetClientRect(hwnd_, &client);
+        const RectI display = displayRectForClient(
+            client.right - client.left,
+            client.bottom - client.top);
+        const mw::presentation::CampaignBattleGlVirtualViewportRect resolvedViewport =
+            mw::presentation::campaignBattleGlVirtualViewportRect(mode, cockpitFamily);
+        const RectI virtualViewport{
+            resolvedViewport.x,
+            resolvedViewport.y,
+            resolvedViewport.width,
+            resolvedViewport.height,
+        };
+        return RECT{
+            display.x + virtualViewport.x * display.width / kScreenWidth,
+            display.y + virtualViewport.y * display.height / kScreenHeight,
+            display.x + (virtualViewport.x + virtualViewport.width) * display.width / kScreenWidth,
+            display.y + (virtualViewport.y + virtualViewport.height) * display.height / kScreenHeight,
+        };
+    }
+
+    bool updateCampaignBattleRenderCadence(DWORD now) {
+        if (!campaignBattleRuntime_.active ||
+            !campaignBattleRuntime_.world.has_value() ||
+            !campaignBattleRuntime_.presentationSnapshotsValid) {
+            return true;
+        }
+        if (campaignBattleRuntime_.lastRenderTick != 0 &&
+            now - campaignBattleRuntime_.lastRenderTick < kCampaignBattleRenderStepMs) {
+            return false;
+        }
+        campaignBattleRuntime_.lastRenderTick = now;
+        ++campaignBattleRuntime_.renderFrameIndex;
+        campaignBattleRuntime_.renderInterpolationAlpha = std::clamp(
+            static_cast<double>(now - campaignBattleRuntime_.lastStepTick) /
+                static_cast<double>(std::max<DWORD>(1, campaignBattleRuntime_.simulationStepMs)),
+            0.0,
+            1.0);
+        return true;
+    }
+
+    void updateCampaignBattleGlViewport() {
+        const bool presentationActive =
+            campaignBattleRuntime_.active &&
+            campaignBattleRuntime_.world.has_value() &&
+            !campaignBattleRuntime_.mechStatusVisible &&
+            campaignBattleRuntime_.presentationMode !=
+                mw::battle::CampaignBattlePresentationMode::TacticalMap;
+        if (!presentationActive) {
+            campaignBattleGlViewport_.setVisible(false);
+            return;
+        }
+
+        if (!campaignBattleGlInitializationAttempted_) {
+            campaignBattleGlInitializationAttempted_ = true;
+            if (!campaignBattleGlViewport_.initialize(instance_, hwnd_)) {
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+                debugLog(
+                    L"Phase 11 campaign WGL viewport initialization failed: " +
+                    widen(campaignBattleGlViewport_.lastError()));
+#endif
+            }
+        }
+        if (!campaignBattleGlViewport_.initialized()) {
+            return;
+        }
+
+        mw::presentation::CampaignBattleGlCockpitOptions cockpitOptions;
+        cockpitOptions.zoomLevel = campaignBattleRuntime_.cockpitZoomLevel;
+        cockpitOptions.hudRgb = mw::presentation::campaignCockpitHudColor(
+                                    campaignBattleRuntime_.cockpitHudColorIndex)
+                                    .rgb;
+        campaignBattleGlViewport_.setCockpitOptions(cockpitOptions);
+
+        const bool interpolateScene =
+            campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::Cockpit ||
+            campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::External;
+        const mw::battle::CampaignBattleRenderScenePackage renderScene =
+            interpolateScene
+                ? mw::battle::campaignBattleInterpolatedRenderSceneFromSnapshots(
+                      campaignBattleRuntime_.previousPresentationSnapshot,
+                      campaignBattleRuntime_.currentPresentationSnapshot,
+                      campaignBattleRuntime_.renderInterpolationAlpha,
+                      campaignBattleRuntime_.presentationMode,
+                      campaignBattleRuntime_.renderAssetRoot)
+                : mw::battle::campaignBattleRenderSceneFromSnapshot(
+                      campaignBattleRuntime_.currentPresentationSnapshot,
+                      campaignBattleRuntime_.presentationMode,
+                      campaignBattleRuntime_.renderAssetRoot);
+        if (!renderScene.valid || !campaignBattleGlViewport_.updateScene(renderScene)) {
+            campaignBattleGlViewport_.setVisible(false);
+            const std::string& error = campaignBattleGlViewport_.lastError();
+            if (error != campaignBattleGlLastLoggedError_) {
+                campaignBattleGlLastLoggedError_ = error;
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+                debugLog(L"Phase 11 campaign WGL scene blocked: " + widen(error));
+#endif
+            }
+            return;
+        }
+
+        campaignBattleGlLastLoggedError_.clear();
+        campaignBattleGlViewport_.setBounds(
+            campaignBattleGlViewportBounds(
+                campaignBattleRuntime_.presentationMode,
+                renderScene.cockpit.family));
+        campaignBattleGlViewport_.setVisible(true);
+        campaignBattleGlViewport_.render();
+    }
+
+    void renderCampaignBattleRuntime(const mw::battle::BattleSnapshot& snapshot) {
+        if (campaignBattleRuntime_.mechStatusVisible) {
+            renderCampaignBattleMechStatus();
+            return;
+        }
+        drawGpPanel(
+            kCampaignBattlePanelRect.x,
+            kCampaignBattlePanelRect.y,
+            kCampaignBattlePanelRect.width,
+            kCampaignBattlePanelRect.height,
+            8);
+        drawRecruitTextCenteredInRect(
+            kCampaignBattlePanelRect.x,
+            18,
+            kCampaignBattlePanelRect.width,
+            L"BATTLE RUNTIME ACTIVE",
+            7);
+        const bool interpolatePresentation =
+            campaignBattleRuntime_.presentationSnapshotsValid &&
+            campaignBattleRuntime_.presentationMode !=
+                mw::battle::CampaignBattlePresentationMode::TacticalMap &&
+            campaignBattleRuntime_.presentationMode !=
+                mw::battle::CampaignBattlePresentationMode::MissionStatus &&
+            campaignBattleRuntime_.presentationMode !=
+                mw::battle::CampaignBattlePresentationMode::CockpitCommandMap;
+        const mw::battle::CampaignBattlePresentationPackage presentation =
+            interpolatePresentation
+                ? mw::battle::campaignBattleInterpolatedPresentationPackageFromSnapshots(
+                      campaignBattleRuntime_.previousPresentationSnapshot,
+                      campaignBattleRuntime_.currentPresentationSnapshot,
+                      campaignBattleRuntime_.renderInterpolationAlpha,
+                      campaignBattleRuntime_.presentationMode)
+                : mw::battle::campaignBattlePresentationPackageFromSnapshot(
+                      snapshot,
+                      campaignBattleRuntime_.presentationMode);
+        const mw::battle::CampaignBattleRenderScenePackage renderScene =
+            interpolatePresentation
+                ? mw::battle::campaignBattleInterpolatedRenderSceneFromSnapshots(
+                      campaignBattleRuntime_.previousPresentationSnapshot,
+                      campaignBattleRuntime_.currentPresentationSnapshot,
+                      campaignBattleRuntime_.renderInterpolationAlpha,
+                      campaignBattleRuntime_.presentationMode,
+                      campaignBattleRuntime_.renderAssetRoot)
+                : mw::battle::campaignBattleRenderSceneFromSnapshot(
+                      snapshot,
+                      campaignBattleRuntime_.presentationMode,
+                      campaignBattleRuntime_.renderAssetRoot);
+        if (campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::MissionStatus ||
+            campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::CockpitCommandMap) {
+            renderCampaignBattleCommandMapBackdrop(snapshot, renderScene);
+        } else if (campaignBattleRuntime_.presentationMode == mw::battle::CampaignBattlePresentationMode::Cockpit) {
+            renderCampaignBattleCockpitPresentation(snapshot, presentation, renderScene);
+        } else if (campaignBattleRuntime_.presentationMode == mw::battle::CampaignBattlePresentationMode::External) {
+            renderCampaignBattleExternalPresentation(snapshot, presentation, renderScene);
+        } else {
+            drawNewsNetText5x5(26, 32, L"NORTH-UP TACTICAL MAP", 7, 168);
+            renderCampaignBattleTacticalMap(snapshot, kCampaignBattleMapRect);
+        }
+
+        constexpr int textX = 210;
+        if (campaignBattleRuntime_.presentationMode != mw::battle::CampaignBattlePresentationMode::TacticalMap) {
+            return;
+        }
+        drawNewsNetText5x5(textX, 46, L"RUNNING", 14, 84);
+        drawNewsNetText5x5(
+            textX,
+            60,
+            L"TICK " + std::to_wstring(snapshot.tickIndex),
+            7,
+            84);
+        drawNewsNetText5x5(
+            textX,
+            70,
+            L"FRAME " + std::to_wstring(campaignBattleRuntime_.renderFrameIndex),
+            7,
+            84);
+        drawNewsNetText5x5(
+            textX,
+            84,
+            L"A" + std::to_wstring(static_cast<int>(std::lround(campaignBattleRuntime_.renderInterpolationAlpha * 100.0))) +
+                L" SPD" + std::to_wstring(static_cast<int>(campaignBattleRuntime_.throttleCommand * 100.0)),
+            7,
+            84);
+        drawNewsNetText5x5(
+            textX,
+            98,
+            L"UNITS " + std::to_wstring(snapshot.combatants.size()),
+            7,
+            84);
+        drawNewsNetText5x5(
+            textX,
+            108,
+            widen(mw::battle::battleMissionRuntimeStateName(snapshot.missionRuntimeState)),
+            7,
+            84);
+        drawNewsNetText5x5(
+            textX,
+            118,
+            campaignBattleGlViewport_.ready()
+                ? L"OPENGL ACTIVE"
+                : (renderScene.valid ? L"GL SCENE READY" : L"GL SCENE BLOCKED"),
+            campaignBattleGlViewport_.ready() || renderScene.valid ? 14 : 12,
+            84);
+        drawNewsNetText5x5(textX, 132, L"P WHITE", 15, 84);
+        drawNewsNetText5x5(textX, 142, L"E RED", 12, 84);
+        drawNewsNetText5x5(textX, 152, L"T CYAN", 11, 84);
+        drawNewsNetText5x5(textX, 164, L"C COCKPIT", 7, 84);
+        drawNewsNetText5x5(textX, 174, L"F3 EXTERNAL", 7, 84);
+    }
+
     void renderBattleStub() {
         fillRect(0, 0, kScreenWidth, kScreenHeight, 0);
+        if (campaignBattleRuntime_.active && campaignBattleRuntime_.world.has_value()) {
+            const mw::battle::BattleSnapshot& snapshot =
+                campaignBattleRuntime_.presentationSnapshotsValid
+                    ? campaignBattleRuntime_.currentPresentationSnapshot
+                    : campaignBattleRuntime_.startSnapshot;
+            renderCampaignBattleRuntime(snapshot);
+            return;
+        }
+        if (acceptedBattleOutcome_.valid) {
+            drawGpPanel(
+                kCampaignBattlePanelRect.x,
+                kCampaignBattlePanelRect.y,
+                kCampaignBattlePanelRect.width,
+                kCampaignBattlePanelRect.height,
+                8);
+            drawRecruitTextCenteredInRect(
+                kCampaignBattlePanelRect.x,
+                22,
+                kCampaignBattlePanelRect.width,
+                acceptedBattleOutcome_.launchSource ==
+                        mw::battle::CampaignBattleLaunchSource::DarkWingFinal
+                    ? L"FINAL BATTLE RESULT"
+                    : L"BATTLE RUNTIME RESULT",
+                7);
+            const std::wstring outcome =
+                mw::battle::campaignBattleOutcomeIsMissionFailure(acceptedBattleOutcome_.outcome)
+                    ? L"DEFEAT"
+                    : widen(mw::battle::campaignBattleOutcomeName(acceptedBattleOutcome_.outcome));
+            drawRecruitTextCenteredInRect(kCampaignBattlePanelRect.x, 38, kCampaignBattlePanelRect.width, outcome, 14);
+            drawNewsNetText5x5(
+                42,
+                58,
+                L"RAW " + std::to_wstring(acceptedBattleOutcome_.rawResultCode) +
+                    L"  TICK " + std::to_wstring(acceptedBattleOutcome_.terminalTickIndex),
+                7,
+                236);
+            drawNewsNetText5x5(
+                42,
+                68,
+                L"RAN " + std::to_wstring(acceptedBattleOutcome_.ticksExecuted) +
+                    L" TICKS  UNITS " + std::to_wstring(acceptedBattleOutcome_.finalCombatantCount),
+                7,
+                236);
+            drawNewsNetText5x5(42, 78, widen(acceptedBattleOutcome_.reason), 7, 236);
+            drawNewsNetText5x5(
+                42,
+                86,
+                L"SOURCE " + widen(mw::battle::campaignBattleLaunchSourceName(
+                                  acceptedBattleOutcome_.launchSource)),
+                7,
+                236);
+            if (acceptedBattleConsequencePlan_.commitEligible) {
+                drawNewsNetText5x5(42, 96, L"IMMUTABLE CONSEQUENCE PLAN", 14, 236);
+                drawNewsNetText5x5(42, 108, L"COMMIT ON CONTINUE YES", 11, 236);
+                drawNewsNetText5x5(
+                    42,
+                    120,
+                    L"PAY " + formatWealth(acceptedBattleConsequencePlan_.payment) +
+                        L"  REP +" +
+                        std::to_wstring(acceptedBattleConsequencePlan_.reputationDelta),
+                    7,
+                    236);
+                drawNewsNetText5x5(
+                    42,
+                    132,
+                    L"SALV " + formatWealth(acceptedBattleConsequencePlan_.salvage) +
+                        L" TIME " +
+                        std::to_wstring(acceptedBattleConsequencePlan_.campaignDateTicks) +
+                        L" XP YES",
+                    7,
+                    236);
+                drawNewsNetText5x5(
+                    42,
+                    144,
+                    L"DAMAGE REPAIR DEATH DEFERRED",
+                    14,
+                    236);
+            } else {
+                drawNewsNetText5x5(42, 96, L"CONSEQUENCE COMMIT NO", 14, 236);
+                if (acceptedBattleOutcome_.launchSource ==
+                    mw::battle::CampaignBattleLaunchSource::DarkWingFinal) {
+                    drawNewsNetText5x5(42, 120, L"CONTINUE -> CAMPAIGN", 11, 236);
+                    drawNewsNetText5x5(42, 132, L"EXTENDED ENDING DEFERRED", 14, 236);
+                    drawNewsNetText5x5(42, 144, L"SETTLEMENT COMMITTED NO", 7, 236);
+                } else {
+                    drawNewsNetText5x5(42, 120, L"NO SETTLEMENT FOR OUTCOME", 7, 236);
+                }
+            }
+            if (acceptedBattleStateGuard_.valid) {
+                drawNewsNetText5x5(
+                    42,
+                    154,
+                    std::wstring(acceptedBattleStateGuard_.unchanged
+                                     ? L"STATE OK MAP "
+                                     : L"STATE CHANGED MAP ") +
+                        std::to_wstring(acceptedBattlePersistenceReport_.mappedBindingCount) +
+                        L"/" +
+                        std::to_wstring(acceptedBattlePersistenceReport_.requestedBindingCount) +
+                        L" LANCE-" +
+                        std::to_wstring(
+                            acceptedBattlePersistenceReport_.unlaunchedMissionParticipantCount),
+                    acceptedBattleStateGuard_.unchanged ? 11 : 12,
+                    236);
+            }
+            drawNewsNetButton(kBattleRuntimeContinueButtonRect, L"CONTINUE", battleStubButtonIndex_ == 0);
+            return;
+        }
         drawGpPanel(70, 50, 180, 108, 8);
         if (finalMissionStubActive_) {
             drawRecruitTextCenteredInRect(70, 58, 180, L"FINAL MISSION STUB", 7);
@@ -8558,6 +10809,9 @@ private:
     }
 
     const std::vector<std::wstring>& missionDebriefMessageLines() const {
+        if (!missionDebriefOverrideLines_.empty()) {
+            return missionDebriefOverrideLines_;
+        }
         if (missionDebriefOutcome_ == MissionOutcome::Victory) {
             return missionVictoryLines_;
         }
@@ -9238,11 +11492,13 @@ private:
     }
 
     void randomizeMarketMech(OwnedMech& mech, std::mt19937& rng) {
-        std::uniform_int_distribution<int> ammoDist(0, kMechAmmoMaxPacks);
-        const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
-        for (size_t i = 0; i < ammoTypes.size(); ++i) {
-            if (ammoTypes[i]) {
-                mech.ammoPacks[i] = ammoDist(rng);
+        const std::array<int, 6> capacities =
+            ammunitionCapacityForMech(mech);
+        for (size_t pool = 0; pool < capacities.size(); ++pool) {
+            if (capacities[pool] > 0) {
+                std::uniform_int_distribution<int> ammoDist(
+                    0, capacities[pool]);
+                mech.ammoPacks[pool] = ammoDist(rng);
             }
         }
 
@@ -9314,12 +11570,13 @@ private:
 
     uint32_t reloadCost(const OwnedMech& mech) const {
         uint32_t total = 0;
-        const std::array<bool, 6> ammoTypes = ammoTypesForMech(mech);
-        for (size_t i = 0; i < ammoTypes.size() && i < kAmmoDefinitions.size(); ++i) {
-            if (!ammoTypes[i]) {
+        const std::array<int, 6> capacities =
+            ammunitionCapacityForMech(mech);
+        for (size_t i = 0; i < capacities.size() && i < kAmmoDefinitions.size(); ++i) {
+            if (capacities[i] <= 0) {
                 continue;
             }
-            const int missing = std::max(0, kMechAmmoMaxPacks - mech.ammoPacks[i]);
+            const int missing = std::max(0, capacities[i] - mech.ammoPacks[i]);
             total += static_cast<uint32_t>(missing) * kAmmoDefinitions[i].tierOneCost;
         }
         return total;
@@ -9977,6 +12234,62 @@ private:
         }
     }
 
+    void drawCampaignBattleArmorOverlay(
+        const OwnedMech& mech,
+        int battleImageX,
+        int battleImageY) {
+        const BattleMechStatusMaskRegistration& registration =
+            battleMechStatusMaskRegistrations_[armorOverlayIndex(mech.chassis)];
+        if (!registration.valid) {
+            return;
+        }
+        const uint32_t black = toBgra(paletteColor(0));
+        for (const ArmorOverlayRect& overlayRect : armorOverlayRects(mech.chassis)) {
+            const size_t section = statusArtSectionToArmorDamageIndex(overlayRect.section);
+            if (section >= mech.armorDamage.size()) {
+                continue;
+            }
+            const uint32_t target =
+                toBgra(paletteColor(armorSectionColor(mech.armorDamage[section])));
+            const int sourceX = battleImageX + registration.x + overlayRect.rect.x;
+            const int sourceY = battleImageY + registration.y + overlayRect.rect.y;
+            const int x0 = std::max(0, sourceX);
+            const int y0 = std::max(0, sourceY);
+            const int x1 = std::min(kScreenWidth, sourceX + overlayRect.rect.width);
+            const int y1 = std::min(kScreenHeight, sourceY + overlayRect.rect.height);
+            for (int y = y0; y < y1; ++y) {
+                for (int x = x0; x < x1; ++x) {
+                    uint32_t& pixel = framebuffer_[static_cast<size_t>(y) * kScreenWidth + x];
+                    if (pixel == black) {
+                        pixel = target;
+                    }
+                }
+            }
+        }
+    }
+
+    void finalizeCampaignBattleStatusStencil(
+        int imageX,
+        int imageY,
+        int imageWidth,
+        int imageHeight) {
+        const uint32_t cyan = toBgra(paletteColor(3));
+        const uint32_t brightCyan = toBgra(paletteColor(11));
+        const uint32_t black = toBgra(paletteColor(0));
+        const int x0 = std::max(0, imageX);
+        const int y0 = std::max(0, imageY);
+        const int x1 = std::min(kScreenWidth, imageX + imageWidth);
+        const int y1 = std::min(kScreenHeight, imageY + imageHeight);
+        for (int y = y0; y < y1; ++y) {
+            for (int x = x0; x < x1; ++x) {
+                uint32_t& pixel = framebuffer_[static_cast<size_t>(y) * kScreenWidth + x];
+                if (pixel == cyan || pixel == brightCyan) {
+                    pixel = black;
+                }
+            }
+        }
+    }
+
     void drawRepairComponentLine(
         const OwnedMech& mech,
         int y,
@@ -10308,6 +12621,7 @@ private:
             currentYear_ += currentMonth_ / kCampaignMonthsPerYear;
             currentMonth_ %= kCampaignMonthsPerYear;
         }
+        currentDay_ = std::clamp(currentMonthDayCounter_ / 2 + 1, 1, 31);
 
         currentPeriodic14DayCounter_ += static_cast<int>(days);
         if (currentPeriodic14DayCounter_ >= kPeriodicCampaignUpdateDays) {
@@ -10455,59 +12769,37 @@ private:
     }
 
     int contractForceScore() const {
-        int tons = 0;
-        int assignedMechs = 0;
+        uint16_t assignedStrength = 0;
         for (const OwnedMech& mech : ownedMechs_) {
             if (mech.assignedCrewSlot >= 0) {
-                tons += mech.tons;
-                ++assignedMechs;
+                assignedStrength = static_cast<uint16_t>(
+                    assignedStrength +
+                    mw::battle::mwMainContractMechStrength(
+                        chassisIndex(mech.chassis)));
             }
         }
-        if (assignedMechs == 0) {
-            for (const OwnedMech& mech : ownedMechs_) {
-                tons += mech.tons;
-            }
-        }
-
-        const int yearProgress = std::max(0, currentYear_ - kStartingYear);
-        return std::max(1, tons / 50 + yearProgress * 2 + static_cast<int>(playerReputationTier_) / 2);
+        return mw::battle::mwMainContractForceScore(
+            playerReputationPoints_, assignedStrength);
     }
 
     static bool contractMissionHasHostileTargetHouse(const ContractMissionDefinition& mission) {
         return mission.name != L"GARRISON DUTY" && mission.name != L"GENERAL SECURITY DUTY";
     }
 
+    static std::optional<int> battleEnvironmentIdForTerrainCode(uint8_t terrainCode) {
+        if (terrainCode == 0) {
+            return std::nullopt;
+        }
+        return static_cast<int>((static_cast<uint32_t>(terrainCode) - 1u) % 3u);
+    }
+
     static void assignContractEnemyCounts(int score, ContractOffer& offer, uint32_t randomValue) {
-        offer.heavyCount = score / 25;
-        int remainder = score % 25;
-        offer.mediumCount = remainder / 15;
-        offer.lightCount = (remainder % 15) / 7;
-
-        int total = offer.heavyCount + offer.mediumCount + offer.lightCount;
-        if (total <= 0) {
-            offer.lightCount = 1;
-            total = 1;
-        }
-        while (total > 4) {
-            if (offer.heavyCount > 0) {
-                --offer.heavyCount;
-            } else if (offer.mediumCount > 0) {
-                --offer.mediumCount;
-            } else {
-                --offer.lightCount;
-            }
-            --total;
-        }
-
-        if (offer.heavyCount == 4) {
-            if ((randomValue & 1u) == 0u) {
-                offer.heavyCount = 3;
-                offer.mediumCount = 1;
-            } else {
-                offer.heavyCount = 2;
-                offer.mediumCount = 2;
-            }
-        }
+        const std::array<uint8_t, 3> counts =
+            mw::battle::mwMainContractOppositionCounts(
+                score, static_cast<uint8_t>(randomValue % 11u));
+        offer.heavyCount = counts[0];
+        offer.mediumCount = counts[1];
+        offer.lightCount = counts[2];
     }
 
     static int contractBasePriceK(int score, uint8_t employerHouse, uint32_t randomValue) {
@@ -10536,29 +12828,1960 @@ private:
         return ((value + 5) / 10) * 10;
     }
 
-    const ContractMissionDefinition& chooseContractMission(bool allowExtended, std::mt19937& rng) const {
-        for (int attempts = 0; attempts < 12; ++attempts) {
-            const size_t index = static_cast<size_t>(rng() % kContractMissionDefinitions.size());
-            const ContractMissionDefinition& mission = kContractMissionDefinitions[index];
-            if (allowExtended || !mission.extended) {
-                return mission;
+    uint8_t chooseOriginalContractTargetCategory(
+        uint8_t employerHouse,
+        std::mt19937& rng) const {
+        const size_t house = std::min<size_t>(employerHouse, 4u);
+        const auto& classLimits = kOriginalContractCategoryMissionClass[house];
+        // Original FUN_101b_4f6e asks its inclusive random helper for 0..10,
+        // adds one, then walks the nonzero category entries circularly.
+        unsigned remaining = static_cast<unsigned>(rng() % 11u) + 1u;
+        size_t category = 0u;
+        while (true) {
+            if (classLimits[category] != 0u && --remaining == 0u) {
+                return static_cast<uint8_t>(category);
             }
+            category = (category + 1u) % classLimits.size();
         }
-        return kContractMissionDefinitions[static_cast<size_t>(rng() % 14u)];
     }
 
-    std::wstring contractTargetPlanetName(uint8_t targetHouse, std::mt19937& rng) const {
-        std::vector<size_t> candidates;
+    uint8_t chooseOriginalContractMissionClass(
+        uint8_t employerHouse,
+        uint8_t targetCategory,
+        std::mt19937& rng) const {
+        const uint8_t maximumClass =
+            kOriginalContractCategoryMissionClass[
+                std::min<size_t>(employerHouse, 4u)][
+                std::min<size_t>(targetCategory, 7u)];
+        if (maximumClass == 0u) {
+            throw std::runtime_error("original contract target category is unavailable for employer House");
+        }
+        const uint32_t inclusiveMaximum =
+            static_cast<uint32_t>(maximumClass - 1u) * 4u;
+        uint8_t missionClass = static_cast<uint8_t>(
+            (rng() % (inclusiveMaximum + 1u)) / 4u + 1u);
+
+        int extendedThreshold = 0;
+        if (currentYear_ > 3029) {
+            extendedThreshold = 75;
+        } else if (currentYear_ > 3028 ||
+                   (currentYear_ == 3028 &&
+                    (currentMonth_ > 7 ||
+                     (currentMonth_ == 7 && currentMonthDayCounter_ >= 40)))) {
+            extendedThreshold = 50;
+        }
+        if (extendedThreshold != 0 &&
+            static_cast<int>(rng() % 101u) >= extendedThreshold) {
+            missionClass = 4u;
+        }
+        return missionClass;
+    }
+
+    const ContractMissionDefinition& chooseContractMissionFromClass(
+        uint8_t missionClass,
+        bool allowExtended,
+        std::mt19937& rng) const {
+        static constexpr std::array<size_t, 10> kClass1{{0,1,2,3,4,5,6,7,8,9}};
+        static constexpr std::array<size_t, 4> kClass2{{10,11,12,13}};
+        static constexpr std::array<size_t, 15> kClass3{{
+            19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,
+        }};
+        static constexpr std::array<size_t, 5> kClass4{{14,15,16,17,18}};
+        const auto choose = [&](const auto& bucket) -> const ContractMissionDefinition& {
+            return kContractMissionDefinitions[
+                bucket[static_cast<size_t>(rng() % bucket.size())]];
+        };
+
+        const ContractMissionDefinition* mission = nullptr;
+        switch (missionClass) {
+        case 1: mission = &choose(kClass1); break;
+        case 2: mission = &choose(kClass2); break;
+        case 4: mission = &choose(kClass4); break;
+        default: mission = &choose(kClass3); break;
+        }
+        // The original falls back to class 3 when an extended record is drawn
+        // without sufficient lance/mech capacity; ordinary class-4 records
+        // remain valid.
+        if (mission->extended && !allowExtended) {
+            mission = &choose(kClass3);
+        }
+        return *mission;
+    }
+
+    int planetIndexFromTableOrder(uint16_t tableOrder) const {
+        const auto found = std::find_if(
+            planets_.begin(),
+            planets_.end(),
+            [tableOrder](const PlanetRecord& planet) {
+                return planet.tableOrder == tableOrder;
+            });
+        return found == planets_.end()
+            ? -1
+            : static_cast<int>(found - planets_.begin());
+    }
+
+    int contractTargetPlanetIndex(
+        uint8_t employerHouse,
+        uint8_t targetCategory,
+        uint8_t missionClass,
+        std::mt19937& rng) const {
+        if (missionClass == 1u || targetCategory > 4u) {
+            const uint8_t tableOrder =
+                kOriginalClassOneTargetPlanetTableOrders[
+                    std::min<size_t>(employerHouse, 4u)][
+                    std::min<size_t>(targetCategory, 7u)][
+                    static_cast<size_t>(rng() % 8u)];
+            if (tableOrder == 0xffu) {
+                throw std::runtime_error("original class-1 target planet table selected an unavailable category");
+            }
+            return planetIndexFromTableOrder(tableOrder);
+        }
+
+        std::vector<size_t> housePlanets;
         for (size_t i = 0; i < planets_.size(); ++i) {
-            if (planets_[i].houseId == targetHouse) {
-                candidates.push_back(i);
+            if (planets_[i].houseId == targetCategory) {
+                housePlanets.push_back(i);
             }
         }
-        if (candidates.empty()) {
-            return currentPlanetName();
+        if (housePlanets.empty()) {
+            return -1;
         }
-        const size_t planetIndex = candidates[static_cast<size_t>(rng() % candidates.size())];
-        return widen(planets_[planetIndex].name);
+        // The assembly selects within the target-House range and retries while
+        // planet byte 3 is zero or below DL; DL holds the chosen mission class.
+        for (size_t attempt = 0; attempt < housePlanets.size() * 4u; ++attempt) {
+            const size_t candidate =
+                housePlanets[static_cast<size_t>(rng() % housePlanets.size())];
+            if (planets_[candidate].unknownByte3 != 0u &&
+                planets_[candidate].unknownByte3 >= missionClass) {
+                return static_cast<int>(candidate);
+            }
+        }
+        const auto fallback = std::find_if(
+            housePlanets.begin(), housePlanets.end(),
+            [&](size_t candidate) {
+                return planets_[candidate].unknownByte3 != 0u &&
+                    planets_[candidate].unknownByte3 >= missionClass;
+            });
+        return fallback == housePlanets.end() ? -1 : static_cast<int>(*fallback);
+    }
+
+    mw::battle::BattleContractMetadata battleContractMetadataFromOffer(const ContractOffer& offer) const {
+        mw::battle::BattleContractMetadata metadata;
+        metadata.valid = true;
+        metadata.provenance = "campaign_contract";
+        metadata.employerHouseId = std::min<uint8_t>(offer.employerHouse, 4);
+        metadata.employerHouseName = narrowAscii(houseNamePlain(offer.employerHouse));
+        metadata.targetHouseId = std::min<uint8_t>(offer.targetHouse, 4);
+        metadata.targetHouseName = narrowAscii(houseNamePlain(offer.targetHouse));
+        metadata.hasHostileTargetHouse = offer.hasHostileTargetHouse;
+        metadata.targetPlanetName = narrowAscii(offer.targetPlanet);
+        metadata.targetPlanetTerrainCode = offer.targetPlanetTerrainCode;
+        metadata.targetEnvironmentId = offer.targetEnvironmentId;
+        metadata.terrainScenarioIndex = offer.terrainScenarioIndex;
+        metadata.terrainScenarioProvenance =
+            "mw_main_ds0956_plus1_btech_mod20_target_planet";
+        metadata.estimatedHeavyMechs = offer.heavyCount;
+        metadata.estimatedMediumMechs = offer.mediumCount;
+        metadata.estimatedLightMechs = offer.lightCount;
+        metadata.oppositionEstimateVariable = true;
+        metadata.garrisonAutoResolveDeferred = false;
+        const auto countByte = [](int count) {
+            return static_cast<uint8_t>(std::clamp(count, 0, 255));
+        };
+        metadata.oppositionSpawnPlan = mw::battle::decodeFreshBtechOppositionSpawnPlan(
+            {{countByte(offer.heavyCount), countByte(offer.mediumCount), countByte(offer.lightCount)}},
+            "campaign_hml_to_btech_context_3_5");
+        metadata.priceK = offer.priceK;
+        metadata.salvagePercent = offer.salvagePercent;
+        metadata.advancePercent = offer.advancePercent;
+        return metadata;
+    }
+
+    uint32_t missionElapsedDateTicks(const ContractOffer& offer) const {
+        if (planets_.empty()) {
+            return mw::battle::campaignBattleOriginalMissionElapsedDateTicks(
+                1,
+                0,
+                0,
+                offer.originalMissionId);
+        }
+
+        const int originIndex = std::clamp(
+            currentPlanetIndex_,
+            0,
+            static_cast<int>(planets_.size()) - 1);
+        const int targetIndex =
+            offer.targetPlanetIndex >= 0 &&
+                static_cast<size_t>(offer.targetPlanetIndex) < planets_.size()
+            ? offer.targetPlanetIndex
+            : originIndex;
+        const PlanetRecord& origin = planets_[static_cast<size_t>(originIndex)];
+        const PlanetRecord& target = planets_[static_cast<size_t>(targetIndex)];
+        return mw::battle::campaignBattleOriginalMissionElapsedDateTicks(
+            travelJumpCount(origin, target),
+            origin.unknownByte7,
+            target.unknownByte7,
+            offer.originalMissionId);
+    }
+
+    mw::battle::CampaignBattleConsequenceContext
+    campaignBattleConsequenceContextForAcceptedContract() const {
+        mw::battle::CampaignBattleConsequenceContext context;
+        context.salvage = missionPlaceholderSalvage();
+        context.campaignDateTicks = missionElapsedDateTicks(acceptedContract_);
+        context.pilotExperienceAward = true;
+        context.salvageBetaValidationRequired = true;
+        context.salvageEstimateAvailable = true;
+        context.campaignTimeProven = true;
+        context.pilotExperienceProven = true;
+        return context;
+    }
+
+    fs::path battleScenarioPath() const {
+        const fs::path direct = resourceRoot_ / L"SNARIO.DAT";
+        if (fs::exists(direct)) {
+            return direct;
+        }
+        const fs::path sorted = fs::current_path() / L"Sorted Original Files" / L"DAT" / L"SNARIO.DAT";
+        if (fs::exists(sorted)) {
+            return sorted;
+        }
+        return direct;
+    }
+
+    static std::optional<std::string> battleMechPresetForChassis(ChassisId chassis) {
+        switch (chassis) {
+        case ChassisId::Locust:
+            return "locust";
+        case ChassisId::Jenner:
+            return "jenner";
+        case ChassisId::PhoenixHawk:
+            return "phoenix_hawk";
+        case ChassisId::ShadowHawk:
+            return "shadow_hawk";
+        case ChassisId::Rifleman:
+            return "rifleman";
+        case ChassisId::Warhammer:
+            return "warhammer";
+        case ChassisId::Marauder:
+            return "marauder";
+        case ChassisId::Battlemaster:
+            return "battlemaster";
+        case ChassisId::Wasp:
+        case ChassisId::Wolverine:
+            break;
+        }
+        return std::nullopt;
+    }
+
+    static std::optional<ChassisId> battleChassisForMechPreset(
+        std::string_view presetId) {
+        if (presetId == "locust") return ChassisId::Locust;
+        if (presetId == "jenner") return ChassisId::Jenner;
+        if (presetId == "phoenix_hawk") return ChassisId::PhoenixHawk;
+        if (presetId == "shadow_hawk") return ChassisId::ShadowHawk;
+        if (presetId == "rifleman") return ChassisId::Rifleman;
+        if (presetId == "warhammer") return ChassisId::Warhammer;
+        if (presetId == "marauder") return ChassisId::Marauder;
+        if (presetId == "battlemaster") return ChassisId::Battlemaster;
+        return std::nullopt;
+    }
+
+    static mw::battle::BattlePersistentMechState battlePersistentMechStateFromOwnedMech(
+        const OwnedMech& mech,
+        std::string provenance) {
+        const auto damage = [](DamageState state) {
+            return static_cast<uint8_t>(state);
+        };
+        const auto byte = [](int value) {
+            return static_cast<uint8_t>(std::clamp(value, 0, 255));
+        };
+        mw::battle::BattlePersistentMechState state;
+        state.valid = true;
+        state.provenance = std::move(provenance);
+        state.engine = damage(mech.engine);
+        state.gyros = damage(mech.gyros);
+        state.sensors = damage(mech.sensors);
+        state.lifeSupport = damage(mech.lifeSupport);
+        state.heatSinksWorking = byte(mech.heatSinksWorking);
+        state.heatSinksTotal = byte(mech.heatSinksTotal);
+        state.leftArmActuator = damage(mech.leftArmActuator);
+        state.rightArmActuator = damage(mech.rightArmActuator);
+        state.leftLegActuator = damage(mech.leftLegActuator);
+        state.rightLegActuator = damage(mech.rightLegActuator);
+        state.jumpJetsWorking = byte(mech.jumpJetsWorking);
+        state.jumpJetsTotal = byte(mech.jumpJetsTotal);
+        state.armorPercent = byte(mech.armorPercent);
+        for (size_t i = 0; i < state.weaponConditions.size(); ++i) {
+            state.weaponConditions[i] = damage(mech.weapons[i].condition);
+        }
+        for (size_t i = 0; i < state.armorDamage.size(); ++i) {
+            state.armorDamage[i] = byte(mech.armorDamage[i]);
+        }
+        return state;
+    }
+
+    static mw::battle::BattlePersistentMechState pristineEnemyMechState(
+        std::string_view mechPresetId) {
+        const std::optional<ChassisId> chassis =
+            battleChassisForMechPreset(mechPresetId);
+        OwnedMech pristine = makeMech(chassis.value_or(ChassisId::Locust));
+        return battlePersistentMechStateFromOwnedMech(
+            pristine,
+            "campaign_opposition_pristine_launch_state");
+    }
+
+    static void applyBattleAmmunitionFromOwnedMech(
+        const OwnedMech& mech,
+        mw::battle::BattleCombatantLaunchState& launch) {
+        launch.ammunitionStateValid = true;
+        launch.ammunitionByPool = mech.ammoPacks;
+    }
+
+    void applyCampaignPlayerLaunchStates(
+        mw::battle::BattleStartParams& params) const {
+        params.playerLaunchState.reset();
+        params.playerAlliedLaunchStates.clear();
+        if (missionParticipants_.empty()) {
+            return;
+        }
+
+        for (size_t participantIndex = 0;
+             participantIndex < missionParticipants_.size();
+             ++participantIndex) {
+            const MissionParticipant& participant = missionParticipants_[participantIndex];
+            if (participant.mechIndex < 0 ||
+                static_cast<size_t>(participant.mechIndex) >= ownedMechs_.size()) {
+                continue;
+            }
+            const OwnedMech& mech =
+                ownedMechs_[static_cast<size_t>(participant.mechIndex)];
+            const std::optional<std::string> preset =
+                battleMechPresetForChassis(mech.chassis);
+            if (!preset.has_value()) {
+                continue;
+            }
+
+            mw::battle::BattleCombatantLaunchState launch;
+            launch.mechPresetId = *preset;
+            launch.roster = params.playerRoster;
+            launch.roster.sourceSlot = "player:" + std::to_string(participantIndex);
+            launch.roster.provenance =
+                participantIndex == 0u
+                    ? "campaign_controlled_player_launch_state"
+                    : "campaign_assigned_lance_launch_state";
+            if (participant.crewSlot >= 0 &&
+                static_cast<size_t>(participant.crewSlot) <
+                    crewMembers_.size()) {
+                launch.roster.gunnerySkill = skillRank(
+                    crewMembers_[static_cast<size_t>(participant.crewSlot)].
+                        gunnery);
+            }
+            launch.persistentMechState = battlePersistentMechStateFromOwnedMech(
+                mech,
+                "campaign_owned_mech_immutable_entry_state");
+            applyBattleAmmunitionFromOwnedMech(mech, launch);
+
+            if (participantIndex == 0u) {
+                launch.startTransform = params.playerStartTransform;
+                params.playerMechPresetId = launch.mechPresetId;
+                params.playerRoster.sourceSlot = launch.roster.sourceSlot;
+                params.playerRoster.gunnerySkill =
+                    launch.roster.gunnerySkill;
+                params.playerLaunchState = std::move(launch);
+                continue;
+            }
+            if (!params.setupMetadata.valid ||
+                participantIndex >= params.setupMetadata.playerSlots.size()) {
+                continue;
+            }
+            launch.startTransform =
+                params.setupMetadata.playerSlots[participantIndex].transform;
+            params.playerAlliedLaunchStates.push_back(std::move(launch));
+        }
+    }
+
+    static bool phase11AcceptedContractHasOppositionEstimate(
+        const mw::battle::BattleContractMetadata& contract) {
+        if (contract.oppositionSpawnPlan.valid && !contract.oppositionSpawnPlan.requests.empty()) {
+            return true;
+        }
+        return contract.estimatedHeavyMechs > 0 ||
+               contract.estimatedMediumMechs > 0 ||
+               contract.estimatedLightMechs > 0;
+    }
+
+    static bool phase11BattleStartHasOpposingCombatant(
+        const mw::battle::BattleStartParams& params) {
+        return std::any_of(
+            params.combatantLaunchStates.begin(),
+            params.combatantLaunchStates.end(),
+            [](const mw::battle::BattleCombatantLaunchState& combatant) {
+                return combatant.roster.team == mw::battle::BattleTeam::Opposing;
+            });
+    }
+
+    uint32_t acceptedContractRuntimeSeed() const {
+        uint32_t seed = 0x45585433u;
+        seed ^= static_cast<uint32_t>(acceptedContract_.generationSlot) *
+            0x9E3779B9u;
+        seed ^= static_cast<uint32_t>(acceptedContract_.targetPlanetTableOrder) *
+            0x85EBCA6Bu;
+        seed ^= static_cast<uint32_t>(currentYear_) * 0xC2B2AE35u;
+        seed ^= static_cast<uint32_t>(currentMonth_ + 1) * 0x27D4EB2Du;
+        seed ^= static_cast<uint32_t>(currentMonthDayCounter_) * 0x165667B1u;
+        return seed;
+    }
+
+    void beginAcceptedContractMissionSequence() {
+        missionSequence_ = {};
+        const auto acceptedDefinition =
+            mw::battle::battleMissionDefinitionByTitle(
+                narrowAscii(acceptedContract_.missionName));
+        if (!acceptedDefinition || !acceptedDefinition->extended) {
+            return;
+        }
+
+        const auto plan = mw::battle::battleExtendedCampaignPlan(
+            acceptedContractRuntimeSeed());
+        if (plan.valid) {
+            missionSequence_.kind = MissionSequenceKind::ExtendedCampaign;
+            missionSequence_.stageCount = plan.stageCount;
+            missionSequence_.missionIds = plan.missionIds;
+        }
+    }
+
+    void beginFinalMissionSequence() {
+        missionSequence_ = {};
+        const auto plan = mw::battle::battleFinalMissionPlan();
+        if (plan.valid) {
+            missionSequence_.kind = MissionSequenceKind::FinalBattle;
+            missionSequence_.stageCount = plan.stageCount;
+            missionSequence_.missionIds = plan.missionIds;
+        }
+    }
+
+    void applyMissionSequenceMission(
+        mw::battle::BattleStartParams& params) const {
+        if (!missionSequence_.active()) {
+            return;
+        }
+        const auto definition = mw::battle::battleMissionDefinitionById(
+            missionSequence_.missionIds[missionSequence_.stageIndex]);
+        if (definition) {
+            params.mission =
+                mw::battle::battleMissionBriefingFromDefinition(*definition);
+        }
+    }
+
+    void applyMissionSequencePlayerCarryover(
+        mw::battle::BattleStartParams& params) const {
+        if (missionSequence_.playerCarryover.empty()) {
+            return;
+        }
+
+        params.playerLaunchState.reset();
+        params.playerAlliedLaunchStates.clear();
+        for (size_t i = 0; i < missionSequence_.playerCarryover.size(); ++i) {
+            mw::battle::BattleCombatantLaunchState launch =
+                missionSequence_.playerCarryover[i];
+            launch.roster.originalLiveObjectSlot.reset();
+            const auto participant = std::find_if(
+                missionParticipants_.begin(), missionParticipants_.end(),
+                [&launch, this](const MissionParticipant& candidate) {
+                    const size_t index = static_cast<size_t>(
+                        &candidate - missionParticipants_.data());
+                    return launch.roster.sourceSlot ==
+                        "player:" + std::to_string(index);
+                });
+            if (participant != missionParticipants_.end() &&
+                participant->mechIndex >= 0 &&
+                static_cast<size_t>(participant->mechIndex) <
+                    ownedMechs_.size()) {
+                applyBattleAmmunitionFromOwnedMech(
+                    ownedMechs_[static_cast<size_t>(participant->mechIndex)],
+                    launch);
+            }
+            if (i == 0u) {
+                launch.startTransform = params.playerStartTransform;
+                params.playerMechPresetId = launch.mechPresetId;
+                params.playerRoster = launch.roster;
+                params.playerLaunchState = std::move(launch);
+                continue;
+            }
+            if (params.setupMetadata.valid &&
+                i < params.setupMetadata.playerSlots.size()) {
+                launch.startTransform =
+                    params.setupMetadata.playerSlots[i].transform;
+            } else {
+                launch.startTransform = params.playerStartTransform;
+                launch.startTransform.z += 700.0 * static_cast<double>(i);
+            }
+            params.playerAlliedLaunchStates.push_back(std::move(launch));
+        }
+    }
+
+    void captureMissionSequencePlayerCarryover(
+        const mw::battle::BattleSnapshot& finalSnapshot) {
+        missionSequence_.playerCarryover.clear();
+        std::vector<const mw::battle::CombatantSnapshot*> survivors;
+        std::vector<const mw::battle::CombatantSnapshot*> destroyed;
+        for (const auto& combatant : finalSnapshot.combatants) {
+            if (combatant.roster.team != mw::battle::BattleTeam::Player) {
+                continue;
+            }
+            if (combatant.missionStatus ==
+                mw::battle::CombatantMissionStatus::Destroyed) {
+                destroyed.push_back(&combatant);
+            } else {
+                survivors.push_back(&combatant);
+            }
+        }
+        survivors.insert(survivors.end(), destroyed.begin(), destroyed.end());
+        missionSequence_.playerCarryover.reserve(survivors.size());
+        for (const auto* combatant : survivors) {
+            missionSequence_.playerCarryover.push_back(
+                mw::battle::prepareNextMissionLaunchState(
+                    *combatant, {}));
+        }
+    }
+
+    mw::battle::BattleStartParams battleStartParamsForAcceptedContract() const {
+        mw::battle::BattleStartParams params;
+        mw::battle::applyBattleDriveRuntimeTuning(params);
+        params.originalMajorSystemRuntimeEnabled = true;
+        params.contract = acceptedBattleContract_;
+        params.playerRoster.team = mw::battle::BattleTeam::Player;
+        params.playerRoster.factionHouseId = acceptedBattleContract_.employerHouseId;
+        params.playerRoster.factionHouseName = acceptedBattleContract_.employerHouseName;
+        params.playerRoster.provenance = "accepted_campaign_contract";
+        params.playerRoster.sourceSlot = "player:0";
+        if (!acceptedContract_.missionName.empty()) {
+            const std::optional<mw::battle::BattleMissionDefinition> definition =
+                mw::battle::battleMissionDefinitionByTitle(narrowAscii(acceptedContract_.missionName));
+            if (definition.has_value()) {
+                params.mission = mw::battle::battleMissionBriefingFromDefinition(*definition);
+            }
+        }
+        if (!params.mission.valid) {
+            params.mission = mw::battle::defaultBattleMissionBriefing();
+        }
+        applyMissionSequenceMission(params);
+        params.terrainScenarioPath = battleScenarioPath();
+        params.terrainScenarioIndex = acceptedBattleContract_.terrainScenarioIndex;
+        params.terrainEnvironmentId = acceptedBattleContract_.targetEnvironmentId;
+        std::optional<mw::battle::OriginalBattlefieldSetup> setup;
+        if (fs::exists(params.terrainScenarioPath)) {
+            try {
+                setup = mw::battle::decodeOriginalBattlefieldSetup(
+                    params.terrainScenarioPath,
+                    params.terrainScenarioIndex,
+                    params.mission.originalId,
+                    params.terrainCellSize);
+            } catch (const std::exception&) {
+                setup.reset();
+            }
+        }
+        if (setup.has_value()) {
+            params.playerStartTransform = setup->playerStartTransform;
+            params.setupMetadata = setup->metadata;
+            params.objective = setup->objective;
+            params.battlefieldBoundary = setup->battlefieldBoundary;
+        }
+        if (!missionParticipants_.empty()) {
+            const int mechIndex = missionParticipants_.front().mechIndex;
+            if (mechIndex >= 0 && static_cast<size_t>(mechIndex) < ownedMechs_.size()) {
+                const std::optional<std::string> preset =
+                    battleMechPresetForChassis(ownedMechs_[static_cast<size_t>(mechIndex)].chassis);
+                if (preset.has_value()) {
+                    params.playerMechPresetId = *preset;
+                }
+            }
+        }
+        applyCampaignPlayerLaunchStates(params);
+        applyMissionSequencePlayerCarryover(params);
+        if (setup.has_value() && phase11AcceptedContractHasOppositionEstimate(acceptedBattleContract_)) {
+            std::array<uint8_t, 3> stageCounts =
+                acceptedBattleContract_.oppositionSpawnPlan.sourceCounts;
+            if (stageCounts == std::array<uint8_t, 3>{{0, 0, 0}}) {
+                const auto countByte = [](int count) {
+                    return static_cast<uint8_t>(std::clamp(count, 0, 255));
+                };
+                stageCounts = {{
+                    countByte(acceptedBattleContract_.estimatedHeavyMechs),
+                    countByte(acceptedBattleContract_.estimatedMediumMechs),
+                    countByte(acceptedBattleContract_.estimatedLightMechs),
+                }};
+            }
+            if (missionSequence_.kind == MissionSequenceKind::ExtendedCampaign &&
+                missionSequence_.active()) {
+                stageCounts = mw::battle::btechExtendedStageOppositionCounts(
+                    stageCounts, missionSequence_.stageIndex);
+            }
+            const uint32_t stageSeed = acceptedContractRuntimeSeed() ^
+                (static_cast<uint32_t>(missionSequence_.stageIndex + 1u) *
+                 0x9E3779B9u);
+            mw::battle::BattleOppositionSpawnPlan spawnPlan =
+                mw::battle::resolveBtechOppositionSpawnPlan(
+                    stageCounts,
+                    stageSeed,
+                    missionSequence_.kind == MissionSequenceKind::ExtendedCampaign
+                        ? "original_btech_extended_stage_hml_round_robin"
+                        : "original_btech_fresh_hml_round_robin");
+            std::optional<uint8_t> opposingHouseId;
+            std::string opposingHouseName = "UNAFFILIATED";
+            if (acceptedBattleContract_.hasHostileTargetHouse) {
+                opposingHouseId = acceptedBattleContract_.targetHouseId;
+                opposingHouseName = acceptedBattleContract_.targetHouseName;
+            }
+            mw::battle::applyOriginalContractOpposition(
+                params,
+                *setup,
+                std::move(spawnPlan),
+                opposingHouseId,
+                std::move(opposingHouseName));
+            for (mw::battle::BattleCombatantLaunchState& enemy :
+                 params.combatantLaunchStates) {
+                enemy.roster.gunnerySkill = static_cast<uint8_t>(
+                    std::min<int>(3, playerReputationTier_));
+                enemy.persistentMechState = pristineEnemyMechState(enemy.mechPresetId);
+                if (const std::optional<ChassisId> enemyChassis =
+                        battleChassisForMechPreset(enemy.mechPresetId)) {
+                    applyBattleAmmunitionFromOwnedMech(
+                        makeMech(*enemyChassis), enemy);
+                }
+            }
+            params.deterministicCombatRuntimeEnabled = true;
+            params.individualWeaponRuntimeEnabled = true;
+            params.originalProjectileRuntimeEnabled = true;
+            params.originalHeatRuntimeEnabled = true;
+            params.stationaryTargetHitDiagnosticEnabled = false;
+            params.weaponTargetPolicy =
+                mw::battle::BattleWeaponTargetPolicy::
+                    CrosshairRayVisibleCombatantProvisional;
+            params.mechSystemsSnapshotEnabled = true;
+            params.weaponRange = 50000.0;
+            params.weaponCooldownTicks = 3;
+            params.weaponDamagePerHit = 1;
+            params.mechSystemMaxDamage = 3;
+        }
+        return params;
+    }
+
+    mw::battle::BattleStartParams battleStartParamsForDarkWingFinalMission() const {
+        mw::battle::BattleStartParams params;
+        mw::battle::applyBattleDriveRuntimeTuning(params);
+        params.originalMajorSystemRuntimeEnabled = true;
+        params.terrainScenarioPath = battleScenarioPath();
+        params.terrainScenarioIndex = 2;
+        params.terrainEnvironmentId = 0;
+        params.playerRoster.team = mw::battle::BattleTeam::Player;
+        params.playerRoster.provenance = "campaign_story_dark_wing_final";
+        params.playerRoster.sourceSlot = "player:0";
+
+        const std::optional<mw::battle::BattleMissionDefinition> definition =
+            mw::battle::battleMissionDefinitionById(12);
+        if (definition.has_value()) {
+            params.mission = mw::battle::battleMissionBriefingFromDefinition(*definition);
+        }
+        if (!params.mission.valid) {
+            params.mission = mw::battle::defaultBattleMissionBriefing();
+        }
+        applyMissionSequenceMission(params);
+
+        if (!missionParticipants_.empty()) {
+            const int mechIndex = missionParticipants_.front().mechIndex;
+            if (mechIndex >= 0 && static_cast<size_t>(mechIndex) < ownedMechs_.size()) {
+                const std::optional<std::string> preset =
+                    battleMechPresetForChassis(ownedMechs_[static_cast<size_t>(mechIndex)].chassis);
+                if (preset.has_value()) {
+                    params.playerMechPresetId = *preset;
+                }
+            }
+        }
+
+        if (!fs::exists(params.terrainScenarioPath)) {
+            return params;
+        }
+        try {
+            const mw::battle::OriginalBattlefieldSetup setup =
+                mw::battle::decodeOriginalDarkWingFinalBattlefieldSetup(
+                    params.terrainScenarioPath,
+                    params.terrainScenarioIndex,
+                    params.terrainCellSize);
+            params.playerStartTransform = setup.playerStartTransform;
+            params.setupMetadata = setup.metadata;
+            params.battlefieldBoundary = setup.battlefieldBoundary;
+            params.objective = setup.objective;
+            mw::battle::applyOriginalDarkWingFinalOpposition(
+                params,
+                setup,
+                std::nullopt,
+                "DARK WING");
+            for (mw::battle::BattleCombatantLaunchState& enemy :
+                 params.combatantLaunchStates) {
+                enemy.roster.gunnerySkill = 3u;
+                enemy.persistentMechState = pristineEnemyMechState(enemy.mechPresetId);
+                if (const std::optional<ChassisId> enemyChassis =
+                        battleChassisForMechPreset(enemy.mechPresetId)) {
+                    applyBattleAmmunitionFromOwnedMech(
+                        makeMech(*enemyChassis), enemy);
+                }
+            }
+            applyCampaignPlayerLaunchStates(params);
+            applyMissionSequencePlayerCarryover(params);
+            params.combatAiPolicy =
+                mw::battle::BattleCombatAiPolicy::Phase10CompatibilityFsm;
+            params.deterministicCombatRuntimeEnabled = true;
+            params.individualWeaponRuntimeEnabled = true;
+            params.originalProjectileRuntimeEnabled = true;
+            params.originalHeatRuntimeEnabled = true;
+            params.stationaryTargetHitDiagnosticEnabled = false;
+            params.weaponTargetPolicy =
+                mw::battle::BattleWeaponTargetPolicy::
+                    CrosshairRayVisibleCombatantProvisional;
+            params.mechSystemsSnapshotEnabled = true;
+            params.weaponRange = 50000.0;
+            params.weaponCooldownTicks = 3;
+            params.weaponDamagePerHit = 1;
+            params.mechSystemMaxDamage = 3;
+        } catch (const std::exception&) {
+            params.combatantLaunchStates.clear();
+            params.oppositionRoster = {};
+        }
+        return params;
+    }
+
+    CampaignPersistentStateSnapshot captureCampaignPersistentState() const {
+        CampaignPersistentStateSnapshot snapshot;
+        snapshot.valid = true;
+        snapshot.wealth = playerWealth_;
+        snapshot.reputationPoints = playerReputationPoints_;
+        snapshot.reputationTier = playerReputationTier_;
+        snapshot.year = currentYear_;
+        snapshot.month = currentMonth_;
+        snapshot.day = currentDay_;
+        snapshot.ownedMechCount = ownedMechs_.size();
+
+        uint64_t hash = 1469598103934665603ull;
+        const auto append = [&hash](uint64_t value) {
+            for (int byte = 0; byte < 8; ++byte) {
+                hash ^= (value >> (byte * 8)) & 0xffu;
+                hash *= 1099511628211ull;
+            }
+        };
+        const auto appendSigned = [&append](int value) {
+            append(static_cast<uint64_t>(static_cast<int64_t>(value)));
+        };
+
+        append(snapshot.wealth);
+        append(snapshot.reputationPoints);
+        append(snapshot.reputationTier);
+        appendSigned(currentYear_);
+        appendSigned(currentMonth_);
+        appendSigned(currentDay_);
+        appendSigned(currentMonthDayCounter_);
+        appendSigned(currentPeriodic14DayCounter_);
+        append(snapshot.ownedMechCount);
+        for (int value : extraAmmoInHold_) {
+            appendSigned(value);
+        }
+        for (int value : housePositiveCounters_) {
+            appendSigned(value);
+        }
+        for (int value : houseNegativeCounters_) {
+            appendSigned(value);
+        }
+        for (int value : familyAttitudes_) {
+            appendSigned(value);
+        }
+        for (uint8_t value : storyMessageFlags_) {
+            append(value);
+        }
+        for (const CrewMember& crew : crewMembers_) {
+            append(crew.hired ? 1u : 0u);
+            appendSigned(crew.recruitIndex);
+            append(skillRank(crew.gunnery));
+            append(skillRank(crew.piloting));
+            append(crew.missionExperience);
+        }
+        for (const RecruitPilot& pilot : recruitPilots_) {
+            append(pilot.gunnerySkill);
+            append(pilot.pilotingSkill);
+            append(pilot.missionExperience);
+        }
+        for (const OwnedMech& mech : ownedMechs_) {
+            append(static_cast<uint64_t>(mech.chassis));
+            appendSigned(mech.assignedCrewSlot);
+            append(static_cast<uint64_t>(mech.condition));
+            append(mech.repairCost);
+            appendSigned(mech.heatSinksWorking);
+            appendSigned(mech.heatSinksTotal);
+            appendSigned(mech.jumpJetsWorking);
+            appendSigned(mech.jumpJetsTotal);
+            appendSigned(mech.armorPercent);
+            for (int value : mech.armorDamage) {
+                appendSigned(value);
+            }
+            for (int value : mech.ammoPacks) {
+                appendSigned(value);
+            }
+            for (DamageState state : {
+                     mech.engine,
+                     mech.gyros,
+                     mech.sensors,
+                     mech.lifeSupport,
+                     mech.leftArmActuator,
+                     mech.rightArmActuator,
+                     mech.leftLegActuator,
+                     mech.rightLegActuator}) {
+                append(static_cast<uint64_t>(state));
+            }
+            for (const MechWeaponStatus& weapon : mech.weapons) {
+                append(static_cast<uint64_t>(weapon.condition));
+            }
+        }
+        snapshot.fingerprint = hash;
+        return snapshot;
+    }
+
+    void setAcceptedBattleUnsupported(
+        std::string reason,
+        mw::battle::CampaignBattleLaunchSource launchSource =
+            mw::battle::CampaignBattleLaunchSource::Unknown) {
+        acceptedBattleOutcome_.valid = true;
+        acceptedBattleOutcome_.launchSource = launchSource;
+        acceptedBattleOutcome_.terminal = false;
+        acceptedBattleOutcome_.outcome = mw::battle::CampaignBattleOutcome::Unsupported;
+        acceptedBattleOutcome_.reason = std::move(reason);
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleConsequencePlan_ =
+            mw::battle::campaignBattleConsequencePlanFromOutcome(
+                acceptedBattleOutcome_,
+                acceptedBattleContract_,
+                campaignBattleConsequenceContextForAcceptedContract());
+        if (launchSource == mw::battle::CampaignBattleLaunchSource::DarkWingFinal) {
+            finalMissionStubActive_ = false;
+        }
+    }
+
+    static const mw::battle::CombatantSnapshot* playerCombatantSnapshot(
+        const mw::battle::BattleSnapshot& snapshot) {
+        for (const mw::battle::CombatantSnapshot& combatant : snapshot.combatants) {
+            if (combatant.playerControlled) {
+                return &combatant;
+            }
+        }
+        return nullptr;
+    }
+
+    static bool campaignBattleJumpControlActive(const mw::battle::BattleSnapshot& snapshot) {
+        const mw::battle::CombatantSnapshot* combatant = playerCombatantSnapshot(snapshot);
+        return combatant != nullptr &&
+               (combatant->jumpJetsEnabled || combatant->airborne || combatant->transform.y > 0.001);
+    }
+
+    bool campaignConsequenceGamRoundTripMatchesCurrentState() const {
+        try {
+            std::vector<uint8_t> data = baseGamSaveData();
+            if (data.size() != kGamSaveSize) {
+                data.assign(kGamSaveSize, 0);
+            }
+            writeRuntimeToGamSave(data);
+            std::array<int, 5> familyAttitudes{};
+            std::array<int, 5> positiveCounters{};
+            std::array<int, 5> negativeCounters{};
+            readInt16Array(data, kGamOffsetFamilyAttitudes, familyAttitudes);
+            readInt16Array(data, kGamOffsetPositiveHouseCounters, positiveCounters);
+            readInt16Array(data, kGamOffsetNegativeHouseCounters, negativeCounters);
+            bool experienceRoundTrip =
+                readGamU16Le(data, kGamOffsetPlayerMissionExperience) ==
+                crewMembers_.front().missionExperience;
+            for (size_t recruitIndex = 0;
+                 experienceRoundTrip && recruitIndex < recruitPilots_.size();
+                 ++recruitIndex) {
+                const size_t experienceOffset =
+                    kGamOffsetRecruitMissionExperience + recruitIndex + 1u;
+                experienceRoundTrip =
+                    experienceOffset < data.size() &&
+                    data[experienceOffset] == static_cast<uint8_t>(std::min<uint16_t>(
+                        recruitPilots_[recruitIndex].missionExperience,
+                        std::numeric_limits<uint8_t>::max()));
+            }
+            return playerWealth_ <= 0xffffffffull &&
+                   readGamU32Le(data, kGamOffsetMoney) == playerWealth_ &&
+                   readGamU16Le(data, kGamOffsetReputationPoints) == playerReputationPoints_ &&
+                   readGamU16Le(data, kGamOffsetReputationTier) == playerReputationTier_ &&
+                   data[kGamOffsetMonthDayCounter] == currentMonthDayCounter_ &&
+                   data[kGamOffsetMonth] == currentMonth_ &&
+                   readGamU16Le(data, kGamOffsetYear) == currentYear_ &&
+                   data[kGamOffsetPeriodic14DayCounter] == currentPeriodic14DayCounter_ &&
+                   experienceRoundTrip &&
+                   familyAttitudes == familyAttitudes_ &&
+                   positiveCounters == housePositiveCounters_ &&
+                   negativeCounters == houseNegativeCounters_;
+        } catch (const std::exception&) {
+            return false;
+        }
+    }
+
+    mw::battle::CampaignBattleConsequenceCommitReceipt
+    commitAcceptedBattleConsequencePlan() {
+        mw::battle::CampaignBattleConsequenceCommitReceipt receipt;
+        receipt.valid = acceptedBattleConsequencePlan_.valid;
+        receipt.planFingerprint = acceptedBattleConsequencePlan_.planFingerprint;
+        receipt.deferredConsequencesPresent =
+            acceptedBattleConsequencePlan_.salvageDeferred ||
+            acceptedBattleConsequencePlan_.campaignTimeDeferred ||
+            acceptedBattleConsequencePlan_.pilotExperienceDeferred ||
+            acceptedBattleConsequencePlan_.persistentMechDamageDeferred ||
+            acceptedBattleConsequencePlan_.repairCostDeferred ||
+            acceptedBattleConsequencePlan_.pilotDeathDeferred;
+        if (!acceptedBattleConsequencePlan_.commitEligible) {
+            receipt.reason = acceptedBattleConsequencePlan_.reason;
+            return receipt;
+        }
+
+        receipt.attempted = true;
+        const CampaignPersistentStateSnapshot before = captureCampaignPersistentState();
+        receipt.beforeStateFingerprint = before.fingerprint;
+        const uint64_t expectedFingerprint =
+            acceptedBattleStateGuard_.valid && acceptedBattleStateGuard_.unchanged
+                ? acceptedBattleStateGuard_.after.fingerprint
+                : 0;
+        const mw::battle::CampaignBattleConsequenceApplyGuard guard =
+            mw::battle::campaignBattleConsequencePlanApplyGuard(
+                acceptedBattleConsequencePlan_,
+                expectedFingerprint,
+                before.fingerprint,
+                lastCommittedBattleConsequencePlanFingerprint_);
+        receipt.duplicateRejected = guard.duplicateRejected;
+        if (!guard.allowed) {
+            receipt.reason = guard.reason;
+            return receipt;
+        }
+
+        const uint64_t oldWealth = playerWealth_;
+        const uint16_t oldReputationPoints = playerReputationPoints_;
+        const uint8_t oldReputationTier = playerReputationTier_;
+        const std::array<int, 5> oldPositiveCounters = housePositiveCounters_;
+        const std::array<int, 5> oldNegativeCounters = houseNegativeCounters_;
+        const std::array<int, 5> oldFamilyAttitudes = familyAttitudes_;
+        const int oldYear = currentYear_;
+        const int oldMonth = currentMonth_;
+        const int oldMonthDayCounter = currentMonthDayCounter_;
+        const int oldPeriodic14DayCounter = currentPeriodic14DayCounter_;
+        const int oldDay = currentDay_;
+        const std::array<CrewMember, 4> oldCrewMembers = crewMembers_;
+        const std::vector<RecruitPilot> oldRecruitPilots = recruitPilots_;
+
+        constexpr uint64_t kGamPersistedWealthMax = 0xffffffffull;
+        const uint64_t consequenceWealthLimit =
+            std::min(kMaxPlayerWealth, kGamPersistedWealthMax);
+        for (uint64_t award : {
+                 acceptedBattleConsequencePlan_.payment,
+                 acceptedBattleConsequencePlan_.salvage}) {
+            if (playerWealth_ < consequenceWealthLimit) {
+                playerWealth_ += std::min(award, consequenceWealthLimit - playerWealth_);
+            }
+        }
+        playerReputationPoints_ = static_cast<uint16_t>(std::min<int64_t>(
+            std::numeric_limits<uint16_t>::max(),
+            static_cast<int64_t>(playerReputationPoints_) +
+                std::max(0, acceptedBattleConsequencePlan_.reputationDelta)));
+        playerReputationTier_ = reputationTierForPoints(playerReputationPoints_);
+        for (size_t index = 0; index < housePositiveCounters_.size(); ++index) {
+            housePositiveCounters_[index] = static_cast<int>(std::min<int64_t>(
+                std::numeric_limits<int16_t>::max(),
+                static_cast<int64_t>(housePositiveCounters_[index]) +
+                    std::max(0, acceptedBattleConsequencePlan_.housePositiveDelta[index])));
+            houseNegativeCounters_[index] = static_cast<int>(std::min<int64_t>(
+                std::numeric_limits<int16_t>::max(),
+                static_cast<int64_t>(houseNegativeCounters_[index]) +
+                    std::max(0, acceptedBattleConsequencePlan_.houseNegativeDelta[index])));
+            familyAttitudes_[index] = static_cast<int>(std::clamp<int64_t>(
+                static_cast<int64_t>(housePositiveCounters_[index]) -
+                    houseNegativeCounters_[index],
+                std::numeric_limits<int16_t>::min(),
+                std::numeric_limits<int16_t>::max()));
+        }
+        if (acceptedBattleConsequencePlan_.pilotExperienceAward) {
+            applyMissionExperience();
+        }
+        if (acceptedBattleConsequencePlan_.campaignDateTicks > 0) {
+            advanceCampaignDays(acceptedBattleConsequencePlan_.campaignDateTicks);
+        }
+
+        const CampaignPersistentStateSnapshot after = captureCampaignPersistentState();
+        receipt.afterStateFingerprint = after.fingerprint;
+        receipt.saveRoundTripVerified =
+            campaignConsequenceGamRoundTripMatchesCurrentState();
+        const bool expectedValuesApplied =
+            playerReputationPoints_ >= oldReputationPoints &&
+            after.valid &&
+            after.fingerprint != before.fingerprint &&
+            receipt.saveRoundTripVerified;
+        if (!expectedValuesApplied) {
+            playerWealth_ = oldWealth;
+            playerReputationPoints_ = oldReputationPoints;
+            playerReputationTier_ = oldReputationTier;
+            housePositiveCounters_ = oldPositiveCounters;
+            houseNegativeCounters_ = oldNegativeCounters;
+            familyAttitudes_ = oldFamilyAttitudes;
+            currentYear_ = oldYear;
+            currentMonth_ = oldMonth;
+            currentMonthDayCounter_ = oldMonthDayCounter;
+            currentPeriodic14DayCounter_ = oldPeriodic14DayCounter;
+            currentDay_ = oldDay;
+            crewMembers_ = oldCrewMembers;
+            recruitPilots_ = oldRecruitPilots;
+            receipt.afterStateFingerprint = captureCampaignPersistentState().fingerprint;
+            receipt.saveRoundTripVerified = false;
+            receipt.reason = "campaign_consequence_commit_verification_failed";
+            return receipt;
+        }
+
+        receipt.committed = true;
+        receipt.verified = true;
+        receipt.reason = "accepted_contract_proven_consequences_committed";
+        lastCommittedBattleConsequencePlanFingerprint_ =
+            acceptedBattleConsequencePlan_.planFingerprint;
+        return receipt;
+    }
+
+    void acknowledgeAcceptedBattleOutcome() {
+        const mw::battle::CampaignBattleOutcomePackage acknowledgedOutcome =
+            acceptedBattleOutcome_;
+        const CampaignPersistentStateSnapshot stateBeforeAcknowledge =
+            captureCampaignPersistentState();
+        const mw::battle::CampaignBattleConsequenceCommitReceipt consequenceCommit =
+            commitAcceptedBattleConsequencePlan();
+        contractAccepted_ = false;
+        acceptedContract_ = {};
+        acceptedBattleContract_ = {};
+        pendingBattleStartParams_.reset();
+        missionLaunchPending_ = false;
+        acceptedBattleOutcome_ = {};
+        acceptedBattleConsequencePlan_ = {};
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleStateGuard_ = {};
+        campaignBattleRuntime_ = {};
+        finalMissionStubActive_ = false;
+        missionSequence_ = {};
+        missionParticipants_.clear();
+        clearStoryScene();
+        pendingStoryReturnState_ = ScreenState::MainMenu;
+        storyBackdrop_ = StoryBackdrop::Campaign;
+        const CampaignPersistentStateSnapshot stateAfterAcknowledge =
+            captureCampaignPersistentState();
+        const bool persistentStateUnchanged =
+            stateBeforeAcknowledge.valid &&
+            stateAfterAcknowledge.valid &&
+            stateBeforeAcknowledge.fingerprint == stateAfterAcknowledge.fingerprint;
+        lastBattlePostResultReceipt_ =
+            mw::battle::campaignBattlePostResultReceiptFromOutcome(
+                acknowledgedOutcome,
+                persistentStateUnchanged,
+                consequenceCommit);
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+        if (!lastBattlePostResultReceipt_.safeCampaignReturn) {
+            debugLog(L"Phase 11 campaign consequence commit/state guard failed.");
+        }
+        debugLog(
+            L"Phase 11 post-result receipt: source=" +
+            widen(mw::battle::campaignBattleLaunchSourceName(
+                lastBattlePostResultReceipt_.launchSource)) +
+            L", destination=" +
+            widen(mw::battle::campaignBattlePostResultDestinationName(
+                lastBattlePostResultReceipt_.destination)) +
+            L", settlement=" +
+            std::wstring(lastBattlePostResultReceipt_.settlementCommitted ? L"yes" : L"no") +
+            L", extended_ending=" +
+            std::wstring(lastBattlePostResultReceipt_.extendedEndingSequenceExecuted
+                             ? L"executed"
+                             : (lastBattlePostResultReceipt_.extendedEndingSequenceDeferred
+                                    ? L"deferred"
+                                    : L"not_requested")));
+#endif
+        acceptedBattleStateGuard_ = {};
+        planetMenuIndex_ = kPlanetStatusIconIndex;
+        switch (lastBattlePostResultReceipt_.destination) {
+        case mw::battle::CampaignBattlePostResultDestination::CampaignMainMenu:
+        case mw::battle::CampaignBattlePostResultDestination::Unsupported:
+            changeState(ScreenState::MainMenu);
+            break;
+        }
+    }
+
+    bool handleCampaignBattleRuntimeKeyDown(WPARAM key) {
+        if (!campaignBattleRuntime_.active || !campaignBattleRuntime_.world.has_value()) {
+            return false;
+        }
+
+        if (campaignBattleRuntime_.mechStatusVisible) {
+            if (key == 'C') {
+                campaignBattleRuntime_.mechStatusVisible = false;
+                campaignBattleRuntime_.presentationMode =
+                    mw::battle::CampaignBattlePresentationMode::CockpitCommandMap;
+                campaignBattleRuntime_.lastStepTick = GetTickCount();
+                campaignBattleRuntime_.lastRenderTick = 0;
+                debugLog(L"Phase 11 battle mech status -> command map.");
+            } else if (key == 'Q') {
+                campaignBattleRuntime_.mechStatusVisible = false;
+                campaignBattleRuntime_.presentationMode =
+                    mw::battle::CampaignBattlePresentationMode::Cockpit;
+                campaignBattleRuntime_.lastStepTick = GetTickCount();
+                campaignBattleRuntime_.lastRenderTick = 0;
+                debugLog(L"Phase 11 battle mech status -> cockpit.");
+            }
+            return true;
+        }
+
+        if (campaignBattleRuntime_.presentationMode ==
+            mw::battle::CampaignBattlePresentationMode::MissionStatus) {
+            if (key == 'C' || key == VK_RETURN) {
+                campaignBattleRuntime_.presentationMode =
+                    mw::battle::CampaignBattlePresentationMode::Cockpit;
+                campaignBattleRuntime_.lastStepTick = GetTickCount();
+                campaignBattleRuntime_.lastRenderTick = 0;
+                campaignBattleRuntime_.renderInterpolationAlpha = 1.0;
+                debugLog(L"Phase 11 mission status dismissed; cockpit runtime active.");
+            }
+            return true;
+        }
+
+        if (campaignBattleRuntime_.presentationMode ==
+            mw::battle::CampaignBattlePresentationMode::CockpitCommandMap) {
+            if (key == 'C' || key == VK_RETURN) {
+                campaignBattleRuntime_.presentationMode =
+                    mw::battle::CampaignBattlePresentationMode::Cockpit;
+                campaignBattleRuntime_.lastRenderTick = 0;
+                debugLog(L"Phase 11 cockpit command map closed.");
+                return true;
+            }
+        }
+
+        if (key == 'C') {
+            campaignBattleRuntime_.presentationMode =
+                campaignBattleRuntime_.presentationMode == mw::battle::CampaignBattlePresentationMode::Cockpit
+                    ? mw::battle::CampaignBattlePresentationMode::CockpitCommandMap
+                    : mw::battle::CampaignBattlePresentationMode::Cockpit;
+            debugLog(
+                L"Phase 11 battle presentation: " +
+                campaignBattlePresentationName(campaignBattleRuntime_.presentationMode));
+            return true;
+        }
+        if (key == 'G' &&
+            campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::Cockpit &&
+            !campaignBattleRuntime_.mechStatusOwnedMechIndexes.empty()) {
+            campaignBattleRuntime_.mechStatusVisible = true;
+            campaignBattleRuntime_.lastRenderTick = 0;
+            debugLog(L"Phase 11 battle mech status opened; simulation paused.");
+            return true;
+        }
+        if (key == VK_F2) {
+            campaignBattleRuntime_.presentationMode =
+                campaignBattleRuntime_.presentationMode ==
+                        mw::battle::CampaignBattlePresentationMode::TacticalMap
+                    ? mw::battle::CampaignBattlePresentationMode::Cockpit
+                    : mw::battle::CampaignBattlePresentationMode::TacticalMap;
+            debugLog(
+                L"Phase 11 battle presentation: " +
+                campaignBattlePresentationName(campaignBattleRuntime_.presentationMode));
+            return true;
+        }
+        if (key == 'T' &&
+            campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::Cockpit &&
+            !currentKeyDownRepeat_) {
+            campaignBattleRuntime_.pendingCockpitRadarToggle = true;
+            debugLog(L"Phase 12 cockpit radar toggle queued for simulation tick.");
+            return true;
+        }
+        if (key == 'R' &&
+            campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::Cockpit &&
+            !currentKeyDownRepeat_) {
+            campaignBattleRuntime_.pendingCockpitRadarRangeCycle = true;
+            debugLog(L"Phase 12 cockpit radar range cycle queued for simulation tick.");
+            return true;
+        }
+        if (key == VK_RETURN &&
+            campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::Cockpit &&
+            !currentKeyDownRepeat_) {
+            campaignBattleRuntime_.pendingTargetScanCycle = true;
+            debugLog(L"Phase 12 target scan cycle queued for simulation tick.");
+            return true;
+        }
+        if (key == VK_F3) {
+            campaignBattleRuntime_.presentationMode =
+                campaignBattleRuntime_.presentationMode == mw::battle::CampaignBattlePresentationMode::External
+                    ? mw::battle::CampaignBattlePresentationMode::Cockpit
+                    : mw::battle::CampaignBattlePresentationMode::External;
+            debugLog(
+                L"Phase 11 battle presentation: " +
+                campaignBattlePresentationName(campaignBattleRuntime_.presentationMode));
+            return true;
+        }
+        if (key == 'H') {
+            campaignBattleRuntime_.cockpitHudColorIndex =
+                (campaignBattleRuntime_.cockpitHudColorIndex + 1u) %
+                mw::presentation::campaignCockpitHudColorCount();
+            debugLog(
+                L"Phase 11 cockpit HUD color: " +
+                widen(mw::presentation::campaignCockpitHudColor(
+                          campaignBattleRuntime_.cockpitHudColorIndex)
+                          .id));
+            return true;
+        }
+        if (key == 'Z') {
+            campaignBattleRuntime_.cockpitZoomLevel =
+                campaignBattleRuntime_.cockpitZoomLevel % 3 + 1;
+            debugLog(
+                L"Phase 11 cockpit zoom: x" +
+                std::to_wstring(campaignBattleRuntime_.cockpitZoomLevel));
+            return true;
+        }
+        if (key == VK_UP) {
+            campaignBattleRuntime_.throttleCommand = std::clamp(
+                campaignBattleRuntime_.throttleCommand + kCampaignBattleThrottleStep,
+                -1.0,
+                1.0);
+            return true;
+        }
+        if (key == VK_DOWN) {
+            campaignBattleRuntime_.throttleCommand = std::clamp(
+                campaignBattleRuntime_.throttleCommand - kCampaignBattleThrottleStep,
+                -1.0,
+                1.0);
+            return true;
+        }
+        if (key == VK_SPACE && !currentKeyDownRepeat_) {
+            campaignBattleRuntime_.pendingFireWeapon = true;
+            return true;
+        }
+        if ((key == VK_OEM_4 || key == VK_OEM_6) &&
+            !currentKeyDownRepeat_) {
+            campaignBattleRuntime_.pendingWeaponSelectionStep +=
+                key == VK_OEM_4 ? -1 : 1;
+            return true;
+        }
+        if (key >= '0' && key <= '9' && !currentKeyDownRepeat_) {
+            campaignBattleRuntime_.pendingWeaponInstanceId =
+                key == '0' ? 10u : static_cast<uint32_t>(key - '0');
+            return true;
+        }
+        if (key == 'J') {
+            campaignBattleRuntime_.pendingJumpJetToggle = true;
+            return true;
+        }
+        if (key == 'N') {
+            ++campaignBattleRuntime_.pendingAimPitchStepDelta;
+            return true;
+        }
+        if (key == 'M') {
+            --campaignBattleRuntime_.pendingAimPitchStepDelta;
+            return true;
+        }
+        if (key == VK_OEM_COMMA) {
+            ++campaignBattleRuntime_.pendingTorsoYawStepDelta;
+            return true;
+        }
+        if (key == VK_OEM_PERIOD) {
+            --campaignBattleRuntime_.pendingTorsoYawStepDelta;
+            return true;
+        }
+        if (key == 'A') {
+            if (const mw::battle::CombatantSnapshot* combatant =
+                    playerCombatantSnapshot(
+                        campaignBattleRuntime_.currentPresentationSnapshot)) {
+                campaignBattleRuntime_.pendingTorsoYawStepDelta -= combatant->torsoYawStep;
+            }
+            return true;
+        }
+        return key == VK_LEFT || key == VK_RIGHT;
+    }
+
+    void handleBattleStubKey(WPARAM key) {
+        if (campaignBattleRuntime_.active) {
+            handleCampaignBattleRuntimeKeyDown(key);
+            return;
+        }
+
+        if (acceptedBattleOutcome_.valid) {
+            if (key == VK_RETURN || key == VK_SPACE || key == VK_ESCAPE) {
+                acknowledgeAcceptedBattleOutcome();
+            }
+            return;
+        }
+
+        if (key == VK_UP || key == VK_LEFT) {
+            battleStubButtonIndex_ = (battleStubButtonIndex_ + 2u) % 3u;
+        } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
+            battleStubButtonIndex_ = (battleStubButtonIndex_ + 1u) % 3u;
+        } else if (key == VK_RETURN || key == VK_SPACE) {
+            activateBattleStubSelection();
+        }
+    }
+
+    void enqueueCampaignBattleRuntimeInput(mw::battle::BattleWorld& world) {
+        const mw::battle::BattleSnapshot& snapshot =
+            campaignBattleRuntime_.currentPresentationSnapshot;
+        const bool jumpControl =
+            campaignBattleRuntime_.pendingJumpJetToggle || campaignBattleJumpControlActive(snapshot);
+
+        mw::battle::BattleInputCommand command;
+        command.tickIndex = world.tickIndex();
+        command.entityId = world.playerEntityId();
+        command.throttle = campaignBattleRuntime_.throttleCommand;
+        command.turn = ((GetAsyncKeyState(VK_LEFT) & 0x8000) != 0 ? 1.0 : 0.0) +
+                       ((GetAsyncKeyState(VK_RIGHT) & 0x8000) != 0 ? -1.0 : 0.0);
+        command.torsoYawStepDelta = campaignBattleRuntime_.pendingTorsoYawStepDelta;
+        command.aimPitchStepDelta = campaignBattleRuntime_.pendingAimPitchStepDelta;
+        command.jumpJetToggle = campaignBattleRuntime_.pendingJumpJetToggle;
+        command.jumpForwardThrust = jumpControl && (GetAsyncKeyState(VK_UP) & 0x8000) != 0;
+        command.jumpVerticalThrust = jumpControl && (GetAsyncKeyState(VK_DOWN) & 0x8000) != 0;
+        command.fireWeapon = campaignBattleRuntime_.pendingFireWeapon;
+        command.selectedWeaponStepDelta =
+            campaignBattleRuntime_.pendingWeaponSelectionStep;
+        command.selectWeaponInstanceId =
+            campaignBattleRuntime_.pendingWeaponInstanceId;
+        command.toggleCockpitRadar =
+            campaignBattleRuntime_.pendingCockpitRadarToggle;
+        command.cycleCockpitRadarRange =
+            campaignBattleRuntime_.pendingCockpitRadarRangeCycle;
+        command.cycleTargetScan =
+            campaignBattleRuntime_.pendingTargetScanCycle;
+        world.enqueueInput(command);
+
+        campaignBattleRuntime_.pendingTorsoYawStepDelta = 0;
+        campaignBattleRuntime_.pendingAimPitchStepDelta = 0;
+        campaignBattleRuntime_.pendingJumpJetToggle = false;
+        campaignBattleRuntime_.pendingFireWeapon = false;
+        campaignBattleRuntime_.pendingWeaponSelectionStep = 0;
+        campaignBattleRuntime_.pendingWeaponInstanceId = 0;
+        campaignBattleRuntime_.pendingCockpitRadarToggle = false;
+        campaignBattleRuntime_.pendingCockpitRadarRangeCycle = false;
+        campaignBattleRuntime_.pendingTargetScanCycle = false;
+    }
+
+    fs::path campaignBattleRenderAssetRoot(const mw::battle::BattleStartParams& params) const {
+        std::vector<fs::path> candidates;
+        const fs::path scenarioDirectory = params.terrainScenarioPath.parent_path();
+        candidates.push_back(scenarioDirectory);
+        if (scenarioDirectory.filename() == L"DAT") {
+            candidates.push_back(scenarioDirectory.parent_path());
+        }
+        candidates.push_back(resourceRoot_);
+        const fs::path exeDirectory = executableDirectory();
+        candidates.push_back(exeDirectory);
+        candidates.push_back(fs::current_path() / L"Sorted Original Files");
+        candidates.push_back(exeDirectory / L"Sorted Original Files");
+        candidates.push_back(exeDirectory.parent_path() / L"Sorted Original Files");
+        candidates.push_back(exeDirectory.parent_path().parent_path() / L"Sorted Original Files");
+        for (const fs::path& candidate : candidates) {
+            const fs::path terrainShapes =
+                mw::battle::campaignBattleOriginalResourcePath(
+                    candidate,
+                    fs::path(L"TBL") / L"viewer8" / L"TERPCK.TBL");
+            if (fs::exists(terrainShapes)) {
+                return candidate;
+            }
+        }
+        return candidates.empty() ? fs::path{} : candidates.front();
+    }
+
+    void configureCampaignBattleCollisionRuntime(
+        mw::battle::BattleStartParams& params,
+        const fs::path& renderAssetRoot) const {
+        const std::vector<mw::legacy3d::TerrainScenarioRecord> records =
+            mw::legacy3d::loadTerrainScenarioRecords(params.terrainScenarioPath);
+        const std::optional<mw::legacy3d::TerrainScenarioRecord> scenario =
+            mw::legacy3d::terrainScenarioRecordByIndex(
+                records,
+                params.terrainScenarioIndex);
+        if (!scenario.has_value() || !scenario->isTerrainLayoutCandidate()) {
+            throw std::runtime_error(
+                "campaign battle collision scenario is not an active terrain layout");
+        }
+        const std::vector<std::string> tileNames =
+            mw::legacy3d::terrainScenarioTileNames(*scenario);
+        std::vector<fs::path> worldPaths;
+        std::vector<fs::path> gridPaths;
+        worldPaths.reserve(tileNames.size());
+        gridPaths.reserve(tileNames.size());
+        for (const std::string& tileName : tileNames) {
+            const fs::path path = mw::battle::campaignBattleOriginalResourcePath(
+                renderAssetRoot,
+                fs::path(L"WLD") / fs::path(tileName + ".WLD"));
+            if (!fs::is_regular_file(path)) {
+                throw std::runtime_error(
+                    "campaign battle collision WLD resource is unavailable: " +
+                    path.string());
+            }
+            worldPaths.push_back(path);
+            const fs::path gridPath =
+                mw::battle::campaignBattleOriginalResourcePath(
+                    renderAssetRoot,
+                    fs::path(L"GRD") / fs::path(tileName + ".GRD"));
+            if (!fs::is_regular_file(gridPath)) {
+                throw std::runtime_error(
+                    "campaign battle collision GRD resource is unavailable: " +
+                    gridPath.string());
+            }
+            gridPaths.push_back(gridPath);
+        }
+        const fs::path terrainShapePath =
+            mw::battle::campaignBattleOriginalResourcePath(
+                renderAssetRoot,
+                fs::path(L"TBL") / L"viewer8" / L"TERPCK.TBL");
+        params.terrainCollisionGrid =
+            mw::battle::loadOriginalBattleTerrainCollisionGrid(
+                gridPaths, params.terrainCellSize);
+        params.terrainCollisionObstacles =
+            mw::battle::loadOriginalBattleTerrainCollisionObstacles(
+                terrainShapePath,
+                worldPaths,
+                0.0,
+                173.0 * params.terrainCellSize,
+                0.0,
+                93.0 * params.terrainCellSize,
+                params.terrainCellSize);
+        const fs::path terrainCollisionCatalogPath =
+            mw::battle::campaignBattleOriginalResourcePath(
+                renderAssetRoot,
+                fs::path(L"GI") / L"TERPCK.GI");
+        if (!fs::is_regular_file(terrainCollisionCatalogPath)) {
+            throw std::runtime_error(
+                "campaign battle TERPCK.GI collision catalog is unavailable: " +
+                terrainCollisionCatalogPath.string());
+        }
+        params.originalTerrainSceneCatalog =
+            mw::battle::loadOriginalBattleTerrainSceneCatalog(
+                terrainCollisionCatalogPath,
+                terrainShapePath,
+                worldPaths);
+        const fs::path projectileShapePath =
+            mw::battle::campaignBattleOriginalResourcePath(
+                renderAssetRoot,
+                fs::path(L"TBL") / L"viewer8" / L"OTHPCK.TBL");
+        params.projectileHitProfiles =
+            mw::battle::loadOriginalBattleProjectileHitProfiles(
+                projectileShapePath);
+        params.mechCollisionProfiles.clear();
+        params.mechHitProfiles.clear();
+        for (const mw::mech3d::MechCatalogEntry& entry :
+             mw::mech3d::mechCatalogEntries()) {
+            params.mechCollisionProfiles.push_back({
+                entry.presetId,
+                mw::battle::campaignBattleCatalogCollisionRadius(
+                    renderAssetRoot, entry.presetId),
+                "catalog_bind_pose_horizontal_assembly_bounds",
+            });
+            params.mechHitProfiles.push_back(
+                mw::battle::campaignBattleCatalogHitProfile(
+                    renderAssetRoot,
+                    entry.presetId));
+        }
+        params.deterministicCollisionRuntimeEnabled = true;
+    }
+
+    void beginCampaignBattleRuntime() {
+        if (!pendingBattleStartParams_.has_value()) {
+            pendingBattleStartParams_ = finalMissionStubActive_
+                ? battleStartParamsForDarkWingFinalMission()
+                : battleStartParamsForAcceptedContract();
+        }
+        missionLaunchPending_ = false;
+        acceptedBattleOutcome_ = {};
+        acceptedBattleConsequencePlan_ = {};
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleStateGuard_ = {};
+        campaignBattleRuntime_ = {};
+        lastBattlePostResultReceipt_ = {};
+        const mw::battle::CampaignBattleLaunchSource requestedLaunchSource =
+            finalMissionStubActive_
+                ? mw::battle::CampaignBattleLaunchSource::DarkWingFinal
+                : (contractAccepted_
+                       ? mw::battle::CampaignBattleLaunchSource::AcceptedContract
+                       : mw::battle::CampaignBattleLaunchSource::Unknown);
+        if (!contractAccepted_ && !finalMissionStubActive_) {
+            setAcceptedBattleUnsupported(
+                "campaign_contract_not_accepted",
+                requestedLaunchSource);
+            pendingBattleStartParams_.reset();
+            return;
+        }
+        if (!phase11BattleStartHasOpposingCombatant(*pendingBattleStartParams_)) {
+            setAcceptedBattleUnsupported(
+                "campaign_battle_no_opposing_roster",
+                requestedLaunchSource);
+            debugLog(L"Phase 11 battle runtime unsupported: no opposing roster.");
+            pendingBattleStartParams_.reset();
+            return;
+        }
+
+        std::vector<mw::battle::CampaignBattlePersistentRosterBinding>
+            persistentRosterBindings;
+        std::vector<int> mechStatusOwnedMechIndexes;
+        const auto playerSourceSlotLaunched = [this](const std::string& sourceSlot) {
+            if (pendingBattleStartParams_->playerLaunchState.has_value() &&
+                pendingBattleStartParams_->playerRoster.sourceSlot == sourceSlot) {
+                return true;
+            }
+            return std::any_of(
+                pendingBattleStartParams_->playerAlliedLaunchStates.begin(),
+                pendingBattleStartParams_->playerAlliedLaunchStates.end(),
+                [&sourceSlot](const mw::battle::BattleCombatantLaunchState& launch) {
+                    return launch.roster.sourceSlot == sourceSlot;
+                });
+        };
+        for (size_t participantIndex = 0;
+             participantIndex < missionParticipants_.size();
+             ++participantIndex) {
+            const MissionParticipant& participant = missionParticipants_[participantIndex];
+            if (participant.mechIndex < 0 || participant.crewSlot < 0 ||
+                static_cast<size_t>(participant.mechIndex) >= ownedMechs_.size()) {
+                continue;
+            }
+            const std::string sourceSlot =
+                "player:" + std::to_string(participantIndex);
+            if (playerSourceSlotLaunched(sourceSlot)) {
+                persistentRosterBindings.push_back({
+                    sourceSlot,
+                    participant.mechIndex,
+                    participant.crewSlot,
+                });
+            }
+            mechStatusOwnedMechIndexes.push_back(participant.mechIndex);
+        }
+
+        try {
+            const fs::path renderAssetRoot =
+                campaignBattleRenderAssetRoot(*pendingBattleStartParams_);
+            configureCampaignBattleCollisionRuntime(
+                *pendingBattleStartParams_,
+                renderAssetRoot);
+            const bool replacementMission =
+                pendingBattleStartParams_->mission.valid &&
+                !pendingBattleStartParams_->mission.extended &&
+                pendingBattleStartParams_->mission.family !=
+                    mw::battle::BattleMissionFamily::Extended;
+            const bool replacementRuntimeReady =
+                pendingBattleStartParams_->deterministicCombatRuntimeEnabled &&
+                pendingBattleStartParams_->individualWeaponRuntimeEnabled &&
+                pendingBattleStartParams_->originalProjectileRuntimeEnabled &&
+                pendingBattleStartParams_->originalHeatRuntimeEnabled &&
+                pendingBattleStartParams_->originalMajorSystemRuntimeEnabled &&
+                pendingBattleStartParams_->deterministicCollisionRuntimeEnabled;
+            if (replacementMission && replacementRuntimeReady) {
+                pendingBattleStartParams_->combatAiPolicy =
+                    mw::battle::BattleCombatAiPolicy::
+                        ReplacementDeterministicCombatAi;
+                pendingBattleStartParams_->enemyRetreatOnDamageEnabled = true;
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+                debugLog(
+                    L"Phase 14 Wiki scenario combat AI enabled");
+#endif
+            } else {
+                const mw::battle::
+                    BattleOriginalAiCampaignMovementActivationDiagnostic
+                    originalMovementActivation =
+                        mw::battle::battleOriginalAiCampaignMovementActivation(
+                            *pendingBattleStartParams_);
+                if (originalMovementActivation.activate) {
+                    pendingBattleStartParams_->combatAiPolicy =
+                        originalMovementActivation.selectedPolicy;
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+                    debugLog(
+                        L"Phase 13 campaign default Act On Own movement enabled: " +
+                        widen(originalMovementActivation.provenance));
+#endif
+                }
+            }
+            pendingBattleStartParams_->cockpitCameraHeight =
+                mw::battle::campaignBattleCatalogCockpitCameraHeight(
+                    renderAssetRoot,
+                    pendingBattleStartParams_->playerMechPresetId);
+            mw::battle::BattleWorld world = mw::battle::BattleWorld::create(*pendingBattleStartParams_);
+            const mw::battle::BattleSnapshot currentSnapshot = world.snapshot();
+            campaignBattleRuntime_.active = true;
+            campaignBattleRuntime_.startSnapshot = world.missionStartSnapshot();
+            campaignBattleRuntime_.previousPresentationSnapshot = currentSnapshot;
+            campaignBattleRuntime_.currentPresentationSnapshot = currentSnapshot;
+            campaignBattleRuntime_.presentationSnapshotsValid = true;
+            campaignBattleRuntime_.diagnosticTickLimit.reset();
+            campaignBattleRuntime_.ticksExecuted = 0;
+            campaignBattleRuntime_.lastStepTick = GetTickCount();
+            campaignBattleRuntime_.simulationStepMs = std::max<DWORD>(
+                1,
+                static_cast<DWORD>(std::lround(world.fixedTickSeconds() * 1000.0)));
+            campaignBattleRuntime_.lastRenderTick = 0;
+            campaignBattleRuntime_.renderFrameIndex = 0;
+            campaignBattleRuntime_.renderInterpolationAlpha = 1.0;
+            campaignBattleRuntime_.renderAssetRoot = renderAssetRoot;
+            campaignBattleRuntime_.presentationMode =
+                mw::battle::CampaignBattlePresentationMode::MissionStatus;
+            campaignBattleRuntime_.mechStatusVisible = false;
+            campaignBattleRuntime_.mechStatusOwnedMechIndexes =
+                std::move(mechStatusOwnedMechIndexes);
+            campaignBattleRuntime_.persistentRosterBindings =
+                std::move(persistentRosterBindings);
+            campaignBattleRuntime_.missionParticipantCount = missionParticipants_.size();
+            campaignBattleRuntime_.persistentStateBefore =
+                captureCampaignPersistentState();
+            campaignBattleRuntime_.world = std::move(world);
+            debugLog(
+                L"Phase 11 interactive battle runtime started; render assets=" +
+                renderAssetRoot.wstring());
+        } catch (const std::exception& error) {
+            setAcceptedBattleUnsupported(
+                std::string("battle_launch_exception:") + error.what(),
+                requestedLaunchSource);
+            debugLog(L"Phase 11 live battle runtime failed: " + widen(error.what()));
+        }
+        pendingBattleStartParams_.reset();
+    }
+
+    void updateCampaignBattleRuntime(DWORD now) {
+        if (!campaignBattleRuntime_.active ||
+            !campaignBattleRuntime_.world.has_value() ||
+            acceptedBattleOutcome_.valid ||
+            campaignBattleRuntime_.mechStatusVisible ||
+            mw::battle::campaignBattlePresentationPausesSimulation(
+                campaignBattleRuntime_.presentationMode)) {
+            return;
+        }
+        const DWORD simulationStepMs =
+            std::max<DWORD>(1, campaignBattleRuntime_.simulationStepMs);
+        if (now - campaignBattleRuntime_.lastStepTick < simulationStepMs) {
+            return;
+        }
+        mw::battle::BattleWorld& world = *campaignBattleRuntime_.world;
+        while (now - campaignBattleRuntime_.lastStepTick >= simulationStepMs &&
+               !world.battleResult().has_value() &&
+               !mw::battle::campaignBattleDiagnosticTickLimitReached(
+                   campaignBattleRuntime_.diagnosticTickLimit,
+                   campaignBattleRuntime_.ticksExecuted)) {
+            enqueueCampaignBattleRuntimeInput(world);
+            campaignBattleRuntime_.previousPresentationSnapshot =
+                campaignBattleRuntime_.currentPresentationSnapshot;
+            world.tick();
+            campaignBattleRuntime_.currentPresentationSnapshot = world.snapshot();
+            const mw::battle::CombatantSnapshot* player =
+                playerCombatantSnapshot(
+                    campaignBattleRuntime_.currentPresentationSnapshot);
+            const mw::battle::BattleShotDiagnostic& shot =
+                campaignBattleRuntime_.currentPresentationSnapshot.lastShot;
+            const mw::battle::BattleCollisionDiagnostic& collision =
+                campaignBattleRuntime_.currentPresentationSnapshot.lastCollision;
+            const mw::battle::BattleTargetScanState& targetScan =
+                campaignBattleRuntime_.currentPresentationSnapshot.targetScan;
+            if (player != nullptr &&
+                player->lastMajorSystemWarning.valid &&
+                player->lastMajorSystemWarning.sequence !=
+                    campaignBattleRuntime_.lastPlayedMajorSystemWarningSequence) {
+                campaignBattleRuntime_.lastPlayedMajorSystemWarningSequence =
+                    player->lastMajorSystemWarning.sequence;
+                if (soundEnabled_) {
+                    MessageBeep(MB_ICONEXCLAMATION);
+                }
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+                debugLog(
+                    L"Major system warning: sim_tick=" +
+                    std::to_wstring(
+                        player->lastMajorSystemWarning.tickIndex) +
+                    L" system=" + std::to_wstring(static_cast<int>(
+                        player->lastMajorSystemWarning.system)) +
+                    L" status=" + std::to_wstring(static_cast<int>(
+                        player->lastMajorSystemWarning.currentStatus)));
+#endif
+            }
+            if (player != nullptr &&
+                player->lastFireRequestWeaponInstanceId != 0u &&
+                (!campaignBattleRuntime_.fireRequestDiagnosticLogged ||
+                 player->lastFireRequestTickIndex !=
+                     campaignBattleRuntime_.lastLoggedFireRequestTickIndex)) {
+                campaignBattleRuntime_.fireRequestDiagnosticLogged = true;
+                campaignBattleRuntime_.lastLoggedFireRequestTickIndex =
+                    player->lastFireRequestTickIndex;
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+                const bool requestProducedShot =
+                    shot.valid &&
+                    shot.tickIndex == player->lastFireRequestTickIndex &&
+                    shot.shooterEntityId == player->id &&
+                    shot.weaponInstanceId ==
+                        player->lastFireRequestWeaponInstanceId;
+                debugLog(
+                    L"Phase 12 weapon: sim_tick=" +
+                    std::to_wstring(player->lastFireRequestTickIndex) +
+                    L" selected_weapon_id=" +
+                    std::to_wstring(player->lastFireRequestWeaponInstanceId) +
+                    L" fire_request=" +
+                    std::wstring(
+                        player->lastFireRequestAccepted
+                            ? L"accepted"
+                            : L"rejected") +
+                    L" shot_sequence=" +
+                    std::to_wstring(requestProducedShot ? shot.sequence : 0u) +
+                    L" target_entity=" + std::to_wstring(
+                        requestProducedShot ? shot.targetEntityId.value : 0u) +
+                    L" hit=" + std::wstring(
+                        requestProducedShot && shot.hit ? L"yes" : L"no") +
+                    L" damage_effect=" + std::to_wstring(
+                        requestProducedShot ? shot.damageApplied : 0));
+                debugLog(
+                    L"Phase 12 presentation: render_frame=" +
+                    std::to_wstring(campaignBattleRuntime_.renderFrameIndex) +
+                    L" alpha=" + std::to_wstring(
+                        campaignBattleRuntime_.renderInterpolationAlpha));
+#endif
+            }
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+            if (targetScan.commandSequence != 0u &&
+                targetScan.commandSequence !=
+                    campaignBattleRuntime_.lastLoggedTargetScanSequence) {
+                campaignBattleRuntime_.lastLoggedTargetScanSequence =
+                    targetScan.commandSequence;
+                debugLog(
+                    L"Phase 12 target scan: sim_tick=" +
+                    std::to_wstring(targetScan.lastCommandTickIndex) +
+                    L" command_sequence=" +
+                    std::to_wstring(targetScan.commandSequence) +
+                    L" selected_kind=" +
+                    std::wstring(
+                        targetScan.selectedTargetKind ==
+                                mw::battle::BattleTargetScanTargetKind::Objective
+                            ? L"objective"
+                            : targetScan.selectedTargetKind ==
+                                      mw::battle::BattleTargetScanTargetKind::Combatant
+                                  ? L"combatant"
+                                  : L"none") +
+                    L" selected_entity=" +
+                    std::to_wstring(
+                        targetScan.selectedTargetEntityId.value) +
+                    L" distance_m=" +
+                    std::to_wstring(static_cast<int>(std::lround(
+                        targetScan.selectedTargetDistanceMeters))) +
+                    L" range_m=" +
+                    std::to_wstring(targetScan.rangeMeters));
+                debugLog(
+                    L"Phase 12 target presentation: render_frame=" +
+                    std::to_wstring(campaignBattleRuntime_.renderFrameIndex) +
+                    L" alpha=" + std::to_wstring(
+                        campaignBattleRuntime_.renderInterpolationAlpha));
+            }
+            if (player != nullptr && player->collisionContact &&
+                collision.valid &&
+                collision.sequence !=
+                    campaignBattleRuntime_.lastLoggedCollisionSequence) {
+                campaignBattleRuntime_.lastLoggedCollisionSequence =
+                    collision.sequence;
+                debugLog(
+                    L"Battle collision: sim_tick=" +
+                    std::to_wstring(collision.tickIndex) +
+                    L" sequence=" + std::to_wstring(collision.sequence) +
+                    L" kind=" + std::to_wstring(
+                        static_cast<int>(collision.kind)) +
+                    L" entity=" + std::to_wstring(collision.entityId.value) +
+                    L" other_entity=" +
+                    std::to_wstring(collision.otherEntityId.value) +
+                    L" terrain_obstacle=" +
+                    std::to_wstring(collision.terrainObstacleId) +
+                    L" record=" +
+                    std::to_wstring(collision.terrainRecordIndex) +
+                    L" displacement=" +
+                    std::to_wstring(collision.displacement) +
+                    L" damage=deferred:0");
+                debugLog(
+                    L"Collision presentation: render_frame=" +
+                    std::to_wstring(campaignBattleRuntime_.renderFrameIndex) +
+                    L" alpha=" + std::to_wstring(
+                        campaignBattleRuntime_.renderInterpolationAlpha) +
+                    L" red_sky_frames=2");
+            }
+#endif
+            campaignBattleRuntime_.presentationSnapshotsValid = true;
+            ++campaignBattleRuntime_.ticksExecuted;
+            campaignBattleRuntime_.lastStepTick += simulationStepMs;
+        }
+        campaignBattleRuntime_.renderInterpolationAlpha = 0.0;
+
+        if (world.battleResult().has_value() ||
+            mw::battle::campaignBattleDiagnosticTickLimitReached(
+                campaignBattleRuntime_.diagnosticTickLimit,
+                campaignBattleRuntime_.ticksExecuted)) {
+            finalizeCampaignBattleRuntimeOutcome();
+        }
+    }
+
+    void finalizeCampaignBattleRuntimeOutcome() {
+        if (!campaignBattleRuntime_.world.has_value()) {
+            return;
+        }
+        missionDebriefOverrideLines_.clear();
+        mw::battle::BattleWorld& world = *campaignBattleRuntime_.world;
+        const mw::battle::BattleSnapshot finalSnapshot =
+            campaignBattleRuntime_.presentationSnapshotsValid
+                ? campaignBattleRuntime_.currentPresentationSnapshot
+                : world.snapshot();
+        const mw::battle::CampaignBattleEntryMechStateGuard entryStateGuard =
+            mw::battle::campaignBattleEntryMechStateGuardFromSnapshots(
+                campaignBattleRuntime_.startSnapshot,
+                finalSnapshot);
+        acceptedBattleOutcome_ = mw::battle::campaignBattleOutcomePackageFromSnapshots(
+            campaignBattleRuntime_.startSnapshot,
+            finalSnapshot,
+            world.battleResult(),
+            campaignBattleRuntime_.ticksExecuted);
+        if (missionSequence_.hasNextStage() &&
+            acceptedBattleOutcome_.terminal &&
+            acceptedBattleOutcome_.outcome ==
+                mw::battle::CampaignBattleOutcome::Victory) {
+            captureMissionSequencePlayerCarryover(finalSnapshot);
+            ++missionSequence_.stageIndex;
+            pendingBattleStartParams_ =
+                missionSequence_.kind == MissionSequenceKind::FinalBattle
+                ? battleStartParamsForDarkWingFinalMission()
+                : battleStartParamsForAcceptedContract();
+            campaignBattleRuntime_ = {};
+            acceptedBattleOutcome_ = {};
+            acceptedBattleConsequencePlan_ = {};
+            acceptedBattlePersistenceReport_ = {};
+            acceptedBattleDamageTranslationPlan_ = {};
+            acceptedBattleStateGuard_ = {};
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+            debugLog(
+                L"Wiki mission sequence advancing to stage " +
+                std::to_wstring(missionSequence_.stageIndex + 1u) + L"/" +
+                std::to_wstring(missionSequence_.stageCount));
+#endif
+            beginCampaignBattleRuntime();
+            return;
+        }
+        acceptedBattlePersistenceReport_ =
+            mw::battle::campaignBattlePersistenceReportFromSnapshot(
+                finalSnapshot,
+                campaignBattleRuntime_.persistentRosterBindings,
+                campaignBattleRuntime_.missionParticipantCount);
+        acceptedBattleDamageTranslationPlan_ =
+            mw::battle::campaignBattlePersistentDamageTranslationPlanFromReport(
+                acceptedBattlePersistenceReport_);
+        acceptedBattleConsequencePlan_ =
+            mw::battle::campaignBattleConsequencePlanFromOutcome(
+                acceptedBattleOutcome_,
+                acceptedBattleContract_,
+                campaignBattleConsequenceContextForAcceptedContract());
+        acceptedBattleStateGuard_.before =
+            campaignBattleRuntime_.persistentStateBefore;
+        acceptedBattleStateGuard_.after = captureCampaignPersistentState();
+        acceptedBattleStateGuard_.valid =
+            acceptedBattleStateGuard_.before.valid &&
+            acceptedBattleStateGuard_.after.valid;
+        acceptedBattleStateGuard_.unchanged =
+            acceptedBattleStateGuard_.valid &&
+            acceptedBattleStateGuard_.before.fingerprint ==
+                acceptedBattleStateGuard_.after.fingerprint;
+        finalMissionStubActive_ = false;
+        debugLog(
+            L"Phase 11 live battle adapter outcome: " +
+            widen(mw::battle::campaignBattleOutcomeName(acceptedBattleOutcome_.outcome)) +
+            L", source=" + widen(mw::battle::campaignBattleLaunchSourceName(
+                               acceptedBattleOutcome_.launchSource)) +
+            L", raw=" + std::to_wstring(acceptedBattleOutcome_.rawResultCode) +
+            L", tick=" + std::to_wstring(acceptedBattleOutcome_.terminalTickIndex) +
+            L", reason=" + widen(acceptedBattleOutcome_.reason));
+        debugLog(
+            L"Phase 11 campaign persistent state guard: " +
+            std::wstring(acceptedBattleStateGuard_.unchanged ? L"unchanged" : L"changed") +
+            L", reputation=" +
+            std::to_wstring(acceptedBattleStateGuard_.before.reputationPoints) + L"->" +
+            std::to_wstring(acceptedBattleStateGuard_.after.reputationPoints));
+        debugLog(
+            L"Phase 11 persistence binding report: mapped=" +
+            std::to_wstring(acceptedBattlePersistenceReport_.mappedBindingCount) + L"/" +
+            std::to_wstring(acceptedBattlePersistenceReport_.requestedBindingCount) +
+            L", unlaunched=" +
+            std::to_wstring(acceptedBattlePersistenceReport_.unlaunchedMissionParticipantCount) +
+            L", reason=" + widen(acceptedBattlePersistenceReport_.reason));
+        debugLog(
+            L"Phase 11 entry mech state guard: player=" +
+            std::to_wstring(entryStateGuard.playerCombatantCount) +
+            L", opposing=" +
+            std::to_wstring(entryStateGuard.opposingCombatantCount) +
+            L", preserved=" +
+            std::to_wstring(entryStateGuard.preservedCombatantCount) +
+            L", pristine_enemy=" +
+            std::wstring(entryStateGuard.opposingStatesPristine ? L"yes" : L"no") +
+            L", reason=" + widen(entryStateGuard.reason));
+        debugLog(
+            L"Phase 11 persistent damage translation audit: exact=" +
+            std::to_wstring(acceptedBattleDamageTranslationPlan_.exactPersistentFieldCount) +
+            L"/" +
+            std::to_wstring(acceptedBattleDamageTranslationPlan_.persistentFieldCount) +
+            L", ambiguous=" +
+            std::to_wstring(acceptedBattleDamageTranslationPlan_.ambiguousPersistentFieldCount) +
+            L", missing=" +
+            std::to_wstring(
+                acceptedBattleDamageTranslationPlan_.missingSourcePersistentFieldCount) +
+            L", mutate=" +
+            std::wstring(
+                acceptedBattleDamageTranslationPlan_.mutationEligible ? L"yes" : L"no") +
+            L", reason=" + widen(acceptedBattleDamageTranslationPlan_.reason));
+        debugLog(
+            L"Phase 11 consequence plan: payment=" +
+            std::to_wstring(acceptedBattleConsequencePlan_.payment) +
+            L", salvage=" + std::to_wstring(acceptedBattleConsequencePlan_.salvage) +
+            L", date_ticks=" +
+            std::to_wstring(acceptedBattleConsequencePlan_.campaignDateTicks) +
+            L", survivor_xp=" +
+            std::wstring(acceptedBattleConsequencePlan_.pilotExperienceAward ? L"yes" : L"no") +
+            L", salvage_beta_check=" +
+            std::wstring(
+                acceptedBattleConsequencePlan_.salvageBetaValidationRequired ? L"yes" : L"no"));
+
+        if (acceptedBattleOutcome_.launchSource ==
+                mw::battle::CampaignBattleLaunchSource::AcceptedContract &&
+            acceptedBattleOutcome_.terminal &&
+            acceptedBattleOutcome_.outcome !=
+                mw::battle::CampaignBattleOutcome::Unsupported &&
+            acceptedContract_.generationSlot != std::numeric_limits<size_t>::max()) {
+            const bool newlyCompleted =
+                mw::battle::completeCampaignContractOfferForVisit(
+                    completedContractVisitLedger_,
+                    currentPlanetVisitSerial_,
+                    acceptedContract_.generationSlot);
+            debugLog(
+                L"Phase 11 contract visit receipt: slot=" +
+                std::to_wstring(acceptedContract_.generationSlot) +
+                L", completed=" + std::wstring(newlyCompleted ? L"yes" : L"already"));
+        }
+
+        const mw::battle::CampaignBattleDebriefPresentation debrief =
+            mw::battle::campaignBattleDebriefPresentationForOutcome(
+                acceptedBattleOutcome_);
+        campaignBattleRuntime_ = {};
+        if (debrief != mw::battle::CampaignBattleDebriefPresentation::None) {
+            missionDebriefOutcome_ =
+                debrief == mw::battle::CampaignBattleDebriefPresentation::Victory
+                    ? MissionOutcome::Victory
+                    : MissionOutcome::Defeat;
+            missionDebriefSalvage_ =
+                debrief == mw::battle::CampaignBattleDebriefPresentation::Victory
+                    ? acceptedBattleConsequencePlan_.salvage
+                    : 0;
+            missionDebriefPayment_ =
+                debrief == mw::battle::CampaignBattleDebriefPresentation::Victory
+                    ? acceptedBattleConsequencePlan_.payment
+                    : 0;
+            missionDeathMenuIndex_ = 0;
+            changeState(ScreenState::MissionDebrief);
+        }
     }
 
     void beginContractTermEdit(ContractEditableField field) {
@@ -10625,12 +14848,58 @@ private:
             return;
         }
         acceptedContract_ = *offer;
+        acceptedBattleContract_ = battleContractMetadataFromOffer(acceptedContract_);
+        missionSequence_ = {};
+        pendingBattleStartParams_.reset();
+        acceptedBattleOutcome_ = {};
+        acceptedBattleConsequencePlan_ = {};
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleStateGuard_ = {};
+        campaignBattleRuntime_ = {};
         contractAccepted_ = true;
         activeContracts_.clear();
         activeContractIndex_ = 0;
         contractEditableField_ = ContractEditableField::None;
         planetMenuIndex_ = kPlanetContractIconIndex;
         changeState(ScreenState::ContractAcceptedMessage);
+    }
+
+    void resolveUneventfulGarrisonDuty() {
+        missionDebriefOutcome_ = MissionOutcome::Victory;
+        missionDebriefSalvage_ = 0;
+        missionDebriefPayment_ = std::min<uint64_t>(
+            kMaxPlayerWealth,
+            static_cast<uint64_t>(std::max(0, acceptedContract_.priceK)) *
+                1000ull);
+        missionDebriefOverrideLines_ = {
+            L"THE CONTRACT AMOUNTED TO AN",
+            L"UNEVENTFUL TOUR OF GARRISON DUTY.",
+        };
+        playerWealth_ = std::min(
+            kMaxPlayerWealth, playerWealth_ + missionDebriefPayment_);
+        applyMissionHouseConsequences(MissionOutcome::Victory);
+        addCompanyReputationPoints(missionReputationDelta(acceptedContract_));
+        applyMissionExperience();
+        advanceCampaignDays(missionElapsedDateTicks(acceptedContract_));
+        if (acceptedContract_.generationSlot !=
+            std::numeric_limits<size_t>::max()) {
+            static_cast<void>(mw::battle::completeCampaignContractOfferForVisit(
+                completedContractVisitLedger_,
+                currentPlanetVisitSerial_,
+                acceptedContract_.generationSlot));
+        }
+        contractAccepted_ = false;
+        acceptedContract_ = {};
+        acceptedBattleContract_ = {};
+        missionLaunchPending_ = false;
+        pendingBattleStartParams_.reset();
+        missionSequence_ = {};
+        missionParticipants_.clear();
+        activeContracts_.clear();
+        planetMenuIndex_ = kPlanetStatusIconIndex;
+        missionDeathMenuIndex_ = 0;
+        changeState(ScreenState::MissionDebrief);
     }
 
     void beginMissionLaunch() {
@@ -10641,12 +14910,35 @@ private:
         if (missionParticipants_.empty()) {
             return;
         }
+        missionDebriefOverrideLines_.clear();
+        if (mw::battle::battleUneventfulGarrisonDutyRoll(
+                acceptedContractRuntimeSeed())) {
+            resolveUneventfulGarrisonDuty();
+            return;
+        }
+        beginAcceptedContractMissionSequence();
+        pendingBattleStartParams_ = battleStartParamsForAcceptedContract();
         finalMissionStubActive_ = false;
+        acceptedBattleOutcome_ = {};
+        acceptedBattleConsequencePlan_ = {};
+        acceptedBattlePersistenceReport_ = {};
+        acceptedBattleDamageTranslationPlan_ = {};
+        acceptedBattleStateGuard_ = {};
+        campaignBattleRuntime_ = {};
         missionLaunchPending_ = true;
         changeState(ScreenState::TravelAnimation);
     }
 
     void handleBattleStubClick(int screenX, int screenY) {
+        if (campaignBattleRuntime_.active) {
+            return;
+        }
+        if (acceptedBattleOutcome_.valid) {
+            if (hitRect(kBattleRuntimeContinueButtonRect, screenX, screenY)) {
+                acknowledgeAcceptedBattleOutcome();
+            }
+            return;
+        }
         if (hitRect(kBattleStubWinButtonRect, screenX, screenY)) {
             battleStubButtonIndex_ = 0;
             activateBattleStubSelection();
@@ -10678,7 +14970,7 @@ private:
 
     void handleMissionDebriefClick(int screenX, int screenY) {
         if (missionDebriefOutcome_ != MissionOutcome::Death) {
-            changeState(ScreenState::MainMenu);
+            dismissMissionDebrief();
             return;
         }
         if (hitRect(kDeathPlayAgainRect, screenX, screenY)) {
@@ -10688,6 +14980,15 @@ private:
             missionDeathMenuIndex_ = 1;
             DestroyWindow(hwnd_);
         }
+    }
+
+    void dismissMissionDebrief() {
+        if (acceptedBattleOutcome_.valid) {
+            acknowledgeAcceptedBattleOutcome();
+            return;
+        }
+        missionDebriefOverrideLines_.clear();
+        changeState(ScreenState::MainMenu);
     }
 
     std::vector<MissionParticipant> currentMissionParticipants() const {
@@ -10731,6 +15032,7 @@ private:
         if (missionParticipants_.empty()) {
             missionParticipants_ = currentMissionParticipants();
         }
+        missionDebriefOverrideLines_.clear();
         if (outcome == MissionOutcome::Death) {
             for (MissionParticipant& participant : missionParticipants_) {
                 participant.killed = participant.crewSlot == 0;
@@ -10756,11 +15058,12 @@ private:
         }
 
         if (outcome != MissionOutcome::Death) {
-            advanceCampaignDays(missionDurationTicks(acceptedContract_));
+            advanceCampaignDays(missionElapsedDateTicks(acceptedContract_));
         }
 
         contractAccepted_ = false;
         missionLaunchPending_ = false;
+        pendingBattleStartParams_.reset();
         activeContracts_.clear();
         planetMenuIndex_ = kPlanetStatusIconIndex;
         missionDeathMenuIndex_ = 0;
@@ -10808,25 +15111,6 @@ private:
         return std::max(0, offer.heavyCount + offer.mediumCount + offer.lightCount);
     }
 
-    static uint32_t missionDurationTicks(const ContractOffer& offer) {
-        const uint32_t enemyWeight =
-            static_cast<uint32_t>(std::max(0, offer.heavyCount)) * 24u +
-            static_cast<uint32_t>(std::max(0, offer.mediumCount)) * 18u +
-            static_cast<uint32_t>(std::max(0, offer.lightCount)) * 12u;
-        uint32_t seed = 0x4D575243u;
-        seed ^= static_cast<uint32_t>(offer.employerHouse) * 0x9E3779B9u;
-        seed ^= static_cast<uint32_t>(offer.targetHouse) * 0x85EBCA6Bu;
-        seed ^= static_cast<uint32_t>(offer.priceK) * 0xC2B2AE35u;
-        seed ^= static_cast<uint32_t>(offer.salvagePercent) * 0x27D4EB2Du;
-        seed ^= static_cast<uint32_t>(offer.advancePercent) * 0x165667B1u;
-        seed ^= enemyWeight * 0xD3A2646Cu;
-
-        if (offer.hasHostileTargetHouse) {
-            return kMissionHostileBaseDuration + enemyWeight + seed % 36u;
-        }
-        return kMissionGarrisonBaseDuration + enemyWeight + seed % 72u;
-    }
-
     void addCompanyReputationPoints(int delta) {
         playerReputationPoints_ = static_cast<uint16_t>(
             std::min<int>(
@@ -10862,39 +15146,66 @@ private:
     }
 
     void applyMissionExperience() {
+        std::array<bool, 4> killedCrewSlots{};
+        std::array<bool, 4> eligibleCrewSlots{};
         for (const MissionParticipant& participant : missionParticipants_) {
-            if (participant.killed ||
-                participant.crewSlot < 0 ||
-                static_cast<size_t>(participant.crewSlot) >= crewMembers_.size()) {
+            if (participant.crewSlot < 0 ||
+                static_cast<size_t>(participant.crewSlot) >= killedCrewSlots.size()) {
                 continue;
             }
-            improveCrewMemberAfterMission(crewMembers_[static_cast<size_t>(participant.crewSlot)]);
+            const size_t crewSlot = static_cast<size_t>(participant.crewSlot);
+            killedCrewSlots[crewSlot] =
+                killedCrewSlots[crewSlot] || participant.killed;
+            if (!acceptedBattlePersistenceReport_.valid) {
+                eligibleCrewSlots[crewSlot] = true;
+            }
+        }
+        if (acceptedBattlePersistenceReport_.valid) {
+            for (const mw::battle::CampaignBattlePersistentCombatantReport& combatant :
+                 acceptedBattlePersistenceReport_.combatants) {
+                if (combatant.valid && combatant.crewSlot >= 0 &&
+                    static_cast<size_t>(combatant.crewSlot) < eligibleCrewSlots.size()) {
+                    eligibleCrewSlots[static_cast<size_t>(combatant.crewSlot)] = true;
+                }
+            }
+        }
+        for (size_t crewSlot = 0; crewSlot < crewMembers_.size(); ++crewSlot) {
+            if (!crewMembers_[crewSlot].hired || !eligibleCrewSlots[crewSlot] ||
+                killedCrewSlots[crewSlot]) {
+                continue;
+            }
+            improveCrewMemberAfterMission(crewMembers_[crewSlot], crewSlot == 0u);
         }
     }
 
-    void improveCrewMemberAfterMission(CrewMember& member) {
+    void improveCrewMemberAfterMission(CrewMember& member, bool commander) {
         const uint8_t skill = skillRank(member.gunnery);
-        if (skill >= 3) {
-            return;
-        }
-        static constexpr std::array<uint8_t, 4> kPromotionMissionThresholds = {{3, 10, 15, 255}};
-        ++member.missionExperience;
-        if (member.missionExperience < kPromotionMissionThresholds[skill]) {
-            return;
+        const mw::battle::CampaignPilotExperienceState experience =
+            mw::battle::campaignPilotExperienceAfterSurvivedMission(
+                skill,
+                member.missionExperience,
+                commander);
+        member.missionExperience = experience.missionCounter;
+        if (experience.promoted) {
+            const uint8_t promotedSkill = experience.skill;
+            member.gunnery = skillLabel(promotedSkill);
+            member.piloting = skillLabel(promotedSkill);
+            if (member.recruitIndex >= 0 &&
+                static_cast<size_t>(member.recruitIndex) < recruitPilots_.size()) {
+                RecruitPilot& pilot = recruitPilots_[static_cast<size_t>(member.recruitIndex)];
+                pilot.gunnerySkill = promotedSkill;
+                pilot.pilotingSkill = promotedSkill;
+                pilot.monthlyWage = monthlyWageForGunnery(promotedSkill);
+                member.wage = pilot.monthlyWage;
+            } else if (member.wage > 0) {
+                member.wage = monthlyWageForGunnery(promotedSkill);
+            }
         }
 
-        const uint8_t promotedSkill = static_cast<uint8_t>(std::min<int>(3, skill + 1));
-        member.gunnery = skillLabel(promotedSkill);
-        member.piloting = skillLabel(promotedSkill);
-        member.missionExperience = 0;
-        if (member.recruitIndex >= 0 && static_cast<size_t>(member.recruitIndex) < recruitPilots_.size()) {
+        if (member.recruitIndex >= 0 &&
+            static_cast<size_t>(member.recruitIndex) < recruitPilots_.size()) {
             RecruitPilot& pilot = recruitPilots_[static_cast<size_t>(member.recruitIndex)];
-            pilot.gunnerySkill = promotedSkill;
-            pilot.pilotingSkill = promotedSkill;
-            pilot.monthlyWage = monthlyWageForGunnery(promotedSkill);
-            member.wage = pilot.monthlyWage;
-        } else if (member.wage > 0) {
-            member.wage = monthlyWageForGunnery(promotedSkill);
+            pilot.missionExperience = member.missionExperience;
         }
     }
 
@@ -11731,6 +16042,20 @@ private:
 #endif
     HINSTANCE instance_ = nullptr;
     HWND hwnd_ = nullptr;
+    bool currentKeyDownRepeat_ = false;
+    mw::presentation::CampaignBattleGlViewport campaignBattleGlViewport_;
+    mw::presentation::CampaignCockpitBackdropImage campaignCockpitBackdrop_;
+    mw::presentation::CampaignCockpitDynamicLayers campaignCockpitDynamicLayers_;
+    std::string campaignCockpitDynamicLayerSignature_;
+    mw::presentation::CampaignIndexedSpriteArchive
+        campaignCockpitTargetScanSprites_;
+    std::string campaignCockpitTargetScanSpriteSignature_;
+    mw::presentation::CampaignEgaPaletteColors campaignBattleMapPalette_;
+    std::string campaignBattleMapPaletteSignature_;
+    mw::presentation::CampaignCockpitMinimapTerrain campaignCockpitMinimapTerrain_;
+    std::string campaignCockpitMinimapTerrainSignature_;
+    bool campaignBattleGlInitializationAttempted_ = false;
+    std::string campaignBattleGlLastLoggedError_;
     fs::path resourceRoot_;
     PicsArchive archive_;
     PicsArchive activisionArchive_;
@@ -11743,6 +16068,9 @@ private:
     PicsArchive crewArchive_;
     PicsArchive crewMechArchive_;
     PicsArchive mechStatusArchive_;
+    PicsArchive battleMechStatusArchive_;
+    std::array<BattleMechStatusMaskRegistration, 8>
+        battleMechStatusMaskRegistrations_ = {};
     PicsArchive houseEmblemsArchive_;
     PicsArchive contractHouseNamesArchive_;
     PicsArchive contractHouseEmblemsArchive_;
@@ -11762,6 +16090,7 @@ private:
     std::vector<std::wstring> missionVictoryLines_;
     std::vector<std::wstring> missionDefeatLines_;
     std::vector<std::wstring> missionDeathPromptLines_;
+    std::vector<std::wstring> missionDebriefOverrideLines_;
     std::vector<size_t> activeNewsNetMessageIndexes_;
     std::vector<RecruitPilot> recruitPilots_;
     std::vector<PlanetRecruitPool> planetRecruitPools_;
@@ -11772,6 +16101,18 @@ private:
     std::vector<int> contractNegotiationLockedVisitByPlanet_;
     std::vector<ContractOffer> activeContracts_;
     ContractOffer acceptedContract_;
+    mw::battle::BattleContractMetadata acceptedBattleContract_;
+    MissionSequenceState missionSequence_;
+    std::optional<mw::battle::BattleStartParams> pendingBattleStartParams_;
+    mw::battle::CampaignBattleOutcomePackage acceptedBattleOutcome_;
+    mw::battle::CampaignBattleConsequencePlan acceptedBattleConsequencePlan_;
+    mw::battle::CampaignBattlePersistenceReport acceptedBattlePersistenceReport_;
+    mw::battle::CampaignBattlePersistentDamageTranslationPlan
+        acceptedBattleDamageTranslationPlan_;
+    CampaignBattleStateGuard acceptedBattleStateGuard_;
+    CampaignBattleRuntimeSession campaignBattleRuntime_;
+    mw::battle::CampaignBattlePostResultReceipt lastBattlePostResultReceipt_;
+    uint64_t lastCommittedBattleConsequencePlanFingerprint_ = 0;
     std::vector<MissionParticipant> missionParticipants_;
     std::vector<PlanetRecord> planets_;
     std::array<uint8_t, 256> storyMessageFlags_ = {};
@@ -11839,6 +16180,7 @@ private:
     uint32_t recruitmentSeed_ = 0;
     int planetVisitSerialCounter_ = 1;
     int currentPlanetVisitSerial_ = 1;
+    mw::battle::CampaignContractVisitLedger completedContractVisitLedger_;
     size_t systemMenuIndex_ = kSystemSaveMenuIndex;
     std::string saveGameNameInput_;
     std::vector<SaveGameSlot> restoreGameSlots_ = std::vector<SaveGameSlot>(kGamVisibleSlotCount);
@@ -11910,15 +16252,18 @@ fs::path findResourceRoot() {
     const fs::path cwd = fs::current_path();
     const fs::path exeDir = executableDirectory();
     const std::vector<fs::path> candidates = {
-        cwd / L"Original",
-        cwd,
+        // Portable install: the replacement executable lives directly beside
+        // the player's original unsorted DOS files.
         exeDir,
+        cwd,
+        cwd / L"Original",
         exeDir / L"Original",
         exeDir.parent_path() / L"Original",
         exeDir.parent_path().parent_path() / L"Original",
     };
     for (const fs::path& candidate : candidates) {
-        if (fs::exists(candidate / L"MW_1PICS.BIN")) {
+        if (fs::exists(candidate / L"MW_1PICS.BIN") &&
+            fs::exists(candidate / L"MW_MAIN.EXE")) {
             return candidate;
         }
     }
@@ -11928,6 +16273,11 @@ fs::path findResourceRoot() {
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand) {
     try {
         SetProcessDPIAware();
+        if (mw::battle::battleWorldLibraryAbiFingerprint() !=
+            mw::battle::battleWorldHeaderAbiFingerprint()) {
+            throw std::runtime_error(
+                "battle runtime ABI mismatch; perform a clean rebuild");
+        }
         App app(findResourceRoot());
         if (!app.initialize(instance, showCommand)) {
             return 1;
