@@ -8,9 +8,9 @@ With this project, I aim to address these limitations and make the game run cons
 
 1. IMPORTANT
 
-This project is being developed using OpenAI Codex. 100% of the code has been written with the assistance of AI. If AI-generated code is unacceptable to you, please close this page.
+**This project is being developed using OpenAI Codex. 100% of the code has been written with the assistance of AI. If AI-generated code is unacceptable to you, please close this page.
 
-The project is currently under active development. Features and functionality may change from version to version. Stability of the listed features is not guaranteed until the release of version 1.0.
+The project is currently under active development. Features and functionality may change from version to version. Stability of the listed features is not guaranteed until the release of version 1.0.**
 
 Use at your own risk.
 
@@ -31,7 +31,7 @@ Implemented
 - Complete game economy, including:
   - Lance management
   - Pilot salaries
-  - Buying and selling BattleMechs
+  - Buying and selling of BattleMechs
   - Travel costs
   - Other economic mechanics
 - 99% Complete storyline
@@ -39,12 +39,10 @@ Implemented
 - Save and load functionality
 
 Work in Progress
-
+- contracts
 - 3D combat simulator
-  - In current alpha versions, the 3D combat simulator is replaced with a placeholder screen.
 
-------------------------------------
-Mech1989-Recoded
+ ------------------------------------
 
 Mech1989-Recoded — моя попытка воссоздать игру MechWarrior, разработанную в 1989 году компанией Dynamix и изданную Activision.
 
@@ -54,7 +52,7 @@ Mech1989-Recoded — моя попытка воссоздать игру MechWar
 
 1. ВАЖНО
 
-Проект создаётся с использованием OpenAI Codex. 100% кода написано с использованием AI. Если использование AI-генерируемого кода для вас неприемлемо, пожалуйста, закройте эту страницу.
+**Проект создаётся с использованием OpenAI Codex. 100% кода написано с использованием AI. Если использование AI-генерируемого кода для вас неприемлемо, пожалуйста, закройте эту страницу.**
 
 Проект находится в фазе активной разработки. Функциональность может меняться от версии к версии. Стабильность заявленных функций до выхода версии 1.0 не гарантируется.
 
@@ -86,6 +84,7 @@ c) Запустите "mw_main_recomp.exe".
 
 В процессе разработки
 
+- выдача контрактов
 - 3D-симулятор боёв
-  - В текущих альфа-версиях 3D-симулятор заменён экраном-заглушкой.
+
    
