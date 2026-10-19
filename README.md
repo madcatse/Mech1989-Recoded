@@ -17,8 +17,6 @@ Mech1989: Recoded is an unofficial native Windows recreation of **MechWarrior (1
 
 **0.6 Beta is the first public testing version.** The campaign, contracts and 3D combat are implemented, including the story ending. Bugs may still occur; please keep backups of your saves and report problems through [GitHub Issues](https://github.com/madcatse/Mech1989-Recoded/issues).
 
-![The original blue Warhammer title screen rendered by Mech1989: Recoded](docs/images/title.png)
-
 ### What is included
 
 - Mercenary campaign, interstellar travel, bars, NewsNet and the story ending.
@@ -31,7 +29,9 @@ Mech1989: Recoded is an unofficial native Windows recreation of **MechWarrior (1
 - Windowed and fullscreen display, crisp DOS-style scaling, resolution choices from 1280×800 to 4K, and saved settings.
 - Emulated PC Speaker effects and MT-32 music through the bundled Munt library.
 
-![Cockpit, instruments and 3D terrain rendered by Mech1989: Recoded](docs/images/cockpit.png)
+![Cockpit, instruments and 3D terrain rendered by Mech1989: Recoded](assets/pic2.jpg)
+![Main menu](assets/pic2.jpg)
+![3D and external camera option (F3) ](assets/pic3.jpg)
 
 ### Quick start
 
