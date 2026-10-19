@@ -22,13 +22,15 @@ constexpr int kOriginalGridWorldXBase = 0xac80;
 constexpr int kOriginalGridWorldZBase = 24000;
 constexpr int kOriginalGridCellSize = 0x200;
 
-constexpr std::array<int, 35> kPlayerPlacementModeByMissionSelector{
-    4, 4, 4, 4, 4, 4, 4, 0, 2, 3, 3, 3, 3, 3, 4, 0, 3, 2,
-    1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 0, 3, 3, 0, 3, 3, 3,
+// DS:092C / DS:08D8, verified against the relocated startup DS segment.
+// See BATTLE_START_PLACEMENT_EVIDENCE.md; the old packed-file base was +2.
+constexpr std::array<int, 36> kPlayerPlacementModeByMissionSelector{
+    4, 4, 4, 4, 4, 4, 4, 4, 0, 2, 3, 3, 3, 3, 3, 4, 0, 3,
+    2, 1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 0, 3, 3, 0, 3, 3, 3,
 };
 
 constexpr std::array<int, 5> kOpposingPlacementModeByPlayerMode{
-    2, 1, 4, 3, 0,
+    0, 2, 1, 4, 3,
 };
 
 std::vector<uint8_t> readFileBytes(const std::filesystem::path& path) {
@@ -93,15 +95,18 @@ OriginalBattlePlacementSide decodePlacementSide(
     const std::array<uint8_t, kScenarioRecordSize>& record,
     int side,
     int mode,
+    int playerMode,
     double terrainCellSize) {
     OriginalBattlePlacementSide result;
     result.mode = mode;
-    result.selectorOffset = 4 + side * 5 + mode;
+    // 1a22 loads [ED0] here even for side 1; the side-specific mode is
+    // loaded only when selecting the 32-byte coordinate block below.
+    result.selectorOffset = 4 + side * 5 + playerMode;
     if (result.selectorOffset < 0 || result.selectorOffset >= static_cast<int>(record.size())) {
         throw std::runtime_error("battle placement selector offset is outside SNARIO record");
     }
     result.bankIndexSource = record[static_cast<size_t>(result.selectorOffset)];
-    if (result.bankIndexSource >= record.size()) {
+    if (result.bankIndexSource >= kScenarioTileCount) {
         throw std::runtime_error("battle placement bank index source is outside SNARIO record");
     }
     result.bankId = record[result.bankIndexSource];
@@ -206,8 +211,8 @@ OriginalBattlePlacement decodeOriginalBattlePlacement(
     std::copy_n(snario.begin() + static_cast<std::ptrdiff_t>(recordOffset), kScenarioRecordSize, result.scenarioRaw.begin());
     std::copy_n(result.scenarioRaw.begin(), kScenarioTileCount, result.tileIds.begin());
 
-    result.playerSide = decodePlacementSide(snario, result.scenarioRaw, 0, modes.playerMode, terrainCellSize);
-    result.opposingSide = decodePlacementSide(snario, result.scenarioRaw, 1, modes.opposingMode, terrainCellSize);
+    result.playerSide = decodePlacementSide(snario, result.scenarioRaw, 0, modes.playerMode, modes.playerMode, terrainCellSize);
+    result.opposingSide = decodePlacementSide(snario, result.scenarioRaw, 1, modes.opposingMode, modes.playerMode, terrainCellSize);
     result.dedicatedObjective =
         decodeDedicatedObjective(snario, result.playerSide, result.opposingSide, terrainCellSize);
 

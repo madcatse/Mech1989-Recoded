@@ -112,7 +112,7 @@ mw::battle::BattleStartParams campaignAcceptedParams(
         mw::battle::decodeOriginalBattlefieldSetup(
             options.snarioPath,
             options.scenarioIndex,
-            params.mission.originalId,
+            mw::battle::originalBattlePlacementSelectorForMission(params.mission.originalId),
             params.terrainCellSize);
     params.playerStartTransform = setup.playerStartTransform;
     params.setupMetadata = setup.metadata;
@@ -149,7 +149,7 @@ mw::battle::BattleStartParams campaignDarkWingFinalParams(const Options& options
     params.playerRoster.sourceSlot = "player:0";
 
     const std::optional<mw::battle::BattleMissionDefinition> definition =
-        mw::battle::battleMissionDefinitionById(12);
+        mw::battle::battleMissionDefinitionById(16);
     expect(definition.has_value(), "Dark Wing final mission definition missing");
     params.mission = mw::battle::battleMissionBriefingFromDefinition(*definition);
 
@@ -271,6 +271,7 @@ struct CampaignPresentationProbe {
     size_t glTerrainObjectDitherVertices = 0;
     size_t glTerrainObjectDitherTriangles = 0;
     bool glTerrainEnvironmentPalettesReady = false;
+    bool glTerrainSkyVariantsReady = false;
     size_t glVisuals = 0;
     bool glObjectiveLoaded = false;
     bool cockpitBackdropReady = false;
@@ -1057,6 +1058,8 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
     desertSnapshot.terrain.environmentId = 0;
     mw::battle::BattleSnapshot snowSnapshot = snapshot;
     snowSnapshot.terrain.environmentId = 2;
+    mw::battle::BattleSnapshot blackDesertSnapshot = desertSnapshot;
+    blackDesertSnapshot.terrain.skyMode = mw::battle::BattleSkyMode::Black;
     const mw::battle::CampaignBattleRenderScenePackage desertScene =
         mw::battle::campaignBattleRenderSceneFromSnapshot(
             desertSnapshot,
@@ -1065,6 +1068,11 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
     const mw::battle::CampaignBattleRenderScenePackage snowScene =
         mw::battle::campaignBattleRenderSceneFromSnapshot(
             snowSnapshot,
+            mw::battle::CampaignBattlePresentationMode::External,
+            sortedOriginalFilesRoot);
+    const mw::battle::CampaignBattleRenderScenePackage blackDesertScene =
+        mw::battle::campaignBattleRenderSceneFromSnapshot(
+            blackDesertSnapshot,
             mw::battle::CampaignBattlePresentationMode::External,
             sortedOriginalFilesRoot);
     CampaignPresentationProbe probe;
@@ -1460,6 +1468,42 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
         arcticPalette.colorPairs == mw::legacy3d::terrainPaletteBank1Bytes("snow") &&
         checker[0] == 0x0fu && checker[15] == 0x0fu &&
         checker[16] == 0xf0u && checker[31] == 0xf0u && checker[32] == 0x0fu;
+    const auto egaRgb = [](int red, int green, int blue) {
+        return std::array<float, 3>{
+            static_cast<float>(red) / 255.0f,
+            static_cast<float>(green) / 255.0f,
+            static_cast<float>(blue) / 255.0f,
+        };
+    };
+    probe.glTerrainSkyVariantsReady =
+        renderScene.terrain.skyMode == snapshot.terrain.skyMode &&
+        blackDesertScene.terrain.skyMode == mw::battle::BattleSkyMode::Black &&
+        mw::battle::battleSnapshotFingerprint(blackDesertSnapshot) !=
+            mw::battle::battleSnapshotFingerprint(desertSnapshot) &&
+        mw::presentation::campaignBattleTerrainGroundRgb(0) ==
+            egaRgb(170, 85, 0) &&
+        mw::presentation::campaignBattleTerrainGroundRgb(1) ==
+            egaRgb(0, 170, 0) &&
+        mw::presentation::campaignBattleTerrainGroundRgb(2) ==
+            egaRgb(255, 255, 255) &&
+        mw::presentation::campaignBattleTerrainSkyRgb(
+            0, mw::battle::BattleSkyMode::BiomeBright) ==
+            egaRgb(255, 255, 255) &&
+        mw::presentation::campaignBattleTerrainSkyRgb(
+            1, mw::battle::BattleSkyMode::BiomeBright) ==
+            egaRgb(85, 85, 255) &&
+        mw::presentation::campaignBattleTerrainSkyRgb(
+            2, mw::battle::BattleSkyMode::BiomeBright) ==
+            egaRgb(85, 255, 255) &&
+        mw::presentation::campaignBattleTerrainSkyRgb(
+            0, mw::battle::BattleSkyMode::Black) ==
+            egaRgb(0, 0, 0) &&
+        mw::presentation::campaignBattleTerrainSkyRgb(
+            1, mw::battle::BattleSkyMode::Black) ==
+            egaRgb(0, 0, 0) &&
+        mw::presentation::campaignBattleTerrainSkyRgb(
+            2, mw::battle::BattleSkyMode::Black) ==
+            egaRgb(0, 0, 0);
     probe.glVisuals = glProbe.visualCount;
     probe.glObjectiveLoaded = glProbe.objectiveLoaded;
     const mw::presentation::CampaignCockpitBackdropImage backdrop =
@@ -1840,7 +1884,7 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
         cockpitCommandMapBackdrop.height == 200 &&
         cockpitCommandMapRect.x == 62 && cockpitCommandMapRect.y == 7 &&
         cockpitCommandMapRect.width == 197 && cockpitCommandMapRect.height == 107 &&
-        !mw::battle::campaignBattlePresentationPausesSimulation(
+        mw::battle::campaignBattlePresentationPausesSimulation(
             mw::battle::CampaignBattlePresentationMode::CockpitCommandMap) &&
         mw::battle::campaignBattlePresentationPausesSimulation(
             mw::battle::CampaignBattlePresentationMode::MissionStatus);
@@ -1914,9 +1958,9 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
     probe.cockpitRadarReady =
         radarGeometry.rect.x == 120 && radarGeometry.rect.y == 117 &&
         radarGeometry.rect.width == 72 && radarGeometry.rect.height == 67 &&
-        radarGeometry.leftX == 122 && radarGeometry.rightX == 189 &&
-        radarGeometry.topY == 119 && radarGeometry.apexX == 156 &&
-        radarGeometry.apexY == 160 && radarGeometry.labelY == 173 &&
+        radarGeometry.leftX == 120 && radarGeometry.rightX == 191 &&
+        radarGeometry.topY == 117 && radarGeometry.apexX == 156 &&
+        radarGeometry.apexY == 153 && radarGeometry.labelY == 176 &&
         mw::presentation::campaignCockpitRadarWorldUnitsPerMeter() == 5.0 &&
         mw::battle::battleCockpitRadarRangeMeters(0u) == 4000u &&
         mw::battle::battleCockpitRadarRangeMeters(1u) == 2000u &&
@@ -1928,12 +1972,12 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
         mw::presentation::campaignCockpitRadarRangeLabel(1000u) == "1000 M" &&
         mw::presentation::campaignCockpitRadarRangeLabel(500u) == "500 M" &&
         forwardContact.visible && forwardContact.x == 156 &&
-        forwardContact.y == 139 &&
+        forwardContact.y == 135 &&
         std::abs(forwardContact.distanceMeters - 2000.0) < 0.001 &&
-        visibleLeftEdgeContact.visible && visibleLeftEdgeContact.x == 139 &&
-        visibleLeftEdgeContact.y == 139 &&
-        visibleRightEdgeContact.visible && visibleRightEdgeContact.x == 173 &&
-        visibleRightEdgeContact.y == 139 &&
+        visibleLeftEdgeContact.visible && visibleLeftEdgeContact.x == 138 &&
+        visibleLeftEdgeContact.y == 135 &&
+        visibleRightEdgeContact.visible && visibleRightEdgeContact.x == 174 &&
+        visibleRightEdgeContact.y == 135 &&
         !outsideContact.visible && !behindContact.visible &&
         !beyondContact.visible;
     const mw::presentation::CampaignCockpitDynamicLayers dynamicLayers =
@@ -2041,7 +2085,7 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
             gaugeCombatant,
             mw::battle::CampaignCockpitFamily::Light);
     probe.cockpitGaugesReady =
-        lightGauge.speedX == 236 && lightGauge.speedY == 177 &&
+        lightGauge.speedX == 238 && lightGauge.speedY == 177 &&
         lightGauge.forwardBars == 16 && lightGauge.reverseBars == 0 &&
         lightGauge.heatX == 198 && lightGauge.heatBottomY == 183 &&
         lightGauge.heatBars == 10 &&
@@ -2053,7 +2097,7 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
         mediumGauge.heatBars == 10 &&
         mediumGauge.jumpGauge.x == lightGauge.jumpGauge.x &&
         mediumGauge.jumpGauge.y == lightGauge.jumpGauge.y &&
-        heavyGauge.speedX == 22 && heavyGauge.speedY == 186 &&
+        heavyGauge.speedX == 21 && heavyGauge.speedY == 186 &&
         heavyGauge.heatX == 198 && heavyGauge.heatBottomY == 183 &&
         heavyGauge.heatBars == 10 &&
         !heavyGauge.jumpGaugeVisible &&
@@ -2104,6 +2148,32 @@ CampaignPresentationProbe probeCampaignPresentationHandoff(
 int main(int argc, char** argv) {
     try {
         const Options options = parseOptions(argc, argv);
+
+        expect(
+            !mw::battle::campaignBattleEnvironmentIdFromPlanetTerrainCode(0u).has_value(),
+            "unknown planet terrain code must not invent a biome");
+        for (uint8_t terrainCode = 1u; terrainCode <= 12u; ++terrainCode) {
+            const std::optional<int> environment =
+                mw::battle::campaignBattleEnvironmentIdFromPlanetTerrainCode(
+                    terrainCode);
+            expect(
+                environment.has_value() &&
+                    *environment == static_cast<int>((terrainCode - 1u) % 3u),
+                "planet terrain code no longer covers all three original biomes");
+        }
+        size_t blackSkyRolls = 0u;
+        size_t brightSkyRolls = 0u;
+        for (uint32_t roll = 0u; roll < 300u; ++roll) {
+            if (mw::battle::campaignBattleSkyModeFromOriginalRoll(roll) ==
+                mw::battle::BattleSkyMode::Black) {
+                ++blackSkyRolls;
+            } else {
+                ++brightSkyRolls;
+            }
+        }
+        expect(
+            blackSkyRolls == 100u && brightSkyRolls == 200u,
+            "original one-in-three black-sky selection changed");
 
         mw::battle::BattleStartParams victoryParams = campaignAcceptedParams(options, true);
         expect(
@@ -2270,6 +2340,7 @@ int main(int argc, char** argv) {
                    presentationProbe.glTerrainObjectDitherVertices > 0u &&
                    presentationProbe.glTerrainObjectDitherTriangles > 0u &&
                    presentationProbe.glTerrainEnvironmentPalettesReady &&
+                   presentationProbe.glTerrainSkyVariantsReady &&
                    presentationProbe.glVisuals == 2u &&
                    presentationProbe.glObjectiveLoaded &&
                    presentationProbe.cockpitBackdropReady &&
@@ -2296,6 +2367,8 @@ int main(int argc, char** argv) {
                "campaign renderer bridge did not resolve the snapshot-owned battle scene");
         expect(presentationProbe.cockpitGaugesReady,
                "campaign cockpit gauge geometry or fill state changed");
+        expect(presentationProbe.cockpitRadarReady,
+               "campaign radar geometry or contact projection changed");
         expect(
             flatPresentationProbe.renderSceneReady &&
                 flatPresentationProbe.renderResourcesPresent &&
@@ -2456,7 +2529,7 @@ int main(int argc, char** argv) {
                 mw::battle::decodeOriginalBattlefieldSetup(
                     options.snarioPath,
                     scenarioIndices[i],
-                    victoryParams.mission.originalId,
+                    mw::battle::originalBattlePlacementSelectorForMission(victoryParams.mission.originalId),
                     500.0);
             expect(activeSetup.scenarioIndex == scenarioIndices[i] &&
                        activeSetup.metadata.valid && activeSetup.battlefieldBoundary.valid,
@@ -2471,13 +2544,13 @@ int main(int argc, char** argv) {
             mw::battle::decodeOriginalBattlefieldSetup(
                 options.snarioPath,
                 scenarioIndices[0],
-                victoryParams.mission.originalId,
+                mw::battle::originalBattlePlacementSelectorForMission(victoryParams.mission.originalId),
                 500.0);
         const mw::battle::OriginalBattlefieldSetup scenario3Setup =
             mw::battle::decodeOriginalBattlefieldSetup(
                 options.snarioPath,
                 scenarioIndices[1],
-                victoryParams.mission.originalId,
+                mw::battle::originalBattlePlacementSelectorForMission(victoryParams.mission.originalId),
                 500.0);
         expect(
             scenario2Setup.playerStartTransform.x != scenario3Setup.playerStartTransform.x ||
@@ -2544,9 +2617,9 @@ int main(int argc, char** argv) {
                     1, 1, 1, 0, 1, 0, 1, 1, 1}} &&
                 thirdAllyMarker.shape ==
                     mw::presentation::CampaignBattleMapPlayerMarkerShape::Plus &&
-                thirdAllyMarker.bgra == 0xff00aa00u &&
-                thirdAllyMarker.egaIndex == 2u &&
-                thirdAllyMarker.contrastOutline &&
+                thirdAllyMarker.bgra == 0xff55ff55u &&
+                thirdAllyMarker.egaIndex == 10u &&
+                !thirdAllyMarker.contrastOutline &&
                 thirdAllyMarker.pixels == std::array<uint8_t, 9>{{
                     0, 1, 0, 1, 1, 1, 0, 1, 0}} &&
                 mw::presentation::campaignCockpitMinimapPlayerBlipBgra(true) ==
@@ -2559,9 +2632,9 @@ int main(int argc, char** argv) {
             campaignDarkWingFinalParams(options);
         const mw::battle::BattleSnapshot finalStart =
             mw::battle::BattleWorld::create(finalParams).missionStartSnapshot();
-        expect(finalStart.mission.originalId == 12u &&
-                   finalStart.setup.missionSelector == 12u &&
-                   finalStart.oppositionRoster.initialMissionSelector == 12u,
+        expect(finalStart.mission.originalId == 16u &&
+                   finalStart.setup.missionSelector == 16u &&
+                   finalStart.oppositionRoster.initialMissionSelector == 16u,
                "campaign Dark Wing final selector changed");
         expect(finalStart.combatants.size() == 5u && !finalStart.objective.valid,
                "campaign Dark Wing final snapshot ownership changed");
@@ -2619,6 +2692,7 @@ int main(int argc, char** argv) {
                    !acceptedReceipt.extendedEndingSequenceDeferred,
                "accepted-contract post-result receipt changed");
         mw::battle::CampaignBattleConsequenceContext consequenceContext;
+        consequenceContext.defeatedOpponents = 1; // returned context+1D, even on a failed mission
         consequenceContext.salvage = 22500;
         consequenceContext.campaignDateTicks = 72;
         consequenceContext.pilotExperienceAward = true;
@@ -2710,15 +2784,15 @@ int main(int argc, char** argv) {
                    defeatConsequencePlan.salvage == 0u &&
                    defeatConsequencePlan.campaignDateTicks == 72u &&
                    defeatConsequencePlan.pilotExperienceAward &&
-                   defeatConsequencePlan.reputationDelta == 0 &&
-                   defeatConsequencePlan.houseNegativeDelta[4] == 1 &&
+                   defeatConsequencePlan.reputationDelta == 1 &&
+                   defeatConsequencePlan.houseNegativeDelta[4] == 0 &&
                    defeatConsequencePlan.houseNegativeDelta[3] == 2 &&
                    withdrawConsequencePlan.commitEligible &&
                    withdrawConsequencePlan.salvage == 0u &&
                    withdrawConsequencePlan.campaignDateTicks == 72u &&
                    withdrawConsequencePlan.pilotExperienceAward &&
-                   withdrawConsequencePlan.houseNegativeDelta ==
-                       defeatConsequencePlan.houseNegativeDelta &&
+                   withdrawConsequencePlan.houseNegativeDelta[4] == 1 &&
+                   withdrawConsequencePlan.houseNegativeDelta[3] == 2 &&
                    !unsupportedConsequencePlan.commitEligible,
                "accepted-contract failure consequence matrix changed");
         const uint64_t consequenceStateFingerprint = 0x123456789abcdef0ull;
@@ -3200,6 +3274,7 @@ int main(int argc, char** argv) {
             << ":env012:bank1:dither" << presentationProbe.glTerrainObjectDitherVertices
             << "v" << presentationProbe.glTerrainObjectDitherTriangles
             << "t:checker"
+            << " campaign_sky=original_1in3_black:bright_white_blue_cyan"
             << " campaign_dither_parity=prototype_shared:palette_batch:checker4x4"
             << " campaign_cockpit_compositor=ready:light:codec"
             << presentationProbe.cockpitBackdropCodec
@@ -3254,7 +3329,7 @@ int main(int argc, char** argv) {
             << cockpitMotionProbe.phoenixHawkHeight << ","
             << cockpitMotionProbe.battleMasterHeight
             << ":bob720ms:45y:presentation_only"
-            << " campaign_final_launch=selector12:units5:roster3bm1wh:unsupported1"
+            << " campaign_final_launch=selector16:units5:roster3bm1wh:unsupported1"
             << " campaign_launch_sources=accepted_contract,dark_wing_final"
             << " campaign_persistence_binding=source_slot:owned_mech+crew:final_systems:unlaunched_explicit:translation_deferred"
             << " campaign_damage_translation=audit29:coarse5:no_guess:intact+degraded+destroyed:mutation_deferred"
@@ -3263,8 +3338,8 @@ int main(int argc, char** argv) {
             << " campaign_consequence_commit=payment+salvage+reputation+house+time+xp:deferred3"
             << " campaign_time=original:jump28+origin4+target2+mission_table:half_day_ticks"
             << " campaign_pilot_xp=original:survivors:thresholds3,10,15:gam0645+0712"
-            << " campaign_salvage=current_estimate:beta_original_validation_required"
-            << " campaign_pilot_health=death_only:no_injury:runtime_death_mapping_deferred"
+            << " campaign_salvage=context_injection:production_original_formula_tested_separately"
+            << " campaign_pilot_health=death_only:no_injury:exact_return_plan"
             << " campaign_original_debrief=accepted:victory,defeat,withdraw:typed_commit_on_dismiss"
             << " campaign_contract_visit=completed_offer_hidden:same_visit:reset_on_travel"
             << " campaign_receipt_matrix=accepted:victory,defeat,withdraw,unsupported:immutable:safe_return:settlement_no"

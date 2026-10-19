@@ -395,9 +395,9 @@ const std::array<CatalogAmmunitionProfileSpec, 8>
 const std::array<CatalogMobilitySpec, 10> kCatalogMobility{{
     CatalogMobilitySpec{"locust", {129, 0, 0, 72, 500}},
     CatalogMobilitySpec{"wasp", {95, 180, 6, 0, 0}},
-    CatalogMobilitySpec{"jenner", {118, 150, 3, 66, 600}},
-    CatalogMobilitySpec{"phoenix_hawk", {97, 180, 6, 54, 700}},
-    CatalogMobilitySpec{"shadow_hawk", {86, 90, 3, 48, 700}},
+    CatalogMobilitySpec{"jenner", {118, 150, 3, 66, 600, 6, 72, 3}},
+    CatalogMobilitySpec{"phoenix_hawk", {97, 180, 6, 54, 700, 6, 72, 2}},
+    CatalogMobilitySpec{"shadow_hawk", {86, 90, 3, 48, 700, 5, 72, 3}},
     CatalogMobilitySpec{"wolverine", {86, 150, 5, 0, 0}},
     CatalogMobilitySpec{"rifleman", {64, 0, 0, 36, 800}},
     CatalogMobilitySpec{"warhammer", {64, 0, 0, 36, 800}},
@@ -462,6 +462,8 @@ size_t slotProbeAnimationIndex(const CatalogMechSpec& spec, const std::string& a
 MechModelDefinition makeSpecModelDefinition(const CatalogMechSpec& spec) {
     MechModelDefinition definition;
     definition.debugName = std::string(spec.presetId) + "_model_mapping_v1";
+    if (std::string_view(spec.presetId) == "battlemaster")
+        definition.geometryPatch = ModelGeometryPatch::BattleMasterBindFeet;
     definition.components.reserve(spec.components.size());
     for (const CatalogComponentSpec& componentSpec : spec.components) {
         MechComponentDefinition component;
@@ -612,6 +614,10 @@ MechCatalogAnimationKind catalogAnimationKind(const std::string& presetId, const
             return MechCatalogAnimationKind::AssemblyFrames;
         }
     }
+    if ((animationId == "jump_start" || animationId == "jump_land") && catalogMobility(presetId).originalBtechJumpSpeedWord0c>0)
+        return MechCatalogAnimationKind::AssemblyFrames;
+    if (animationId == "fall" || animationId == "stand_up" || animationId == "stand_fail")
+        return MechCatalogAnimationKind::AssemblyFrames;
     if (animationId == "destroyed" && spec.deathAnimationCount == 1) {
         return MechCatalogAnimationKind::AssemblyFrames;
     }
@@ -640,6 +646,38 @@ ModelAssemblyFrameAnimationDefinition makeCatalogAssemblyFrameAnimationDefinitio
     const CatalogMechSpec& spec = catalogSpec(presetId);
     if (animationId == "idle") {
         return {};
+    }
+    if ((animationId == "jump_start" || animationId == "jump_land") &&
+        catalogMobility(presetId).originalBtechJumpSpeedWord0c>0) {
+        // DS:248E/24A0/24AA/24B4: sequences 2 and 6 share bank2, stride6.
+        const std::vector<int> order=animationId=="jump_start"?
+            std::vector<int>{0,1,2,2,3,4,5}:std::vector<int>{5,4,4,5};
+        ModelAssemblyFrameAnimationDefinition result;
+        result.debugName=presetId+"_"+animationId;result.frameDurationMs=50;
+        for(const auto& part:spec.components)result.componentIds.push_back(part.componentId);
+        for(const int frame:order) {
+            std::vector<int> records;
+            for(int slot=0;slot<6;++slot)records.push_back(54+slot*6+frame);
+            result.frames.push_back(AssemblyFrameDefinition{records,result.debugName+"_"+std::to_string(frame)});
+        }
+        return result;
+    }
+    if (animationId == "fall" || animationId == "stand_up" || animationId == "stand_fail") {
+        // BTECH 9E9B..9F9E: bank 4 follows idle(6), walk(48), and
+        // the optional jump bank(36). DS:2472/2478/247C give frame order.
+        const std::vector<int> order = animationId == "fall" ? std::vector<int>{0,1,2,3,4} :
+            animationId == "stand_up" ? std::vector<int>{3,2,1,0} : std::vector<int>{3,2,2,3,4};
+        const int base = catalogMobility(presetId).jumpCapable() ? 90 : 54;
+        ModelAssemblyFrameAnimationDefinition result;
+        result.debugName = presetId + "_" + animationId;
+        result.frameDurationMs = 50; // frame selection unit; world owns cadence
+        for (const auto& part : spec.components) result.componentIds.push_back(part.componentId);
+        for (const int frame : order) {
+            std::vector<int> records;
+            for (int slot = 0; slot < 6; ++slot) records.push_back(base + slot*5 + frame);
+            result.frames.push_back(AssemblyFrameDefinition{records, result.debugName + "_" + std::to_string(frame)});
+        }
+        return result;
     }
     if (animationId == "destroyed" && spec.deathAnimationCount == 1) {
         return makeSpecDestroyedAnimationDefinition(spec, 0);
@@ -742,7 +780,7 @@ std::vector<MechCatalogWeaponMount> catalogWeaponMounts(
     return result;
 }
 
-MechCatalogDamageProfile catalogDamageProfile(const std::string& presetId) {
+MechCatalogDamageProfile catalogDamageProfile(const std::string& presetId, bool experiencedCommander) {
     const auto it = std::find_if(
         kCatalogDamageProfiles.begin(),
         kCatalogDamageProfiles.end(),
@@ -752,7 +790,16 @@ MechCatalogDamageProfile catalogDamageProfile(const std::string& presetId) {
     if (it == kCatalogDamageProfiles.end()) {
         throw std::runtime_error("unknown mech damage profile: " + presetId);
     }
-    return it->profile;
+    auto profile = it->profile;
+    if (experiencedCommander) {
+        for (size_t leg : {size_t(2), size_t(3)}) {
+            auto& armor = profile.externalArmorMaximumBtechOrder[leg];
+            auto& internal = profile.internalStructureMaximumBtechOrder[leg];
+            armor = static_cast<uint16_t>(armor + armor / 4u);
+            internal = static_cast<uint16_t>(internal + internal / 4u);
+        }
+    }
+    return profile;
 }
 
 MechCatalogCriticalProfile catalogCriticalProfile(

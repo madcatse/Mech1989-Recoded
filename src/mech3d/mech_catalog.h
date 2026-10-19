@@ -51,6 +51,9 @@ struct MechCatalogMobility {
     // Raw BTECH.EXE definition-row word +0x02, added at half value to the
     // c42e terrain height by the ordinary 87c4 pose transaction.
     int originalBtechDefinitionHeightWord02 = 0;
+    int originalBtechJumpAccelerationWord0a = 0;
+    int originalBtechJumpSpeedWord0c = 0;
+    int originalBtechInstalledJetsWord08 = 0;
 
     bool jumpCapable() const {
         return jumpCapacityMeters > 0;
@@ -144,7 +147,8 @@ std::filesystem::path catalogDefaultResourcePath(const std::string& presetId);
 MechCatalogMobility catalogMobility(const std::string& presetId);
 std::vector<MechCatalogWeaponMount> catalogWeaponMounts(
     const std::string& presetId);
-MechCatalogDamageProfile catalogDamageProfile(const std::string& presetId);
+// BTECH 34A8: commander gunnery > 1 strengthens both legs of every model.
+MechCatalogDamageProfile catalogDamageProfile(const std::string& presetId, bool experiencedCommander = false);
 MechCatalogCriticalProfile catalogCriticalProfile(const std::string& presetId);
 MechCatalogAmmunitionProfile catalogAmmunitionProfile(
     const std::string& presetId);

@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <windowsx.h>
+#include "resources/game_resource.h"
 
 #include <algorithm>
 #include <array>
@@ -25,13 +26,28 @@
 #include <vector>
 
 #include "battle/battle_module.h"
+#include "audio/music_player.h"
+#include "audio/speaker_player.h"
+#include "presentation/battle_audio.h"
+#include "presentation/display_settings.h"
 #include "battle/battle_setup.h"
 #include "battle/battle_world.h"
 #include "battle/campaign_ammunition.h"
+#include "battle/campaign_contracts.h"
+#include "battle/campaign_market.h"
+#include "battle/campaign_salvage.h"
+#include "battle/campaign_result_state.h"
+#include "battle/campaign_accepted_contract.h"
+#include "battle/campaign_crew_state.h"
+#include "battle/campaign_ending.h"
+#include "battle/campaign_repair.h"
+#include "battle/campaign_recruitment.h"
+#include "battle/campaign_mech_persistence.h"
 #include "legacy3d/terrain_parser.h"
 #include "mech3d/mech_catalog.h"
 #include "presentation/campaign_battle_gl_viewport.h"
 #include "presentation/campaign_cockpit_compositor.h"
+#include "presentation/campaign_command_screen.h"
 
 namespace fs = std::filesystem;
 
@@ -39,12 +55,8 @@ fs::path executableDirectory();
 
 constexpr int kScreenWidth = 320;
 constexpr int kScreenHeight = 200;
-constexpr int kExactDisplayPixelWidth = 5;
-constexpr int kExactDisplayPixelHeight = 6;
-constexpr int kCompactDisplayPixelWidth = 4;
-constexpr int kCompactDisplayPixelHeight = 5;
-constexpr int kDefaultDisplayWidth = kScreenWidth * kCompactDisplayPixelWidth;
-constexpr int kDefaultDisplayHeight = kScreenHeight * kCompactDisplayPixelHeight;
+constexpr int kDefaultDisplayWidth = 1280;
+constexpr int kDefaultDisplayHeight = 1000;
 constexpr std::string_view kBuildDate = __DATE__;
 constexpr std::string_view kBuildTime = __TIME__;
 
@@ -117,23 +129,6 @@ struct ArmorOverlayRect {
     RectI rect;
 };
 
-static constexpr std::array<uint8_t, 145> kPlanetEconomyTiersByTableOrder = {{
-    1, 2, 4, 2, 4, 2, 3, 4, 3, 2,
-    2, 1, 2, 1, 1, 2, 2, 4, 2, 4,
-    1, 3, 4, 1, 4, 3, 4, 1, 4, 4,
-    1, 2, 2, 1, 2, 4, 2, 2, 1, 3,
-    4, 1, 1, 2, 3, 2, 2, 4, 3, 4,
-    4, 2, 4, 2, 3, 2, 3, 1, 1, 4,
-    1, 2, 1, 3, 2, 2, 2, 2, 1, 2,
-    4, 1, 4, 1, 3, 2, 2, 2, 1, 1,
-    1, 4, 4, 1, 3, 2, 2, 2, 2, 1,
-    1, 1, 2, 1, 1, 3, 1, 2, 3, 2,
-    1, 1, 2, 1, 1, 2, 2, 4, 3, 1,
-    2, 2, 3, 1, 2, 1, 1, 1, 2, 1,
-    3, 1, 1, 4, 3, 1, 4, 4, 1, 2,
-    3, 4, 2, 2, 4, 2, 3, 4, 2, 2,
-    4, 1, 2, 3, 4,
-}};
 
 enum class ScreenState {
     ActivisionSplash,
@@ -154,6 +149,7 @@ enum class ScreenState {
     MechRepairStatus,
     MechReloadPrompt,
     MechSellOffer,
+    MechSellRefused,
     MechBuyList,
     MechBuyStatus,
     MechBuyDamageStatus,
@@ -169,6 +165,7 @@ enum class ScreenState {
     TravelAnimation,
     MissionBattleStub,
     MissionDebrief,
+    CampaignEnding,
 };
 
 enum class BarDialogState {
@@ -189,6 +186,7 @@ enum class StoryBackdrop {
     Bar,
     Contract,
     MechLab,
+    Ending,
 };
 
 enum class PlanetEnvironment {
@@ -386,12 +384,16 @@ public:
         logPath_ = exeDir / L"mwlog.txt";
         file_.open(logPath_, std::ios::binary | std::ios::trunc);
 
+        // A release keeps the in-game cheats and file log without opening a
+        // second desktop window. Developers can explicitly opt into that window.
+#if defined(MW_DEBUG_WINDOW) && MW_DEBUG_WINDOW
         if (!GetConsoleWindow()) {
-            AllocConsole();
+            ownsConsole_ = AllocConsole() != FALSE;
         }
+#endif
         consoleOut_ = GetStdHandle(STD_OUTPUT_HANDLE);
         if (consoleOut_ != INVALID_HANDLE_VALUE && consoleOut_ != nullptr) {
-            SetConsoleTitleW(L"MW_MAIN Recomp Debug Log");
+            SetConsoleTitleW(L"Mech1989: Recoded Debug Log");
             SetConsoleTextAttribute(
                 consoleOut_,
                 FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
@@ -408,8 +410,9 @@ public:
         }
         log(L"Debug tools shutting down.");
         file_.close();
-        if (GetConsoleWindow()) {
+        if (ownsConsole_) {
             FreeConsole();
+            ownsConsole_ = false;
         }
         initialized_ = false;
     }
@@ -462,6 +465,7 @@ private:
 
     static constexpr size_t kMaxRecentLines = 64;
     bool initialized_ = false;
+    bool ownsConsole_ = false;
     HANDLE consoleOut_ = nullptr;
     fs::path logPath_;
     std::ofstream file_;
@@ -631,6 +635,22 @@ PicsArchive loadRawPicsImage(const fs::path& path, uint32_t offset, int entryInd
     archive.palette.assign(std::begin(kEgaPalette), std::end(kEgaPalette));
     archive.decodedSize = decoded.size();
     archive.images.push_back(std::move(image));
+    return archive;
+}
+
+PicsArchive loadEndingBackground(const fs::path& path) {
+    // MW_MAIN 108C..113C: 100 packed-entry offsets followed by their sizes.
+    const auto packed = readFile(path);
+    const size_t offset = readPicsOffset(packed, 77u * 4u);
+    const size_t size = readU16Le(packed, 400u + 77u * 2u);
+    if (offset + size > packed.size()) throw std::runtime_error("ending background out of range");
+    const auto decoded = decompressPicsNibbleRle(
+        std::vector<uint8_t>(packed.begin() + offset, packed.begin() + offset + size));
+    if (decoded.size() < 4u + 160u * 134u || readU16Le(decoded,0) != 320 || readU16Le(decoded,2) != 134)
+        throw std::runtime_error("invalid ending background");
+    PicsArchive archive;
+    archive.palette.assign(std::begin(kEgaPalette), std::end(kEgaPalette));
+    archive.images.push_back({77,320,134,160,{decoded.begin()+4,decoded.begin()+4+160*134}});
     return archive;
 }
 
@@ -834,9 +854,7 @@ PlanetRecord parsePlanetRecord(const std::vector<uint8_t>& data, uint16_t pointe
     record.mapX = data[offset + 5u];
     record.mapY = data[offset + 6u];
     record.unknownByte7 = data[offset + 7u];
-    if (tableOrder > 0 && tableOrder <= kPlanetEconomyTiersByTableOrder.size()) {
-        record.economyTier = kPlanetEconomyTiersByTableOrder[tableOrder - 1u];
-    }
+    record.economyTier = static_cast<uint8_t>((record.terrainCode - 1u) / 3u + 1u);
     record.population = static_cast<uint64_t>(readU16Le(data, offset + 8u)) * 1000000ull;
 
     if (record.planetNumber == 0 || record.houseId > 4 || record.terrainCode == 0 || record.terrainCode > 12) {
@@ -902,12 +920,42 @@ uint32_t toBgra(Color color) {
 }
 
 class App {
+    friend void runMouseLookAppChecks(App&);
+    friend void runReleaseSmoke(const fs::path&, bool);
+    friend void runCampaignMechPersistenceSmoke();
+    friend void runCampaignRepairSmoke();
+    friend void runCampaignContractAvailabilitySmoke();
+    friend void runCampaignMechMarketSmoke();
+    friend void runCampaignRecruitmentSmoke();
+    friend void runCampaignStorySmoke();
+    friend void runCampaignEndingSmoke();
+    friend void runCampaignSequenceSmoke();
+    friend void runCampaignRngSmoke();
+    friend void runCampaignGamCorpusSmoke();
+    friend void runCampaignDeploymentSmoke();
+    friend void runCampaignLaunchContextSmoke();
+    friend void runCampaignResultGamSmoke();
+    friend void runCampaignAcceptedGamSmoke();
+    friend void runCampaignCrewGamSmoke();
+    friend void runCampaignPilotReturnSmoke();
+    friend void runCampaignLiveVictorySmoke();
+    friend void runCampaignLiveFailureSmoke();
+    friend void runPhase15ClosureSmoke();
+    friend void runPhase16ValidationSmoke();
+    friend void runFinalBattleValidationSmoke();
+    friend void runAudioSceneSmoke();
+    friend void runSpeakerSceneSmoke();
+    friend void runStartupDisplaySmoke();
+    friend void runCampaignSalvageSmoke();
+    friend void runBattleStartPlacementSmoke(bool visual);
+    friend void runBattleAwsSmoke(bool visual);
 public:
     explicit App(fs::path resourceRoot) : resourceRoot_(std::move(resourceRoot)) {
         framebuffer_.assign(kScreenWidth * kScreenHeight, 0xFF000000u);
     }
 
     ~App() {
+        releaseMouseLookCapture();
         campaignBattleGlViewport_.shutdown();
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
         debugTools_.shutdown();
@@ -921,16 +969,23 @@ public:
         debugLog(buildTimestampLine());
         debugLog(L"Application initialize. Resource root: " + resourceRoot_.wstring());
 #endif
+        hostClockRng_=true;
+        restartCampaignModuleRng(campaignModuleClockTicks());
         loadResources();
+        settingsPath_ = (resourceRoot_.filename() == L"Original"
+            ? resourceRoot_.parent_path() : executableDirectory()) / L"mw1989.ini";
+        loadPreferences();
 
         WNDCLASSW wc{};
         wc.lpfnWndProc = &App::windowProc;
         wc.hInstance = instance_;
         wc.lpszClassName = L"MWMainRecompWindow";
         wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
+        wc.hIcon = static_cast<HICON>(LoadImageW(instance_, MAKEINTRESOURCEW(IDI_MW1989),
+            IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED));
         wc.hbrBackground = nullptr;
-        if (!RegisterClassW(&wc)) {
-            MessageBoxW(nullptr, L"Unable to register window class.", L"MW Main Recomp", MB_ICONERROR);
+        if (!RegisterClassW(&wc) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {
+            MessageBoxW(nullptr, L"Unable to register window class.", L"Mech1989: Recoded", MB_ICONERROR);
             return false;
         }
 
@@ -940,7 +995,7 @@ public:
         hwnd_ = CreateWindowExW(
             0,
             wc.lpszClassName,
-            L"MW_MAIN replacement engine",
+            L"Mech1989: Recoded",
             windowStyle,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
@@ -951,9 +1006,22 @@ public:
             instance_,
             this);
         if (!hwnd_) {
-            MessageBoxW(nullptr, L"Unable to create window.", L"MW Main Recomp", MB_ICONERROR);
+            MessageBoxW(nullptr, L"Unable to create window.", L"Mech1989: Recoded", MB_ICONERROR);
             return false;
         }
+
+        SendMessageW(hwnd_, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(
+            LoadImageW(instance_, MAKEINTRESOURCEW(IDI_MW1989), IMAGE_ICON,
+                GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)));
+
+        applyDisplaySettings();
+
+        music_.initialize(resourceRoot_, executableDirectory());
+        speaker_.initialize(resourceRoot_);
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+        debugLog(widen(music_.status()));
+        debugLog(widen(speaker_.status()));
+#endif
 
         ShowWindow(hwnd_, showCommand);
         UpdateWindow(hwnd_);
@@ -979,7 +1047,9 @@ private:
         RequestMission,
         SystemMenu,
         ToggleSound,
-        Detail,
+        Resolution,
+        Fullscreen,
+        MouseLook,
         Restart,
         Continue,
         SaveGame,
@@ -997,6 +1067,15 @@ private:
         QuitToDos,
         GrigYes,
         GrigNo,
+        GrigRevengeGoOn,
+        GrigRevengeDecline,
+        GrigRevengeDeal,
+        GrigRevengeForget,
+        GrigRevengeWait,
+        GrigRevengeStrike,
+        GrigRevengeWaitTooLong,
+        GrigRevengeAcceptOffer,
+        GrigRevengeKill,
         DustballFirstFight,
         DustballFirstRun,
         DustballSecondFight,
@@ -1053,6 +1132,7 @@ private:
         std::wstring name;
         std::wstring mechName;
         int armorPercent = 100;
+        int conditionPercent = 100; // Result screen: whole-mech coarse condition.
         bool killed = false;
     };
 
@@ -1076,6 +1156,9 @@ private:
     };
 
     struct CampaignBattleRuntimeSession {
+        mw::presentation::CampaignCommandScreenState commandScreen;
+        bool pendingLanceOrderTick = false;
+        mw::battle::BattleReplay inputReplay;
         bool active = false;
         std::optional<mw::battle::BattleWorld> world;
         mw::battle::BattleSnapshot startSnapshot;
@@ -1098,9 +1181,11 @@ private:
         int pendingTorsoYawStepDelta = 0;
         int pendingAimPitchStepDelta = 0;
         bool pendingJumpJetToggle = false;
-        bool pendingFireWeapon = false;
-        int pendingWeaponSelectionStep = 0;
-        uint32_t pendingWeaponInstanceId = 0;
+        bool pendingStandUp = false;
+        bool pendingConclusionAcknowledgment = false;
+        bool retreatPromptVisible = false;
+        bool pendingConfirmedRetreat = false;
+        std::vector<mw::battle::BattleInputCommand> pendingWeaponControls;
         bool pendingCockpitRadarToggle = false;
         bool pendingCockpitRadarRangeCycle = false;
         bool pendingTargetScanCycle = false;
@@ -1187,6 +1272,7 @@ private:
         int jumpJetsWorking = 0;
         int jumpJetsTotal = 0;
         int armorPercent = 100;
+        // Campaign storage follows raw MW_MAIN/GAM ordinals.
         std::array<int, 9> armorDamage = {};
         std::array<int, 6> ammoPacks = {};
         DamageState engine = DamageState::Functional;
@@ -1198,6 +1284,7 @@ private:
         DamageState leftLegActuator = DamageState::Functional;
         DamageState rightLegActuator = DamageState::Functional;
         std::array<MechWeaponStatus, 10> weapons = {};
+        std::optional<mw::battle::BattlePersistentDamage> exactDamage;
     };
 
     enum class CrewAssignmentOptionKind {
@@ -1226,22 +1313,18 @@ private:
         uint8_t pilotingSkill = 0;
         uint32_t monthlyWage = 0;
         uint16_t missionExperience = 0;
-    };
-
-    struct PlanetRecruitPool {
-        int visitSerial = -1;
-        int monthKey = -1;
-        std::vector<size_t> originalCandidates;
-        std::vector<size_t> candidates;
+        uint8_t unavailable = 0;
     };
 
     struct MarketMech {
         OwnedMech mech;
         uint32_t askingPrice = 0;
+        size_t originalSlot = 0;
     };
 
-    struct PlanetMechMarket {
+    struct CurrentMechMarket {
         bool initialized = false;
+        mw::battle::OriginalMechMarket original;
         std::vector<MarketMech> mechsForSale;
     };
 
@@ -1296,6 +1379,8 @@ private:
         std::wstring targetPlanet;
         uint8_t targetPlanetTerrainCode = 0;
         std::optional<int> targetEnvironmentId;
+        mw::battle::BattleSkyMode skyMode =
+            mw::battle::BattleSkyMode::BiomeBright;
         uint8_t targetCategory = 0;
         uint8_t originalMissionClass = 1;
         uint8_t originalMissionId = 0;
@@ -1306,8 +1391,11 @@ private:
         int mediumCount = 0;
         int lightCount = 1;
         int priceK = 100;
+        int priceCeilingK = 100;
         int salvagePercent = 0;
         int advancePercent = 0;
+        int salvageCeilingPercent = 0;
+        int advanceCeilingPercent = 0;
         int housePriceK = 100;
         int houseSalvagePercent = 0;
         int houseAdvancePercent = 0;
@@ -1325,8 +1413,16 @@ private:
         MissionSequenceKind kind = MissionSequenceKind::None;
         size_t stageIndex = 0;
         size_t stageCount = 0;
+        uint8_t originalRow = 0;
+        std::optional<uint16_t> employerPayoutPercent;
+        bool campaignModuleReturned = false;
+        std::optional<mw::battle::BattleOppositionSpawnPlan> opposition;
+        std::optional<uint16_t> skyRoll;
+        size_t preparedStage = std::numeric_limits<size_t>::max();
+        std::optional<std::array<int,6>> remainingExtraAmmo; // never written mid-sequence
         std::array<uint8_t, 3> missionIds{};
         std::vector<mw::battle::BattleCombatantLaunchState> playerCarryover;
+        mw::battle::OriginalSalvageRecords salvageRecords; // RAM, shared four-record cap across stages.
 
         bool active() const {
             return kind != MissionSequenceKind::None &&
@@ -1369,16 +1465,19 @@ private:
     static constexpr size_t kPlanetSystemIconIndex = 5;
     static constexpr size_t kSystemSaveMenuIndex = 0;
     static constexpr size_t kSystemRestoreMenuIndex = 1;
-    static constexpr size_t kSystemContinueMenuIndex = 6;
+    static constexpr size_t kSystemMouseLookMenuIndex = 5;
+    static constexpr size_t kSystemContinueMenuIndex = 8;
     static constexpr size_t kRestoreGameCancelIndex = 12;
     static constexpr size_t kGamSaveSize = 0x718;
     static constexpr size_t kGamMaxNameChars = 8;
     static constexpr size_t kGamVisibleSlotCount = 12;
     static constexpr size_t kMwMainNewGameTemplateFileOffset = 0x009148;
-    static constexpr size_t kGamOffsetReputation = 0x001D;
+    static constexpr size_t kGamOffsetDefeatedOpponents = 0x001D; // BTECH returned count, not rank.
     static constexpr size_t kGamOffsetPlanetIndex = 0x0021;
     static constexpr size_t kGamOffsetCurrentPlanetHouseId = 0x0025;
+    static constexpr size_t kGamOffsetCurrentPlanetBiome = 0x0023;
     static constexpr size_t kGamOffsetCurrentPlanetTerrainBand = 0x0027;
+    static constexpr size_t kGamOffsetServiceFactor = 0x002f;
     static constexpr size_t kGamOffsetCurrentPlanetContractAvailable = 0x0029;
     static constexpr size_t kGamOffsetMapX = 0x002B;
     static constexpr size_t kGamOffsetMapY = 0x002D;
@@ -1410,6 +1509,7 @@ private:
     static constexpr size_t kGamOffsetDetailLevel = 0x070D;
     // MW_MAIN DS:0B5A, the commander's separate word-sized mission counter.
     static constexpr size_t kGamOffsetPlayerMissionExperience = 0x0712;
+    static constexpr size_t kGamOffsetCampaignCompleted = 0x0714; // MW_MAIN DS:0B5C
     static constexpr int kCommanderBirthYear = 3006;
     static constexpr int kCommanderBirthMonth = 4;
     static constexpr int kCommanderBirthDay = 8;
@@ -1480,10 +1580,6 @@ private:
     static constexpr int kMechRepairWealthY = 185;
     static constexpr int kMechRepairCostValueX = 105;
     static constexpr int kMechRepairCostValueWidth = 60;
-    static constexpr uint32_t kMechRepairComponentMultiplier = 333;
-    static constexpr uint32_t kMechRepairCountUnitCost = 2000;
-    static constexpr uint32_t kMechRepairWeaponLightCost = 2000;
-    static constexpr uint32_t kMechRepairArmorLevelCost = 4000;
     static constexpr size_t kArmorSectionCount = 9;
     static constexpr int kArmorDamageMaxLevel = 3;
     static constexpr int kArmorDamageDenominator =
@@ -1564,15 +1660,15 @@ private:
     static constexpr RectI kCampaignBattleMapRect{24, 42, 176, 132};
     static constexpr DWORD kCampaignBattleRenderStepMs = 16;
     static constexpr double kCampaignBattleThrottleStep = 0.25;
-    static constexpr RectI kDeathPlayAgainRect{42, 103, 92, 10};
-    static constexpr RectI kDeathQuitRect{42, 114, 52, 10};
+    static constexpr RectI kDeathPlayAgainRect{43, 103, 92, 7};
+    static constexpr RectI kDeathQuitRect{43, 110, 52, 7};
     static constexpr int kMissionResultDeathImageEntry = 0;
     static constexpr int kMissionResultVictoryImageEntry = 1;
     static constexpr int kMissionResultDefeatImageEntry = 2;
-    static constexpr RectI kMissionDebriefTopPanelRect{2, 2, 315, 137};
-    static constexpr RectI kMissionDebriefBottomPanelRect{2, 142, 315, 56};
+    static constexpr RectI kMissionDebriefTopPanelRect{2, 2, 315, 136};
+    static constexpr RectI kMissionDebriefBottomPanelRect{2, 141, 314, 57};
     static constexpr int kMissionDebriefEmblemX = 256;
-    static constexpr int kMissionDebriefEmblemY = 143;
+    static constexpr int kMissionDebriefEmblemY = 142;
     static constexpr int kMissionDebriefMessageTextWidth = 244;
     static constexpr int kDebriefFrameUpperLeftEntry = 36;
     static constexpr int kDebriefFrameUpperRightEntry = 37;
@@ -1683,27 +1779,6 @@ private:
         {L"CAPTURE OF AMMO AND MECH PARTS", L"Retrieval", 3, false},
         {L"PARTICIPATING IN HOSTAGE RAID", L"Retrieval", 3, false},
     }};
-    // MW_MAIN DS:0A02, indexed by employer House and target category.  Zero
-    // makes a category unavailable; nonzero is the maximum mission class used
-    // by FUN_101b_4f6e before its original quarter-range randomization.
-    static constexpr std::array<std::array<uint8_t, 8>, 5>
-        kOriginalContractCategoryMissionClass = {{
-            {{0, 4, 2, 2, 4, 0, 2, 2}},
-            {{4, 0, 4, 3, 0, 2, 2, 0}},
-            {{2, 4, 0, 2, 3, 2, 0, 0}},
-            {{2, 3, 2, 0, 4, 0, 0, 0}},
-            {{4, 0, 3, 4, 0, 0, 0, 1}},
-        }};
-    // MW_MAIN DS:8E9A..8FD9.  Class-1 missions and special categories 5..7
-    // choose one of these one-based target planet table orders directly.
-    static constexpr std::array<std::array<std::array<uint8_t, 8>, 8>, 5>
-        kOriginalClassOneTargetPlanetTableOrders = {{
-            {{{{255,255,255,255,255,255,255,255}},{{16,17,18,20,23,26,27,15}},{{13,16,13,16,13,16,13,16}},{{13,16,13,16,13,16,13,16}},{{7,8,9,10,15,12,13,14}},{{255,255,255,255,255,255,255,255}},{{3,4,5,30,3,4,5,30}},{{3,4,5,30,3,4,5,30}}}},
-            {{{{43,45,46,47,49,52,58,59}},{{255,255,255,255,255,255,255,255}},{{35,41,44,54,55,56,58,42}},{{44,58,44,58,44,58,44,58}},{{39,44,58,39,44,58,39,44}},{{35,57,36,35,57,36,35,57}},{{50,51,50,51,50,51,50,51}},{{255,255,255,255,255,255,255,255}}}},
-            {{{{66,76,80,66,76,80,66,76}},{{66,74,75,76,80,85,86,90}},{{255,255,255,255,255,255,255,255}},{{65,66,68,69,76,81,82,83}},{{66,76,80,66,76,80,66,76}},{{64,73,86,64,73,86,64,73}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}}}},
-            {{{{99,100,101,99,100,101,99,100}},{{99,100,101,99,100,101,99,100}},{{92,93,96,103,106,107,110,111}},{{255,255,255,255,255,255,255,255}},{{95,97,102,105,108,112,113,114}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}}}},
-            {{{{119,121,126,126,129,133,134,143}},{{121,133,121,133,121,133,121,133}},{{133,133,133,133,133,133,133,133}},{{121,123,131,133,138,139,140,143}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}},{{255,255,255,255,255,255,255,255}},{{124,132,137,124,132,137,124,132}}}},
-        }};
     static constexpr MwMainTextRef kCampaignIntroText{
         "mw_main.endgame.020c12",
         0x020C12u,
@@ -1937,6 +2012,45 @@ private:
         0x0163E4u,
         498u,
         12u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeInformant{
+        "mw_main.story.01d81c", 0x01D81Cu, 475u, 14u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengePrice{
+        "mw_main.story.01d9fc", 0x01D9FCu, 472u, 14u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeDecline{
+        "mw_main.text.01dbd8", 0x01DBD8u, 131u, 4u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeLanding{
+        "mw_main.story.01d3ae", 0x01D3AEu, 570u, 14u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeGuards{
+        "mw_main.story.01d5ec", 0x01D5ECu, 555u, 16u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeForget{
+        "mw_main.story.01d36c", 0x01D36Cu, 62u, 2u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengePosition{
+        "mw_main.story.01d240", 0x01D240u, 296u, 11u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeOffer{
+        "mw_main.story.01cfc3", 0x01CFC3u, 634u, 18u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeEscape{
+        "mw_main.story.01cf3b", 0x01CF3Bu, 131u, 4u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeDeath{
+        "mw_main.story.01cd45", 0x01CD45u, 398u, 11u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeDeathEpilogue{
+        "mw_main.story.01ced7", 0x01CED7u, 96u, 5u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeKill{
+        "mw_main.story.01c9c7", 0x01C9C7u, 367u, 11u,
+    };
+    static constexpr MwMainTextRef kStoryGrigRevengeBounty{
+        "mw_main.story.01cb37", 0x01CB37u, 524u, 14u,
     };
     static constexpr MwMainTextRef kStoryAlbieroRaidIntro{
         "mw_main.story.01663f",
@@ -2191,12 +2305,13 @@ private:
         {kStoryNewsMarikAmbush, 0x29, 0x2B},
         {kStoryNewsKangarooJackDeath, 0x2E, 0x3A},
         {kStoryNewsBlackWidowLead, 0x2E, 0x36},
-        {kStoryNewsTashaFiles, 0x39, 0x3B},
-        {kStoryNewsMatabushiProposal, 0x39, 0x3C},
-        {kStoryNewsMatabushiDarkWingOption, 0x39, 0x3D},
-        {kStoryNewsMatabushiPreparations, 0x39, 0x3E},
-        {kStoryNewsMatabushiProceed, 0x39, 0x3F},
-        {kStoryNewsJordanAlbieroLead, 0x38, 0x40},
+        {kStoryNewsJordanAlbieroLead, 0x37, 0x3B},
+        // These are five pages of ONE original message, not five story flags.
+        {kStoryNewsTashaFiles, 0x38, 0x3C},
+        {kStoryNewsMatabushiProposal, 0x38, 0x3C},
+        {kStoryNewsMatabushiDarkWingOption, 0x38, 0x3C},
+        {kStoryNewsMatabushiPreparations, 0x38, 0x3C},
+        {kStoryNewsMatabushiProceed, 0x38, 0x3C},
     }};
 
     static constexpr std::array<PilotTextDefinition, 42> kRecruitPilotDefinitions = {{
@@ -2312,11 +2427,13 @@ private:
         {L"DONE", MenuAction::Continue},
     }};
 
-    static constexpr std::array<MenuItem, 7> kSystemMenuItems = {{
+    static constexpr std::array<MenuItem, 9> kSystemMenuItems = {{
         {L"SAVE GAME", MenuAction::SaveGame},
         {L"RESTORE GAME", MenuAction::RestoreGame},
         {L"TURN SOUND OFF", MenuAction::ToggleSound},
-        {L"DETAIL: LOW", MenuAction::Detail},
+        {L"RESOLUTION: AUTO", MenuAction::Resolution},
+        {L"FULLSCREEN: NO", MenuAction::Fullscreen},
+        {L"MOUSELOOK: NO", MenuAction::MouseLook},
         {L"RESTART GAME", MenuAction::Restart},
         {L"EXIT TO DOS", MenuAction::ExitToDos},
         {L"CONTINUE", MenuAction::Continue},
@@ -2550,11 +2667,92 @@ private:
         return DefWindowProcW(hwnd, message, wParam, lParam);
     }
 
+    bool mouseLookContextActive() const {
+        if (!mouseLookEnabled_ || mouseLookSizing_ || state_!=ScreenState::MissionBattleStub ||
+            !campaignBattleRuntime_.active || !campaignBattleRuntime_.world || acceptedBattleOutcome_.valid ||
+            campaignBattleRuntime_.retreatPromptVisible || campaignBattleRuntime_.mechStatusVisible ||
+            campaignBattleRuntime_.presentationMode!=mw::battle::CampaignBattlePresentationMode::Cockpit) return false;
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+        if (debugConsoleOpen_) return false;
+#endif
+        const auto& snapshot=campaignBattleRuntime_.currentPresentationSnapshot;
+        const auto* player=playerCombatantSnapshot(snapshot);
+        return player && player->missionStatus==mw::battle::CombatantMissionStatus::Active &&
+            player->posture.posture==mw::battle::BattlePosture::Upright &&
+            !player->heat.reactorShutdown && !player->majorSystems.engineShutdown && !player->majorSystems.lifeSupportFailure &&
+            !(snapshot.conclusionDelay.active && snapshot.conclusionDelay.freezesSimulation);
+    }
+
+    void clearMouseLookInput() {
+        mouseLookPendingYaw_=mouseLookPendingPitch_=0.0;
+        mouseLookLeftHeld_=mouseLookRightHeld_=mouseLookCenterTorso_=false;
+        mouseLookFirePending_=false;
+        mouseLookAbsolutePoint_.reset();
+    }
+
+    void releaseMouseLookCapture() {
+        clearMouseLookInput();
+        if (!mouseLookCaptured_) return;
+        mouseLookCaptured_=false;
+        ClipCursor(nullptr);
+        RAWINPUTDEVICE device{0x01,0x02,RIDEV_REMOVE,nullptr};
+        RegisterRawInputDevices(&device,1,sizeof(device));
+        SetCursor(LoadCursorW(nullptr,IDC_ARROW));
+    }
+
+    void syncMouseLookCapture() {
+        if (!hwnd_ || !mouseLookContextActive() || !IsWindowVisible(hwnd_) || IsIconic(hwnd_) ||
+            GetAncestor(GetForegroundWindow(),GA_ROOT)!=hwnd_) {
+            releaseMouseLookCapture();return;
+        }
+        if (!mouseLookCaptured_) {
+            clearMouseLookInput();
+            RAWINPUTDEVICE device{0x01,0x02,0,hwnd_}; // Foreground only; keep normal menu messages.
+            if (!RegisterRawInputDevices(&device,1,sizeof(device))) {
+                mouseLookEnabled_=false;debugLog(L"MOUSELOOK unavailable: mouse input registration failed.");return;
+            }
+            mouseLookCaptured_=true;
+        }
+        RECT rect{};GetClientRect(hwnd_,&rect);
+        POINT origin{rect.left,rect.top};ClientToScreen(hwnd_,&origin);OffsetRect(&rect,origin.x,origin.y);
+        if (!ClipCursor(&rect)) { releaseMouseLookCapture();return; }
+        SetCursor(nullptr);
+    }
+
+    void handleMouseLookRawInput(const RAWMOUSE& mouse) {
+        if (!mouseLookCaptured_ || !mouseLookContextActive()) { clearMouseLookInput();return; }
+        double dx=mouse.lLastX,dy=mouse.lLastY;
+        if (mouse.usFlags & MOUSE_MOVE_ABSOLUTE) {
+            POINT position{mouse.lLastX,mouse.lLastY};
+            dx=dy=0;
+            if (mouseLookAbsolutePoint_) {
+                const bool desktop=(mouse.usFlags&MOUSE_VIRTUAL_DESKTOP)!=0;
+                dx=double(position.x-mouseLookAbsolutePoint_->x)*GetSystemMetrics(desktop?SM_CXVIRTUALSCREEN:SM_CXSCREEN)/65535.0;
+                dy=double(position.y-mouseLookAbsolutePoint_->y)*GetSystemMetrics(desktop?SM_CYVIRTUALSCREEN:SM_CYSCREEN)/65535.0;
+            }
+            mouseLookAbsolutePoint_=position;
+        } else mouseLookAbsolutePoint_.reset();
+        // No OS acceleration or integer aim-step rounding. Positive world yaw
+        // turns left; negative Windows Y means an upward, non-inverted look.
+        const double radiansPerCount=0.0015/std::max(1,campaignBattleRuntime_.cockpitZoomLevel);
+        mouseLookPendingYaw_-=dx*radiansPerCount;
+        mouseLookPendingPitch_-=dy*radiansPerCount;
+        if (mouse.usButtonFlags&RI_MOUSE_LEFT_BUTTON_DOWN) {
+            if (!mouseLookLeftHeld_) mouseLookFirePending_=true;
+            mouseLookLeftHeld_=true;
+        }
+        if (mouse.usButtonFlags&RI_MOUSE_LEFT_BUTTON_UP) mouseLookLeftHeld_=false;
+        if (mouse.usButtonFlags&RI_MOUSE_RIGHT_BUTTON_DOWN) mouseLookRightHeld_=true;
+        if (mouse.usButtonFlags&RI_MOUSE_RIGHT_BUTTON_UP) mouseLookRightHeld_=false;
+    }
+
     LRESULT handleMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {
         case WM_TIMER: {
+            syncMouseLookCapture();
             const DWORD now = GetTickCount();
             update(now);
+            syncMouseLookCapture();
             const bool campaignBattleRenderDue = updateCampaignBattleRenderCadence(now);
             render();
             if (campaignBattleRenderDue) {
@@ -2564,16 +2762,40 @@ private:
             return 0;
         }
         case WM_SIZE:
+            clearMouseLookInput();
             updateCampaignBattleGlViewport();
+            syncMouseLookCapture();
+            InvalidateRect(hwnd, nullptr, FALSE);
             return 0;
+        case WM_MOVE:
+            syncMouseLookCapture();return 0;
+        case WM_ENTERSIZEMOVE:
+            mouseLookSizing_=true;releaseMouseLookCapture();return 0;
+        case WM_EXITSIZEMOVE:
+            mouseLookSizing_=false;syncMouseLookCapture();return 0;
+        case WM_DPICHANGED:
+        case WM_DISPLAYCHANGE:
+            applyDisplaySettings();
+            return 0;
+        case WM_SYSKEYDOWN:
+            if (wParam == VK_RETURN && (lParam & (1ll << 29))) {
+                if (!(lParam & (1ll << 30))) toggleFullscreen();
+                return 0;
+            }
+            return DefWindowProcW(hwnd, message, wParam, lParam);
+        case WM_SYSCHAR:
+            if (wParam == VK_RETURN) return 0; // Consume the Alt+Enter character too.
+            return DefWindowProcW(hwnd, message, wParam, lParam);
         case WM_KEYDOWN:
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
             if (handleDebugKeyDown(wParam, lParam)) {
+                syncMouseLookCapture();
                 return 0;
             }
 #endif
             currentKeyDownRepeat_ = (lParam & (1ll << 30)) != 0;
             handleKey(wParam);
+            syncMouseLookCapture();
             currentKeyDownRepeat_ = false;
             return 0;
         case WM_CHAR:
@@ -2590,12 +2812,39 @@ private:
         case WM_RBUTTONDOWN:
             handleMouseClick(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), true);
             return 0;
+        case WM_MOUSEMOVE: {
+            if (mouseLookCaptured_) return 0;
+            const int x = GET_X_LPARAM(lParam), y = GET_Y_LPARAM(lParam);
+            // Windows can synthesize mouse moves during repaint/layout. A stationary
+            // pointer must not replace a destination subsequently edited by keyboard.
+            if (!lastCommandPointer_ || lastCommandPointer_->first != x || lastCommandPointer_->second != y) {
+                lastCommandPointer_ = std::pair<int,int>{x,y};
+                handleCampaignCommandPointer(x, y, mw::presentation::CampaignCommandPointerEvent::Move);
+            }
+            return 0;
+        }
         case WM_PAINT:
             paint(hwnd);
             return 0;
         case WM_ERASEBKGND:
             return 1;
+        case WM_ACTIVATEAPP:
+            if (!wParam) releaseMouseLookCapture();
+            else syncMouseLookCapture();
+            return 0;
+        case WM_SETCURSOR:
+            if (mouseLookCaptured_ && LOWORD(lParam)==HTCLIENT) { SetCursor(nullptr); return TRUE; }
+            return DefWindowProcW(hwnd,message,wParam,lParam);
+        case WM_INPUT: {
+            RAWINPUT input{};UINT size=sizeof(input);
+            if (mouseLookCaptured_ && GetRawInputData(reinterpret_cast<HRAWINPUT>(lParam),RID_INPUT,
+                    &input,&size,sizeof(RAWINPUTHEADER))!=UINT(-1) && input.header.dwType==RIM_TYPEMOUSE)
+                handleMouseLookRawInput(input.data.mouse);
+            // Foreground raw-input handles still require default cleanup.
+            return DefWindowProcW(hwnd,message,wParam,lParam);
+        }
         case WM_DESTROY:
+            releaseMouseLookCapture();
             campaignBattleGlViewport_.shutdown();
             PostQuitMessage(0);
             return 0;
@@ -2647,6 +2896,8 @@ private:
             return L"MechReloadPrompt";
         case ScreenState::MechSellOffer:
             return L"MechSellOffer";
+        case ScreenState::MechSellRefused:
+            return L"MechSellRefused";
         case ScreenState::MechBuyList:
             return L"MechBuyList";
         case ScreenState::MechBuyStatus:
@@ -2675,6 +2926,8 @@ private:
             return L"TravelAnimation";
         case ScreenState::MissionBattleStub:
             return L"MissionBattleStub";
+        case ScreenState::CampaignEnding:
+            return L"CampaignEnding";
         case ScreenState::MissionDebrief:
             return L"MissionDebrief";
         }
@@ -2763,7 +3016,8 @@ private:
 
         debugLog(L"> " + widen(command));
 
-        const std::array<CheatDefinition, 27> cheats = {{
+        const std::array<CheatDefinition, 29> cheats = {{
+            {"mouselook", &App::cheatMouseLook},
             {"money", &App::cheatMoney},
             {"exp1", &App::cheatPilotSkillPoor},
             {"exp2", &App::cheatPilotSkillAverage},
@@ -2784,6 +3038,7 @@ private:
             {"rep4", &App::cheatReputationElite},
             {"month", &App::cheatNextMonth},
             {"battle_test", &App::cheatBattleTest},
+            {"battle_test_orders", &App::cheatBattleTestOrders},
             {"battle_test_medium", &App::cheatBattleTestMedium},
             {"battle_test_heavy", &App::cheatBattleTestHeavy},
             {"battle_test_defeat", &App::cheatBattleTestDefeat},
@@ -2805,6 +3060,14 @@ private:
 #endif
 
     void handleMouseClick(int clientX, int clientY, bool rightButton) {
+        if (mouseLookCaptured_) return; // Buttons arrive once through raw input.
+        if (state_ == ScreenState::CampaignEnding) { finishCampaignEnding(); return; }
+        if (!repairNotice_.empty() && (state_==ScreenState::MechStatus || state_==ScreenState::MechRepairStatus)) {
+            repairNotice_.clear(); return;
+        }
+        if (handleCampaignCommandPointer(clientX, clientY, rightButton
+            ? mw::presentation::CampaignCommandPointerEvent::Back
+            : mw::presentation::CampaignCommandPointerEvent::Select)) return;
         if (rightButton) {
             if (state_ == ScreenState::BarMenu && barDialogState_ != BarDialogState::None) {
                 closeBarDialog();
@@ -2825,6 +3088,7 @@ private:
                 state_ == ScreenState::MechRepairStatus ||
                 state_ == ScreenState::MechReloadPrompt ||
                 state_ == ScreenState::MechSellOffer ||
+                state_ == ScreenState::MechSellRefused ||
                 state_ == ScreenState::MechBuyList ||
                 state_ == ScreenState::MechBuyStatus ||
                 state_ == ScreenState::MechBuyDamageStatus ||
@@ -2849,7 +3113,7 @@ private:
                     changeState(ScreenState::MechLabMenu);
                 } else if (state_ == ScreenState::MechRepairStatus ||
                            state_ == ScreenState::MechReloadPrompt ||
-                           state_ == ScreenState::MechSellOffer) {
+                           state_ == ScreenState::MechSellOffer || state_ == ScreenState::MechSellRefused) {
                     changeState(ScreenState::MechStatus);
                 } else if (state_ == ScreenState::MechBuyCannotAfford ||
                            state_ == ScreenState::MechBuyTooMany) {
@@ -2956,6 +3220,9 @@ private:
             return;
         }
 
+        if (state_ == ScreenState::MechSellRefused) {
+            changeState(ScreenState::MechStatus); return;
+        }
         if (state_ == ScreenState::MechSellOffer) {
             handleMechSellOfferClick(screenX, screenY);
             return;
@@ -3040,6 +3307,7 @@ private:
                 return;
             }
             contractMenuIndex_ = 0;
+            advanceCampaignDays(1); // Original contract entry 4AA2..4AA5.
             if (tryStartContractStory()) {
                 return;
             }
@@ -3244,7 +3512,7 @@ private:
             return;
         }
 
-        const PlanetMechMarket& market = currentPlanetMechMarket();
+        const CurrentMechMarket& market = currentMechMarket();
         const size_t count = market.mechsForSale.size();
         if (count == 0) {
             selectedMarketMechIndex_ = 0;
@@ -3318,7 +3586,7 @@ private:
     }
 
     void handleSystemMenuClick(int screenX, int screenY) {
-        const int itemIndex = hitMenuItem(screenX, screenY, 90, 90, 140, kSystemMenuItems.size());
+        const int itemIndex = hitMenuItem(screenX, screenY, 40, 80, 240, kSystemMenuItems.size());
         if (itemIndex < 0) {
             return;
         }
@@ -3689,7 +3957,7 @@ private:
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
         debugLog(activeContractOffer() && activeContractOffer()->termsModified
             ? L"Contract submit selected."
-            : L"Contract accept selected. Accept flow is not implemented yet.");
+            : L"Contract accept selected.");
 #endif
         ContractOffer* offer = activeContractOffer();
         if (!offer) {
@@ -3704,163 +3972,128 @@ private:
 
     void openContractNegotiation() {
         contractNegotiationTerminated_ = false;
-        contractNegotiationUnavailable_ = false;
         activeContractIndex_ = 0;
         contractEditableField_ = ContractEditableField::None;
         contractNegotiationButtonIndex_ = 1;
-        if (currentPlanetContractsLocked()) {
-            activeContracts_.clear();
-            contractNegotiationUnavailable_ = true;
-            changeState(ScreenState::ContractNegotiation);
-            return;
-        }
-        generateCurrentPlanetContracts();
-        if (activeContracts_.empty()) {
-            changeState(ScreenState::ContractMenu);
-            return;
-        }
+        // Request only presents the current board, including an empty board.
+        contractNegotiationUnavailable_ = !currentPlanetContractsAvailable() ||
+            currentContractHouseRefuses() || activeContracts_.empty();
         changeState(ScreenState::ContractNegotiation);
     }
 
+    bool currentContractHouseRefuses() const {
+        return static_cast<uint16_t>(houseNegativeCounters_[currentPlanetHouseId()]) >= 8;
+    }
+
+    ContractOffer contractOfferFromOriginal(const mw::battle::OriginalContractTables& tables,
+        const mw::battle::OriginalContractOffer& source, size_t slot = std::numeric_limits<size_t>::max()) const {
+            ContractOffer offer;
+            offer.generationSlot = slot;
+            offer.employerHouse = currentPlanetHouseId();
+            offer.targetCategory = source.category;
+            offer.originalMissionClass = source.missionClass;
+            offer.originalMissionId = tables.missions.at(source.missionIndex).id;
+            const auto& definition = kContractMissionDefinitions.at(source.missionIndex);
+            offer.missionName = definition.name;
+            offer.hasHostileTargetHouse = source.category<=4; // MW_MAIN2101: chosen category, not mission title.
+            offer.targetPlanetTableOrder = source.targetPlanetIndex + 1u;
+            offer.targetPlanetIndex = planetIndexFromTableOrder(offer.targetPlanetTableOrder);
+            if (offer.targetPlanetIndex < 0) throw std::runtime_error("contract target planet is unavailable");
+            const auto& target = planets_.at(static_cast<size_t>(offer.targetPlanetIndex));
+            offer.targetHouse = source.category<=4 ? source.category : target.houseId;
+            offer.targetPlanet = widen(target.name);
+            offer.targetPlanetTerrainCode = target.terrainCode;
+            offer.targetEnvironmentId = mw::battle::campaignBattleEnvironmentIdFromPlanetTerrainCode(target.terrainCode);
+            offer.terrainScenarioIndex = mw::battle::campaignBattleTerrainScenarioIndexFromTargetPlanetTableOrder(
+                offer.targetPlanetTableOrder);
+            // Presentation-only replacement seed: no extra original RNG draw.
+            offer.skyMode = mw::battle::campaignBattleSkyModeFromOriginalRoll(
+                uint32_t{offer.targetPlanetTableOrder} * 31u + offer.originalMissionId);
+            offer.heavyCount = source.opposition[0];
+            offer.mediumCount = source.opposition[1];
+            offer.lightCount = source.opposition[2];
+            offer.priceK = offer.housePriceK = source.price;
+            offer.salvagePercent = offer.houseSalvagePercent = source.salvage;
+            offer.advancePercent = offer.houseAdvancePercent = source.advance;
+            offer.priceCeilingK = source.priceCeiling;
+            offer.salvageCeilingPercent = source.salvageCeiling;
+            offer.advanceCeilingPercent = source.advanceCeiling;
+            return offer;
+    }
+
+    void installContractBoard(const mw::battle::OriginalContractTables& tables,
+                              const mw::battle::OriginalContractBoard& board) {
+        std::vector<ContractOffer> offers;
+        for (size_t slot = 0; slot < board.offers.size(); ++slot) {
+            offers.push_back(contractOfferFromOriginal(tables,board.offers[slot],slot));
+        }
+        activeContracts_ = std::move(offers);
+        contractClassFourThreshold_ = board.classFourThreshold;
+        activeContractIndex_ = 0;
+        contractEditableField_ = ContractEditableField::None;
+        contractNegotiationTerminated_ = false;
+        contractNegotiationUnavailable_ = false;
+    }
+
+    mw::battle::OriginalContractBoard originalContractBoardForSave(
+        const mw::battle::OriginalContractTables& tables) const {
+        mw::battle::OriginalContractBoard board;
+        board.classFourThreshold = contractClassFourThreshold_;
+        for (const auto& offer : activeContracts_) {
+            const auto mission = std::find_if(tables.missions.begin(), tables.missions.end(),
+                [&](const auto& m) { return m.id == offer.originalMissionId; });
+            if (mission == tables.missions.end() || offer.targetPlanetTableOrder == 0)
+                throw std::runtime_error("cannot save an unknown contract mission/target");
+            mw::battle::OriginalContractOffer o;
+            o.missionIndex = static_cast<size_t>(mission - tables.missions.begin());
+            o.targetPlanetIndex = offer.targetPlanetTableOrder - 1u;
+            o.category = offer.targetCategory;
+            o.missionClass = offer.originalMissionClass;
+            o.opposition = {{static_cast<uint16_t>(offer.heavyCount), static_cast<uint16_t>(offer.mediumCount),
+                static_cast<uint16_t>(offer.lightCount)}};
+            // Editable requests are UI scratch. Save the last House offer.
+            o.price = static_cast<uint16_t>(offer.housePriceK);
+            o.salvage = static_cast<uint16_t>(offer.houseSalvagePercent);
+            o.advance = static_cast<uint16_t>(offer.houseAdvancePercent);
+            o.priceCeiling = static_cast<uint16_t>(offer.priceCeilingK);
+            o.salvageCeiling = static_cast<uint16_t>(offer.salvageCeilingPercent);
+            o.advanceCeiling = static_cast<uint16_t>(offer.advanceCeilingPercent);
+            board.offers.push_back(o);
+        }
+        if (!board.offers.empty()) board.status = mw::battle::ContractBoardStatus::Ready;
+        return board;
+    }
+
     void generateCurrentPlanetContracts() {
-        activeContracts_.clear();
-        if (planets_.empty()) {
-            return;
-        }
-
-        const PlanetRecord& currentPlanet =
-            planets_[std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1)];
-        if (currentPlanet.contractAvailableFlag == 0) {
-            return;
-        }
-        if (currentPlanetContractsLocked()) {
-            return;
-        }
-        if (houseNegativeCounters_[std::min<size_t>(currentPlanet.houseId, houseNegativeCounters_.size() - 1u)] > 7) {
-            return;
-        }
-
-        mw::battle::beginCampaignContractVisit(
-            completedContractVisitLedger_,
-            currentPlanetVisitSerial_);
-
-        std::mt19937 rng(contractGenerationSeed(currentPlanet));
-        size_t offerCount = 2u + static_cast<size_t>(rng() % 3u);
-        if (currentYear_ == 3028 && currentMonth_ >= 7) {
-            offerCount = 3u + static_cast<size_t>(rng() % 3u);
-        } else if (currentYear_ > 3028) {
-            offerCount = 3u + static_cast<size_t>(rng() % 3u);
-        }
-
-        activeContracts_.reserve(offerCount);
-        for (size_t slot = 0; slot < offerCount; ++slot) {
-            ContractOffer offer = generateContractOffer(currentPlanet, slot, rng);
-            if (!mw::battle::campaignContractOfferAvailableForVisit(
-                    completedContractVisitLedger_,
-                    currentPlanetVisitSerial_,
-                    slot)) {
-#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
-                debugLog(
-                    L"Contract route: slot=" + std::to_wstring(slot) +
-                    L" hidden because it was completed during this planet visit");
-#endif
-                continue;
-            }
-            activeContracts_.push_back(std::move(offer));
-#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
-            const ContractOffer& loggedOffer = activeContracts_.back();
-            debugLog(
-                L"Contract route: slot=" + std::to_wstring(slot) +
-                L", employer=" + std::to_wstring(loggedOffer.employerHouse) +
-                L", category=" + std::to_wstring(loggedOffer.targetCategory) +
-                L", class=" + std::to_wstring(loggedOffer.originalMissionClass) +
-                L", target_table_order=" + std::to_wstring(loggedOffer.targetPlanetTableOrder) +
-                L", scenario=" + std::to_wstring(loggedOffer.terrainScenarioIndex) +
-                L", mission=" + std::wstring(loggedOffer.missionName));
-#endif
-        }
+        if (planets_.empty() || mwMainData_.empty()) return;
+        const auto tables = mw::battle::decodeOriginalContractTables(mwMainData_);
+        mw::battle::ContractGenerationContext context;
+        context.employerHouse = currentPlanetHouseId();
+        context.year = currentYear_;
+        context.month = currentMonth_;
+        context.dayCounter = currentMonthDayCounter_;
+        context.forceScore = contractForceScore();
+        context.crewCount = static_cast<uint16_t>(std::count_if(crewMembers_.begin(), crewMembers_.end(),
+            [](const auto& crew) { return crew.hired; }));
+        context.ownedMechCount = static_cast<uint16_t>(ownedMechs_.size());
+        context.positiveStanding = housePositiveCounters_[context.employerHouse];
+        context.negativeStanding = houseNegativeCounters_[context.employerHouse];
+        const auto board = mw::battle::generateOriginalContractBoard(tables, context, repairSession_.rng);
+        installContractBoard(tables, board);
+        if (board.status == mw::battle::ContractBoardStatus::Invalid)
+            debugLog(L"Contract generation rejected invalid tables or exhausted its bounded retry budget.");
     }
 
     uint32_t contractGenerationSeed(const PlanetRecord& planet) const {
+        // Replacement seed policy: all inputs survive an original GAM save.
+        // DOS's global BIOS-seeded RNG and unrelated subsystem draws are not reproduced.
         uint32_t seed = 0x6D575243u;
         seed ^= static_cast<uint32_t>(planet.tableOrder) * 0x9E3779B9u;
         seed ^= static_cast<uint32_t>(planet.planetNumber) * 0x85EBCA6Bu;
         seed ^= static_cast<uint32_t>(currentYear_) * 0xC2B2AE35u;
         seed ^= static_cast<uint32_t>(currentMonth_ + 1) * 0x27D4EB2Du;
         seed ^= static_cast<uint32_t>(currentMonthDayCounter_) * 0x165667B1u;
-        seed ^= static_cast<uint32_t>(currentPlanetVisitSerial_) * 0xD3A2646Cu;
         return seed;
-    }
-
-    ContractOffer generateContractOffer(const PlanetRecord& currentPlanet, size_t slot, std::mt19937& rng) const {
-        ContractOffer offer;
-        offer.generationSlot = slot;
-        offer.employerHouse = std::min<uint8_t>(currentPlanet.houseId, 4);
-        offer.targetCategory =
-            chooseOriginalContractTargetCategory(offer.employerHouse, rng);
-        offer.originalMissionClass = chooseOriginalContractMissionClass(
-            offer.employerHouse,
-            offer.targetCategory,
-            rng);
-        const bool hasExtendedCapacity = ownedMechs_.size() >= 4u;
-        const ContractMissionDefinition& mission = chooseContractMissionFromClass(
-            offer.originalMissionClass,
-            hasExtendedCapacity,
-            rng);
-        offer.originalMissionClass = mission.originalMissionClass;
-        offer.originalMissionId = static_cast<uint8_t>(
-            static_cast<size_t>(&mission - kContractMissionDefinitions.data()) + 1u);
-        offer.missionName = mission.name;
-        offer.hasHostileTargetHouse = contractMissionHasHostileTargetHouse(mission);
-
-        offer.targetPlanetIndex = contractTargetPlanetIndex(
-            offer.employerHouse,
-            offer.targetCategory,
-            offer.originalMissionClass,
-            rng);
-        if (offer.targetPlanetIndex >= 0 &&
-            static_cast<size_t>(offer.targetPlanetIndex) < planets_.size()) {
-            const PlanetRecord& targetPlanet = planets_[static_cast<size_t>(offer.targetPlanetIndex)];
-            offer.targetHouse = std::min<uint8_t>(targetPlanet.houseId, 4);
-            offer.targetPlanet = widen(targetPlanet.name);
-            offer.targetPlanetTerrainCode = targetPlanet.terrainCode;
-            offer.targetEnvironmentId = battleEnvironmentIdForTerrainCode(targetPlanet.terrainCode);
-            offer.targetPlanetTableOrder = targetPlanet.tableOrder;
-            offer.terrainScenarioIndex =
-                mw::battle::campaignBattleTerrainScenarioIndexFromTargetPlanetTableOrder(
-                    targetPlanet.tableOrder);
-        } else {
-            offer.targetPlanet = currentPlanetName();
-            offer.targetHouse = offer.employerHouse;
-            offer.targetPlanetTableOrder = currentPlanet.tableOrder;
-            offer.terrainScenarioIndex =
-                mw::battle::campaignBattleTerrainScenarioIndexFromTargetPlanetTableOrder(
-                    currentPlanet.tableOrder);
-        }
-
-        int score = contractForceScore();
-        if (slot == 1u || slot == 4u) {
-            score = score + score / 2;
-        } else if (slot == 2u || slot == 5u) {
-            score /= 2;
-        }
-        assignContractEnemyCounts(score, offer, static_cast<uint32_t>(rng()));
-        if (mission.extended) {
-            offer.heavyCount *= 3;
-            offer.mediumCount *= 3;
-            offer.lightCount *= 3;
-        }
-
-        offer.priceK = contractBasePriceK(score, offer.employerHouse, static_cast<uint32_t>(rng()));
-        if (mission.extended) {
-            offer.priceK = std::min(kContractMaxPriceK, offer.priceK * 3);
-        }
-        offer.salvagePercent = contractDefaultSalvagePercent(offer.employerHouse, static_cast<uint32_t>(rng()));
-        offer.advancePercent = contractDefaultAdvancePercent(offer.employerHouse, static_cast<uint32_t>(rng()));
-        offer.housePriceK = offer.priceK;
-        offer.houseSalvagePercent = offer.salvagePercent;
-        offer.houseAdvancePercent = offer.advancePercent;
-        return offer;
     }
 
     void handleCrewMenuClick(int screenX, int screenY) {
@@ -3909,7 +4142,7 @@ private:
             extraAmmoSelectionIndex_ = 0;
             changeState(ScreenState::MechExtraAmmo);
         } else if (action == MenuAction::BuyMechs) {
-            openCurrentPlanetMechMarket();
+            openCurrentMechMarket();
         } else if (action == MenuAction::Continue) {
             if (tryStartMechBayExitStory()) {
                 return;
@@ -3918,8 +4151,8 @@ private:
         }
     }
 
-    void openCurrentPlanetMechMarket() {
-        ensureCurrentPlanetMechMarket();
+    void openCurrentMechMarket() {
+        ensureCurrentMechMarket();
         selectedMarketMechIndex_ = 0;
         mechMarketScrollOffset_ = 0;
         changeState(ScreenState::MechBuyList);
@@ -3973,8 +4206,10 @@ private:
             reloadSelectionIndex_ = 0;
             changeState(ScreenState::MechReloadPrompt);
         } else if (mechStatusMenuIndex_ == 3) {
+            advanceCampaignDays(2); // Original 3314: negotiation costs one displayed day.
             sellOfferSelectionIndex_ = 0;
-            changeState(ScreenState::MechSellOffer);
+            changeState(mw::battle::originalMarketAcceptsSale(mechMarket_.original,currentPlanetEconomyTier())
+                ? ScreenState::MechSellOffer : ScreenState::MechSellRefused);
         } else if (mechStatusMenuIndex_ == 4) {
             changeState(ScreenState::MechReviewList);
         }
@@ -4027,13 +4262,25 @@ private:
             return;
         }
 
+        if (!mw::battle::originalMarketAcceptsSale(mechMarket_.original,currentPlanetEconomyTier())) {
+            changeState(ScreenState::MechSellRefused);
+            return;
+        }
         OwnedMech soldMech = ownedMechs_[selectedMechIndex_];
         soldMech.assignedCrewSlot = -1;
         const uint32_t offer = mechSellOffer(soldMech);
         const uint32_t askingPrice = std::max(offer, mechBuyPrice(soldMech));
 
         playerWealth_ = std::min<uint64_t>(kMaxPlayerWealth, playerWealth_ + offer);
-        currentPlanetMechMarket().mechsForSale.push_back({soldMech, askingPrice});
+        ++mechMarket_.original.sales;
+        for (size_t slot=0; slot<mechMarket_.original.slots.size(); ++slot) {
+            if (mechMarket_.original.slots[slot].chassis!=0xffff) continue;
+            mechMarket_.original.slots[slot]=originalMarketMech(soldMech);
+            const auto pos=std::find_if(mechMarket_.mechsForSale.begin(),mechMarket_.mechsForSale.end(),
+                [slot](const auto& entry) { return entry.originalSlot>slot; });
+            mechMarket_.mechsForSale.insert(pos,{soldMech,askingPrice,slot});
+            break;
+        }
 
         ownedMechs_.erase(ownedMechs_.begin() + static_cast<std::ptrdiff_t>(selectedMechIndex_));
         selectedMechIndex_ = ownedMechs_.empty() ? 0 : std::min(selectedMechIndex_, ownedMechs_.size() - 1u);
@@ -4042,7 +4289,7 @@ private:
     }
 
     void activateMechBuyListSelection() {
-        const PlanetMechMarket& market = currentPlanetMechMarket();
+        const CurrentMechMarket& market = currentMechMarket();
         if (selectedMarketMechIndex_ >= market.mechsForSale.size()) {
             mechLabMenuIndex_ = 2;
             changeState(ScreenState::MechLabMenu);
@@ -4064,7 +4311,7 @@ private:
     }
 
     void buySelectedMarketMech() {
-        PlanetMechMarket& market = currentPlanetMechMarket();
+        CurrentMechMarket& market = currentMechMarket();
         if (selectedMarketMechIndex_ >= market.mechsForSale.size()) {
             changeState(ScreenState::MechBuyList);
             return;
@@ -4085,6 +4332,7 @@ private:
         boughtMech.repairCost = totalRepairCost(boughtMech);
         playerWealth_ -= offer.askingPrice;
         ownedMechs_.push_back(boughtMech);
+        market.original.slots.at(offer.originalSlot).chassis=0xffff;
         market.mechsForSale.erase(market.mechsForSale.begin() + static_cast<std::ptrdiff_t>(selectedMarketMechIndex_));
 
         if (!market.mechsForSale.empty() && selectedMarketMechIndex_ >= market.mechsForSale.size()) {
@@ -4095,6 +4343,25 @@ private:
         clampMechMarketScroll();
         mechBuyMenuIndex_ = 0;
         changeState(ScreenState::MechBuyList);
+    }
+
+    void initializeRepairSession() {
+        // 1909/1A01 -> 3FFD clears only cache. Restore/new game do not
+        // re-execute process startup 0159 -> 0C0A or rewind unsaved RNG.
+        repairSession_.unavailable.fill(0);
+        repairNotice_.clear();
+    }
+
+    uint32_t campaignModuleClockTicks() const {
+        if (!hostClockRng_) return 0; // Controlled headless/test startup.
+        SYSTEMTIME local{}; GetLocalTime(&local);
+        const uint32_t ms=((local.wHour*60u+local.wMinute)*60u+local.wSecond)*1000u+local.wMilliseconds;
+        return static_cast<uint32_t>(uint64_t{ms}*1193182u/65536000u);
+    }
+    void restartCampaignModuleRng(uint32_t biosTicks) {
+        // MW loader 0B80/0BDB EXEC reloads modules, not a shared cross-module RNG.
+        repairSession_={}; repairSession_.rng={1557,6536};
+        repairSession_.rng.mixBiosTicks(biosTicks);
     }
 
     void repairSelectedMechTarget() {
@@ -4108,40 +4375,41 @@ private:
             return;
         }
 
-        const uint32_t cost = repairTargetCost(*mech, target);
-        if (cost == 0 || playerWealth_ < cost) {
+        repairNotice_.clear();
+        const auto selector=repairSelector(target);
+        if (selector!=10 && !mw::battle::originalRepairAvailable(repairTables_,repairSession_,
+                gamChassisId(mech->chassis),currentPlanetEconomyTier(),selector>10 ? selector-1 : selector)) {
+            repairNotice_=L"HAVE TO WAIT FOR PARTS";
             return;
         }
-
-        switch (target.kind) {
-        case RepairTargetKind::Engine:
-        case RepairTargetKind::Gyros:
-        case RepairTargetKind::Sensors:
-        case RepairTargetKind::LifeSupport:
-        case RepairTargetKind::LeftArmActuator:
-        case RepairTargetKind::RightArmActuator:
-        case RepairTargetKind::LeftLegActuator:
-        case RepairTargetKind::RightLegActuator:
-            setComponentCondition(*mech, target.kind, DamageState::Functional);
-            break;
-        case RepairTargetKind::HeatSink:
-            mech->heatSinksWorking = mech->heatSinksTotal;
-            break;
-        case RepairTargetKind::JumpJets:
-            mech->jumpJetsWorking = mech->jumpJetsTotal;
-            break;
-        case RepairTargetKind::Armor:
-            repairArmorStep(*mech);
-            break;
-        case RepairTargetKind::Weapon:
-            if (target.index < mech->weapons.size()) {
-                mech->weapons[target.index].condition = DamageState::Functional;
-            }
-            break;
+        const uint32_t cost = repairTargetCost(*mech, target);
+        if (playerWealth_ < cost) return;
+        auto condition=repairCondition(*mech);
+        const auto before=condition;
+        if (!mw::battle::applyOriginalRepairStep(condition,repairSelector(target))) return;
+        auto state=battlePersistentMechStateFromOwnedMech(*mech,"campaign_repair");
+        // Keep all exact damage except the purchased field. Exact runtime points
+        // have no DOS equivalent; their reconstruction follows our entry bridge.
+        if (target.kind==RepairTargetKind::Armor) {
+            const auto changed=std::mismatch(before.begin()+20,before.end(),condition.begin()+20);
+            const auto section=mw::battle::originalGamArmorRuntimeIndex(
+                static_cast<size_t>(changed.first-(before.begin()+20)));
+            state.armorDamage[section]=0;
+            mw::battle::repairCampaignMechDamage(state,battleMechPresetForChassis(mech->chassis).value_or(""),
+                mw::battle::CampaignMechRepairKind::ArmorSection,section);
+        } else {
+            mw::battle::repairCampaignMechDamageStep(state,battleMechPresetForChassis(mech->chassis).value_or(""),
+                target.kind==RepairTargetKind::Weapon ? mw::battle::CampaignMechRepairKind::Weapon :
+                    mw::battle::CampaignMechRepairKind::CriticalComponent,
+                target.kind==RepairTargetKind::Weapon ? target.index : repairSelector(target));
         }
-
+        // Original 3F9E..3FC9 pays first, then advances calendar using the old
+        // condition in AX, then mutates damage. CX's 0/1/2/5 table is unused.
+        const auto ticks=mw::battle::originalRepairStepTicks(selectedMechIndex_,repairSelector(target),before);
         playerWealth_ -= cost;
-        mech->repairCost = totalRepairCost(*mech);
+        advanceCampaignDays(ticks);
+        applyBattlePersistentMechStateToOwnedMech(*mech,state);
+        finalizeLoadedMech(*mech);
         const std::vector<RepairTarget> targets = repairableTargets(*mech);
         if (!targets.empty()) {
             repairSelectionIndex_ = std::min(repairSelectionIndex_, targets.size() - 1u);
@@ -4157,38 +4425,53 @@ private:
             return;
         }
 
+        repairNotice_.clear();
         const uint32_t cost = totalRepairCost(*mech);
-        if (cost == 0 || playerWealth_ < cost) {
-            return;
-        }
+        if (cost==0) { repairNotice_=L"THIS MECH IS NOT DAMAGED."; return; }
+        if (playerWealth_<cost) { repairNotice_=L"YOU DON'T HAVE ENOUGH MONEY"; return; }
+        const auto before=repairCondition(*mech);
+        auto condition=before;
+        playerWealth_-=cost; // MW_MAIN 384C: full quote is required up front.
+        const bool failed=mw::battle::applyOriginalFullRepair(repairTables_,repairSession_,
+            gamChassisId(mech->chassis),currentPlanetEconomyTier(),condition);
+        playerWealth_+=mw::battle::originalRepairTotalCost(repairTables_,gamChassisId(mech->chassis),
+            serviceFactor_,condition); // 38CA: refund unresolved damage.
 
-        mech->engine = DamageState::Functional;
-        mech->gyros = DamageState::Functional;
-        mech->sensors = DamageState::Functional;
-        mech->lifeSupport = DamageState::Functional;
-        mech->leftArmActuator = DamageState::Functional;
-        mech->rightArmActuator = DamageState::Functional;
-        mech->leftLegActuator = DamageState::Functional;
-        mech->rightLegActuator = DamageState::Functional;
-        mech->heatSinksWorking = mech->heatSinksTotal;
-        mech->jumpJetsWorking = mech->jumpJetsTotal;
-        mech->armorDamage = {};
-        updateArmorPercent(*mech);
-        for (MechWeaponStatus& weapon : mech->weapons) {
-            weapon.condition = DamageState::Functional;
+        // Restore only cleared fields, retaining exact points in unpaid fields.
+        auto state=battlePersistentMechStateFromOwnedMech(*mech,"campaign_full_repair");
+        const auto preset=battleMechPresetForChassis(mech->chassis).value_or("");
+        for (size_t field=0;field<before.size();++field) {
+            if (!before[field] || condition[field]) continue;
+            if (field>=20) {
+                const auto section=mw::battle::originalGamArmorRuntimeIndex(field-20);
+                state.armorDamage[section]=0;
+                mw::battle::repairCampaignMechDamage(state,preset,
+                    mw::battle::CampaignMechRepairKind::ArmorSection,section);
+            } else {
+                const auto kind=field<10 ? mw::battle::CampaignMechRepairKind::CriticalComponent :
+                    mw::battle::CampaignMechRepairKind::Weapon;
+                const auto index=field<10 ? field : field-10;
+                // Step helper updates legacy summary as well as exact state.
+                // Finish with full restoration for the paid exact field only.
+                for (size_t step=0;step<before[field];++step)
+                    mw::battle::repairCampaignMechDamageStep(state,preset,kind,index);
+                mw::battle::repairCampaignMechDamage(state,preset,kind,index);
+            }
         }
-
-        playerWealth_ -= cost;
-        mech->repairCost = 0;
-        mech->condition = DamageState::Functional;
-        repairSelectionIndex_ = 0;
+        applyBattlePersistentMechStateToOwnedMech(*mech,state);
+        // Legacy armor path owns the coarse bytes (exact helper is a no-op there).
+        for (size_t i=0;i<9;++i) mech->armorDamage[i]=condition[20+i];
+        if (!failed) mech->exactDamage.reset();
+        finalizeLoadedMech(*mech);
+        repairSelectionIndex_=0;
+        repairNotice_=failed ? L"NOT ALL PARTS WERE AVAILABLE." : L"ALL SYSTEMS ARE NOW FUNCTIONAL.";
     }
 
     void activateBarMenuItem(size_t itemIndex) {
         const MenuAction action = kBarMenuItems[itemIndex].action;
         if (itemIndex == 0) {
+            advanceCampaignDays(1); // Original 69F7..69FA, before story dispatch.
             if (!tryStartOrderDrinkStory()) {
-                spendStoryCbills(5);
                 beginStory({makeStoryPage(kStoryQuietBarDrink)}, StoryBackdrop::Bar, ScreenState::BarMenu);
             }
         } else if (action == MenuAction::RecruitCrew) {
@@ -4203,7 +4486,6 @@ private:
 
     void openRecruitDialog() {
         barMenuIndex_ = 1;
-        ensureRecruitPoolForCurrentPlanet();
         const int candidateIndex = findNextRecruitCandidate();
         if (candidateIndex < 0) {
             activeRecruitIndex_ = -1;
@@ -4215,6 +4497,7 @@ private:
         }
 
         activeRecruitIndex_ = candidateIndex;
+        advanceCampaignDays(1); // MW_MAIN 6A3A: half a displayed day per interview.
         recruitChoiceIndex_ = 0;
         barDialogState_ = BarDialogState::RecruitOffer;
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
@@ -4233,7 +4516,7 @@ private:
         }
 
         const size_t index = static_cast<size_t>(activeRecruitIndex_);
-        removeRecruitFromCurrentPool(index);
+        removeActiveRecruitOffer();
 
         if (recruitChoiceIndex_ == 0) {
             if (!hireRecruit(index)) {
@@ -4298,29 +4581,18 @@ private:
         return currentPlanetIs(name);
     }
 
-    int chooseNewGameStartingPlanetIndex() const {
+    int chooseNewGameStartingPlanetIndex() {
         std::vector<int> candidates;
-        candidates.reserve(planets_.size());
-        for (size_t i = 0; i < planets_.size(); ++i) {
-            const PlanetRecord& planet = planets_[i];
-            if (planet.contractAvailableFlag != 0 && (planet.houseId == 0 || planet.houseId == 4)) {
-                candidates.push_back(static_cast<int>(i));
-            }
-        }
-        if (candidates.empty()) {
-            for (size_t i = 0; i < planets_.size(); ++i) {
-                if (planets_[i].contractAvailableFlag != 0) {
-                    candidates.push_back(static_cast<int>(i));
-                }
-            }
+        // Original new-game pool DS8FDA..8FE1, shared inclusive R(7).
+        for (size_t i=0;i<8 && 0x11CDAu+i<mwMainData_.size();++i) {
+            const int index=planetIndexFromTableOrder(mwMainData_[0x11CDAu+i]);
+            if(index>=0) candidates.push_back(index);
         }
         if (candidates.empty()) {
             return findPlanetIndexByName(kFallbackStartingPlanetName);
         }
 
-        std::mt19937 rng(makeRecruitmentSeed() ^ 0x53544152u);
-        std::uniform_int_distribution<size_t> distribution(0, candidates.size() - 1u);
-        return candidates[distribution(rng)];
+        return candidates[repairSession_.rng.inclusive(static_cast<uint16_t>(candidates.size()-1))];
     }
 
     bool isMainStoryComplete() const {
@@ -4329,6 +4601,12 @@ private:
 
     void spendStoryCbills(uint64_t amount) {
         playerWealth_ = playerWealth_ > amount ? playerWealth_ - amount : 0;
+    }
+
+    void awardOriginalStoryCbills(uint32_t amount) {
+        // Original action04 (662D): DWORD ADD/ADC, then clear on sign bit.
+        const uint32_t total = static_cast<uint32_t>(playerWealth_) + amount;
+        playerWealth_ = (total & 0x80000000u) ? 0u : total;
     }
 
     std::vector<std::wstring> storyLines(const MwMainTextRef& textRef) const {
@@ -4459,10 +4737,11 @@ private:
 
     const std::wstring& wendallDestinationPlanet() {
         if (wendallDestinationPlanet_.empty()) {
-            static constexpr std::array<std::string_view, 3> kMarikDestinations = {{
+            static constexpr std::array<std::string_view, 4> kMarikDestinations = {{
                 "GIBSON",
                 "MOSIRO",
                 "SADURNI",
+                "LESNOVO",
             }};
             wendallDestinationPlanet_ = chooseStoryPlanet(kMarikDestinations, 0x57454E44u);
         }
@@ -4483,9 +4762,11 @@ private:
 
     const std::wstring& blackWidowDestinationPlanet() {
         if (blackWidowDestinationPlanet_.empty()) {
-            static constexpr std::array<std::string_view, 2> kBlackWidowDestinations = {{
+            static constexpr std::array<std::string_view, 4> kBlackWidowDestinations = {{
                 "PROSERPINA",
+                "DELACRUZ",
                 "THESTRIA",
+                "MISERY",
             }};
             blackWidowDestinationPlanet_ = chooseStoryPlanet(kBlackWidowDestinations, 0x5749444Fu);
         }
@@ -4494,7 +4775,8 @@ private:
 
     const std::wstring& darkWingDestinationPlanet() {
         if (darkWingDestinationPlanet_.empty()) {
-            static constexpr std::array<std::string_view, 2> kDarkWingDestinations = {{
+            static constexpr std::array<std::string_view, 3> kDarkWingDestinations = {{
+                "RADSTADT",
                 "KIRCHBACH",
                 "ALBIERO",
             }};
@@ -4505,6 +4787,56 @@ private:
 
     bool isCurrentPlanetName(const std::wstring& name) const {
         return currentPlanetName() == name;
+    }
+
+    void initializeStoryDestinations() {
+        // 1832..1884, after starting planet AND service factor, before boards.
+        storyDestinationSaveIds_[0]=static_cast<uint16_t>(planets_.at(static_cast<size_t>(currentPlanetIndex_)).tableOrder);
+        constexpr std::array<size_t,5> pools{{0x8fe2,0x8fe5,0x8fe9,0x8fec,0x8ff0}};
+        constexpr std::array<uint16_t,5> bounds{{2,3,2,3,2}};
+        std::array<std::wstring*,5> names{{&grigDestinationPlanet_,&wendallDestinationPlanet_,
+            &kearneyDestinationPlanet_,&blackWidowDestinationPlanet_,&darkWingDestinationPlanet_}};
+        for(size_t i=0;i<pools.size();++i) {
+            const auto id=mwMainData_.at(0x8d00+pools[i]+repairSession_.rng.inclusive(bounds[i]));
+            storyDestinationSaveIds_[i+1]=id;
+            *names[i]=widen(planets_.at(static_cast<size_t>(planetIndexFromTableOrder(id))).name);
+        }
+    }
+
+    void restoreStoryDestinations(const std::vector<uint8_t>& data) {
+        std::array<std::wstring,6> names;
+        for(size_t i=0;i<names.size();++i) {
+            storyDestinationSaveIds_[i]=readGamU16Le(data,0x6FEu+i*2u);
+            const int index=planetIndexFromTableOrder(storyDestinationSaveIds_[i]);
+            if(index>=0) names[i]=widen(planets_[static_cast<size_t>(index)].name);
+        }
+        if(!names[0].empty()) {
+            const int index=planetIndexFromTableOrder(storyDestinationSaveIds_[0]);
+            startingStoryPlanetName_=planets_[static_cast<size_t>(index)].name;
+        } else if(!storyFlag(0x0A)) startingStoryPlanetName_=currentPlanetNameAscii();
+        else startingStoryPlanetName_=std::string(kFallbackStartingPlanetName);
+        grigDestinationPlanet_=names[1];wendallDestinationPlanet_=names[2];
+        kearneyDestinationPlanet_=names[3];blackWidowDestinationPlanet_=names[4];
+        darkWingDestinationPlanet_=names[5];
+        // Preserve invalid/zero legacy words verbatim on no-action Save. Cached
+        // fallback names are compatibility policy, not a reconstruction of lost data.
+    }
+
+    void refreshStoryNewsText() {
+        newsNetMessageLines_.clear();
+        newsNetMessageLines_.reserve(kNewsNetEntries.size()+kStoryNewsNetEntries.size());
+        for(const auto& entry:kNewsNetEntries)
+            newsNetMessageLines_.push_back(parseMwMainTextBlock(mwMainData_,entry.text));
+        for(const auto& entry:kStoryNewsNetEntries) {
+            auto lines=storyLines(entry.text);
+            if(entry.messageId==0x36) {
+                appendToLastStoryLine(lines,blackWidowDestinationPlanet());
+                appendStoryLines(lines,storyLines(kStoryNewsBlackWidowLeadSuffix));
+            } else if(entry.messageId==0x3B && !lines.empty() && lines.front().rfind(L"- ",0)==0) {
+                lines.front().erase(0,2);
+            }
+            newsNetMessageLines_.push_back(std::move(lines));
+        }
     }
 
     void beginStory(
@@ -4529,48 +4861,39 @@ private:
                 beginStory({makeStoryPage(kStoryStartingBarClue1)}, StoryBackdrop::Bar, ScreenState::BarMenu);
                 return true;
             }
-            if (!storyFlag(0x0A)) {
-                setStoryFlag(0x0A);
-                spendStoryCbills(5);
-                beginStory({makeStoryPage(kStoryStartingBarClue2)}, StoryBackdrop::Bar, ScreenState::BarMenu);
-                return true;
-            }
         }
-
-        if (currentPlanetIs("LAND'S END") && storyFlag(0x08)) {
+        if (storyFlag(0x06) && !storyFlag(0x0A)) {
+            setStoryFlag(0x0A);
+            spendStoryCbills(5);
+            beginStory({makeStoryPage(kStoryStartingBarClue2)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+            return true;
+        }
+        if (currentPlanetIs("LAND'S END")) {
             if (!storyFlag(0x0B)) {
                 setStoryFlag(0x0B);
                 spendStoryCbills(15);
                 beginStory({makeStoryPage(kStoryLandsEndSetup)}, StoryBackdrop::Bar, ScreenState::BarMenu);
                 return true;
             }
-            if (!storyFlag(0x0C)) {
-                setStoryFlag(0x0C);
-                StoryPage page = makeStoryPage(kStoryLandsEndContact);
-                appendToLastStoryLine(page.lines, grigDestinationPlanet() + L".\"");
-                beginStory({std::move(page)}, StoryBackdrop::Bar, ScreenState::BarMenu);
-                return true;
-            }
         }
 
-        if (currentPlanetIs("DUSTBALL") && (storyFlag(0x1B) || storyFlag(0x1C))) {
+        if (currentPlanetIs("DUSTBALL") && storyFlag(0x17)) {
             if (!storyFlag(0x24)) {
                 setStoryFlag(0x24);
                 spendStoryCbills(25);
                 beginStory({makeStoryPage(kStoryStoneArrowInquiry)}, StoryBackdrop::Bar, ScreenState::BarMenu);
                 return true;
             }
-            if (!storyFlag(0x25)) {
-                setStoryFlag(0x25);
-                spendStoryCbills(75);
-                StoryPage page = makeStoryPage(kStoryStoneArrowResult);
-                appendToLastStoryLine(page.lines, wendallDestinationPlanet() + L".");
-                beginStory({std::move(page)}, StoryBackdrop::Bar, ScreenState::BarMenu);
-                return true;
-            }
         }
-
-        if (storyFlag(0x29) && isCurrentPlanetName(kearneyDestinationPlanet()) && !storyFlag(0x2D)) {
+        if (storyFlag(0x24) && !storyFlag(0x25)) {
+            setStoryFlag(0x25);
+            spendStoryCbills(75);
+            StoryPage page = makeStoryPage(kStoryStoneArrowResult);
+            appendToLastStoryLine(page.lines, wendallDestinationPlanet() + L".");
+            beginStory({std::move(page)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+            return true;
+        }
+        if ((storyFlag(0x26) || storyFlag(0x3A)) && isCurrentPlanetName(kearneyDestinationPlanet()) && !storyFlag(0x2D)) {
             setStoryFlag(0x2D);
             setStoryFlag(0x2E);
             beginStory(
@@ -4587,6 +4910,14 @@ private:
     }
 
     bool tryStartBarEntryStory() {
+        // Original DS6150: message0C is a bar-entry event, anywhere after0B.
+        if (storyFlag(0x0B) && !storyFlag(0x0C)) {
+            setStoryFlag(0x0C);
+            StoryPage page = makeStoryPage(kStoryLandsEndContact);
+            appendToLastStoryLine(page.lines, grigDestinationPlanet() + L".\"");
+            beginStory({std::move(page)}, StoryBackdrop::Bar, ScreenState::BarMenu);
+            return true;
+        }
         if (storyFlag(0x36) && isCurrentPlanetName(blackWidowDestinationPlanet()) && !storyFlag(0x38) && !storyFlag(0x39)) {
             setStoryFlag(0x37);
             beginStory(
@@ -4658,8 +4989,18 @@ private:
             return true;
         }
 
-        if (storyFlag(0x40) && currentPlanetIs("ALBIERO") && !storyFlag(0x41)) {
-            setStoryFlag(0x41);
+        if (storyFlag(0x17) && isCurrentPlanetName(grigDestinationPlanet()) && !storyFlag(0x45)) {
+            setStoryFlag(0x45);
+            beginStory({makeStoryPage(kStoryGrigRevengeInformant,
+                {{L"GO ON", StoryAction::GrigRevengeGoOn},
+                 {L"NOT INTERESTED", StoryAction::GrigRevengeDecline}})},
+                StoryBackdrop::Campaign, ScreenState::MainMenu);
+            return true;
+        }
+
+        // Original has two records for message40: accept39 OR Jordan's letter3B.
+        if ((storyFlag(0x39) || storyFlag(0x3B)) && currentPlanetIs("ALBIERO") && !storyFlag(0x40)) {
+            setStoryFlag(0x40);
             beginStory(
                 {
                     makeStoryPage(kStoryAlbieroRaidIntro),
@@ -4682,7 +5023,7 @@ private:
     }
 
     bool tryStartFinalBasePrompt() {
-        if (storyFlag(0x45) && isCurrentPlanetName(darkWingDestinationPlanet())) {
+        if (!campaignCompleted_ && !storyFlag(0x72) && storyFlag(0x43) && isCurrentPlanetName(darkWingDestinationPlanet())) {
             beginStory({makeFinalBasePromptPage()}, StoryBackdrop::Campaign, ScreenState::MainMenu);
             return true;
         }
@@ -4690,6 +5031,16 @@ private:
     }
 
     void returnToMainMenu(bool allowFinalBasePrompt = true) {
+        if (crewPayrollNotice_ != mw::battle::CrewPayrollNotice::None) {
+            StoryPage page;
+            if (crewPayrollNotice_==mw::battle::CrewPayrollNotice::Warning)
+                page.lines={L"YOU DON'T HAVE ENOUGH MONEY",L"TO PAY YOUR CREW THIS MONTH,",
+                    L"BUT THEY AGREE TO HANG ON",L"FOR ANOTHER MONTH."};
+            else page.lines={L"FOR THE SECOND MONTH IN",L"A ROW YOU COULD NOT PAY",L"YOUR CREW SO THEY LEFT."};
+            crewPayrollNotice_=mw::battle::CrewPayrollNotice::None;
+            beginStory({std::move(page)},StoryBackdrop::Campaign,ScreenState::MainMenu);
+            return;
+        }
         if (allowFinalBasePrompt && tryStartFinalBasePrompt()) {
             return;
         }
@@ -4698,7 +5049,7 @@ private:
 
     bool tryStartMechBayStory() {
         std::vector<StoryPage> pages;
-        if (storyFlag(0x0A) && !storyFlag(0x07)) {
+        if ((storyFlag(0x06) || storyFlag(0x0A)) && !storyFlag(0x07)) {
             setStoryFlag(0x07);
             spendStoryCbills(10);
             pages.push_back(makeStoryPage(kStoryOptionalCrestLore));
@@ -4805,12 +5156,18 @@ private:
     }
 
     int storyLineStep(const StoryPage& page) const {
+        if (storyBackdrop_ == StoryBackdrop::Ending) return 7;
         return page.lines.size() > 20 ? 7 : 8;
     }
 
     RectI storyPanelRect(const StoryPage& page) const {
         const int lineStep = storyLineStep(page);
         const int lineCount = std::max<int>(1, static_cast<int>(page.lines.size()));
+        if (storyBackdrop_ == StoryBackdrop::Ending) {
+            // Original61CC/0EF1:47 six-pixel columns, three padding lines.
+            const int height=(lineCount+3)*7;
+            return {19,(kScreenHeight-height)/2,282,height};
+        }
         const int maxPanelHeight = storyBackdrop_ == StoryBackdrop::Contract ? 184 : 192;
         const int panelHeight = std::clamp(lineCount * lineStep + 20, 38, maxPanelHeight);
         if (storyBackdrop_ == StoryBackdrop::Contract) {
@@ -4896,6 +5253,55 @@ private:
             setStoryFlag(0x0F);
             beginStory({makeStoryPage(kStoryGrigNo)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
             break;
+        case StoryAction::GrigRevengeGoOn:
+            setStoryFlag(0x46);
+            beginStory({makeStoryPage(kStoryGrigRevengePrice,
+                {{L"DEAL", StoryAction::GrigRevengeDeal}, {L"NO DEAL", StoryAction::GrigRevengeDecline}})},
+                StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::GrigRevengeDecline:
+            setStoryFlag(0x47);
+            beginStory({makeStoryPage(kStoryGrigRevengeDecline)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::GrigRevengeDeal:
+            setStoryFlag(0x48);
+            beginStory({makeStoryPage(kStoryGrigRevengeLanding),
+                makeStoryPage(kStoryGrigRevengeGuards,
+                    {{L"FORGET IT", StoryAction::GrigRevengeForget}, {L"WAIT", StoryAction::GrigRevengeWait}})},
+                StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::GrigRevengeForget:
+            setStoryFlag(0x49);
+            beginStory({makeStoryPage(kStoryGrigRevengeForget)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::GrigRevengeWait:
+            setStoryFlag(0x4A);
+            beginStory({makeStoryPage(kStoryGrigRevengePosition,
+                {{L"STRIKE NOW", StoryAction::GrigRevengeStrike}, {L"WAIT", StoryAction::GrigRevengeWaitTooLong}})},
+                StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::GrigRevengeStrike:
+            setStoryFlag(0x4B);
+            beginStory({makeStoryPage(kStoryGrigRevengeOffer,
+                {{L"ACCEPT HIS OFFER", StoryAction::GrigRevengeAcceptOffer},
+                 {L"PULL THE TRIGGER", StoryAction::GrigRevengeKill}})},
+                StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::GrigRevengeWaitTooLong:
+            setStoryFlag(0x4C);
+            beginStory({makeStoryPage(kStoryGrigRevengeEscape)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
+        case StoryAction::GrigRevengeAcceptOffer:
+            setStoryFlag(0x4D);
+            beginStory({makeStoryPage(kStoryGrigRevengeDeath), makeStoryPage(kStoryGrigRevengeDeathEpilogue)},
+                StoryBackdrop::Campaign, ScreenState::MainMenu, StoryAction::GameOver);
+            break;
+        case StoryAction::GrigRevengeKill:
+            if (!storyFlag(0x4E)) awardOriginalStoryCbills(200000);
+            setStoryFlag(0x4E);
+            beginStory({makeStoryPage(kStoryGrigRevengeKill), makeStoryPage(kStoryGrigRevengeBounty)},
+                StoryBackdrop::Campaign, ScreenState::MainMenu);
+            break;
         case StoryAction::DustballFirstFight:
             setStoryFlag(0x18);
             beginStory(
@@ -4972,11 +5378,11 @@ private:
             beginStory({makeStoryPage(kStoryOfficeHideRun)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
             break;
         case StoryAction::AcceptBlackWidowStory:
-            setStoryFlag(0x38);
+            setStoryFlag(0x39);
             beginStory({makeStoryPage(kStoryBlackWidowAccept)}, StoryBackdrop::Bar, ScreenState::BarMenu);
             break;
         case StoryAction::ChallengeBlackWidowStory:
-            setStoryFlag(0x39);
+            setStoryFlag(0x38);
             beginStory(
                 {
                     makeStoryPage(kStoryBlackWidowFight),
@@ -4988,7 +5394,7 @@ private:
                 ScreenState::BarMenu);
             break;
         case StoryAction::FollowTasha:
-            setStoryFlag(0x42);
+            setStoryFlag(0x3E);
             beginStory(
                 {
                     makeStoryPage(kStoryAlbieroCargoDoor),
@@ -5000,7 +5406,7 @@ private:
                 ScreenState::MainMenu);
             break;
         case StoryAction::StayDown:
-            setStoryFlag(0x43);
+            setStoryFlag(0x3F);
             beginStory({makeStoryPage(kStoryAlbieroStayDown)}, StoryBackdrop::Campaign, ScreenState::MainMenu);
             break;
         case StoryAction::TrustKearney:
@@ -5008,8 +5414,8 @@ private:
             beginStory({makeStoryPage(kStoryTrustKearneyDeath)}, StoryBackdrop::Campaign, ScreenState::MainMenu, StoryAction::GameOver);
             break;
         case StoryAction::TrustTasha: {
-            setStoryFlag(0x45);
-            playerWealth_ = std::min<uint64_t>(kMaxPlayerWealth, playerWealth_ + 5000000ull);
+            if (!storyFlag(0x43)) awardOriginalStoryCbills(5000000);
+            setStoryFlag(0x43);
             StoryPage inroad = makeStoryPage(kStoryOperationInroadDisk);
             appendToLastStoryLine(inroad.lines, darkWingDestinationPlanet() + L".");
             std::vector<StoryPage> pages;
@@ -5023,6 +5429,16 @@ private:
             break;
         }
         case StoryAction::FinalAttack:
+            if (!checkMissionDeployment(true)) break;
+            mw::battle::clearOriginalCampaignResultForLaunch(campaignResultState_);
+            // MW_MAIN 6913..6928, then the common 1C90/1C96 loader fields.
+            // These existing context bytes survive BTECH and explicit Save.
+            if (!acceptedContractSaveState_) acceptedContractSaveState_ = mw::battle::OriginalAcceptedContractState{};
+            acceptedContractSaveState_->missionClass = 3;
+            acceptedContractSaveState_->biome = static_cast<uint8_t>((planets_[static_cast<size_t>(currentPlanetIndex_)].terrainCode - 1u) % 3u);
+            acceptedContractSaveState_->targetTableOrder = static_cast<uint8_t>(planets_[static_cast<size_t>(currentPlanetIndex_)].tableOrder);
+            acceptedContractSaveState_->missionId = 99;
+            acceptedContractSaveState_->detail = static_cast<uint8_t>(detailLevel_);
             finalMissionStubActive_ = true;
             battleStubButtonIndex_ = 0;
             missionParticipants_ = currentMissionParticipants();
@@ -5032,9 +5448,11 @@ private:
             acceptedBattleOutcome_ = {};
             acceptedBattleConsequencePlan_ = {};
             acceptedBattlePersistenceReport_ = {};
+            acceptedBattleMechReturnPlan_ = {};
             acceptedBattleDamageTranslationPlan_ = {};
             acceptedBattleStateGuard_ = {};
             campaignBattleRuntime_ = {};
+            speaker_.stop();
             beginCampaignBattleRuntime();
             changeState(ScreenState::MissionBattleStub);
             break;
@@ -5048,204 +5466,93 @@ private:
         }
     }
 
-    void ensureRecruitPoolForCurrentPlanet() {
-        if (currentPlanetIndex_ < 0 || static_cast<size_t>(currentPlanetIndex_) >= planets_.size()) {
-            return;
+    mw::battle::OriginalRecruitmentState originalRecruitmentState() const {
+        mw::battle::OriginalRecruitmentState state;
+        state.board = recruitBoard_;
+        for (size_t i = 0; i < recruitPilots_.size() && i < state.pilots.size(); ++i) {
+            const auto& pilot = recruitPilots_[i];
+            state.pilots[i] = {pilot.gunnerySkill, pilot.pilotingSkill,
+                static_cast<uint8_t>(std::min<uint16_t>(pilot.missionExperience, 255)), pilot.unavailable};
         }
-        if (planetRecruitPools_.size() != planets_.size()) {
-            planetRecruitPools_.assign(planets_.size(), {});
-        }
-
-        PlanetRecruitPool& pool = planetRecruitPools_[static_cast<size_t>(currentPlanetIndex_)];
-        if (pool.visitSerial == currentPlanetVisitSerial_) {
-            return;
-        }
-
-        pool = generateRecruitPoolForPlanet(currentPlanetIndex_);
-        pool.visitSerial = currentPlanetVisitSerial_;
-        pool.monthKey = currentMonthKey();
-        for (size_t recruitIndex : pool.originalCandidates) {
-            if (recruitIndex < recruitLastPlanetIndex_.size()) {
-                recruitLastPlanetIndex_[recruitIndex] = currentPlanetIndex_;
-                recruitLastMonthKey_[recruitIndex] = currentMonthKey();
-            }
-        }
+        return state;
     }
 
-    PlanetRecruitPool generateRecruitPoolForPlanet(int planetIndex) const {
-        PlanetRecruitPool pool;
-        if (planetIndex < 0 || static_cast<size_t>(planetIndex) >= planets_.size()) {
-            return pool;
-        }
-
-        // Temporary bar-pool heuristic until the original MW_MAIN.EXE recruit
-        // selection algorithm is recovered. The pool is local to a planet visit,
-        // scales from 0 to 6 candidates by relative planetary population, avoids
-        // candidates seen on the immediately previous planet where practical,
-        // and keeps same-portrait pilots separated whenever alternatives exist.
-        const size_t targetCount = recruitPoolSizeForPlanet(planets_[static_cast<size_t>(planetIndex)]);
-        if (targetCount == 0) {
-            return pool;
-        }
-
-        std::vector<size_t> candidates = buildRecruitCandidatesForPlanet(planetIndex, true, true);
-        if (candidates.size() < targetCount) {
-            candidates = buildRecruitCandidatesForPlanet(planetIndex, false, true);
-        }
-        if (candidates.size() < targetCount) {
-            candidates = buildRecruitCandidatesForPlanet(planetIndex, false, false);
-        }
-
-        pool.originalCandidates = chooseDiverseRecruitCandidates(candidates, targetCount, planetIndex);
-        pool.candidates = pool.originalCandidates;
-        return pool;
+    void generateCurrentRecruitBoard() {
+        if (planets_.empty() || recruitPilots_.size() != mw::battle::kOriginalRecruitCount) return;
+        std::vector<uint16_t> companions;
+        for (size_t slot = 1; slot < crewMembers_.size(); ++slot)
+            if (crewMembers_[slot].hired && crewMembers_[slot].recruitIndex >= 0)
+                companions.push_back(static_cast<uint16_t>(crewMembers_[slot].recruitIndex + 1));
+        bool limited = false;
+        recruitBoard_ = mw::battle::generateOriginalRecruitBoard(originalRecruitmentState().pilots,
+            currentPlanetEconomyTier(), playerReputationTier_, companions, repairSession_.rng, &limited);
+        if (limited) debugLog(L"Recruitment retry guard retained the partial original board.");
     }
 
-    std::vector<size_t> buildRecruitCandidatesForPlanet(
-        int planetIndex,
-        bool avoidPreviousPlanetPool,
-        bool respectMonthlyLocation) const {
-        std::vector<size_t> candidates;
-        for (size_t i = 0; i < recruitPilots_.size(); ++i) {
-            if (isRecruitHired(i) || !isRecruitAvailableForReputation(recruitPilots_[i])) {
+    void removeActiveRecruitOffer() {
+        // Original consumes the displayed slot even when the one-tick interview
+        // refreshed the board. Array-derived count cannot underflow.
+        if (activeRecruitBoardSlot_ < recruitBoard_.size()) recruitBoard_[activeRecruitBoardSlot_] = 0;
+    }
+
+    int findNextRecruitCandidate() {
+        for (; recruitBoardCursor_ < recruitBoard_.size(); ++recruitBoardCursor_) {
+            const auto id = recruitBoard_[recruitBoardCursor_];
+            if (id == 0) continue;
+            const size_t index = id - 1u;
+            // Fail closed for stale/corrupt or calendar-boundary duplicate offers.
+            if (index >= recruitPilots_.size() || recruitPilots_[index].unavailable || isRecruitPortraitHired(index)) {
+                recruitBoard_[recruitBoardCursor_] = 0;
                 continue;
             }
-            if (avoidPreviousPlanetPool &&
-                std::find(previousPlanetRecruitIndexes_.begin(), previousPlanetRecruitIndexes_.end(), i) !=
-                    previousPlanetRecruitIndexes_.end()) {
-                continue;
-            }
-            if (respectMonthlyLocation && isRecruitTemporarilyOnAnotherPlanet(i, planetIndex)) {
-                continue;
-            }
-            candidates.push_back(i);
-        }
-        return candidates;
-    }
-
-    std::vector<size_t> chooseDiverseRecruitCandidates(
-        const std::vector<size_t>& candidates,
-        size_t targetCount,
-        int planetIndex) const {
-        std::vector<size_t> selected;
-        selected.reserve(std::min(targetCount, candidates.size()));
-        while (selected.size() < targetCount && selected.size() < candidates.size()) {
-            size_t bestCandidate = candidates.front();
-            uint32_t bestScore = UINT32_MAX;
-            bool found = false;
-
-            for (size_t candidate : candidates) {
-                if (std::find(selected.begin(), selected.end(), candidate) != selected.end()) {
-                    continue;
-                }
-
-                const RecruitPilot& pilot = recruitPilots_[candidate];
-                uint32_t score = recruitCandidateSortKey(candidate, planetIndex);
-                const size_t samePortraitCount = static_cast<size_t>(std::count_if(
-                    selected.begin(),
-                    selected.end(),
-                    [&](size_t selectedIndex) {
-                        return recruitPilots_[selectedIndex].portraitEntry == pilot.portraitEntry;
-                    }));
-                score += static_cast<uint32_t>(samePortraitCount * 30000u);
-                if (!selected.empty() &&
-                    recruitPilots_[selected.back()].portraitEntry == pilot.portraitEntry &&
-                    hasCandidateWithDifferentPortrait(candidates, selected, pilot.portraitEntry)) {
-                    score += 1000000u;
-                }
-
-                if (!found || score < bestScore) {
-                    found = true;
-                    bestScore = score;
-                    bestCandidate = candidate;
-                }
-            }
-
-            if (!found) {
-                break;
-            }
-            selected.push_back(bestCandidate);
-        }
-        return selected;
-    }
-
-    bool hasCandidateWithDifferentPortrait(
-        const std::vector<size_t>& candidates,
-        const std::vector<size_t>& selected,
-        uint8_t portraitEntry) const {
-        return std::any_of(
-            candidates.begin(),
-            candidates.end(),
-            [&](size_t candidate) {
-                return std::find(selected.begin(), selected.end(), candidate) == selected.end() &&
-                    recruitPilots_[candidate].portraitEntry != portraitEntry;
-            });
-    }
-
-    uint32_t recruitCandidateSortKey(size_t recruitIndex, int planetIndex) const {
-        const PlanetRecord& planet = planets_[static_cast<size_t>(planetIndex)];
-        uint32_t value = static_cast<uint32_t>((recruitIndex + 1u) * 1103515245u);
-        value ^= recruitmentSeed_;
-        value ^= static_cast<uint32_t>(planet.tableOrder) * 2654435761u;
-        value ^= static_cast<uint32_t>(currentMonthKey()) * 2246822519u;
-        value ^= static_cast<uint32_t>(currentPlanetVisitSerial_) * 3266489917u;
-        value ^= value >> 16;
-        value *= 2246822519u;
-        value ^= value >> 13;
-        return value;
-    }
-
-    size_t recruitPoolSizeForPlanet(const PlanetRecord& planet) const {
-        if (planets_.size() < 2) {
-            return 0;
-        }
-
-        size_t lowerPopulationCount = 0;
-        for (const PlanetRecord& candidate : planets_) {
-            if (candidate.population < planet.population) {
-                ++lowerPopulationCount;
-            }
-        }
-
-        const size_t denominator = planets_.size() - 1u;
-        return std::min<size_t>(6u, (lowerPopulationCount * 6u + denominator / 2u) / denominator);
-    }
-
-    bool isRecruitTemporarilyOnAnotherPlanet(size_t recruitIndex, int planetIndex) const {
-        if (recruitIndex >= recruitLastPlanetIndex_.size()) {
-            return false;
-        }
-        const int lastPlanet = recruitLastPlanetIndex_[recruitIndex];
-        if (lastPlanet < 0 || lastPlanet == planetIndex) {
-            return false;
-        }
-        return currentMonthKey() - recruitLastMonthKey_[recruitIndex] < 1;
-    }
-
-    void removeRecruitFromCurrentPool(size_t recruitIndex) {
-        if (currentPlanetIndex_ < 0 || static_cast<size_t>(currentPlanetIndex_) >= planetRecruitPools_.size()) {
-            return;
-        }
-        std::vector<size_t>& candidates = planetRecruitPools_[static_cast<size_t>(currentPlanetIndex_)].candidates;
-        candidates.erase(std::remove(candidates.begin(), candidates.end(), recruitIndex), candidates.end());
-    }
-
-    int findNextRecruitCandidate() const {
-        if (currentPlanetIndex_ < 0 || static_cast<size_t>(currentPlanetIndex_) >= planetRecruitPools_.size()) {
-            return -1;
-        }
-
-        const PlanetRecruitPool& pool = planetRecruitPools_[static_cast<size_t>(currentPlanetIndex_)];
-        for (size_t candidate : pool.candidates) {
-            if (!isRecruitHired(candidate)) {
-                return static_cast<int>(candidate);
-            }
+            activeRecruitBoardSlot_ = recruitBoardCursor_;
+            return static_cast<int>(index);
         }
         return -1;
     }
 
+    void restoreRecruitment(const mw::battle::OriginalRecruitmentState& state) {
+        if (recruitPilots_.size() != state.pilots.size())
+            throw std::runtime_error("recruit catalog is not initialized");
+        recruitBoard_ = state.board;
+        recruitBoardCursor_ = 0;
+        activeRecruitBoardSlot_ = recruitBoard_.size();
+        // Early replacement saves never wrote skills. Original initialization
+        // cannot produce all 42 pilots at zero/zero.
+        const bool missingSkills = std::all_of(state.pilots.begin(), state.pilots.end(),
+            [](const auto& pilot) { return pilot.gunnery == 0 && pilot.piloting == 0; });
+        const auto initial = missingSkills ? loadRecruitPilots(mwMainData_) : std::vector<RecruitPilot>{};
+        for (size_t i = 0; i < state.pilots.size(); ++i) {
+            auto& pilot = recruitPilots_[i];
+            pilot.gunnerySkill = missingSkills ? initial[i].gunnerySkill : state.pilots[i].gunnery;
+            pilot.pilotingSkill = missingSkills ? initial[i].pilotingSkill : state.pilots[i].piloting;
+            pilot.monthlyWage = monthlyWageForGunnery(pilot.gunnerySkill);
+            pilot.missionExperience = state.pilots[i].experience;
+            pilot.unavailable = state.pilots[i].unavailable;
+        }
+    }
+
+    void reconcileLoadedRecruitBoard() {
+        // Old replacement GAMs lack hire flags and retain consumed offers.
+        // Preserve all other unavailable flags, including absent/dead pilots.
+        for (const auto& member : crewMembers_)
+            if (member.hired && member.recruitIndex >= 0 &&
+                static_cast<size_t>(member.recruitIndex) < recruitPilots_.size())
+                recruitPilots_[static_cast<size_t>(member.recruitIndex)].unavailable = 1;
+        std::array<bool, 21> portraits{};
+        for (const auto& member : crewMembers_)
+            if (member.hired && member.recruitIndex >= 0)
+                portraits.at(static_cast<size_t>(member.recruitIndex) / 2) = true;
+        for (auto& id : recruitBoard_) {
+            if (id == 0) continue;
+            const size_t index = id - 1u;
+            if (recruitPilots_[index].unavailable || portraits[index / 2]) id = 0;
+            else portraits[index / 2] = true;
+        }
+    }
+
     bool hireRecruit(size_t recruitIndex) {
-        if (recruitIndex >= recruitPilots_.size()) {
+        if (recruitIndex >= recruitPilots_.size() || recruitPilots_[recruitIndex].unavailable || isRecruitPortraitHired(recruitIndex)) {
             return false;
         }
 
@@ -5266,22 +5573,18 @@ private:
         slot->portraitEntry = pilot.portraitEntry;
         slot->recruitIndex = static_cast<int>(recruitIndex);
         slot->missionExperience = pilot.missionExperience;
+        recruitPilots_[recruitIndex].unavailable = 1;
         return true;
     }
 
-    bool isRecruitHired(size_t recruitIndex) const {
+    bool isRecruitPortraitHired(size_t recruitIndex) const {
         return std::any_of(
             crewMembers_.begin(),
             crewMembers_.end(),
             [recruitIndex](const CrewMember& member) {
-                return member.hired && member.recruitIndex == static_cast<int>(recruitIndex);
+                return member.hired && member.recruitIndex >= 0 &&
+                    static_cast<size_t>(member.recruitIndex) / 2 == recruitIndex / 2;
             });
-    }
-
-    bool isRecruitAvailableForReputation(const RecruitPilot& pilot) const {
-        const uint8_t bestSkill = std::max(pilot.gunnerySkill, pilot.pilotingSkill);
-        const uint8_t allowedSkill = static_cast<uint8_t>(std::min<int>(3, playerReputationTier_ + 1));
-        return bestSkill <= allowedSkill;
     }
 
     RectI crewMechSlotRect(size_t slot) const {
@@ -5437,10 +5740,15 @@ private:
         ownedMechs_[mechIndex].assignedCrewSlot = static_cast<int>(crewSlot);
     }
 
-    void dismissCrewSlot(size_t crewSlot) {
+    void dismissCrewSlot(size_t crewSlot, bool deceased = false) {
         if (crewSlot == 0 || crewSlot >= crewMembers_.size() || !crewMembers_[crewSlot].hired) {
             return;
         }
+        retainCrewGamState();
+        mw::battle::removeOriginalCrewGamSlot(crewGamState_,crewSlot);
+        const auto recruitIndex = crewMembers_[crewSlot].recruitIndex;
+        if (recruitIndex >= 0 && static_cast<size_t>(recruitIndex) < recruitPilots_.size())
+            recruitPilots_[static_cast<size_t>(recruitIndex)].unavailable = deceased ? 1 : 0;
 
         for (OwnedMech& mech : ownedMechs_) {
             if (mech.assignedCrewSlot == static_cast<int>(crewSlot)) {
@@ -5508,9 +5816,80 @@ private:
             changeState(ScreenState::ActivisionSplash);
         } else if (action == MenuAction::ToggleSound) {
             soundEnabled_ = !soundEnabled_;
-        } else if (action == MenuAction::Detail) {
-            detailLevel_ = (detailLevel_ + 1) % 3;
+            if (!soundEnabled_) {
+                music_.play(mw::audio::MusicTrack::None);
+                speaker_.stop();
+            }
+        } else if (action == MenuAction::Resolution) {
+            cycleResolution(1);
+        } else if (action == MenuAction::Fullscreen) {
+            toggleFullscreen();
+        } else if (action == MenuAction::MouseLook) {
+            toggleMouseLook();
         }
+    }
+
+    void applyDisplaySettings() {
+        if (!hwnd_ || applyingDisplaySettings_) return;
+        applyingDisplaySettings_ = true;
+        MONITORINFO monitor{sizeof(MONITORINFO)};
+        GetMonitorInfoW(MonitorFromWindow(hwnd_, MONITOR_DEFAULTTONEAREST), &monitor);
+        const bool fullscreen = displaySettings_.fullscreen;
+        if (IsZoomed(hwnd_)) ShowWindow(hwnd_, SW_RESTORE);
+        const DWORD style = (fullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW) | WS_CLIPCHILDREN |
+            (static_cast<DWORD>(GetWindowLongPtrW(hwnd_, GWL_STYLE)) & WS_VISIBLE);
+        SetWindowLongPtrW(hwnd_, GWL_STYLE, style);
+        RECT target = monitor.rcMonitor;
+        if (!fullscreen) {
+            const auto mode = mw::presentation::displayResolutions[displaySettings_.resolution];
+            RECT size{0, 0, mode.width ? mode.width : kDefaultDisplayWidth,
+                mode.height ? mode.height : kDefaultDisplayHeight};
+            AdjustWindowRectExForDpi(&size, style, FALSE, 0, GetDpiForWindow(hwnd_));
+            const int width = std::min(size.right - size.left, monitor.rcWork.right - monitor.rcWork.left);
+            const int height = std::min(size.bottom - size.top, monitor.rcWork.bottom - monitor.rcWork.top);
+            target.left = monitor.rcWork.left + (monitor.rcWork.right - monitor.rcWork.left - width) / 2;
+            target.top = monitor.rcWork.top + (monitor.rcWork.bottom - monitor.rcWork.top - height) / 2;
+            target.right = target.left + width; target.bottom = target.top + height;
+        }
+        // Borderless fullscreen never changes the operating system's display mode.
+        SetWindowPos(hwnd_, nullptr, target.left, target.top, target.right - target.left,
+            target.bottom - target.top, SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE);
+        applyingDisplaySettings_ = false;
+        lastCommandPointer_.reset();
+        updateCampaignBattleGlViewport();
+        InvalidateRect(hwnd_, nullptr, FALSE);
+    }
+
+    void loadPreferences() {
+        displaySettings_ = mw::presentation::loadDisplaySettings(settingsPath_);
+        mouseLookEnabled_ = displaySettings_.mouseLook;
+    }
+
+    void persistDisplaySettings() {
+        displaySettings_.mouseLook = mouseLookEnabled_;
+        displaySettingsSaveFailed_ = !settingsPath_.empty() &&
+            !mw::presentation::saveDisplaySettings(settingsPath_, displaySettings_);
+    }
+
+    void cycleResolution(int direction) {
+        const int count = static_cast<int>(mw::presentation::displayResolutions.size());
+        displaySettings_.resolution = (displaySettings_.resolution + direction + count) % count;
+        applyDisplaySettings();
+        persistDisplaySettings();
+    }
+
+    void toggleFullscreen() {
+        displaySettings_.fullscreen = !displaySettings_.fullscreen;
+        applyDisplaySettings();
+        persistDisplaySettings();
+    }
+
+    void toggleMouseLook() {
+        mouseLookEnabled_=!mouseLookEnabled_;
+        clearMouseLookInput();
+        debugLog(mouseLookEnabled_ ? L"MOUSELOOK ON: mouse aim; LMB single fire; RMB salvo." : L"MOUSELOOK OFF: classic controls.");
+        syncMouseLookCapture();
+        persistDisplaySettings();
     }
 
     void openSaveGameNameInput() {
@@ -5682,39 +6061,61 @@ private:
     }
 
     bool saveCurrentGame(const fs::path& path) {
-        std::vector<uint8_t> data = baseGamSaveData();
-        if (data.size() != kGamSaveSize) {
-            data.assign(kGamSaveSize, 0);
-        }
-        writeRuntimeToGamSave(data);
-
-        std::ofstream output(path, std::ios::binary | std::ios::trunc);
-        if (!output) {
-            status_ = L"Save failed: unable to open " + path.wstring();
+        try {
+            std::vector<uint8_t> data = baseGamSaveData();
+            if (data.size() != kGamSaveSize) data.assign(kGamSaveSize, 0);
+            writeRuntimeToGamSave(data);
+            const auto extra = mw::battle::encodeCampaignMechSave(data, campaignMechSaveEntries());
+            mw::battle::writeCampaignSaveFiles(path, data, extra);
+            gamRawState_ = std::move(data);
+            gamRawStateValid_ = true;
+            return true;
+        } catch (const std::exception& error) {
+            status_ = L"Save failed: " + widen(error.what());
             return false;
         }
-        output.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
-        if (!output) {
-            status_ = L"Save failed: unable to write " + path.wstring();
-            return false;
-        }
-        gamRawState_ = std::move(data);
-        gamRawStateValid_ = true;
-        return true;
     }
 
     void loadGameFromFile(const fs::path& path) {
         try {
+            if (fs::exists(path.wstring() + L".mw-old") || fs::exists(path.wstring() + L".mwstate.mw-old") ||
+                fs::exists(path.wstring() + L".mw-new") || fs::exists(path.wstring() + L".mwstate.mw-new"))
+                throw std::runtime_error("incomplete save transaction: backup needs recovery");
             std::vector<uint8_t> data = readFile(path);
             if (data.size() != kGamSaveSize) {
                 status_ = L"Load failed: invalid save size";
                 return;
             }
+            std::optional<std::vector<mw::battle::CampaignMechSaveEntry>> exact;
+            const fs::path extraPath = path.wstring() + L".mwstate";
+            if (fs::exists(extraPath)) {
+                exact = mw::battle::decodeCampaignMechSave(data, readFile(extraPath));
+                if (exact->size() != readGamU16Le(data, kGamOffsetMechCount))
+                    throw std::runtime_error("saved mech roster does not match companion");
+                for (size_t i = 0; i < exact->size(); ++i) {
+                    ChassisId chassis = ChassisId::Jenner;
+                    if (!runtimeChassisId(readGamU16Le(data, kGamOffsetMechChassisList + i*2u), chassis) ||
+                        battleMechPresetForChassis(chassis).value_or("") != (*exact)[i].mechPresetId)
+                        throw std::runtime_error("saved mech identity does not match companion");
+                }
+            }
             applyGamSaveToRuntime(data);
+            if (exact) {
+                for (size_t i = 0; i < exact->size(); ++i) {
+                    auto& mech=ownedMechs_.at(i);
+                    mech.exactDamage = (*exact)[i].damage;
+                    auto state=battlePersistentMechStateFromOwnedMech(mech,"exact_restore");
+                    mw::battle::reconcileExactSideTorsoGrades(state);
+                    applyBattlePersistentMechStateToOwnedMech(mech,state);
+                    finalizeLoadedMech(mech);
+                }
+            }
             gamRawState_ = std::move(data);
             gamRawStateValid_ = true;
             systemMenuIndex_ = kSystemSaveMenuIndex;
             returnToMainMenu();
+            if (campaignResultState_.accepted==1 && !contractAccepted_)
+                status_=L"Saved contract could not be restored; its original data was retained.";
         } catch (const std::exception& error) {
             status_ = L"Load failed: " + widen(error.what());
         }
@@ -5729,13 +6130,19 @@ private:
             data[kGamOffsetPlanetIndex] =
                 static_cast<uint8_t>(planet.planetNumber > 0 ? planet.planetNumber - 1u : 0u);
             data[kGamOffsetCurrentPlanetHouseId] = planet.houseId;
+            writeU16Le(data,kGamOffsetCurrentPlanetBiome,
+                static_cast<uint16_t>((planet.terrainCode-1u)%3u));
             data[kGamOffsetCurrentPlanetTerrainBand] =
                 static_cast<uint8_t>(planet.terrainCode > 0 ? (planet.terrainCode - 1u) / 3u : 0u);
             data[kGamOffsetCurrentPlanetContractAvailable] = planet.contractAvailableFlag;
             data[kGamOffsetMapX] = planet.mapX;
             data[kGamOffsetMapY] = planet.mapY;
         }
-        data[kGamOffsetReputation] = playerReputationTier_;
+        writeU16Le(data,kGamOffsetServiceFactor,serviceFactor_);
+        writeU16Le(data,0x59e,contactNegotiationSkill_);
+        mw::battle::encodeOriginalCampaignResult(data,campaignResultState_);
+        if (acceptedContractSaveState_)
+            mw::battle::encodeOriginalAcceptedContract(data,*acceptedContractSaveState_);
         data[kGamOffsetMonthDayCounter] = static_cast<uint8_t>(std::clamp(currentMonthDayCounter_, 0, 255));
         data[kGamOffsetMonth] = static_cast<uint8_t>(std::clamp(currentMonth_, 0, 11));
         writeU16Le(data, kGamOffsetYear, static_cast<uint16_t>(std::clamp(currentYear_, 0, 65535)));
@@ -5755,6 +6162,10 @@ private:
             const size_t chassisOffset = kGamOffsetMechChassisList + slot * 2u;
             const size_t recordOffset = kGamOffsetMechRecords + slot * kGamMechRecordStride;
             if (slot >= mechCount) {
+                // Original Restore/Save copies the complete DS0448..0B60
+                // payload. An already empty slot's damage/ammo is opaque;
+                // clearing it merely by saving loses original disk bytes.
+                if (readGamU16Le(data, chassisOffset) == 0xFFFF) continue;
                 writeU16Le(data, chassisOffset, 0xFFFF);
                 mw::battle::encodeOriginalGamOwnedMechAmmunition(
                     data, slot, {}, {});
@@ -5765,12 +6176,15 @@ private:
             }
 
             const OwnedMech& mech = ownedMechs_[slot];
+            // Original Restore/Save and BTECH exit preserve all ammo type words
+            // and inactive quantities. Initialize them for a changed chassis.
+            const bool sameChassis = readGamU16Le(data, chassisOffset) == gamChassisId(mech.chassis);
             writeU16Le(data, chassisOffset, gamChassisId(mech.chassis));
             writeGamMechRecord(data, recordOffset, mech);
             const std::array<int, 6> capacities =
                 ammunitionCapacityForMech(mech);
             mw::battle::encodeOriginalGamOwnedMechAmmunition(
-                data, slot, capacities, mech.ammoPacks);
+                data, slot, capacities, mech.ammoPacks, sameChassis);
         }
 
         for (size_t i = 0; i < extraAmmoInHold_.size(); ++i) {
@@ -5787,11 +6201,39 @@ private:
             data[kGamOffsetMessageFlags + i] = storyMessageFlags_[i];
         }
         data[kGamOffsetDetailLevel] = static_cast<uint8_t>(std::clamp(detailLevel_, 0, 2));
+        data[kGamOffsetCampaignCompleted] = campaignCompleted_;
+        for(size_t i=0;i<storyDestinationSaveIds_.size();++i)
+            writeU16Le(data,0x6FEu+i*2u,storyDestinationSaveIds_[i]);
+        const auto tables = mw::battle::decodeOriginalContractTables(mwMainData_);
+        mw::battle::encodeOriginalContractBoard(data, tables, originalContractBoardForSave(tables));
+        mw::battle::encodeOriginalMechMarket(data, mechMarket_.original);
+        mw::battle::encodeOriginalRecruitment(data, originalRecruitmentState());
     }
 
     void applyGamSaveToRuntime(const std::vector<uint8_t>& data) {
+        const auto tables = mw::battle::decodeOriginalContractTables(mwMainData_);
+        const auto board = mw::battle::decodeOriginalContractBoard(data, tables);
+        const auto savedAcceptance=mw::battle::decodeOriginalAcceptedContract(data);
+        auto restoredAcceptance=data[0x20]==1
+            ? mw::battle::originalAcceptedContractOffer(savedAcceptance,tables) : std::nullopt;
+        if (restoredAcceptance && planetIndexFromTableOrder(savedAcceptance.targetTableOrder)<0)
+            restoredAcceptance.reset(); // Preserve unknown input without inventing a target.
+        for (const auto& offer : board.offers) {
+            if (planetIndexFromTableOrder(offer.targetPlanetIndex + 1u) < 0)
+                throw std::runtime_error("saved contract target is not represented in the campaign planet catalog");
+        }
+
+        const auto restoredServiceFactor = readGamU16Le(data,kGamOffsetServiceFactor);
+        // Generated factors are 18..79. Preserve imported words if division is
+        // representable for every chassis; reject corrupt DOS divide-overflow inputs.
+        if (restoredServiceFactor > 3449) throw std::runtime_error("invalid saved service factor");
+        const auto restoredRecruitment = mw::battle::decodeOriginalRecruitment(data);
+        const auto restoredMarket = mw::battle::decodeOriginalMechMarket(data);
+        static_cast<void>(makeCurrentMechMarket(restoredMarket)); // prevalidate before mutation
         const uint8_t planetSaveId = data[kGamOffsetPlanetIndex];
         currentPlanetIndex_ = findPlanetIndexBySaveId(planetSaveId);
+        serviceFactor_ = restoredServiceFactor;
+        contactNegotiationSkill_=readGamU16Le(data,0x59e);
         selectedPlanetIndex_ = currentPlanetIndex_;
         pendingTravelPlanetIndex_ = currentPlanetIndex_;
         pendingTravelCost_ = 0;
@@ -5809,10 +6251,9 @@ private:
         playerReputationPoints_ = readGamU16Le(data, kGamOffsetReputationPoints);
         playerReputationTier_ =
             static_cast<uint8_t>(std::clamp<int>(readGamU16Le(data, kGamOffsetReputationTier), 0, 3));
-        if (playerReputationPoints_ == 0 && data[kGamOffsetReputation] <= 3) {
-            playerReputationTier_ = std::max<uint8_t>(playerReputationTier_, data[kGamOffsetReputation]);
-            playerReputationPoints_ = minimumReputationPointsForTier(playerReputationTier_);
-        }
+        // DS0465 is last-stage defeated enemies. It is independent of the
+        // company rank at DS04EA and reputation points at DS04B3.
+        campaignResultState_ = mw::battle::decodeOriginalCampaignResult(data);
 
         storyMessageFlags_.fill(0);
         for (size_t i = 0;
@@ -5820,12 +6261,10 @@ private:
              ++i) {
             storyMessageFlags_[i] = data[kGamOffsetMessageFlags + i];
         }
-        if (!storyFlag(0x0A)) {
-            startingStoryPlanetName_ = currentPlanetNameAscii();
-        } else if (startingStoryPlanetName_.empty()) {
-            startingStoryPlanetName_ = std::string(kFallbackStartingPlanetName);
-        }
         applyOriginalStoryCompatibilityFlags();
+        campaignCompleted_ = data[kGamOffsetCampaignCompleted];
+        restoreStoryDestinations(data);
+        refreshStoryNewsText();
         soundEnabled_ = data[kGamOffsetSoundDisabled] == 0;
         detailLevel_ = std::clamp<int>(data[kGamOffsetDetailLevel], 0, 2);
 
@@ -5837,13 +6276,15 @@ private:
         ownedMechs_.clear();
         const size_t savedMechCount =
             std::min<size_t>(readGamU16Le(data, kGamOffsetMechCount), kMaxOwnedMechs);
-        for (size_t slot = 0; slot < savedMechCount; ++slot) {
+        std::array<uint16_t,kMaxOwnedMechs> savedSlotToRuntime; savedSlotToRuntime.fill(0xffff);
+        for (size_t slot = 0; slot < kMaxOwnedMechs && ownedMechs_.size() < savedMechCount; ++slot) {
             const uint16_t saveChassis = readGamU16Le(data, kGamOffsetMechChassisList + slot * 2u);
             ChassisId chassis = ChassisId::Jenner;
             if (!runtimeChassisId(saveChassis, chassis)) {
                 continue;
             }
-            OwnedMech mech = makeMech(chassis, ownedMechs_.empty() ? 0 : -1);
+            savedSlotToRuntime[slot]=static_cast<uint16_t>(ownedMechs_.size());
+            OwnedMech mech = makeMech(chassis, -1);
             readGamMechRecord(data, kGamOffsetMechRecords + slot * kGamMechRecordStride, mech);
             const std::array<int, 6> capacities =
                 ammunitionCapacityForMech(mech);
@@ -5853,27 +6294,50 @@ private:
             finalizeLoadedMech(mech);
             ownedMechs_.push_back(std::move(mech));
         }
-        if (ownedMechs_.empty()) {
-            ownedMechs_.push_back(makeStartingJenner(0));
+        auto crewData=data;
+        for (size_t crew=0; crew<std::min<size_t>(4,readGamU16Le(data,kGamOffsetCrewCount)); ++crew) {
+            const auto raw=readGamU16Le(data,kGamOffsetCrewAssignedMechs+crew*2);
+            writeU16Le(crewData,kGamOffsetCrewAssignedMechs+crew*2,
+                raw<savedSlotToRuntime.size() ? savedSlotToRuntime[raw] : uint16_t{0xffff});
         }
-
-        applyGamCrewRosterToRuntime(data);
-        initializeRecruitmentState();
-        if (planetMechMarkets_.size() != planets_.size()) {
-            planetMechMarkets_.assign(planets_.size(), {});
-        }
-        activeContracts_.clear();
+        const bool legacyRecruitment = readGamU16Le(data, kGamOffsetCrewCount) > 1 &&
+            std::all_of(restoredRecruitment.pilots.begin(), restoredRecruitment.pilots.end(),
+                [](const auto& p) { return p.unavailable == 0; });
+        restoreRecruitment(restoredRecruitment);
+        applyGamCrewRosterToRuntime(crewData, legacyRecruitment);
+        reconcileLoadedRecruitBoard();
+        initializeCampaignVisitState();
+        mechMarket_ = makeCurrentMechMarket(restoredMarket);
+        selectedMarketMechIndex_ = mechMarketScrollOffset_ = 0;
+        installContractBoard(tables, board);
         acceptedContract_ = {};
         acceptedBattleContract_ = {};
         pendingBattleStartParams_.reset();
         acceptedBattleOutcome_ = {};
         acceptedBattleConsequencePlan_ = {};
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleStateGuard_ = {};
         campaignBattleRuntime_ = {};
+        speaker_.stop();
         missionSequence_ = {};
+        missionParticipants_.clear();
         contractAccepted_ = false;
+        acceptedContractFinance_.reset();
+        acceptedContractSaveState_ = savedAcceptance;
+        // Original disk Restore leaves the rejection counter and RNG in RAM.
+        // Finance restoration deliberately fixes the stale/zero advance bug.
+        if (restoredAcceptance) {
+            acceptedContract_=contractOfferFromOriginal(tables,*restoredAcceptance);
+            acceptedContract_.targetEnvironmentId=savedAcceptance.biome;
+            acceptedContract_.hasHostileTargetHouse=savedAcceptance.targetCategory<=4;
+            if (acceptedContract_.hasHostileTargetHouse)
+                acceptedContract_.targetHouse=static_cast<uint8_t>(savedAcceptance.targetCategory);
+            acceptedContractFinance_=mw::battle::restoredAcceptedContractFinance(savedAcceptance);
+            acceptedBattleContract_=battleContractMetadataFromOffer(acceptedContract_);
+            contractAccepted_=true;
+        }
         missionLaunchPending_ = false;
         finalMissionStubActive_ = false;
         storyPages_.clear();
@@ -5889,16 +6353,28 @@ private:
         newsNetMessageIndex_ = 0;
         newsNetShowingNoOther_ = false;
         newsNetDayCharged_ = false;
+        initializeRepairSession();
     }
 
     void applyOriginalStoryCompatibilityFlags() {
-        if (storyFlag(0x43) && !storyFlag(0x41) && currentPlanetIs("ALBIERO")) {
-            setStoryFlag(0x45);
-            darkWingDestinationPlanet_ = L"ALBIERO";
-        }
+        // Original messages3D/41/42 are unused. These positive markers identify
+        // the old replacement's provisional late story numbering. Do not guess
+        // from45 alone: an original save may have seen Grig's informant.
+        if(!storyFlag(0x3D) && !storyFlag(0x41) && !storyFlag(0x42)) return;
+        const auto old=storyMessageFlags_;
+        storyMessageFlags_[0x38]=old[0x39];storyMessageFlags_[0x39]=old[0x38];
+        storyMessageFlags_[0x3B]=(old[0x40] || old[0x3B])?1:0;
+        storyMessageFlags_[0x3C]=(old[0x3B] || old[0x3C] || old[0x3D] || old[0x3E] || old[0x3F])?1:0;
+        storyMessageFlags_[0x3D]=0;storyMessageFlags_[0x3E]=old[0x42];
+        storyMessageFlags_[0x3F]=old[0x43];storyMessageFlags_[0x40]=old[0x41];
+        storyMessageFlags_[0x41]=storyMessageFlags_[0x42]=0;
+        storyMessageFlags_[0x43]=old[0x45];storyMessageFlags_[0x45]=0;
     }
 
     void writeRuntimeCrewRosterToGamSave(std::vector<uint8_t>& data) const {
+        mw::battle::encodeOriginalCrewGam(data,crewGamState_);
+        // Plane0 of the wage-rank array is the separate company rank.
+        writeU16Le(data,kGamOffsetReputationTier,playerReputationTier_);
         const uint16_t crewCount = static_cast<uint16_t>(std::clamp<int>(hiredCrewCount(), 1, 4));
         writeU16Le(data, kGamOffsetCrewCount, crewCount);
         writeU16Le(
@@ -5918,6 +6394,9 @@ private:
         for (size_t slot = 0; slot < crewMembers_.size(); ++slot) {
             const CrewMember& member = crewMembers_[slot];
             const bool active = slot < crewCount && member.hired;
+            // Original removal retains the final cell of every plane except
+            // assignments. Keep the complete shifted tail, including opaque words.
+            if (!active) continue;
             uint16_t pilotId = 0;
             uint16_t assignedMech = 0xFFFF;
             uint8_t gunnery = 0;
@@ -5943,15 +6422,32 @@ private:
                 }
             }
 
+            if (slot > 0) {
+                uint16_t wageRank = 0;
+                while (wageRank < 3 && monthlyWageForGunnery(static_cast<uint8_t>(wageRank)) < member.wage) ++wageRank;
+                writeU16Le(data, kGamOffsetReputationTier + slot * 2u, active ? wageRank : 0);
+            }
             writeU16Le(data, kGamOffsetCrewPilotIds + slot * 2u, pilotId);
             writeU16Le(data, kGamOffsetCrewGunnerySkills + slot * 2u, gunnery);
             writeU16Le(data, kGamOffsetCrewPilotingSkills + slot * 2u, piloting);
             writeU16Le(data, kGamOffsetCrewAssignedMechs + slot * 2u, assignedMech);
+            if (slot>0) writeU16Le(data,0xca+slot*2u,static_cast<uint16_t>(member.portraitEntry));
         }
     }
 
-    void applyGamCrewRosterToRuntime(const std::vector<uint8_t>& data) {
+    void retainCrewGamState() {
+        auto data=baseGamSaveData();
+        writeRuntimeCrewRosterToGamSave(data);
+        crewGamState_=mw::battle::decodeOriginalCrewGam(data);
+    }
+
+    void applyGamCrewRosterToRuntime(const std::vector<uint8_t>& data, bool legacyRecruitment = false) {
+        crewGamState_=mw::battle::decodeOriginalCrewGam(data);
         resetCrewRosterForLoadedMechs();
+        crewMembers_.front().gunnery = skillLabel(static_cast<uint8_t>(std::min<uint16_t>(
+            readGamU16Le(data, kGamOffsetCrewGunnerySkills), 3)));
+        crewMembers_.front().piloting = skillLabel(static_cast<uint8_t>(std::min<uint16_t>(
+            readGamU16Le(data, kGamOffsetCrewPilotingSkills), 3)));
         crewMembers_.front().missionExperience =
             readGamU16Le(data, kGamOffsetPlayerMissionExperience);
         for (size_t recruitIndex = 0; recruitIndex < recruitPilots_.size(); ++recruitIndex) {
@@ -5995,8 +6491,9 @@ private:
             pilot.gunnerySkill = gunnery;
             pilot.pilotingSkill = piloting;
             pilot.monthlyWage = monthlyWageForGunnery(gunnery);
-            member.wage = monthlyWageForGunnery(gunnery);
-            member.portraitEntry = pilot.portraitEntry;
+            const auto wageRank = readGamU16Le(data, kGamOffsetReputationTier + slot * 2u);
+            member.wage = monthlyWageForGunnery(legacyRecruitment || wageRank > 3 ? gunnery : static_cast<uint8_t>(wageRank));
+            member.portraitEntry = legacyRecruitment ? pilot.portraitEntry : crewGamState_.words[mw::battle::OriginalCrewGamState::Portrait][slot];
             member.recruitIndex = static_cast<int>(recruitIndex);
             member.missionExperience = pilot.missionExperience;
         }
@@ -6022,12 +6519,8 @@ private:
             mechAssigned[assignedMech] = true;
         }
 
-        if (!ownedMechs_.empty() &&
-            crewMembers_[0].hired &&
-            assignedMechIndexForCrewSlot(0) < 0 &&
-            !mechAssigned[0]) {
-            ownedMechs_[0].assignedCrewSlot = 0;
-        }
+        // FFFF is an intentional unassigned commander, not missing data.
+        // Original 1B55 checks DS050A and refuses launch until assigned.
     }
 
     void resetCrewRosterForLoadedMechs() {
@@ -6201,64 +6694,20 @@ private:
     }
 
     static void writeGamMechRecord(std::vector<uint8_t>& data, size_t offset, const OwnedMech& mech) {
-        if (offset + kGamMechRecordStride > data.size()) {
-            return;
-        }
-        data[offset + 0x00u] = gamDamageState(mech.engine);
-        data[offset + 0x01u] = gamDamageState(mech.gyros);
-        data[offset + 0x02u] = gamDamageState(mech.sensors);
-        data[offset + 0x03u] = gamDamageState(mech.lifeSupport);
-        data[offset + 0x04u] =
-            static_cast<uint8_t>(std::clamp(mech.heatSinksTotal - mech.heatSinksWorking, 0, 255));
-        data[offset + 0x05u] = gamDamageState(mech.leftArmActuator);
-        data[offset + 0x06u] = gamDamageState(mech.rightArmActuator);
-        data[offset + 0x07u] = gamDamageState(mech.leftLegActuator);
-        data[offset + 0x08u] = gamDamageState(mech.rightLegActuator);
-        data[offset + 0x09u] =
-            static_cast<uint8_t>(std::clamp(mech.jumpJetsTotal - mech.jumpJetsWorking, 0, 255));
-        for (size_t i = 0; i < mech.weapons.size(); ++i) {
-            data[offset + 0x0Au + i] = gamDamageState(mech.weapons[i].condition);
-        }
-        for (size_t i = 0; i < mech.armorDamage.size(); ++i) {
-            data[offset + 0x14u + i] =
-                static_cast<uint8_t>(std::clamp(mech.armorDamage[i], 0, kArmorDamageMaxLevel));
-        }
+        mw::battle::encodeOriginalGamMechDamage(data, offset,
+            battlePersistentMechStateFromOwnedMech(mech, "campaign_save"));
     }
 
     static void readGamMechRecord(const std::vector<uint8_t>& data, size_t offset, OwnedMech& mech) {
-        if (offset + kGamMechRecordStride > data.size()) {
-            return;
-        }
-        mech.engine = runtimeDamageState(data[offset + 0x00u]);
-        mech.gyros = runtimeDamageState(data[offset + 0x01u]);
-        mech.sensors = runtimeDamageState(data[offset + 0x02u]);
-        mech.lifeSupport = runtimeDamageState(data[offset + 0x03u]);
-        mech.heatSinksWorking = std::clamp(
-            mech.heatSinksTotal - static_cast<int>(data[offset + 0x04u]),
-            0,
-            mech.heatSinksTotal);
-        mech.leftArmActuator = runtimeDamageState(data[offset + 0x05u]);
-        mech.rightArmActuator = runtimeDamageState(data[offset + 0x06u]);
-        mech.leftLegActuator = runtimeDamageState(data[offset + 0x07u]);
-        mech.rightLegActuator = runtimeDamageState(data[offset + 0x08u]);
-        mech.jumpJetsWorking = std::clamp(
-            mech.jumpJetsTotal - static_cast<int>(data[offset + 0x09u]),
-            0,
-            mech.jumpJetsTotal);
-        for (size_t i = 0; i < mech.weapons.size(); ++i) {
-            mech.weapons[i].condition = mech.weapons[i].weapon.empty()
-                ? DamageState::Functional
-                : runtimeDamageState(data[offset + 0x0Au + i]);
-        }
-        for (size_t i = 0; i < mech.armorDamage.size(); ++i) {
-            mech.armorDamage[i] = std::clamp<int>(data[offset + 0x14u + i], 0, kArmorDamageMaxLevel);
-        }
+        applyBattlePersistentMechStateToOwnedMech(mech, mw::battle::decodeOriginalGamMechDamage(
+            data, offset, battlePersistentMechStateFromOwnedMech(mech, "campaign_save")));
     }
 
     void finalizeLoadedMech(OwnedMech& mech) const {
         updateArmorPercent(mech);
         mech.repairCost = totalRepairCost(mech);
         mech.condition =
+            (mech.exactDamage && (mech.exactDamage->mechDestroyed || mech.exactDamage->mechDisabled)) ||
             mech.engine == DamageState::Junk ||
                     mech.gyros == DamageState::Junk ||
                     mech.sensors == DamageState::Junk ||
@@ -6273,6 +6722,10 @@ private:
     void cheatMoney() {
         playerWealth_ = 10000000;
         debugLog(L"Cheat money applied. Wealth: " + formatWealth(playerWealth_));
+    }
+
+    void cheatMouseLook() {
+        toggleMouseLook();
     }
 
     void cheatPilotSkillPoor() {
@@ -6429,7 +6882,8 @@ private:
 
     void cheatBattleTestPreset(
         const std::string& playerMechPresetId,
-        DebugBattleTestOutcome outcome = DebugBattleTestOutcome::Interactive) {
+        DebugBattleTestOutcome outcome = DebugBattleTestOutcome::Interactive,
+        bool manualLanceProbe = false) {
         ContractOffer offer;
         offer.employerHouse = 4;
         offer.targetHouse = 3;
@@ -6437,18 +6891,40 @@ private:
         offer.targetPlanet = L"WARLOCK";
         offer.targetPlanetTerrainCode = 11;
         offer.targetEnvironmentId = 1;
-        offer.originalMissionId = 11;
-        offer.missionName = L"RESCUE OF A KIDNAP VICTIM";
+        offer.originalMissionId = manualLanceProbe ? 24 : 11;
+        offer.missionName = manualLanceProbe ? L"DESTRUCTION OF A FACTORY" : L"RESCUE OF A KIDNAP VICTIM";
         offer.lightCount = 1;
         offer.priceK = 150;
+        offer.priceCeilingK = 600;
         offer.salvagePercent = 5;
-        offer.advancePercent = 5;
+        offer.advancePercent = 6;
+        offer.salvageCeilingPercent = 20;
+        offer.advanceCeilingPercent = 25;
+        offer.housePriceK = offer.priceK;
+        offer.houseSalvagePercent = offer.salvagePercent;
+        offer.houseAdvancePercent = offer.advancePercent;
         acceptedContract_ = offer;
         acceptedBattleContract_ = battleContractMetadataFromOffer(acceptedContract_);
         contractAccepted_ = true;
         pendingBattleStartParams_ = battleStartParamsForAcceptedContract();
         if (pendingBattleStartParams_.has_value()) {
             pendingBattleStartParams_->playerMechPresetId = playerMechPresetId;
+            if (manualLanceProbe) {
+                auto& params = *pendingBattleStartParams_;
+                params.playerStartTransform = {60000.0,0.0,35000.0,0.0};
+                params.playerAlliedLaunchStates.clear();
+                const char* presets[] = {"phoenix_hawk","jenner","locust"};
+                for (size_t i=0;i<3;++i) {
+                    mw::battle::BattleCombatantLaunchState ally;
+                    ally.mechPresetId=presets[i];
+                    ally.roster.team=mw::battle::BattleTeam::Player;
+                    ally.roster.sourceSlot="player:"+std::to_string(i+1);
+                    ally.startTransform={61500.0,0.0,33000.0+1500.0*i,1.5707963267948966};
+                    params.playerAlliedLaunchStates.push_back(ally);
+                }
+                for (size_t i=0;i<params.combatantLaunchStates.size();++i)
+                    params.combatantLaunchStates[i].startTransform={67500.0,0.0,35000.0+1000.0*i,0.0};
+            }
             if (outcome == DebugBattleTestOutcome::Defeat) {
                 pendingBattleStartParams_->combatAiPolicy =
                     mw::battle::BattleCombatAiPolicy::Phase10CompatibilityFsm;
@@ -6475,9 +6951,11 @@ private:
         acceptedBattleOutcome_ = {};
         acceptedBattleConsequencePlan_ = {};
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleStateGuard_ = {};
         campaignBattleRuntime_ = {};
+        speaker_.stop();
         missionLaunchPending_ = false;
         finalMissionStubActive_ = false;
         beginCampaignBattleRuntime();
@@ -6502,6 +6980,11 @@ private:
         cheatBattleTestPreset("locust");
     }
 
+    void cheatBattleTestOrders() {
+        cheatBattleTestPreset("locust", DebugBattleTestOutcome::Interactive, true);
+        campaignBattleRuntime_.presentationMode = mw::battle::CampaignBattlePresentationMode::CockpitCommandMap;
+    }
+
     void cheatBattleTestMedium() {
         cheatBattleTestPreset("phoenix_hawk");
     }
@@ -6524,6 +7007,8 @@ private:
 
     void cheatBattleTestFinal() {
         contractAccepted_ = false;
+        acceptedContractFinance_.reset();
+        deploymentFailures_ = 0;
         acceptedContract_ = {};
         acceptedBattleContract_ = {};
         missionParticipants_ = currentMissionParticipants();
@@ -6534,9 +7019,11 @@ private:
         acceptedBattleOutcome_ = {};
         acceptedBattleConsequencePlan_ = {};
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleStateGuard_ = {};
         campaignBattleRuntime_ = {};
+        speaker_.stop();
         beginCampaignBattleRuntime();
         debugConsoleOpen_ = false;
         changeState(ScreenState::MissionBattleStub);
@@ -6552,25 +7039,24 @@ private:
 #endif
 
     void openNewsNet() {
+        advanceCampaignDays(1); // Original 2C24..2C27, charged on entry.
         rebuildNewsNetMessages();
         newsNetButtonIndex_ = 0;
         newsNetShowingNoOther_ = false;
         newsNetNoOtherDirection_ = 0;
         newsNetMessageIndex_ = 0;
-        newsNetDayCharged_ = false;
+        newsNetDayCharged_ = true;
+        markDisplayedNewsNetMessage();
         changeState(ScreenState::NewsNet);
     }
 
     void closeNewsNet() {
-        if (!newsNetDayCharged_) {
-            advanceCampaignDays(1);
-            newsNetDayCharged_ = true;
-            rebuildNewsNetMessages();
-        }
         changeState(ScreenState::StatusMenu);
     }
 
     void activateNewsNetButton(size_t buttonIndex) {
+        // Reading Jordan's letter can unlock the following Tasha document.
+        rebuildNewsNetMessages();
         if (buttonIndex == 0) {
             if (newsNetShowingNoOther_ && newsNetNoOtherDirection_ > 0) {
                 newsNetShowingNoOther_ = false;
@@ -6598,6 +7084,7 @@ private:
         } else {
             closeNewsNet();
         }
+        if (buttonIndex < 2) markDisplayedNewsNetMessage();
     }
 
     int hitStarmapPlanet(int screenX, int screenY) const {
@@ -6712,6 +7199,14 @@ private:
     }
 
     void handleKey(WPARAM key) {
+        if (state_ == ScreenState::Authorization) {
+            if (!currentKeyDownRepeat_) advanceStartupScreen();
+            return;
+        }
+        if (state_ == ScreenState::CampaignEnding) { finishCampaignEnding(); return; }
+        if (!repairNotice_.empty() && (state_==ScreenState::MechStatus || state_==ScreenState::MechRepairStatus)) {
+            repairNotice_.clear(); return; // Modal input is consumed, not replayed.
+        }
         if (key == VK_ESCAPE) {
             if (state_ == ScreenState::CampaignMessage && isStorySceneActive()) {
                 advanceStoryScene();
@@ -6743,7 +7238,7 @@ private:
                 changeState(ScreenState::MechReviewList);
             } else if (state_ == ScreenState::MechRepairStatus) {
                 changeState(ScreenState::MechStatus);
-            } else if (state_ == ScreenState::MechSellOffer) {
+            } else if (state_ == ScreenState::MechSellOffer || state_ == ScreenState::MechSellRefused) {
                 mechStatusMenuIndex_ = 3;
                 changeState(ScreenState::MechStatus);
             } else if (state_ == ScreenState::MechBuyList) {
@@ -6793,6 +7288,7 @@ private:
                 systemMenuIndex_ = kSystemRestoreMenuIndex;
                 changeState(ScreenState::SystemMenu);
             } else if (state_ == ScreenState::MissionBattleStub) {
+                handleCampaignBattleRuntimeKeyDown(key);
                 return;
             } else if (state_ == ScreenState::MissionDebrief) {
                 if (missionDebriefOutcome_ != MissionOutcome::Death) {
@@ -7034,6 +7530,10 @@ private:
             return;
         }
 
+        if (state_ == ScreenState::MechSellRefused) {
+            if (key == VK_RETURN || key == VK_SPACE) changeState(ScreenState::MechStatus);
+            return;
+        }
         if (state_ == ScreenState::MechSellOffer) {
             if (key == VK_UP || key == VK_LEFT || key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
                 sellOfferSelectionIndex_ = (sellOfferSelectionIndex_ + 1u) % 2u;
@@ -7044,7 +7544,7 @@ private:
         }
 
         if (state_ == ScreenState::MechBuyList) {
-            const size_t count = currentPlanetMechMarket().mechsForSale.size() + 1u;
+            const size_t count = currentMechMarket().mechsForSale.size() + 1u;
             if (key == VK_UP || key == VK_LEFT) {
                 selectedMarketMechIndex_ = (selectedMarketMechIndex_ + count - 1u) % count;
                 clampMechMarketScroll();
@@ -7094,7 +7594,16 @@ private:
         }
 
         if (state_ == ScreenState::SystemMenu) {
-            if (key == VK_UP || key == VK_LEFT) {
+            if ((key == VK_LEFT || key == VK_RIGHT) &&
+                kSystemMenuItems[systemMenuIndex_].action == MenuAction::Resolution) {
+                cycleResolution(key == VK_LEFT ? -1 : 1);
+            } else if ((key == VK_LEFT || key == VK_RIGHT) &&
+                kSystemMenuItems[systemMenuIndex_].action == MenuAction::Fullscreen) {
+                toggleFullscreen();
+            } else if ((key == VK_LEFT || key == VK_RIGHT) &&
+                kSystemMenuItems[systemMenuIndex_].action == MenuAction::MouseLook) {
+                toggleMouseLook();
+            } else if (key == VK_UP || key == VK_LEFT) {
                 systemMenuIndex_ = (systemMenuIndex_ + kSystemMenuItems.size() - 1) % kSystemMenuItems.size();
             } else if (key == VK_DOWN || key == VK_RIGHT || key == VK_TAB) {
                 systemMenuIndex_ = (systemMenuIndex_ + 1) % kSystemMenuItems.size();
@@ -7168,6 +7677,40 @@ private:
         }
     }
 
+    void initializeOriginalCampaignGeneration() {
+        const std::vector<uint8_t> initial(mwMainData_.begin()+0x9148,mwMainData_.begin()+0x9860);
+        // MW_MAIN new-game entry restores its initial GAM, including the date.
+        // PLAY AGAIN reuses this App; member initializers alone leave the old date.
+        currentYear_ = readGamU16Le(initial, kGamOffsetYear);
+        currentMonth_ = readGamU16Le(initial, kGamOffsetMonth);
+        currentMonthDayCounter_ = readGamU16Le(initial, kGamOffsetMonthDayCounter);
+        currentPeriodic14DayCounter_ = kStartingPeriodic14DayCounter;
+        currentDay_ = 1;
+        crewGamState_=mw::battle::decodeOriginalCrewGam(initial);
+        crewPayrollNotice_=mw::battle::CrewPayrollNotice::None;
+        mechMarket_ = {};
+        currentPlanetIndex_ = chooseNewGameStartingPlanetIndex();
+        startingStoryPlanetName_ = currentPlanetNameAscii();
+        generateCurrentServiceFactor(); // 182F precedes the five destination draws.
+        initializeStoryDestinations();
+        refreshStoryNewsText();
+        selectedPlanetIndex_ = currentPlanetIndex_;
+        pendingTravelPlanetIndex_ = currentPlanetIndex_;
+        initializeCampaignVisitState();
+        generateCurrentMechMarket(); // MW_MAIN 188A
+        generateCurrentRecruitBoard(); // MW_MAIN 188D
+        playerWealth_=1000000ull+1000ull*repairSession_.rng.inclusive(255); // 1890
+        const auto starting=mw::battle::generateOriginalStartingMech(marketTables_,repairSession_.rng);
+        auto& startingMech=ownedMechs_.front();
+        readGamMechRecord(std::vector<uint8_t>(starting.condition.begin(),starting.condition.end()),0,startingMech);
+        startingMech.ammoPacks.fill(0);
+        for(size_t a=0;a<marketTables_.ammoCounts[2];++a)
+            startingMech.ammoPacks[starting.ammoTypes[a]]=starting.ammunition[a];
+        finalizeLoadedMech(startingMech);
+        generateCurrentPlanetContracts();
+        initializeRepairSession();
+    }
+
     void loadResources() {
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
         debugLog(L"Loading game resources from: " + resourceRoot_.wstring());
@@ -7204,15 +7747,20 @@ private:
         pendingStoryReturnState_ = ScreenState::MainMenu;
         storyBackdrop_ = StoryBackdrop::Campaign;
         storyMessageFlags_ = {};
+        campaignCompleted_ = 0;
+        endingFrame_ = 0;
         startingStoryPlanetName_.clear();
         grigDestinationPlanet_.clear();
         wendallDestinationPlanet_.clear();
         kearneyDestinationPlanet_.clear();
         blackWidowDestinationPlanet_.clear();
         darkWingDestinationPlanet_.clear();
+        storyDestinationSaveIds_.fill(0);
         newsNetNoOtherLines_.clear();
         missionVictoryLines_.clear();
         missionDefeatLines_.clear();
+        for(auto& lines:missionHouseVictoryLines_) lines.clear();
+        for(auto& lines:missionHouseDefeatLines_) lines.clear();
         missionDeathPromptLines_.clear();
         activeNewsNetMessageIndexes_.clear();
         activeContracts_.clear();
@@ -7222,11 +7770,15 @@ private:
         acceptedBattleOutcome_ = {};
         acceptedBattleConsequencePlan_ = {};
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleStateGuard_ = {};
         campaignBattleRuntime_ = {};
+        speaker_.stop();
         missionSequence_ = {};
         contractAccepted_ = false;
+        acceptedContractFinance_.reset();
+        deploymentFailures_ = 0;
         missionLaunchPending_ = false;
         finalMissionStubActive_ = false;
         missionParticipants_.clear();
@@ -7234,12 +7786,10 @@ private:
         missionDebriefSalvage_ = 0;
         missionDebriefPayment_ = 0;
         recruitPilots_.clear();
-        planetRecruitPools_.clear();
-        contractNegotiationLockedVisitByPlanet_.clear();
-        recruitLastPlanetIndex_.clear();
-        recruitLastMonthKey_.clear();
-        previousPlanetRecruitIndexes_.clear();
-        planetMechMarkets_.clear();
+        recruitBoard_ = {};
+        recruitBoardCursor_ = 0;
+        activeRecruitBoardSlot_ = recruitBoard_.size();
+        mechMarket_ = {};
         planets_.clear();
         barDialogState_ = BarDialogState::None;
         activeRecruitIndex_ = -1;
@@ -7249,6 +7799,7 @@ private:
         restoreGameSelectionIndex_ = 0;
         gamRawState_.clear();
         gamRawStateValid_ = false;
+        acceptedContractSaveState_.reset();
         starmapNameInputActive_ = false;
         starmapNameInput_.clear();
         resetReputationAndHouseStanding();
@@ -7256,6 +7807,9 @@ private:
         try {
             const fs::path mwMainPath = resourceRoot_ / L"MW_MAIN.EXE";
             mwMainData_ = readFile(mwMainPath);
+            marketTables_ = mw::battle::decodeOriginalMarketTables(mwMainData_);
+            salvageTables_ = mw::battle::decodeOriginalSalvageTables(mwMainData_);
+            repairTables_ = mw::battle::decodeOriginalRepairTables(mwMainData_);
             archive_ = loadPicsArchive(resourceRoot_ / L"MW_1PICS.BIN");
             activisionArchive_ = loadPicsArchive(resourceRoot_ / L"MW_APICS.BIN");
             titleArchive_ = loadPicsArchive(resourceRoot_ / L"MW_TPICS.BIN");
@@ -7278,6 +7832,8 @@ private:
             loadMechArtArchives();
             travelShuttleArchive_ = loadRawPicsImage(mwPicsPath, 0x000680D5u, kTravelShuttleEntry);
             travelEngineArchive_ = loadPicsArchive(resourceRoot_ / L"MW_2PICS.BIN");
+            endingArchive_ = loadPicsArchive(resourceRoot_ / L"MW_FPICS.BIN");
+            endingBackground_ = loadEndingBackground(mwPicsPath);
             barArchive_ = loadRawPicsImageWithNibblePhase(
                 mwPicsPath,
                 0x0001799Bu,
@@ -7305,31 +7861,20 @@ private:
             newsNetNoOtherLines_ = parseMwMainTextBlock(mwMainData_, kNewsNetNoOtherText);
             missionVictoryLines_ = parseMwMainTextBlock(mwMainData_, kMissionVictoryText);
             missionDefeatLines_ = parseMwMainTextBlock(mwMainData_, kMissionDefeatText);
+            for(size_t house=0;house<5;++house) {
+                auto resultMessage=[&](size_t table) {
+                    const size_t offset=0x8d00+readU16Le(mwMainData_,0x8d00+table+2*house);
+                    size_t end=offset;while(mwMainData_.at(end)!=0) ++end;
+                    return parseMwMainTextBlock(mwMainData_,{"mw_main.house_result",offset,end-offset,0});
+                };
+                // Original2147 /2174: employer-specific loss/victory messages.
+                missionHouseDefeatLines_[house]=resultMessage(0x1491);
+                missionHouseVictoryLines_[house]=resultMessage(0x166a);
+            }
             missionDeathPromptLines_ = parseMwMainTextBlock(mwMainData_, kMissionDeathPromptText);
-            newsNetMessageLines_.reserve(kNewsNetEntries.size() + kStoryNewsNetEntries.size());
-            for (const NewsNetEntry& entry : kNewsNetEntries) {
-                newsNetMessageLines_.push_back(parseMwMainTextBlock(mwMainData_, entry.text));
-            }
-            for (const StoryNewsNetEntry& entry : kStoryNewsNetEntries) {
-                std::vector<std::wstring> lines = storyLines(entry.text);
-                if (entry.messageId == 0x36) {
-                    appendToLastStoryLine(lines, blackWidowDestinationPlanet());
-                    appendStoryLines(lines, storyLines(kStoryNewsBlackWidowLeadSuffix));
-                } else if (entry.messageId == 0x40 && !lines.empty()) {
-                    if (lines.front().size() >= 2 && lines.front()[0] == L'-' && lines.front()[1] == L' ') {
-                        lines.front().erase(0, 2);
-                    }
-                }
-                newsNetMessageLines_.push_back(std::move(lines));
-            }
             recruitPilots_ = loadRecruitPilots(mwMainData_);
             planets_ = loadPlanetRecords(mwMainPath);
-            planetMechMarkets_.assign(planets_.size(), {});
-            currentPlanetIndex_ = chooseNewGameStartingPlanetIndex();
-            startingStoryPlanetName_ = currentPlanetNameAscii();
-            selectedPlanetIndex_ = currentPlanetIndex_;
-            pendingTravelPlanetIndex_ = currentPlanetIndex_;
-            initializeRecruitmentState();
+            initializeOriginalCampaignGeneration();
             loadHouseEmblems();
             loadContractMenuImages();
             loadMissionResultImages();
@@ -7623,6 +8168,8 @@ private:
     }
 
     void resetReputationAndHouseStanding() {
+        campaignResultState_ = {};
+        mw::battle::clearOriginalCampaignResultForLaunch(campaignResultState_);
         playerReputationPoints_ = 0;
         playerReputationTier_ = 0;
         housePositiveCounters_.fill(0);
@@ -7630,13 +8177,7 @@ private:
         syncFamilyAttitudesFromHouseCounters();
     }
 
-    void initializeRecruitmentState() {
-        planetRecruitPools_.assign(planets_.size(), {});
-        contractNegotiationLockedVisitByPlanet_.assign(planets_.size(), 0);
-        recruitLastPlanetIndex_.assign(recruitPilots_.size(), -1);
-        recruitLastMonthKey_.assign(recruitPilots_.size(), -1000000);
-        previousPlanetRecruitIndexes_.clear();
-        recruitmentSeed_ = makeRecruitmentSeed();
+    void initializeCampaignVisitState() {
         planetVisitSerialCounter_ = 1;
         currentPlanetVisitSerial_ = planetVisitSerialCounter_;
         completedContractVisitLedger_ = {};
@@ -7645,7 +8186,7 @@ private:
             currentPlanetVisitSerial_);
     }
 
-    static uint32_t makeRecruitmentSeed() {
+    static uint32_t makeStorySeed() {
         LARGE_INTEGER counter{};
         QueryPerformanceCounter(&counter);
         uint64_t value = static_cast<uint64_t>(counter.QuadPart);
@@ -7719,12 +8260,15 @@ private:
 
     void update(DWORD now) {
         const DWORD elapsed = now - stateStartedTick_;
+        if (state_ == ScreenState::CampaignEnding) {
+            // Host presentation clock; original 2442 waits five DS:000C ticks.
+            endingFrame_ = std::min<size_t>(45, elapsed / 275u);
+            return;
+        }
         if (state_ == ScreenState::ActivisionSplash && elapsed > 2200) {
             changeState(ScreenState::IntroText);
         } else if (state_ == ScreenState::IntroText && elapsed > 6500) {
             changeState(ScreenState::Title);
-        } else if (state_ == ScreenState::Authorization && elapsed > 1200) {
-            changeState(ScreenState::CampaignMessage);
         } else if (state_ == ScreenState::ContractAcceptedMessage && elapsed > kContractAcceptedMessageMs) {
             changeState(ScreenState::MainMenu);
         } else if (state_ == ScreenState::MechLabMenu) {
@@ -7763,7 +8307,6 @@ private:
     void completeTravel() {
         advanceCampaignDays(pendingTravelDays_);
         if (!planets_.empty()) {
-            previousPlanetRecruitIndexes_ = currentPlanetGeneratedRecruitIndexes();
             currentPlanetIndex_ = std::clamp(pendingTravelPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
             selectedPlanetIndex_ = currentPlanetIndex_;
             currentPlanetVisitSerial_ = ++planetVisitSerialCounter_;
@@ -7773,6 +8316,10 @@ private:
             barDialogState_ = BarDialogState::None;
             activeRecruitIndex_ = -1;
         }
+        generateCurrentServiceFactor(); // MW_MAIN 5F1B -> 1ACE
+        generateCurrentMechMarket(); // MW_MAIN 5F1E, after arrival
+        generateCurrentPlanetContracts(); // MW_MAIN 101B:5F21, after arrival
+        generateCurrentRecruitBoard(); // MW_MAIN 5F24
         playerWealth_ = (playerWealth_ > pendingTravelCost_) ? (playerWealth_ - pendingTravelCost_) : 0;
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
         debugLog(
@@ -7787,14 +8334,9 @@ private:
         pendingTravelDays_ = 0;
     }
 
-    std::vector<size_t> currentPlanetGeneratedRecruitIndexes() const {
-        if (currentPlanetIndex_ < 0 || static_cast<size_t>(currentPlanetIndex_) >= planetRecruitPools_.size()) {
-            return {};
-        }
-        return planetRecruitPools_[static_cast<size_t>(currentPlanetIndex_)].originalCandidates;
-    }
-
-    void changeState(ScreenState state) {
+    void changeState(ScreenState state, bool debriefHasBattle = true) {
+        if (state != ScreenState::MissionBattleStub) speaker_.stop();
+        repairNotice_.clear();
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
         if (state_ != state) {
             debugLog(
@@ -7804,11 +8346,15 @@ private:
                 std::wstring(screenStateName(state)));
         }
 #endif
+        updateMusicForState(state, debriefHasBattle);
         state_ = state;
         stateStartedTick_ = GetTickCount();
-        if (state_ == ScreenState::MechLabMenu) {
+        if (state_ == ScreenState::BarMenu) {
+            recruitBoardCursor_ = 0; // MW_MAIN 6957: on entering the bar.
+        } else if (state_ == ScreenState::MechLabMenu) {
             resetMechLabAnimation(stateStartedTick_);
         } else if (state_ == ScreenState::MainMenu) {
+            repairSession_.unavailable.fill(0); // MW_MAIN 1909/1A01 -> 3FFD.
             if (!planetIconAvailable(planetMenuIndex_)) {
                 planetMenuIndex_ = kPlanetStatusIconIndex;
             }
@@ -7841,20 +8387,20 @@ private:
             selectedMechIndex_ = ownedMechs_.empty() ? 0 : std::min(selectedMechIndex_, ownedMechs_.size() - 1u);
             sellOfferSelectionIndex_ = std::min<size_t>(sellOfferSelectionIndex_, 1u);
         } else if (state_ == ScreenState::MechBuyList) {
-            ensureCurrentPlanetMechMarket();
+            ensureCurrentMechMarket();
             clampMechMarketScroll();
         } else if (state_ == ScreenState::MechBuyStatus ||
                    state_ == ScreenState::MechBuyCannotAfford ||
                    state_ == ScreenState::MechBuyTooMany) {
-            ensureCurrentPlanetMechMarket();
-            const PlanetMechMarket& market = currentPlanetMechMarket();
+            ensureCurrentMechMarket();
+            const CurrentMechMarket& market = currentMechMarket();
             selectedMarketMechIndex_ = market.mechsForSale.empty()
                 ? 0
                 : std::min(selectedMarketMechIndex_, market.mechsForSale.size() - 1u);
             mechBuyMenuIndex_ = std::min<size_t>(mechBuyMenuIndex_, 2u);
         } else if (state_ == ScreenState::MechBuyDamageStatus) {
-            ensureCurrentPlanetMechMarket();
-            const PlanetMechMarket& market = currentPlanetMechMarket();
+            ensureCurrentMechMarket();
+            const CurrentMechMarket& market = currentMechMarket();
             selectedMarketMechIndex_ = market.mechsForSale.empty()
                 ? 0
                 : std::min(selectedMarketMechIndex_, market.mechsForSale.size() - 1u);
@@ -7862,6 +8408,32 @@ private:
             crewInteractionMode_ = CrewInteractionMode::Navigate;
             crewSelectionIndex_ = kCrewDoneSelectionIndex;
             crewAssignmentIndex_ = 0;
+        }
+    }
+
+    void updateMusicForState(ScreenState next, bool debriefHasBattle) {
+        using Track = mw::audio::MusicTrack;
+        // Phase17 policy: SOUND OFF consistently mutes music, including cues
+        // which the original happened not to gate with its saved sound flag.
+        if (!soundEnabled_) { music_.play(Track::None); return; }
+        if (next == ScreenState::IntroText || next == ScreenState::Title) {
+            if (music_.requestedTrack() != Track::Theme) music_.play(Track::Theme);
+        } else if (next == ScreenState::CampaignEnding) {
+            music_.play(Track::Ending); // MW_MAIN 001B:230A
+        } else if (next == ScreenState::MissionDebrief) {
+            if (missionDebriefOutcome_ == MissionOutcome::Death) music_.play(Track::Death); // 246B
+            else if (debriefHasBattle && missionDebriefOutcome_ == MissionOutcome::Victory && !isDarkWingVictory(acceptedBattleOutcome_))
+                music_.play(Track::Success); // 215C: LAUNCH.MUS is the successful return cue.
+            else music_.play(Track::None);
+        } else if (next == ScreenState::BarMenu ||
+                   (next == ScreenState::CampaignMessage && isStorySceneActive() && storyBackdrop_ == StoryBackdrop::Bar)) {
+            if (music_.requestedTrack() != Track::Bar) music_.play(Track::Bar);
+        } else if (next == ScreenState::CampaignMessage && isStorySceneActive() && pendingStoryDefaultAction_ == StoryAction::GameOver) {
+            music_.play(Track::Death); // script opcode at 6588..65B0
+        } else if (next == ScreenState::MainMenu || next == ScreenState::Authorization ||
+                   next == ScreenState::ActivisionSplash || next == ScreenState::TravelAnimation ||
+                   next == ScreenState::MissionBattleStub) {
+            music_.play(Track::None);
         }
     }
 
@@ -7926,6 +8498,10 @@ private:
         case ScreenState::MechReloadPrompt:
             renderMechReloadPrompt();
             break;
+        case ScreenState::MechSellRefused:
+            renderMechStatus();
+            renderMechBuyMessage(L"WE DON'T NEED ANY MORE MECHS", L"AT THIS TIME, THANKS.");
+            break;
         case ScreenState::MechSellOffer:
             renderMechSellOffer();
             break;
@@ -7973,9 +8549,21 @@ private:
         case ScreenState::MissionBattleStub:
             renderBattleStub();
             break;
+        case ScreenState::CampaignEnding:
+            renderCampaignEnding();
+            break;
         case ScreenState::MissionDebrief:
             renderMissionDebrief();
             break;
+        }
+
+        if (!repairNotice_.empty() && (state_==ScreenState::MechStatus || state_==ScreenState::MechRepairStatus)) {
+            if (repairNotice_==L"NOT ALL PARTS WERE AVAILABLE.")
+                renderMechBuyMessage(L"NOT ALL PARTS",L"WERE AVAILABLE.");
+            else if (repairNotice_==L"ALL SYSTEMS ARE NOW FUNCTIONAL.")
+                renderMechBuyMessage(L"ALL SYSTEMS ARE",L"NOW FUNCTIONAL.");
+            else renderMechBuyMessage(repairNotice_,repairNotice_==L"YOU DON'T HAVE ENOUGH MONEY" ?
+                L"TO REPAIR ALL THIS DAMAGE!" : L"");
         }
 
         if (!status_.empty() && status_.find(L"failed") != std::wstring::npos) {
@@ -8040,19 +8628,17 @@ private:
 
     void renderAuthorization() {
         drawImageFullScreenOrCentered(titleArchive_, 2);
-        const DWORD elapsed = GetTickCount() - stateStartedTick_;
-        if (elapsed < 700) {
-            fillRect(34, 132, 252, 54, 0);
-            drawBox(32, 130, 256, 58, 7);
-            drawSmallText(42, 138, L"WHAT IS YOUR PASSWORD?", 15, 0);
-            drawSmallText(42, 154, L"CODE CHECK: WHISKEY DELTA TANGO", 15, 0);
-            drawSmallText(42, 170, L"AUTHORIZATION CODE: ", 15, 0);
-        } else {
-            fillRect(68, 98, 184, 34, 8);
-            drawBox(66, 96, 188, 38, 7);
-            drawSmallTextCenteredInRect(66, 106, 188, L"AUTHORIZATION CONFIRMED!", 15, 8);
-            drawSmallTextCenteredInRect(66, 120, 188, L"GLAD TO HAVE YOU ABOARD.", 15, 8);
-        }
+        // Original GPICS frame, extended upwards to fit the fan-project notice.
+        drawGpPanel(0, 90, 320, 110, 8);
+        drawSmallTextPlainCenteredInRect(10, 100, 300, L"WELCOME TO MECH1989: RECODED!", 12);
+        drawTextPassCenteredInRect(font_, 10, 111, 300, L"This game is based on \"Mechwarrior\"", 7);
+        drawTextPassCenteredInRect(font_, 10, 122, 300, L"game from 1989 for PC.", 7);
+        drawSmallTextPlainCenteredInRect(10, 135, 300, L"UNOFFICIAL FAN PROJECT. JUST FOR FUN.", 7);
+        drawSmallTextPlainCenteredInRect(10, 144, 300, L"WE CLAIM NO RIGHTS TO ANY TRADEMARKS.", 7);
+        drawSmallTextPlainCenteredInRect(10, 153, 300, L"ALL BELONG TO THEIR RESPECTIVE OWNERS.", 7);
+        drawSmallTextPlainCenteredInRect(10, 166, 300, L"BUGS MAY OCCUR. PLEASE BE CAREFUL!", 7);
+        drawSmallTextPlainCenteredInRect(10, 177, 300, L"WELCOME ABOARD!", 14);
+        drawSmallTextPlainCenteredInRect(10, 189, 300, L"PRESS ANY KEY OR CLICK TO CONTINUE", 7);
     }
 
     void renderCampaignShell(bool introMessage = false) {
@@ -8080,8 +8666,41 @@ private:
         }
     }
 
+    static bool isDarkWingVictory(const mw::battle::CampaignBattleOutcomePackage& outcome) {
+        return outcome.valid && outcome.terminal &&
+            outcome.launchSource == mw::battle::CampaignBattleLaunchSource::DarkWingFinal &&
+            outcome.outcome == mw::battle::CampaignBattleOutcome::Victory && outcome.rawResultCode >= 0 &&
+            outcome.rawResultCode <= 255 && mw::battle::originalDarkWingEnding(static_cast<uint8_t>(outcome.rawResultCode),99);
+    }
+
+    void finishCampaignEnding() {
+        if (endingFrame_ < 45) return;
+        // Original 241A waits for input, then 6293/66CC marks message 76.
+        setStoryFlag(0x76);
+        lastBattlePostResultReceipt_.extendedEndingSequenceExecuted = true;
+        lastBattlePostResultReceipt_.reason = "dark_wing_victory_ending_presented";
+        beginStory({makeStoryPage({"mw_main.ending.choice",0x20EA3u,52u,4u},
+            {{L"CONTINUE",StoryAction::None},{L"QUIT",StoryAction::QuitToDos}})},
+            StoryBackdrop::Ending, ScreenState::MainMenu);
+    }
+
+    void renderCampaignEnding() {
+        fillRect(0,0,kScreenWidth,kScreenHeight,7);
+        drawImageAt(endingBackground_,77,0,0,false);
+        const auto frame = mw::battle::originalDarkWingEndingFrame(std::min<size_t>(endingFrame_,44));
+        for (size_t i=0;i<frame.count;++i) {
+            const auto sprite=frame.sprites[i];
+            drawImageAt(endingArchive_,sprite.entry,sprite.x,sprite.y,true);
+        }
+        const auto lines=parseMwMainTextBlock(mwMainData_,{"mw_main.ending.prologue",0xA737u,387u,9u});
+        int y=140;
+        for (const auto& line:lines) { drawSmallTextPlain(14,y,line,0); y+=6; }
+    }
+
     void renderStoryScene() {
-        if (storyBackdrop_ == StoryBackdrop::Bar) {
+        if (storyBackdrop_ == StoryBackdrop::Ending) {
+            renderCampaignEnding();
+        } else if (storyBackdrop_ == StoryBackdrop::Bar) {
             renderBarInformationBackdrop();
         } else if (storyBackdrop_ == StoryBackdrop::Contract) {
             renderContractStoryBackdrop();
@@ -8095,7 +8714,7 @@ private:
         const RectI panel = storyPanelRect(page);
         drawGpPanel(panel.x, panel.y, panel.width, panel.height, 8);
 
-        const int textX = panel.x + 9;
+        const int textX = panel.x + (storyBackdrop_ == StoryBackdrop::Ending ? 12 : 9);
         const int textY = panel.y + 10;
         const int textWidth = panel.width - 18;
         const int lineStep = storyLineStep(page);
@@ -8212,6 +8831,12 @@ private:
             return;
         }
         if (contractNegotiationUnavailable_) {
+            if (currentContractHouseRefuses()) {
+                drawContractText7x5(38, 39, L"BECAUSE OF YOUR MANY ACTIONS", kContractTextColor);
+                drawContractText7x5(38, 47, L"AGAINST OUR HOLDINGS WE HAVE NO", kContractTextColor);
+                drawContractText7x5(38, 55, L"DESIRE TO DO BUSINESS WITH YOU.", kContractTextColor);
+                return;
+            }
             drawContractText7x5(38, 39, L"NO CONTRACTS ARE AVAILABLE", kContractTextColor);
             drawContractText7x5(38, 47, L"AT THIS TIME.", kContractTextColor);
             return;
@@ -8538,8 +9163,8 @@ private:
     }
 
     void renderMechBuyList() {
-        ensureCurrentPlanetMechMarket();
-        const PlanetMechMarket& market = currentPlanetMechMarket();
+        ensureCurrentMechMarket();
+        const CurrentMechMarket& market = currentMechMarket();
         const RectI panel = mechBuyListPanelRect();
 
         if (market.mechsForSale.empty()) {
@@ -8826,7 +9451,7 @@ private:
             drawMechStatusText(76, y, damageLabel(weapon.condition), color);
             y += kMechRepairComponentLineStep;
         }
-        drawMechStatusText(4, 176, L"Q - RETURN TO COCKPIT", 7);
+        drawMechStatusText(4, 176, L"G/Q - RETURN TO COCKPIT", 7);
         drawMechStatusText(4, 184, L"C - GO TO COMMAND SCREEN", 7);
 
         drawImageAt(
@@ -8976,8 +9601,10 @@ private:
 
     void renderSystemMenu() {
         drawImageFullScreenOrCentered(campaignArchive_, campaignBackdropEntry());
-        drawGpPanel(90, 80, 140, 86, 8);
-        drawSystemMenu(90, 90, 140);
+        drawGpPanel(40, 68, 240, 108, 8);
+        drawSystemMenu(40, 80, 240);
+        if (displaySettingsSaveFailed_)
+            drawSmallTextPlainCenteredInRect(0, 178, 320, L"SETTINGS COULD NOT BE SAVED", 12);
     }
 
     void renderSaveGameNameInput() {
@@ -9707,7 +10334,8 @@ private:
         int y,
         int rightExclusive,
         uint32_t bgra) {
-        if (smallFont_.rows.empty()) {
+        const auto& weaponFont=campaignCockpitDynamicLayers_.font; // BTECH6X6B.FNT, not campaign6X6.FNT.
+        if (weaponFont.rows.empty()) {
             return;
         }
         int destinationX = x;
@@ -9715,14 +10343,14 @@ private:
             if (destinationX + 5 > rightExclusive) {
                 break;
             }
-            if (smallFont_.contains(ch)) {
+            if (weaponFont.contains(ch)) {
                 const int glyph =
-                    static_cast<unsigned char>(ch) - smallFont_.firstCode;
-                const int rows = std::min(5, smallFont_.height);
-                const int columns = std::min(5, smallFont_.width);
+                    static_cast<unsigned char>(ch) - weaponFont.firstCode;
+                const int rows = weaponFont.height;
+                const int columns = weaponFont.width;
                 for (int row = 0; row < rows; ++row) {
-                    const uint8_t bits = smallFont_.rows[
-                        static_cast<size_t>(glyph) * smallFont_.height + row];
+                    const uint8_t bits = weaponFont.rows[
+                        static_cast<size_t>(glyph) * weaponFont.height + row];
                     for (int column = 0; column < columns; ++column) {
                         if (((bits >> (7 - column)) & 1u) == 0u) {
                             continue;
@@ -9750,27 +10378,21 @@ private:
     void renderCampaignCockpitWeaponPanel(
         const mw::battle::BattleSnapshot& snapshot,
         mw::battle::CampaignCockpitFamily family) {
-        constexpr uint32_t kBrightBlue = 0xff5555ffu;
         constexpr uint32_t kBrightGreen = 0xff55ff55u;
-        const mw::presentation::CampaignCockpitWeaponPanelLayout& panel =
-            mw::presentation::campaignCockpitWeaponPanelLayout(family);
-
-        // LIGHT/MEDIUM/HEAVY.SCR bakes in a green first-row marker. Restore all
-        // marker interiors before applying the snapshot-owned selection.
+        const auto& panel = mw::presentation::campaignCockpitWeaponPanelLayout(family);
+        const auto* player = playerCombatantSnapshot(snapshot);
+        // Repaint both the selected light and AWS outline, including empty rows.
         for (size_t row = 0; row < panel.rowCapacity; ++row) {
-            fillRectBgra(
-                panel.statusX,
-                mw::presentation::campaignCockpitWeaponPanelRowY(panel, row),
-                panel.statusWidth,
-                panel.statusHeight,
-                kBrightBlue);
+            const auto* weapon = player && row < player->weapons.size() ? &player->weapons[row] : nullptr;
+            const auto lamp = mw::presentation::campaignCockpitWeaponLamp(
+                weapon && weapon->selected, weapon && weapon->awsLinked,
+                player && player->automaticWeaponsEnabled);
+            const int y = mw::presentation::campaignCockpitWeaponPanelRowY(panel, row);
+            for (int py = 0; py < 7; ++py)
+                for (int px = 0; px < 8; ++px)
+                    fillRectBgra(panel.statusX - 1 + px, y - 1 + py, 1, 1, lamp[py * 8 + px]);
         }
-
-        const mw::battle::CombatantSnapshot* player =
-            playerCombatantSnapshot(snapshot);
-        if (player == nullptr) {
-            return;
-        }
+        if (player == nullptr) return;
         const size_t rowCount =
             std::min(panel.rowCapacity, player->weapons.size());
         for (size_t row = 0; row < rowCount; ++row) {
@@ -9779,15 +10401,6 @@ private:
             const int y = mw::presentation::campaignCockpitWeaponPanelRowY(
                 panel,
                 row);
-            if (weapon.selected) {
-                fillRectBgra(
-                    panel.statusX,
-                    y,
-                    panel.statusWidth,
-                    panel.statusHeight,
-                    kBrightGreen);
-            }
-
             const mw::presentation::CampaignCockpitWeaponTextColors colors =
                 mw::presentation::campaignCockpitWeaponTextColors(
                     family,
@@ -9930,11 +10543,12 @@ private:
             fillRectBgra(x, gauge.speedY, 1, 1, highlight);
             fillRectBgra(x, gauge.speedY + 1, 1, barHeight - 1, body);
         };
+        for(int i=0;i<29;++i)drawSpeedBar(i,0xff555555u,0xffaaaaaau);
         for (int i = 1; i <= gauge.reverseBars; ++i) {
             drawSpeedBar(zeroIndex - i, 0xffaa0000u, 0xffff5555u);
         }
         for (int i = 1; i <= gauge.forwardBars; ++i) {
-            drawSpeedBar(zeroIndex + i, 0xff00d900u, 0xff55ff55u);
+            drawSpeedBar(zeroIndex + i, 0xff00aa00u, 0xff55ff55u);
         }
         drawSpeedBar(zeroIndex, 0xffffff55u, 0xffffffffu);
 
@@ -9956,26 +10570,26 @@ private:
                 fillY,
                 6,
                 gauge.jumpFuelFillHeight,
-                0xff474fffu);
+                0xff5555ffu);
             fillRectBgra(
                 gauge.jumpGauge.x + 6,
                 fillY,
                 1,
                 gauge.jumpFuelFillHeight,
-                0xff40ffffu);
+                0xff55ffffu);
         }
         fillRectBgra(
             gauge.jumpGauge.x - 1,
             gauge.jumpActivationThresholdY,
             gauge.jumpGauge.width + 1,
             1,
-            0xff850000u);
+            0xffaa0000u);
         fillRectBgra(
-            gauge.jumpGauge.x + gauge.jumpGauge.width,
+            gauge.jumpGauge.x + gauge.jumpGauge.width - 1,
             gauge.jumpActivationThresholdY,
+            2,
             1,
-            1,
-            0xffff1f1fu);
+            0xffff5555u);
         if (!player->jumpJetReady) {
             for (int y = 0; y < gauge.jumpReadyLight.height; ++y) {
                 for (int x = 0; x < gauge.jumpReadyLight.width; ++x) {
@@ -9985,7 +10599,7 @@ private:
                         gauge.jumpReadyLight.y + y,
                         1,
                         1,
-                        highlight ? 0xffff3838u : 0xffa60000u);
+                        highlight ? 0xffff5555u : 0xffaa0000u);
                 }
             }
         }
@@ -10130,18 +10744,12 @@ private:
             !player->majorSystems.radarContactsVisible) {
             return;
         }
-        drawCampaignCockpitLineBgra(
-            geometry.leftX,
-            geometry.topY,
-            geometry.apexX,
-            geometry.apexY,
-            sector);
-        drawCampaignCockpitLineBgra(
-            geometry.rightX,
-            geometry.topY,
-            geometry.apexX,
-            geometry.apexY,
-            sector);
+        // Captured original raster: two-pixel45-degree arms, open apex row.
+        for(int y=geometry.topY;y<geometry.apexY;++y) {
+            const int offset=y-geometry.topY;
+            fillRectBgra(geometry.leftX+offset,y,2,1,sector);
+            if(y>geometry.topY)fillRectBgra(geometry.rightX-offset,y,2,1,sector);
+        }
 
         if (player != nullptr) {
             for (const mw::battle::CombatantSnapshot& combatant :
@@ -10301,6 +10909,17 @@ private:
             return;
         }
         framebuffer_ = campaignCockpitBackdrop_.bgraPixels;
+        if (renderScene.mode == mw::battle::CampaignBattlePresentationMode::CockpitCommandMap) {
+            std::vector<mw::presentation::CampaignCommandCrewName> names;
+            for (const auto& binding : campaignBattleRuntime_.persistentRosterBindings) {
+                if (binding.crewSlot >= 0 && static_cast<size_t>(binding.crewSlot) < crewMembers_.size()) {
+                    const auto name = crewMembers_[static_cast<size_t>(binding.crewSlot)].name;
+                    if (!name.empty()) names.push_back({binding.sourceSlot, narrowAscii(name)});
+                }
+            }
+            mw::presentation::composeCampaignCommandPanels(framebuffer_, campaignCockpitDynamicLayers_.font,
+                snapshot, campaignBattleRuntime_.commandScreen, names);
+        }
         if (renderScene.mode ==
                 mw::battle::CampaignBattlePresentationMode::MissionStatus &&
             snapshot.mission.valid) {
@@ -10308,15 +10927,49 @@ private:
             drawCampaignCockpitFontText(
                 campaignCockpitDynamicLayers_.font,
                 "YOUR NEXT MISSION:",
-                24,
-                146,
+                20,
+                150,
                 missionText);
             drawCampaignCockpitFontText(
                 campaignCockpitDynamicLayers_.font,
                 snapshot.mission.title,
-                32,
-                164,
+                25,
+                165,
                 missionText);
+            // BTECH416A: occupied lance rows, six-pixel font, eight-pixel rows.
+            // The original simulator uses this fixed short-name table (DS22AC),
+            // including its commander label, independently of MW_MAIN's names.
+            static constexpr std::array<const char*,27> pilotNames{{
+                "G. BRAVER", "ELLI GUJAR", "KAREN BLAK", "TARIS REN", "TJ",
+                "D. SAJAK", "PAM NORTH", "TARA ELLIS", "A. MORRIS", "ILSA MARN",
+                "ARA", "S. MILLER", "ROSE ARTZ", "JJ KITTER", "EMMA MEYER",
+                "ERIN FALLS", "A. CHU LAI", "ZERA TITH", "CHANEY TI", "BOB TRUE",
+                "TED HEGEL", "TIM SEERS", "Z. RODGERS", "T.D. BENTE", "T. RICH",
+                "JOHN ZOE", "KELLY T."
+            }};
+            const auto text=[&](int x,int y,const std::string& value) {
+                drawCampaignCockpitFontText(campaignCockpitDynamicLayers_.font,value,x,y,missionText);
+            };
+            text(207,22,"CREW STATUS:");text(207,70,"MECH STATUS:");
+            for(const auto& binding:campaignBattleRuntime_.persistentRosterBindings) {
+                if(binding.crewSlot<0 || binding.crewSlot>=4) continue;
+                const auto actor=std::find_if(snapshot.combatants.begin(),snapshot.combatants.end(),
+                    [&](const auto& a){return a.roster.sourceSlot==binding.sourceSlot;});
+                if(actor==snapshot.combatants.end()) continue;
+                const auto& crew=crewMembers_[static_cast<size_t>(binding.crewSlot)];
+                const size_t pilot=binding.crewSlot==0 ? 0 : static_cast<size_t>(crew.recruitIndex+1);
+                if(pilot>=pilotNames.size()) continue;
+                const int row=binding.crewSlot*8;
+                text(211,30+row,pilotNames[pilot]);text(283,30+row,":OK");
+                std::string mech=actor->mechPresetId;
+                for(char& c:mech)c=c=='_'?' ':static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+                text(211,78+row,mech);text(283,78+row,":");
+                // Stage entry resets the new control state to standing. Use the
+                // recovered4106 viability predicate, not an armor percentage.
+                const auto viability=mw::battle::battleOriginalAiAggregate7070FromAuthoritativeState(
+                    static_cast<uint8_t>(binding.crewSlot),0,0,0,actor->detailedDamage,actor->weapons);
+                text(289,78+row,viability.viability4106Passed ? "OK" : "JUNK");
+            }
         }
     }
 
@@ -10343,6 +10996,18 @@ private:
         renderCampaignCockpitTargetScan(snapshot, renderScene);
         (void)presentation;
         renderCampaignCockpitGauges(snapshot, renderScene.cockpit.family);
+        if (campaignBattleRuntime_.retreatPromptVisible) {
+            const auto& prompt = campaignCockpitDynamicLayers_.retreatPrompt;
+            if (prompt.valid) {
+                for (int y=0; y<prompt.height; ++y)
+                    std::copy_n(prompt.bgraPixels.begin()+y*prompt.width, prompt.width,
+                        framebuffer_.begin()+(87+y)*kScreenWidth+107);
+            } else {
+                fillRect(107,87,107,27,0);
+                drawNewsNetText5x5(118,94,L"DO YOU WANT TO",7,100);
+                drawNewsNetText5x5(121,102,L"RETREAT (Y/N)",7,100);
+            }
+        }
     }
 
     void renderCampaignBattleExternalPresentation(
@@ -10421,7 +11086,7 @@ private:
         }
         campaignBattleRuntime_.lastRenderTick = now;
         ++campaignBattleRuntime_.renderFrameIndex;
-        campaignBattleRuntime_.renderInterpolationAlpha = std::clamp(
+        campaignBattleRuntime_.renderInterpolationAlpha = campaignBattleRuntime_.retreatPromptVisible ? 1.0 : std::clamp(
             static_cast<double>(now - campaignBattleRuntime_.lastStepTick) /
                 static_cast<double>(std::max<DWORD>(1, campaignBattleRuntime_.simulationStepMs)),
             0.0,
@@ -10457,6 +11122,12 @@ private:
 
         mw::presentation::CampaignBattleGlCockpitOptions cockpitOptions;
         cockpitOptions.zoomLevel = campaignBattleRuntime_.cockpitZoomLevel;
+        cockpitOptions.retreatPromptVisible = campaignBattleRuntime_.retreatPromptVisible;
+        cockpitOptions.commandOverlay = mw::presentation::campaignCommandMapOverlay(
+            campaignBattleRuntime_.currentPresentationSnapshot, campaignBattleRuntime_.commandScreen);
+        for (const auto& actor : campaignBattleRuntime_.currentPresentationSnapshot.combatants)
+            if (mw::battle::battleLanceOrderTargetKnown(campaignBattleRuntime_.currentPresentationSnapshot, actor.id))
+                cockpitOptions.knownCommandMapEnemies.push_back(actor.id);
         cockpitOptions.hudRgb = mw::presentation::campaignCockpitHudColor(
                                     campaignBattleRuntime_.cockpitHudColorIndex)
                                     .rgb;
@@ -10688,7 +11359,7 @@ private:
                 drawNewsNetText5x5(
                     42,
                     144,
-                    L"DAMAGE REPAIR DEATH DEFERRED",
+                    acceptedBattleMechReturnPlan_.valid ? L"MECH DAMAGE RETAINED" : L"MECH RETURN UNAVAILABLE",
                     14,
                     236);
             } else {
@@ -10697,7 +11368,7 @@ private:
                     mw::battle::CampaignBattleLaunchSource::DarkWingFinal) {
                     drawNewsNetText5x5(42, 120, L"CONTINUE -> CAMPAIGN", 11, 236);
                     drawNewsNetText5x5(42, 132, L"EXTENDED ENDING DEFERRED", 14, 236);
-                    drawNewsNetText5x5(42, 144, L"SETTLEMENT COMMITTED NO", 7, 236);
+                    drawNewsNetText5x5(42, 144, acceptedBattleMechReturnPlan_.valid ? L"MECH DAMAGE RETAINED" : L"SETTLEMENT COMMITTED NO", 7, 236);
                 } else {
                     drawNewsNetText5x5(42, 120, L"NO SETTLEMENT FOR OUTCOME", 7, 236);
                 }
@@ -10738,36 +11409,52 @@ private:
             kMissionDebriefTopPanelRect.y,
             kMissionDebriefTopPanelRect.width,
             kMissionDebriefTopPanelRect.height);
-        fillRect(156, 10, 1, 122, 0);
+        fillRect(156, 7, 155, 1, 15); // Original1D38: white horizontal rule.
 
-        drawImageAt(missionResultArchive_, missionDebriefImageEntry(), 9, 7, false);
+        drawImageAt(missionResultArchive_, missionDebriefImageEntry(), 8, 7, false);
 
-        drawDebriefText(162, 16, L"CREW STATUS:", 0);
-        int crewY = 28;
-        for (const MissionParticipant& participant : missionParticipants_) {
-            if (crewY > 56) {
-                break;
+        // MW_MAIN1DBD..1EB3 visits every hired pilot. Unassigned pilots still
+        // have a crew row; only their mech row is skipped, without compaction.
+        drawDebriefText(160, 10, L"CREW STATUS:", 0);
+        for (size_t slot=0;slot<crewMembers_.size();++slot) {
+            const auto& crew=crewMembers_[slot];
+            if(!crew.hired) continue;
+            const auto participant=std::find_if(missionParticipants_.begin(),missionParticipants_.end(),
+                [slot](const MissionParticipant& p){return p.crewSlot==static_cast<int>(slot);});
+            const bool killed=participant!=missionParticipants_.end() && participant->killed;
+            std::wstring name(crew.name);
+            if(slot==0) {
+                // Original1DC1 uses the saved commander name at GAM003B.
+                const auto gam=baseGamSaveData();
+                std::string saved;
+                for(size_t at=0x3b;at<0x47 && at<gam.size() && gam[at];++at)
+                    saved.push_back(static_cast<char>(gam[at]));
+                if(!saved.empty()) name=widen(saved);
             }
-            drawDebriefText(162, crewY, participant.name, 0);
-            drawDebriefText(250, crewY, participant.killed ? L"KILLED" : L"OK", 0);
-            crewY += 10;
+            const int y=20+static_cast<int>(slot)*8;
+            drawDebriefText(160,y,name,0);
+            drawDebriefText(248,y,killed ? L"KILLED" : L"OK",0);
         }
 
-        drawDebriefText(162, 76, L"MECH STATUS", 0);
-        int mechY = 88;
+        drawDebriefText(160, 60, L"MECH STATUS:", 0);
         for (const MissionParticipant& participant : missionParticipants_) {
-            if (mechY > 108) {
-                break;
+            if(participant.crewSlot<0 || participant.crewSlot>=4) continue;
+            const int y=70+participant.crewSlot*8;
+            std::wstring name=participant.mechName;
+            if(participant.mechIndex>=0 && static_cast<size_t>(participant.mechIndex)<ownedMechs_.size()) {
+                const auto chassis=gamChassisId(ownedMechs_[participant.mechIndex].chassis);
+                size_t afterName=0;
+                name=widen(readCStringAscii(mwMainData_,0x8d00+readU16Le(mwMainData_,0x8d00+0x2e70+2*chassis),afterName));
             }
-            drawDebriefText(162, mechY, participant.mechName, 0);
-            drawDebriefTextRightAligned(294, mechY, std::to_wstring(participant.armorPercent) + L" %", 0);
-            mechY += 10;
+            drawDebriefText(160,y,name,0);
+            drawDebriefText(264,y,std::to_wstring(participant.conditionPercent),0);
+            drawDebriefText(288,y,L"%",0);
         }
 
-        drawDebriefText(162, 118, L"SALVAGE:", 0);
-        drawDebriefText(234, 118, formatWealth(missionDebriefSalvage_), 0);
-        drawDebriefText(162, 129, L"PAYMENT:", 0);
-        drawDebriefText(234, 129, formatWealth(missionDebriefPayment_), 0);
+        drawDebriefText(160, 110, L"SALVAGE:", 0);
+        drawDebriefText(232, 110, formatWealth(missionDebriefSalvage_), 0);
+        drawDebriefText(160, 120, L"PAYMENT:", 0);
+        drawDebriefText(232, 120, formatWealth(missionDebriefPayment_), 0);
 
         drawDebriefPanel(
             kMissionDebriefBottomPanelRect.x,
@@ -10775,23 +11462,20 @@ private:
             kMissionDebriefBottomPanelRect.width,
             kMissionDebriefBottomPanelRect.height);
         const std::vector<std::wstring>& messageLines = missionDebriefMessageLines();
-        int messageY = 158;
+        int messageY = missionDebriefOverrideLines_.empty() ? 148 : 154;
         for (const std::wstring& line : messageLines) {
             if (line.empty()) {
+                messageY += 6; // Preserve leading CRs: one on loss, two on victory.
                 continue;
             }
             if (messageY > 184) {
                 break;
             }
             drawNewsNetText5x5(10, messageY, line, 0, kMissionDebriefMessageTextWidth);
-            messageY += 8;
+            messageY += 6;
         }
-        drawImageAt(
-            houseEmblemsArchive_,
-            static_cast<int>(acceptedContract_.employerHouse),
-            kMissionDebriefEmblemX,
-            kMissionDebriefEmblemY,
-            false);
+        drawImageAt(houseEmblemsArchive_,static_cast<int>(acceptedContract_.employerHouse),
+            kMissionDebriefEmblemX,kMissionDebriefEmblemY,false);
 
         if (missionDebriefOutcome_ == MissionOutcome::Death) {
             renderMissionDeathMenu();
@@ -10813,26 +11497,32 @@ private:
             return missionDebriefOverrideLines_;
         }
         if (missionDebriefOutcome_ == MissionOutcome::Victory) {
-            return missionVictoryLines_;
+            const auto house=static_cast<size_t>(acceptedContract_.employerHouse);
+            return house<missionHouseVictoryLines_.size() && !missionHouseVictoryLines_[house].empty()
+                ? missionHouseVictoryLines_[house] : missionVictoryLines_;
         }
         if (missionDebriefOutcome_ == MissionOutcome::Death) {
             static const std::vector<std::wstring> kNoDeathHouseLines;
             return kNoDeathHouseLines;
         }
-        return missionDefeatLines_;
+        const auto house=static_cast<size_t>(acceptedContract_.employerHouse);
+        return house<missionHouseDefeatLines_.size() && !missionHouseDefeatLines_[house].empty()
+            ? missionHouseDefeatLines_[house] : missionDefeatLines_;
     }
 
     void renderMissionDeathMenu() {
-        drawGpPanel(25, 72, 270, 54, 8);
+        // Original61CC ->0EF1:47 columns*6, (5 lines+3)*7, centered.
+        // Text origin31/82;67A2 menu cells43/103 and43/110.
+        drawGpPanel(19, 72, 282, 56, 8);
         if (missionDeathPromptLines_.size() >= 2) {
-            drawNewsNetText5x5(37, 83, missionDeathPromptLines_[0], 7, 250);
-            drawNewsNetText5x5(37, 91, missionDeathPromptLines_[1], 7, 250);
+            drawNewsNetText5x5(31, 82, missionDeathPromptLines_[0], 7, 258);
+            drawNewsNetText5x5(31, 89, missionDeathPromptLines_[1], 7, 258);
         } else {
-            drawNewsNetText5x5(37, 83, L"SUDDEN DEATH IS A GRIM REALITY IN THE", 7, 250);
-            drawNewsNetText5x5(37, 91, L"SUCCESSOR STATES OF THE 31ST CENTURY.", 7, 250);
+            drawNewsNetText5x5(31, 82, L"SUDDEN DEATH IS A GRIM REALITY IN THE", 7, 258);
+            drawNewsNetText5x5(31, 89, L"SUCCESSOR STATES OF THE 31ST CENTURY.", 7, 258);
         }
-        drawNewsNetText5x5(48, 106, L"PLAY AGAIN", missionDeathMenuIndex_ == 0 ? 14 : 7, 100);
-        drawNewsNetText5x5(48, 113, L"QUIT", missionDeathMenuIndex_ == 1 ? 14 : 7, 60);
+        drawNewsNetText5x5(43, 103, L"PLAY AGAIN", missionDeathMenuIndex_ == 0 ? 14 : 7, 100);
+        drawNewsNetText5x5(43, 110, L"QUIT", missionDeathMenuIndex_ == 1 ? 14 : 7, 60);
     }
 
     void drawDebriefText(int x, int y, std::wstring_view text, uint8_t color) {
@@ -10843,13 +11533,10 @@ private:
             if (cursorX > 309) {
                 break;
             }
-            drawGlyph7x5(debriefFont, cursorX, y, ch, color);
+            // Preserve all FOX88 rows, including its blank top and comma tail.
+            drawGlyph(debriefFont, cursorX, y, ch, color);
             cursorX += 8;
         }
-    }
-
-    void drawDebriefTextRightAligned(int rightX, int y, std::wstring_view text, uint8_t color) {
-        drawDebriefText(rightX - newsNetButtonTextWidth(text), y, text, color);
     }
 
 
@@ -11133,7 +11820,7 @@ private:
     }
 
     MarketMech* selectedMarketMech() {
-        PlanetMechMarket& market = currentPlanetMechMarket();
+        CurrentMechMarket& market = currentMechMarket();
         if (selectedMarketMechIndex_ >= market.mechsForSale.size()) {
             return nullptr;
         }
@@ -11141,16 +11828,7 @@ private:
     }
 
     const MarketMech* selectedMarketMech() const {
-        if (planetMechMarkets_.empty()) {
-            return nullptr;
-        }
-        const int index = planets_.empty()
-            ? 0
-            : std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
-        if (static_cast<size_t>(index) >= planetMechMarkets_.size()) {
-            return nullptr;
-        }
-        const PlanetMechMarket& market = planetMechMarkets_[static_cast<size_t>(index)];
+        const CurrentMechMarket& market = mechMarket_;
         if (selectedMarketMechIndex_ >= market.mechsForSale.size()) {
             return nullptr;
         }
@@ -11170,7 +11848,7 @@ private:
     }
 
     RectI mechBuyListPanelRect() {
-        const size_t marketCount = currentPlanetMechMarket().mechsForSale.size();
+        const size_t marketCount = currentMechMarket().mechsForSale.size();
         if (marketCount == 0) {
             return kMechBuyMessagePanelRect;
         }
@@ -11180,7 +11858,7 @@ private:
     }
 
     void clampMechMarketScroll() {
-        const PlanetMechMarket& market = currentPlanetMechMarket();
+        const CurrentMechMarket& market = currentMechMarket();
         const size_t count = market.mechsForSale.size();
         const size_t maxSelection = count;
         selectedMarketMechIndex_ = std::min(selectedMarketMechIndex_, maxSelection);
@@ -11239,6 +11917,15 @@ private:
     }
 
     static void updateArmorPercent(OwnedMech& mech) {
+        if (mech.exactDamage) {
+            uint32_t remaining = 0, maximum = 0;
+            for (const auto& armor : mech.exactDamage->detailed.armorSections) {
+                remaining += armor.armorRemaining; maximum += armor.armorMaximum;
+            }
+            mech.armorPercent = maximum ? static_cast<int>(remaining*100u/maximum) : 0;
+            return;
+        }
+
         const int damage = std::clamp(armorDamageTotal(mech), 0, kArmorDamageDenominator);
         mech.armorPercent = ((kArmorDamageDenominator - damage) * 100) / kArmorDamageDenominator;
     }
@@ -11266,6 +11953,12 @@ private:
         for (size_t section : kArmorDamageOrder) {
             if (section < mech.armorDamage.size() && mech.armorDamage[section] > 0) {
                 mech.armorDamage[section] = 0;
+                if (mech.exactDamage) {
+                    auto state = battlePersistentMechStateFromOwnedMech(mech, "campaign_repair");
+                    mw::battle::repairCampaignMechDamage(state, *battleMechPresetForChassis(mech.chassis),
+                        mw::battle::CampaignMechRepairKind::ArmorSection, section);
+                    applyBattlePersistentMechStateToOwnedMech(mech, state);
+                }
                 break;
             }
         }
@@ -11340,52 +12033,6 @@ private:
         }
     }
 
-    static uint32_t componentBaseCost(const OwnedMech& mech, RepairTargetKind kind) {
-        static constexpr std::array<std::array<uint32_t, 8>, kPlayableMechCount> costs = {{
-            {{210, 190, 40, 50, 5, 5, 7, 7}},
-            {{0, 0, 40, 50, 5, 5, 7, 7}},
-            {{570, 540, 70, 50, 8, 8, 12, 12}},
-            {{42, 2, 90, 50, 10, 10, 15, 15}},
-            {{232, 132, 110, 50, 13, 13, 19, 19}},
-            {{240, 142, 110, 50, 13, 13, 19, 19}},
-            {{192, 112, 120, 50, 14, 14, 21, 21}},
-            {{20, 176, 140, 50, 16, 16, 24, 24}},
-            {{220, 20, 150, 50, 17, 17, 26, 26}},
-            {{108, 64, 170, 50, 19, 19, 29, 29}},
-        }};
-
-        size_t componentIndex = 0;
-        switch (kind) {
-        case RepairTargetKind::Engine:
-            componentIndex = 0;
-            break;
-        case RepairTargetKind::Gyros:
-            componentIndex = 1;
-            break;
-        case RepairTargetKind::Sensors:
-            componentIndex = 2;
-            break;
-        case RepairTargetKind::LifeSupport:
-            componentIndex = 3;
-            break;
-        case RepairTargetKind::LeftArmActuator:
-            componentIndex = 4;
-            break;
-        case RepairTargetKind::RightArmActuator:
-            componentIndex = 5;
-            break;
-        case RepairTargetKind::LeftLegActuator:
-            componentIndex = 6;
-            break;
-        case RepairTargetKind::RightLegActuator:
-            componentIndex = 7;
-            break;
-        default:
-            return 0;
-        }
-        return costs[chassisIndex(mech.chassis)][componentIndex];
-    }
-
     uint8_t currentPlanetEconomyTier() const {
         if (planets_.empty()) {
             return 1;
@@ -11396,176 +12043,89 @@ private:
 
     uint32_t mechBuyPrice(const OwnedMech& mech) const {
         const uint8_t tier = currentPlanetEconomyTier();
-        const uint32_t basePrice = mechDefinition(mech.chassis).buyPrices[tier - 1u];
-        const uint32_t repairCost = totalRepairCost(mech);
-        return basePrice > repairCost ? basePrice - repairCost : 0;
+        return mw::battle::originalMarketPrice(marketTables_,gamChassisId(mech.chassis),
+            tier,totalRepairCost(mech),true);
     }
 
     uint32_t mechSellOffer(const OwnedMech& mech) const {
         const uint8_t tier = currentPlanetEconomyTier();
-        const uint32_t basePrice = mechDefinition(mech.chassis).sellPrices[tier - 1u];
-        const uint32_t repairCost = totalRepairCost(mech);
-        return basePrice > repairCost ? basePrice - repairCost : 0;
+        return mw::battle::originalMarketPrice(marketTables_,gamChassisId(mech.chassis),
+            tier,totalRepairCost(mech),false);
     }
 
-    PlanetMechMarket& currentPlanetMechMarket() {
-        if (planetMechMarkets_.size() != planets_.size()) {
-            planetMechMarkets_.assign(planets_.size(), {});
-        }
-        const int index = planets_.empty()
-            ? 0
-            : std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1);
-        if (planetMechMarkets_.empty()) {
-            planetMechMarkets_.push_back({});
-        }
-        return planetMechMarkets_[static_cast<size_t>(index)];
-    }
+    CurrentMechMarket& currentMechMarket() { return mechMarket_; }
 
-    void ensureCurrentPlanetMechMarket() {
-        PlanetMechMarket& market = currentPlanetMechMarket();
-        if (market.initialized) {
-            return;
-        }
-
+    CurrentMechMarket makeCurrentMechMarket(const mw::battle::OriginalMechMarket& original) const {
+        CurrentMechMarket market;
         market.initialized = true;
-        std::mt19937 rng(makePlanetMarketSeed());
-        const uint8_t tier = currentPlanetEconomyTier();
-        const int count = generateMarketMechCount(tier, rng);
-        market.mechsForSale.reserve(market.mechsForSale.size() + static_cast<size_t>(count));
-        for (int i = 0; i < count; ++i) {
-            OwnedMech mech = makeMech(randomMarketChassis(rng), -1);
-            randomizeMarketMech(mech, rng);
-            market.mechsForSale.push_back({mech, mechBuyPrice(mech)});
+        market.original = original;
+        for (size_t slot=0; slot<original.slots.size(); ++slot) {
+            const auto& source=original.slots[slot];
+            if (source.chassis==0xffff) continue;
+            ChassisId chassis;
+            if (!runtimeChassisId(source.chassis,chassis))
+                throw std::runtime_error("unsupported saved market chassis");
+            auto mech=makeMech(chassis,-1);
+            const std::vector<uint8_t> record(source.condition.begin(),source.condition.end());
+            readGamMechRecord(record,0,mech);
+            mech.ammoPacks.fill(0);
+            for (size_t a=0; a<marketTables_.ammoCounts.at(source.chassis); ++a) {
+                const auto type=marketTables_.ammoTypes.at(source.chassis)[a];
+                if (source.ammoTypes[a]!=type)
+                    throw std::runtime_error("saved market ammunition type differs from chassis");
+                mech.ammoPacks[type]=std::min(source.ammunition[a],marketTables_.ammoCapacities[source.chassis][a]);
+            }
+            finalizeLoadedMech(mech);
+            market.mechsForSale.push_back({mech,mechBuyPrice(mech),slot});
         }
+        return market;
     }
 
-    uint32_t makePlanetMarketSeed() const {
-        uint32_t seed = 0x4D574D4Bu;
-        seed ^= static_cast<uint32_t>(std::max(0, currentPlanetIndex_)) * 0x9E3779B9u;
-        seed ^= static_cast<uint32_t>(currentYear_) * 0x85EBCA6Bu;
-        seed ^= static_cast<uint32_t>(currentMonth_ + 1) * 0xC2B2AE35u;
-        seed ^= static_cast<uint32_t>(currentDay_) * 0x27D4EB2Fu;
-        seed ^= static_cast<uint32_t>(currentPlanetVisitSerial_) * 0x165667B1u;
-        return seed;
+    void generateCurrentServiceFactor() {
+        if (planets_.empty()) return;
+        serviceFactor_=mw::battle::generateOriginalServiceFactor(currentPlanetEconomyTier(),repairSession_.rng);
+        // 1B43..1B51 follows price computation: house contact skill is another
+        // shared draw even when the player never opens contract negotiation.
+        contactNegotiationSkill_=static_cast<uint16_t>(repairSession_.rng.inclusive(2)+
+            mwMainData_.at(0x8d00+0x11a3+currentPlanetHouseId()));
+        for (auto& mech : ownedMechs_) finalizeLoadedMech(mech);
     }
 
-    static int generateMarketMechCount(uint8_t tier, std::mt19937& rng) {
-        const uint32_t roll = rng() % 100u;
-        switch (std::clamp<uint8_t>(tier, 1, 4)) {
-        case 1:
-            if (roll < 8) {
-                return 0;
-            }
-            return 6 + static_cast<int>(rng() % 7u);
-        case 2:
-            if (roll < 12) {
-                return 0;
-            }
-            return 4 + static_cast<int>(rng() % 5u);
-        case 3:
-            if (roll < 20) {
-                return 0;
-            }
-            return 2 + static_cast<int>(rng() % 3u);
-        case 4:
-        default:
-            if (roll < 30) {
-                return 0;
-            }
-            return 1 + static_cast<int>(rng() % 3u);
-        }
+    void generateCurrentMechMarket() {
+        if (planets_.empty() || mwMainData_.empty()) return;
+        auto next=makeCurrentMechMarket(mw::battle::generateOriginalMechMarket(
+            marketTables_,currentPlanetEconomyTier(),repairSession_.rng,mechMarket_.original));
+        mechMarket_=std::move(next);
+        selectedMarketMechIndex_=0; mechMarketScrollOffset_=0;
     }
 
-    static ChassisId randomMarketChassis(std::mt19937& rng) {
-        uint32_t totalWeight = 0;
-        for (const MechDefinition& definition : kMechDefinitions) {
-            totalWeight += definition.marketWeight;
-        }
-        uint32_t roll = totalWeight == 0 ? 0 : rng() % totalWeight;
-        for (const MechDefinition& definition : kMechDefinitions) {
-            if (roll < definition.marketWeight) {
-                return definition.chassis;
-            }
-            roll -= definition.marketWeight;
-        }
-        return ChassisId::Locust;
+    void ensureCurrentMechMarket() {
+        // Initialization belongs to new game/load/refresh, never to rendering.
+        if (!mechMarket_.initialized) throw std::runtime_error("market is not initialized");
     }
 
-    void randomizeMarketMech(OwnedMech& mech, std::mt19937& rng) {
-        const std::array<int, 6> capacities =
-            ammunitionCapacityForMech(mech);
-        for (size_t pool = 0; pool < capacities.size(); ++pool) {
-            if (capacities[pool] > 0) {
-                std::uniform_int_distribution<int> ammoDist(
-                    0, capacities[pool]);
-                mech.ammoPacks[pool] = ammoDist(rng);
-            }
+    mw::battle::OriginalMarketMech originalMarketMech(const OwnedMech& mech) const {
+        mw::battle::OriginalMarketMech result;
+        result.chassis=gamChassisId(mech.chassis);
+        std::vector<uint8_t> record(29);
+        writeGamMechRecord(record,0,mech);
+        std::copy(record.begin(),record.end(),result.condition.begin());
+        for (size_t a=0; a<marketTables_.ammoCounts.at(result.chassis); ++a) {
+            const auto type=marketTables_.ammoTypes[result.chassis][a];
+            result.ammoTypes[a]=type;
+            result.ammunition[a]=static_cast<uint16_t>(std::clamp(mech.ammoPacks[type],0,
+                static_cast<int>(marketTables_.ammoCapacities[result.chassis][a])));
         }
-
-        const uint32_t roll = rng() % 100u;
-        if (roll < 28) {
-            mech.repairCost = 0;
-            mech.condition = DamageState::Functional;
-            return;
-        }
-
-        DamageState targetState = DamageState::LightDamage;
-        int componentHits = 2;
-        int weaponHits = 1;
-        int armorMin = 70;
-        int armorPercentMax = 94;
-        if (roll >= 76 && roll < 94) {
-            targetState = DamageState::HeavyDamage;
-            componentHits = 4;
-            weaponHits = 2;
-            armorMin = 35;
-            armorPercentMax = 72;
-        } else if (roll >= 94) {
-            targetState = DamageState::Junk;
-            componentHits = 6;
-            weaponHits = 3;
-            armorMin = 12;
-            armorPercentMax = 45;
-        }
-
-        static constexpr std::array<RepairTargetKind, 8> componentKinds = {{
-            RepairTargetKind::Engine,
-            RepairTargetKind::Gyros,
-            RepairTargetKind::Sensors,
-            RepairTargetKind::LifeSupport,
-            RepairTargetKind::LeftArmActuator,
-            RepairTargetKind::RightArmActuator,
-            RepairTargetKind::LeftLegActuator,
-            RepairTargetKind::RightLegActuator,
-        }};
-
-        for (int i = 0; i < componentHits; ++i) {
-            setComponentCondition(mech, componentKinds[rng() % componentKinds.size()], targetState);
-        }
-        for (int i = 0; i < weaponHits; ++i) {
-            damageRandomWeapon(mech, targetState, rng);
-        }
-
-        mech.heatSinksWorking = std::max(0, mech.heatSinksTotal - static_cast<int>(rng() % (targetState == DamageState::Junk ? 6u : 3u)));
-        mech.jumpJetsWorking = std::max(0, mech.jumpJetsTotal - static_cast<int>(rng() % (targetState == DamageState::Functional ? 1u : 4u)));
-        std::uniform_int_distribution<int> armorDist(armorMin, armorPercentMax);
-        damageArmorToPercent(mech, armorDist(rng));
-
-        mech.repairCost = totalRepairCost(mech);
-        mech.condition = targetState == DamageState::Junk ? DamageState::Junk : DamageState::Functional;
+        return result;
     }
 
     static void damageRandomWeapon(OwnedMech& mech, DamageState state, std::mt19937& rng) {
         std::vector<size_t> weaponIndexes;
         for (size_t i = 0; i < mech.weapons.size(); ++i) {
-            if (!mech.weapons[i].weapon.empty()) {
-                weaponIndexes.push_back(i);
-            }
+            if (!mech.weapons[i].weapon.empty()) weaponIndexes.push_back(i);
         }
-        if (weaponIndexes.empty()) {
-            return;
-        }
-        mech.weapons[weaponIndexes[rng() % weaponIndexes.size()]].condition = state;
+        if (!weaponIndexes.empty())
+            mech.weapons[weaponIndexes[rng() % weaponIndexes.size()]].condition = state;
     }
 
     uint32_t reloadCost(const OwnedMech& mech) const {
@@ -11591,42 +12151,28 @@ private:
         return kAmmoDefinitions[ammoIndex].tierOneCost * planetTier;
     }
 
+    static size_t repairSelector(const RepairTarget& target) {
+        return target.kind==RepairTargetKind::Weapon ? 11+target.index : static_cast<size_t>(target.kind);
+    }
+
+    static mw::battle::OriginalMechCondition repairCondition(const OwnedMech& mech) {
+        std::vector<uint8_t> bytes(29);
+        writeGamMechRecord(bytes,0,mech);
+        mw::battle::OriginalMechCondition result{};
+        std::copy(bytes.begin(),bytes.end(),result.begin());
+        return result;
+    }
+
     uint32_t repairTargetCost(const OwnedMech& mech, const RepairTarget& target) const {
-        switch (target.kind) {
-        case RepairTargetKind::Engine:
-        case RepairTargetKind::Gyros:
-        case RepairTargetKind::Sensors:
-        case RepairTargetKind::LifeSupport:
-        case RepairTargetKind::LeftArmActuator:
-        case RepairTargetKind::RightArmActuator:
-        case RepairTargetKind::LeftLegActuator:
-        case RepairTargetKind::RightLegActuator:
-            return componentBaseCost(mech, target.kind) *
-                kMechRepairComponentMultiplier *
-                damageRepairMultiplier(componentCondition(mech, target.kind));
-        case RepairTargetKind::HeatSink:
-            return static_cast<uint32_t>(std::max(0, mech.heatSinksTotal - mech.heatSinksWorking)) *
-                kMechRepairCountUnitCost;
-        case RepairTargetKind::JumpJets:
-            return static_cast<uint32_t>(std::max(0, mech.jumpJetsTotal - mech.jumpJetsWorking)) *
-                kMechRepairCountUnitCost;
-        case RepairTargetKind::Armor:
-            return static_cast<uint32_t>(nextRepairableArmorDamageLevel(mech)) *
-                kMechRepairArmorLevelCost;
-        case RepairTargetKind::Weapon:
-            if (target.index < mech.weapons.size()) {
-                return kMechRepairWeaponLightCost * damageRepairMultiplier(mech.weapons[target.index].condition);
-            }
-            return 0;
-        }
-        return 0;
+        return mw::battle::originalRepairUnitCost(repairTables_,gamChassisId(mech.chassis),
+            serviceFactor_,repairSelector(target),repairCondition(mech));
     }
 
     std::vector<RepairTarget> repairableTargets(const OwnedMech& mech) const {
         std::vector<RepairTarget> targets;
         const auto addComponent = [&](RepairTargetKind kind) {
             RepairTarget target{kind, 0};
-            if (repairTargetCost(mech, target) > 0) {
+            if (componentCondition(mech, kind) != DamageState::Functional) {
                 targets.push_back(target);
             }
         };
@@ -11657,16 +12203,8 @@ private:
     }
 
     uint32_t totalRepairCost(const OwnedMech& mech) const {
-        uint32_t total = 0;
-        for (const RepairTarget& target : repairableTargets(mech)) {
-            if (target.kind == RepairTargetKind::Armor) {
-                total += static_cast<uint32_t>(armorDamageTotal(mech)) *
-                    kMechRepairArmorLevelCost;
-            } else {
-                total += repairTargetCost(mech, target);
-            }
-        }
-        return total;
+        return mw::battle::originalRepairTotalCost(repairTables_,gamChassisId(mech.chassis),
+            serviceFactor_,repairCondition(mech));
     }
 
     bool selectedRepairTarget(const OwnedMech& mech, RepairTarget& target) const {
@@ -12391,6 +12929,9 @@ private:
     }
 
     void drawStatusInfoPanel(int x, int y, int width) {
+        // MW_MAIN24FC..2511 refreshes this saved display cache when showing
+        // company details, not during settlement (which changes counters).
+        syncFamilyAttitudesFromHouseCounters();
         drawTextPassCenteredInRect(smallFont_, x, y + 6, width, L"BLAZING ACES", 12);
         drawTextPass(smallFont_, x + 8, y + 16, L"COMMANDER:", 7);
         drawTextPass(smallFont_, x + 72, y + 16, commanderName_, 12);
@@ -12430,24 +12971,16 @@ private:
             std::wstring label(kSystemMenuItems[i].label);
             if (kSystemMenuItems[i].action == MenuAction::ToggleSound) {
                 label = soundEnabled_ ? L"TURN SOUND OFF" : L"TURN SOUND ON";
-            } else if (kSystemMenuItems[i].action == MenuAction::Detail) {
-                label = L"DETAIL: ";
-                label += detailLabel();
+            } else if (kSystemMenuItems[i].action == MenuAction::Resolution) {
+                label = L"RESOLUTION: " + mw::presentation::displayResolutionLabel(displaySettings_);
+            } else if (kSystemMenuItems[i].action == MenuAction::Fullscreen) {
+                label = displaySettings_.fullscreen ? L"FULLSCREEN: YES" : L"FULLSCREEN: NO";
+            } else if (kSystemMenuItems[i].action == MenuAction::MouseLook) {
+                label = mouseLookEnabled_ ? L"MOUSELOOK: YES" : L"MOUSELOOK: NO";
             }
 
             const int itemY = y + static_cast<int>(i) * kSystemMenuLineStep;
             drawMenuTextCenteredInRect(x, itemY, width, label, i == systemMenuIndex_ ? 14 : 7);
-        }
-    }
-
-    std::wstring_view detailLabel() const {
-        switch (detailLevel_) {
-        case 0:
-            return L"LOW";
-        case 1:
-            return L"MED";
-        default:
-            return L"HIGH";
         }
     }
 
@@ -12528,7 +13061,13 @@ private:
         const int dy = std::abs(static_cast<int>(from.mapY) - static_cast<int>(to.mapY));
         const int scaledDy = (dy * 32) / 20;
         const uint32_t distanceSquared = static_cast<uint32_t>(dx * dx + scaledDy * scaledDy);
-        const uint32_t distance = integerSqrt(distanceSquared);
+        // MW_MAIN 5F5C uses the DS4CE6 lookup table, not an exact square root.
+        // Planet coordinates are bytes, so the squared distance is < 1,000,000.
+        const uint32_t tableIndex = distanceSquared >= 10000 ? distanceSquared / 1000 :
+            distanceSquared >= 100 ? distanceSquared / 10 : distanceSquared * 10;
+        uint32_t distance = readU16Le(mwMainData_, 0x8D00u + 0x4CE6u + tableIndex * 2u);
+        if (distanceSquared >= 10000) distance *= 10;
+        else if (distanceSquared < 100) distance /= 10;
         return static_cast<uint16_t>(std::max<uint32_t>(1, distance / 18));
     }
 
@@ -12572,12 +13111,24 @@ private:
         return total;
     }
 
-    void payMonthlyCrewWages() {
+    void payMonthlyCrewWages(uint32_t elapsedMonths=1) {
         const uint64_t payroll = monthlyCrewPayroll();
-        if (payroll == 0) {
-            return;
+        const auto notice=mw::battle::applyOriginalCrewPayroll(playerWealth_,crewGamState_.unpaidCrewPayroll,payroll,elapsedMonths);
+        if (notice!=mw::battle::CrewPayrollNotice::None) crewPayrollNotice_=notice;
+        if (notice==mw::battle::CrewPayrollNotice::Departed) {
+            retainCrewGamState();
+            // DOS0D33/0D3C/0D45 uses one-based IDs with base04BF rather than
+            // 04BE, freeing neighbours. Correct only the actually departing IDs.
+            for(size_t slot=1;slot<crewMembers_.size();++slot) {
+                const auto& member=crewMembers_[slot];
+                if(member.hired && member.recruitIndex>=0)
+                    recruitPilots_.at(static_cast<size_t>(member.recruitIndex)).unavailable=0;
+                crewMembers_[slot]={};
+                crewGamState_.words[mw::battle::OriginalCrewGamState::Assignment][slot]=0xffff;
+            }
+            for(auto& mech:ownedMechs_) if(mech.assignedCrewSlot>0)mech.assignedCrewSlot=-1;
+            crewSelectionIndex_=kCrewDoneSelectionIndex;
         }
-        playerWealth_ = (playerWealth_ > payroll) ? (playerWealth_ - payroll) : 0;
     }
 
     uint64_t travelCostBetween(int fromIndex, int toIndex) const {
@@ -12607,10 +13158,6 @@ private:
     void advanceCampaignDays(uint32_t days) {
         const int elapsedMonthCount =
             (currentMonthDayCounter_ + static_cast<int>(days)) / kCampaignDaysPerMonth;
-        for (int i = 0; i < elapsedMonthCount; ++i) {
-            payMonthlyCrewWages();
-        }
-
         currentMonthDayCounter_ += static_cast<int>(days);
         if (elapsedMonthCount > 0) {
             currentMonth_ += elapsedMonthCount;
@@ -12626,11 +13173,22 @@ private:
         currentPeriodic14DayCounter_ += static_cast<int>(days);
         if (currentPeriodic14DayCounter_ >= kPeriodicCampaignUpdateDays) {
             currentPeriodic14DayCounter_ %= kPeriodicCampaignUpdateDays;
-            // Original game runs periodic campaign updates here; those systems are not modeled yet.
+            generateCurrentRecruitBoard(); // MW_MAIN 0CA8
+            generateCurrentMechMarket(); // MW_MAIN 0CAB
+            generateCurrentPlanetContracts(); // MW_MAIN 101B:0CAE
         }
+        payMonthlyCrewWages(static_cast<uint32_t>(elapsedMonthCount)); // Original bills all elapsed months once, after boards.
     }
 
     bool isNewsNetEntryAvailable(const NewsNetEntry& entry) const {
+        // Original news date condition expires after six months (6488..64B8).
+        // Use the stated day at the expiry boundary. The original mistakenly
+        // stores the month in DS5E74; that unrelated date typo is not reproduced.
+        const int expiryMonthIndex = entry.year * 12 + entry.month - 1 + 6;
+        const int currentMonthIndex = currentYear_ * 12 + currentMonth_;
+        const int expiryDayCounter = std::max(0, (entry.day - 1) * 2);
+        if (currentMonthIndex > expiryMonthIndex ||
+            (currentMonthIndex == expiryMonthIndex && currentMonthDayCounter_ > expiryDayCounter)) return false;
         const int currentMonthOneBased = currentMonth_ + 1;
         const int requiredDayCounter = std::max(0, (entry.day - 1) * 2);
         if (currentYear_ != entry.year) {
@@ -12651,9 +13209,7 @@ private:
             return false;
         }
         const StoryNewsNetEntry& entry = kStoryNewsNetEntries[storyIndex];
-        if (entry.messageId == 0x40 && storyFlag(0x39)) {
-            return true;
-        }
+        if (entry.messageId == 0x3C) return storyFlag(0x38) && storyFlag(0x3B);
         return storyFlag(entry.prerequisiteMessageId);
     }
 
@@ -12670,23 +13226,19 @@ private:
 
     void rebuildNewsNetMessages() {
         activeNewsNetMessageIndexes_.clear();
-        for (size_t i = 0; i < newsNetMessageLines_.size(); ++i) {
-            if (isNewsNetMessageAvailable(i)) {
-                const uint8_t messageId = newsNetMessageId(i);
-                if (messageId != 0) {
-                    setStoryFlag(messageId);
-                }
-                activeNewsNetMessageIndexes_.push_back(i);
-            }
-        }
+        // Source list DS6073: story messages precede dated articles. There is
+        // no seven-message cap; old articles disappear by date, not queue size.
+        for (size_t i=kNewsNetEntries.size();i<newsNetMessageLines_.size();++i)
+            if (isNewsNetMessageAvailable(i)) activeNewsNetMessageIndexes_.push_back(i);
+        for (size_t i=0;i<kNewsNetEntries.size();++i)
+            if (isNewsNetMessageAvailable(i)) activeNewsNetMessageIndexes_.push_back(i);
+    }
 
-        constexpr size_t kVisibleNewsNetMessageCount = 7;
-        if (activeNewsNetMessageIndexes_.size() > kVisibleNewsNetMessageCount) {
-            activeNewsNetMessageIndexes_.erase(
-                activeNewsNetMessageIndexes_.begin(),
-                activeNewsNetMessageIndexes_.end() -
-                    static_cast<std::ptrdiff_t>(kVisibleNewsNetMessageCount));
-        }
+    void markDisplayedNewsNetMessage() {
+        if (newsNetShowingNoOther_ || newsNetMessageIndex_ < 0 ||
+            static_cast<size_t>(newsNetMessageIndex_) >= activeNewsNetMessageIndexes_.size()) return;
+        const uint8_t id=newsNetMessageId(activeNewsNetMessageIndexes_[static_cast<size_t>(newsNetMessageIndex_)]);
+        if (id) setStoryFlag(id);
     }
 
     std::wstring_view noOtherNewsNetMessageLine() const {
@@ -12771,7 +13323,8 @@ private:
     int contractForceScore() const {
         uint16_t assignedStrength = 0;
         for (const OwnedMech& mech : ownedMechs_) {
-            if (mech.assignedCrewSlot >= 0) {
+            if (mech.assignedCrewSlot >= 0 && static_cast<size_t>(mech.assignedCrewSlot) < crewMembers_.size() &&
+                crewMembers_[static_cast<size_t>(mech.assignedCrewSlot)].hired) {
                 assignedStrength = static_cast<uint16_t>(
                     assignedStrength +
                     mw::battle::mwMainContractMechStrength(
@@ -12786,183 +13339,16 @@ private:
         return mission.name != L"GARRISON DUTY" && mission.name != L"GENERAL SECURITY DUTY";
     }
 
-    static std::optional<int> battleEnvironmentIdForTerrainCode(uint8_t terrainCode) {
-        if (terrainCode == 0) {
-            return std::nullopt;
-        }
-        return static_cast<int>((static_cast<uint32_t>(terrainCode) - 1u) % 3u);
-    }
-
-    static void assignContractEnemyCounts(int score, ContractOffer& offer, uint32_t randomValue) {
-        const std::array<uint8_t, 3> counts =
-            mw::battle::mwMainContractOppositionCounts(
-                score, static_cast<uint8_t>(randomValue % 11u));
-        offer.heavyCount = counts[0];
-        offer.mediumCount = counts[1];
-        offer.lightCount = counts[2];
-    }
-
-    static int contractBasePriceK(int score, uint8_t employerHouse, uint32_t randomValue) {
-        static constexpr std::array<int, 5> kHousePriceBias = {{3, 5, 2, 4, 3}};
-        static constexpr std::array<int, 5> kHousePriceMultiplier = {{7, 9, 6, 8, 7}};
-        const int house = std::min<int>(employerHouse, 4);
-        const int basePrice = ((std::max(1, score) >> 1) + 1) * 100;
-        const int randomTerm = static_cast<int>(randomValue % 12u) + 1 + kHousePriceBias[house];
-        const int price = basePrice + (randomTerm * basePrice * kHousePriceMultiplier[house]) / 100;
-        return std::clamp(roundToNearest10(price), 100, kContractMaxPriceK);
-    }
-
-    static int contractDefaultSalvagePercent(uint8_t employerHouse, uint32_t randomValue) {
-        static constexpr std::array<int, 5> kHouseSalvage = {{4, 5, 5, 4, 5}};
-        const int house = std::min<int>(employerHouse, 4);
-        return std::clamp(kHouseSalvage[house] + static_cast<int>(randomValue % 2u), 0, 100);
-    }
-
-    static int contractDefaultAdvancePercent(uint8_t employerHouse, uint32_t randomValue) {
-        static constexpr std::array<int, 5> kHouseAdvance = {{4, 5, 3, 3, 5}};
-        const int house = std::min<int>(employerHouse, 4);
-        return std::clamp(kHouseAdvance[house] + static_cast<int>(randomValue % 2u), 0, 100);
-    }
-
     static int roundToNearest10(int value) {
         return ((value + 5) / 10) * 10;
     }
 
-    uint8_t chooseOriginalContractTargetCategory(
-        uint8_t employerHouse,
-        std::mt19937& rng) const {
-        const size_t house = std::min<size_t>(employerHouse, 4u);
-        const auto& classLimits = kOriginalContractCategoryMissionClass[house];
-        // Original FUN_101b_4f6e asks its inclusive random helper for 0..10,
-        // adds one, then walks the nonzero category entries circularly.
-        unsigned remaining = static_cast<unsigned>(rng() % 11u) + 1u;
-        size_t category = 0u;
-        while (true) {
-            if (classLimits[category] != 0u && --remaining == 0u) {
-                return static_cast<uint8_t>(category);
-            }
-            category = (category + 1u) % classLimits.size();
-        }
-    }
-
-    uint8_t chooseOriginalContractMissionClass(
-        uint8_t employerHouse,
-        uint8_t targetCategory,
-        std::mt19937& rng) const {
-        const uint8_t maximumClass =
-            kOriginalContractCategoryMissionClass[
-                std::min<size_t>(employerHouse, 4u)][
-                std::min<size_t>(targetCategory, 7u)];
-        if (maximumClass == 0u) {
-            throw std::runtime_error("original contract target category is unavailable for employer House");
-        }
-        const uint32_t inclusiveMaximum =
-            static_cast<uint32_t>(maximumClass - 1u) * 4u;
-        uint8_t missionClass = static_cast<uint8_t>(
-            (rng() % (inclusiveMaximum + 1u)) / 4u + 1u);
-
-        int extendedThreshold = 0;
-        if (currentYear_ > 3029) {
-            extendedThreshold = 75;
-        } else if (currentYear_ > 3028 ||
-                   (currentYear_ == 3028 &&
-                    (currentMonth_ > 7 ||
-                     (currentMonth_ == 7 && currentMonthDayCounter_ >= 40)))) {
-            extendedThreshold = 50;
-        }
-        if (extendedThreshold != 0 &&
-            static_cast<int>(rng() % 101u) >= extendedThreshold) {
-            missionClass = 4u;
-        }
-        return missionClass;
-    }
-
-    const ContractMissionDefinition& chooseContractMissionFromClass(
-        uint8_t missionClass,
-        bool allowExtended,
-        std::mt19937& rng) const {
-        static constexpr std::array<size_t, 10> kClass1{{0,1,2,3,4,5,6,7,8,9}};
-        static constexpr std::array<size_t, 4> kClass2{{10,11,12,13}};
-        static constexpr std::array<size_t, 15> kClass3{{
-            19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,
-        }};
-        static constexpr std::array<size_t, 5> kClass4{{14,15,16,17,18}};
-        const auto choose = [&](const auto& bucket) -> const ContractMissionDefinition& {
-            return kContractMissionDefinitions[
-                bucket[static_cast<size_t>(rng() % bucket.size())]];
-        };
-
-        const ContractMissionDefinition* mission = nullptr;
-        switch (missionClass) {
-        case 1: mission = &choose(kClass1); break;
-        case 2: mission = &choose(kClass2); break;
-        case 4: mission = &choose(kClass4); break;
-        default: mission = &choose(kClass3); break;
-        }
-        // The original falls back to class 3 when an extended record is drawn
-        // without sufficient lance/mech capacity; ordinary class-4 records
-        // remain valid.
-        if (mission->extended && !allowExtended) {
-            mission = &choose(kClass3);
-        }
-        return *mission;
-    }
-
     int planetIndexFromTableOrder(uint16_t tableOrder) const {
-        const auto found = std::find_if(
-            planets_.begin(),
-            planets_.end(),
-            [tableOrder](const PlanetRecord& planet) {
-                return planet.tableOrder == tableOrder;
-            });
-        return found == planets_.end()
-            ? -1
-            : static_cast<int>(found - planets_.begin());
-    }
-
-    int contractTargetPlanetIndex(
-        uint8_t employerHouse,
-        uint8_t targetCategory,
-        uint8_t missionClass,
-        std::mt19937& rng) const {
-        if (missionClass == 1u || targetCategory > 4u) {
-            const uint8_t tableOrder =
-                kOriginalClassOneTargetPlanetTableOrders[
-                    std::min<size_t>(employerHouse, 4u)][
-                    std::min<size_t>(targetCategory, 7u)][
-                    static_cast<size_t>(rng() % 8u)];
-            if (tableOrder == 0xffu) {
-                throw std::runtime_error("original class-1 target planet table selected an unavailable category");
-            }
-            return planetIndexFromTableOrder(tableOrder);
-        }
-
-        std::vector<size_t> housePlanets;
+        if (tableOrder == 0 || tableOrder > 146) return -1;
         for (size_t i = 0; i < planets_.size(); ++i) {
-            if (planets_[i].houseId == targetCategory) {
-                housePlanets.push_back(i);
-            }
+            if (planets_[i].tableOrder == tableOrder) return static_cast<int>(i);
         }
-        if (housePlanets.empty()) {
-            return -1;
-        }
-        // The assembly selects within the target-House range and retries while
-        // planet byte 3 is zero or below DL; DL holds the chosen mission class.
-        for (size_t attempt = 0; attempt < housePlanets.size() * 4u; ++attempt) {
-            const size_t candidate =
-                housePlanets[static_cast<size_t>(rng() % housePlanets.size())];
-            if (planets_[candidate].unknownByte3 != 0u &&
-                planets_[candidate].unknownByte3 >= missionClass) {
-                return static_cast<int>(candidate);
-            }
-        }
-        const auto fallback = std::find_if(
-            housePlanets.begin(), housePlanets.end(),
-            [&](size_t candidate) {
-                return planets_[candidate].unknownByte3 != 0u &&
-                    planets_[candidate].unknownByte3 >= missionClass;
-            });
-        return fallback == housePlanets.end() ? -1 : static_cast<int>(*fallback);
+        return -1;
     }
 
     mw::battle::BattleContractMetadata battleContractMetadataFromOffer(const ContractOffer& offer) const {
@@ -12977,6 +13363,7 @@ private:
         metadata.targetPlanetName = narrowAscii(offer.targetPlanet);
         metadata.targetPlanetTerrainCode = offer.targetPlanetTerrainCode;
         metadata.targetEnvironmentId = offer.targetEnvironmentId;
+        metadata.skyMode = offer.skyMode;
         metadata.terrainScenarioIndex = offer.terrainScenarioIndex;
         metadata.terrainScenarioProvenance =
             "mw_main_ds0956_plus1_btech_mod20_target_planet";
@@ -13027,10 +13414,16 @@ private:
     mw::battle::CampaignBattleConsequenceContext
     campaignBattleConsequenceContextForAcceptedContract() const {
         mw::battle::CampaignBattleConsequenceContext context;
-        context.salvage = missionPlaceholderSalvage();
+        // Preview is read-only. 1EB6..1EDC consumes one shared roll on the
+        // ordinary result boundary, including failures, but never context99.
+        context.employerPayoutPercent=missionSequence_.employerPayoutPercent.value_or(100);
+        if (acceptedContractFinance_) context.contractBalanceK=acceptedContractFinance_->balanceK;
+        context.salvage=mw::battle::originalSalvageAward(salvageTables_,missionSequence_.salvageRecords,
+            currentPlanetEconomyTier(),static_cast<uint16_t>(acceptedContract_.salvagePercent),
+            context.employerPayoutPercent,0,false,true);
         context.campaignDateTicks = missionElapsedDateTicks(acceptedContract_);
         context.pilotExperienceAward = true;
-        context.salvageBetaValidationRequired = true;
+        context.salvageBetaValidationRequired = false;
         context.salvageEstimateAvailable = true;
         context.campaignTimeProven = true;
         context.pilotExperienceProven = true;
@@ -13116,9 +13509,38 @@ private:
             state.weaponConditions[i] = damage(mech.weapons[i].condition);
         }
         for (size_t i = 0; i < state.armorDamage.size(); ++i) {
-            state.armorDamage[i] = byte(mech.armorDamage[i]);
+            state.armorDamage[mw::battle::originalGamArmorRuntimeIndex(i)] = byte(mech.armorDamage[i]);
         }
+        state.exactDamage = mech.exactDamage;
         return state;
+    }
+
+    static void applyBattlePersistentMechStateToOwnedMech(
+        OwnedMech& mech, const mw::battle::BattlePersistentMechState& state) {
+        mech.engine = runtimeDamageState(state.engine);
+        mech.gyros = runtimeDamageState(state.gyros);
+        mech.sensors = runtimeDamageState(state.sensors);
+        mech.lifeSupport = runtimeDamageState(state.lifeSupport);
+        mech.leftArmActuator = runtimeDamageState(state.leftArmActuator);
+        mech.rightArmActuator = runtimeDamageState(state.rightArmActuator);
+        mech.leftLegActuator = runtimeDamageState(state.leftLegActuator);
+        mech.rightLegActuator = runtimeDamageState(state.rightLegActuator);
+        mech.heatSinksWorking = state.heatSinksWorking;
+        mech.heatSinksTotal = state.heatSinksTotal;
+        mech.jumpJetsWorking = state.jumpJetsWorking;
+        mech.jumpJetsTotal = state.jumpJetsTotal;
+        for (size_t i = 0; i < mech.weapons.size(); ++i)
+            mech.weapons[i].condition = runtimeDamageState(state.weaponConditions[i]);
+        for (size_t i = 0; i < mech.armorDamage.size(); ++i) mech.armorDamage[i] = state.armorDamage[mw::battle::originalGamArmorRuntimeIndex(i)];
+        mech.exactDamage = state.exactDamage;
+        updateArmorPercent(mech);
+    }
+
+    std::vector<mw::battle::CampaignMechSaveEntry> campaignMechSaveEntries() const {
+        std::vector<mw::battle::CampaignMechSaveEntry> entries;
+        for (const auto& mech : ownedMechs_)
+            entries.push_back({battleMechPresetForChassis(mech.chassis).value_or(""), mech.exactDamage});
+        return entries;
     }
 
     static mw::battle::BattlePersistentMechState pristineEnemyMechState(
@@ -13176,6 +13598,8 @@ private:
                 launch.roster.gunnerySkill = skillRank(
                     crewMembers_[static_cast<size_t>(participant.crewSlot)].
                         gunnery);
+                launch.roster.pilotingSkill = skillRank(
+                    crewMembers_[static_cast<size_t>(participant.crewSlot)].piloting);
             }
             launch.persistentMechState = battlePersistentMechStateFromOwnedMech(
                 mech,
@@ -13188,6 +13612,7 @@ private:
                 params.playerRoster.sourceSlot = launch.roster.sourceSlot;
                 params.playerRoster.gunnerySkill =
                     launch.roster.gunnerySkill;
+                params.playerRoster.pilotingSkill = launch.roster.pilotingSkill;
                 params.playerLaunchState = std::move(launch);
                 continue;
             }
@@ -13235,6 +13660,11 @@ private:
 
     void beginAcceptedContractMissionSequence() {
         missionSequence_ = {};
+        missionSequence_.salvageRecords = mw::battle::originalSimulatorEmptySalvage();
+        battleRng_ = {};
+        // Original 2CF8 sums 300 context bytes into an uninitialized stack word.
+        // This stable host seed substitutes for that unrecoverable startup state.
+        battleRng_.addSeed(static_cast<uint16_t>(acceptedContractRuntimeSeed()));
         const auto acceptedDefinition =
             mw::battle::battleMissionDefinitionByTitle(
                 narrowAscii(acceptedContract_.missionName));
@@ -13242,22 +13672,28 @@ private:
             return;
         }
 
-        const auto plan = mw::battle::battleExtendedCampaignPlan(
-            acceptedContractRuntimeSeed());
+        const auto plan = mw::battle::originalBattleSequencePlan(static_cast<uint8_t>(battleRng_.exclusive(8)));
         if (plan.valid) {
             missionSequence_.kind = MissionSequenceKind::ExtendedCampaign;
             missionSequence_.stageCount = plan.stageCount;
             missionSequence_.missionIds = plan.missionIds;
+            missionSequence_.originalRow = plan.originalRow;
+            missionSequence_.remainingExtraAmmo = extraAmmoInHold_;
         }
     }
 
     void beginFinalMissionSequence() {
         missionSequence_ = {};
+        missionSequence_.salvageRecords = mw::battle::originalSimulatorEmptySalvage();
+        battleRng_ = {};
+        battleRng_.addSeed(static_cast<uint16_t>(acceptedContractRuntimeSeed()));
         const auto plan = mw::battle::battleFinalMissionPlan();
         if (plan.valid) {
             missionSequence_.kind = MissionSequenceKind::FinalBattle;
             missionSequence_.stageCount = plan.stageCount;
             missionSequence_.missionIds = plan.missionIds;
+            missionSequence_.originalRow = plan.originalRow;
+            missionSequence_.remainingExtraAmmo = extraAmmoInHold_;
         }
     }
 
@@ -13286,22 +13722,6 @@ private:
             mw::battle::BattleCombatantLaunchState launch =
                 missionSequence_.playerCarryover[i];
             launch.roster.originalLiveObjectSlot.reset();
-            const auto participant = std::find_if(
-                missionParticipants_.begin(), missionParticipants_.end(),
-                [&launch, this](const MissionParticipant& candidate) {
-                    const size_t index = static_cast<size_t>(
-                        &candidate - missionParticipants_.data());
-                    return launch.roster.sourceSlot ==
-                        "player:" + std::to_string(index);
-                });
-            if (participant != missionParticipants_.end() &&
-                participant->mechIndex >= 0 &&
-                static_cast<size_t>(participant->mechIndex) <
-                    ownedMechs_.size()) {
-                applyBattleAmmunitionFromOwnedMech(
-                    ownedMechs_[static_cast<size_t>(participant->mechIndex)],
-                    launch);
-            }
             if (i == 0u) {
                 launch.startTransform = params.playerStartTransform;
                 params.playerMechPresetId = launch.mechPresetId;
@@ -13324,29 +13744,34 @@ private:
     void captureMissionSequencePlayerCarryover(
         const mw::battle::BattleSnapshot& finalSnapshot) {
         missionSequence_.playerCarryover.clear();
-        std::vector<const mw::battle::CombatantSnapshot*> survivors;
-        std::vector<const mw::battle::CombatantSnapshot*> destroyed;
+        std::vector<const mw::battle::CombatantSnapshot*> players;
         for (const auto& combatant : finalSnapshot.combatants) {
             if (combatant.roster.team != mw::battle::BattleTeam::Player) {
                 continue;
             }
-            if (combatant.missionStatus ==
-                mw::battle::CombatantMissionStatus::Destroyed) {
-                destroyed.push_back(&combatant);
-            } else {
-                survivors.push_back(&combatant);
-            }
+            players.push_back(&combatant);
         }
-        survivors.insert(survivors.end(), destroyed.begin(), destroyed.end());
-        missionSequence_.playerCarryover.reserve(survivors.size());
-        for (const auto* combatant : survivors) {
-            missionSequence_.playerCarryover.push_back(
-                mw::battle::prepareNextMissionLaunchState(
-                    *combatant, {}));
+        std::sort(players.begin(),players.end(),[](const auto* a,const auto* b) {
+            return a->roster.sourceSlot < b->roster.sourceSlot;
+        });
+        for (const auto* combatant : players) {
+            mw::battle::BattleCombatantLaunchState launch;
+            launch.mechPresetId=combatant->mechPresetId;
+            launch.roster=combatant->roster;
+            launch.persistentMechState=mw::battle::campaignMechStateFromCombatant(*combatant);
+            launch.destroyedComponentIds=combatant->destroyedComponentIds;
+            launch.priorMissionStatus=combatant->missionStatus;
+            launch.ammunitionStateValid=combatant->ammunitionStateValid;
+            launch.ammunitionByPool=combatant->ammunitionByPool;
+            missionSequence_.playerCarryover.push_back(std::move(launch));
         }
     }
 
-    mw::battle::BattleStartParams battleStartParamsForAcceptedContract() const {
+    mw::battle::BattleStartParams battleStartParamsForAcceptedContract() {
+        if (missionSequence_.preparedStage!=missionSequence_.stageIndex) {
+            missionSequence_.opposition.reset(); missionSequence_.skyRoll.reset();
+            missionSequence_.preparedStage=missionSequence_.stageIndex;
+        }
         mw::battle::BattleStartParams params;
         mw::battle::applyBattleDriveRuntimeTuning(params);
         params.originalMajorSystemRuntimeEnabled = true;
@@ -13369,14 +13794,18 @@ private:
         applyMissionSequenceMission(params);
         params.terrainScenarioPath = battleScenarioPath();
         params.terrainScenarioIndex = acceptedBattleContract_.terrainScenarioIndex;
+        if (missionSequence_.active())
+            params.terrainScenarioIndex=mw::battle::originalBattleSequenceScenario(params.terrainScenarioIndex,
+                missionSequence_.originalRow,missionSequence_.stageIndex);
         params.terrainEnvironmentId = acceptedBattleContract_.targetEnvironmentId;
+        params.terrainSkyMode = acceptedBattleContract_.skyMode;
         std::optional<mw::battle::OriginalBattlefieldSetup> setup;
         if (fs::exists(params.terrainScenarioPath)) {
             try {
                 setup = mw::battle::decodeOriginalBattlefieldSetup(
                     params.terrainScenarioPath,
                     params.terrainScenarioIndex,
-                    params.mission.originalId,
+                    mw::battle::originalBattlePlacementSelectorForMission(params.mission.originalId),
                     params.terrainCellSize);
             } catch (const std::exception&) {
                 setup.reset();
@@ -13418,16 +13847,10 @@ private:
                 stageCounts = mw::battle::btechExtendedStageOppositionCounts(
                     stageCounts, missionSequence_.stageIndex);
             }
-            const uint32_t stageSeed = acceptedContractRuntimeSeed() ^
-                (static_cast<uint32_t>(missionSequence_.stageIndex + 1u) *
-                 0x9E3779B9u);
-            mw::battle::BattleOppositionSpawnPlan spawnPlan =
-                mw::battle::resolveBtechOppositionSpawnPlan(
-                    stageCounts,
-                    stageSeed,
-                    missionSequence_.kind == MissionSequenceKind::ExtendedCampaign
-                        ? "original_btech_extended_stage_hml_round_robin"
-                        : "original_btech_fresh_hml_round_robin");
+            if (!missionSequence_.opposition)
+                missionSequence_.opposition=mw::battle::resolveBtechOppositionSpawnPlan(stageCounts,battleRng_,
+                    "original_btech_shared_rng_hml_round_robin");
+            auto spawnPlan=*missionSequence_.opposition;
             std::optional<uint8_t> opposingHouseId;
             std::string opposingHouseName = "UNAFFILIATED";
             if (acceptedBattleContract_.hasHostileTargetHouse) {
@@ -13465,22 +13888,43 @@ private:
             params.weaponDamagePerHit = 1;
             params.mechSystemMaxDamage = 3;
         }
+        if (!missionSequence_.skyRoll) missionSequence_.skyRoll=battleRng_.exclusive(3);
+        params.terrainSkyMode=mw::battle::campaignBattleSkyModeFromOriginalRoll(*missionSequence_.skyRoll);
+        params.originalRng=battleRng_;
         return params;
     }
 
-    mw::battle::BattleStartParams battleStartParamsForDarkWingFinalMission() const {
+    mw::battle::BattleStartParams battleStartParamsForDarkWingFinalMission() {
+        if (missionSequence_.preparedStage!=missionSequence_.stageIndex) {
+            missionSequence_.opposition.reset(); missionSequence_.skyRoll.reset();
+            missionSequence_.preparedStage=missionSequence_.stageIndex;
+        }
         mw::battle::BattleStartParams params;
         mw::battle::applyBattleDriveRuntimeTuning(params);
         params.originalMajorSystemRuntimeEnabled = true;
         params.terrainScenarioPath = battleScenarioPath();
-        params.terrainScenarioIndex = 2;
-        params.terrainEnvironmentId = 0;
+        params.terrainScenarioIndex = 0;
+        if (!planets_.empty() && currentPlanetIndex_ >= 0 &&
+            static_cast<size_t>(currentPlanetIndex_) < planets_.size()) {
+            params.terrainScenarioIndex=mw::battle::originalBattleSequenceScenario(
+                planets_[static_cast<size_t>(currentPlanetIndex_)].tableOrder,8,missionSequence_.stageIndex);
+            params.terrainEnvironmentId =
+                mw::battle::campaignBattleEnvironmentIdFromPlanetTerrainCode(
+                    planets_[static_cast<size_t>(currentPlanetIndex_)].terrainCode);
+        } else {
+            params.terrainEnvironmentId = 0;
+        }
+        params.terrainSkyMode =
+            mw::battle::campaignBattleSkyModeFromOriginalRoll(
+                acceptedContractRuntimeSeed() ^
+                (static_cast<uint32_t>(missionSequence_.stageIndex + 1u) *
+                 0x9E3779B9u));
         params.playerRoster.team = mw::battle::BattleTeam::Player;
         params.playerRoster.provenance = "campaign_story_dark_wing_final";
         params.playerRoster.sourceSlot = "player:0";
 
         const std::optional<mw::battle::BattleMissionDefinition> definition =
-            mw::battle::battleMissionDefinitionById(12);
+            mw::battle::battleMissionDefinitionById(16);
         if (definition.has_value()) {
             params.mission = mw::battle::battleMissionBriefingFromDefinition(*definition);
         }
@@ -13501,13 +13945,17 @@ private:
         }
 
         if (!fs::exists(params.terrainScenarioPath)) {
-            return params;
+            if (!missionSequence_.skyRoll) missionSequence_.skyRoll=battleRng_.exclusive(3);
+        params.terrainSkyMode=mw::battle::campaignBattleSkyModeFromOriginalRoll(*missionSequence_.skyRoll);
+        params.originalRng=battleRng_;
+        return params;
         }
         try {
             const mw::battle::OriginalBattlefieldSetup setup =
-                mw::battle::decodeOriginalDarkWingFinalBattlefieldSetup(
+                mw::battle::decodeOriginalBattlefieldSetup(
                     params.terrainScenarioPath,
                     params.terrainScenarioIndex,
+                    mw::battle::originalBattlePlacementSelectorForMission(params.mission.originalId),
                     params.terrainCellSize);
             params.playerStartTransform = setup.playerStartTransform;
             params.setupMetadata = setup.metadata;
@@ -13574,9 +14022,14 @@ private:
             append(static_cast<uint64_t>(static_cast<int64_t>(value)));
         };
 
+        append(serviceFactor_);
+        append(contactNegotiationSkill_);
         append(snapshot.wealth);
         append(snapshot.reputationPoints);
         append(snapshot.reputationTier);
+        for (auto byte:mw::battle::originalCampaignResultBytes(campaignResultState_)) append(byte);
+        if (acceptedContractSaveState_)
+            for (auto byte:mw::battle::originalAcceptedContractBytes(*acceptedContractSaveState_)) append(byte);
         appendSigned(currentYear_);
         appendSigned(currentMonth_);
         appendSigned(currentDay_);
@@ -13598,18 +14051,23 @@ private:
         for (uint8_t value : storyMessageFlags_) {
             append(value);
         }
+        append(campaignCompleted_);
         for (const CrewMember& crew : crewMembers_) {
             append(crew.hired ? 1u : 0u);
             appendSigned(crew.recruitIndex);
             append(skillRank(crew.gunnery));
             append(skillRank(crew.piloting));
             append(crew.missionExperience);
+            append(crew.wage);
+            appendSigned(crew.portraitEntry);
         }
         for (const RecruitPilot& pilot : recruitPilots_) {
             append(pilot.gunnerySkill);
             append(pilot.pilotingSkill);
             append(pilot.missionExperience);
+            append(pilot.unavailable);
         }
+        for (auto id : recruitBoard_) append(id);
         for (const OwnedMech& mech : ownedMechs_) {
             append(static_cast<uint64_t>(mech.chassis));
             appendSigned(mech.assignedCrewSlot);
@@ -13640,7 +14098,35 @@ private:
             for (const MechWeaponStatus& weapon : mech.weapons) {
                 append(static_cast<uint64_t>(weapon.condition));
             }
+            if (mech.exactDamage) append(mw::battle::persistentMechDamageFingerprint(*mech.exactDamage));
         }
+        append(mechMarket_.initialized);
+        append(mechMarket_.original.saleQuota); append(mechMarket_.original.sales);
+        for (const auto& entry : mechMarket_.original.slots) {
+            append(entry.chassis);
+            for (auto v : entry.condition) append(v);
+            for (auto v : entry.ammoTypes) append(v);
+            for (auto v : entry.ammunition) append(v);
+        }
+        for (const auto& entry : mechMarket_.mechsForSale) {
+            append(entry.originalSlot); append(entry.askingPrice);
+            if (entry.mech.exactDamage) append(mw::battle::persistentMechDamageFingerprint(*entry.mech.exactDamage));
+        }
+        append(contractClassFourThreshold_);
+        append(activeContracts_.size());
+        for (const auto& offer : activeContracts_) {
+            append(offer.originalMissionId); append(offer.originalMissionClass);
+            append(offer.targetCategory); append(offer.targetPlanetTableOrder);
+            appendSigned(offer.heavyCount); appendSigned(offer.mediumCount); appendSigned(offer.lightCount);
+            appendSigned(offer.housePriceK); appendSigned(offer.houseSalvagePercent); appendSigned(offer.houseAdvancePercent);
+            appendSigned(offer.priceCeilingK); appendSigned(offer.salvageCeilingPercent); appendSigned(offer.advanceCeilingPercent);
+        }
+        for(size_t plane=0;plane<7;++plane) for(size_t slot=0;slot<4;++slot)
+            if(plane==mw::battle::OriginalCrewGamState::Opaque || !crewMembers_[slot].hired ||
+                (plane==mw::battle::OriginalCrewGamState::Portrait && slot==0)) append(crewGamState_.words[plane][slot]);
+        append(crewGamState_.dropshipMissedPayments);
+        append(crewGamState_.unpaidCrewPayroll);
+        append(static_cast<uint8_t>(crewPayrollNotice_));
         snapshot.fingerprint = hash;
         return snapshot;
     }
@@ -13655,6 +14141,7 @@ private:
         acceptedBattleOutcome_.outcome = mw::battle::CampaignBattleOutcome::Unsupported;
         acceptedBattleOutcome_.reason = std::move(reason);
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleConsequencePlan_ =
             mw::battle::campaignBattleConsequencePlanFromOutcome(
@@ -13689,6 +14176,24 @@ private:
                 data.assign(kGamSaveSize, 0);
             }
             writeRuntimeToGamSave(data);
+            auto marketRoundTrip=data;
+            if (acceptedContractSaveState_ &&
+                mw::battle::originalAcceptedContractBytes(mw::battle::decodeOriginalAcceptedContract(data)) !=
+                    mw::battle::originalAcceptedContractBytes(*acceptedContractSaveState_)) return false;
+            mw::battle::encodeOriginalMechMarket(marketRoundTrip,mw::battle::decodeOriginalMechMarket(data));
+            if (marketRoundTrip!=data) return false;
+            const auto exact = mw::battle::decodeCampaignMechSave(data,
+                mw::battle::encodeCampaignMechSave(data, campaignMechSaveEntries()));
+            for (size_t i = 0; i < ownedMechs_.size(); ++i) {
+                OwnedMech restored = makeMech(ownedMechs_[i].chassis);
+                readGamMechRecord(data, kGamOffsetMechRecords + i*kGamMechRecordStride, restored);
+                restored.exactDamage = exact.at(i).damage;
+                updateArmorPercent(restored);
+                if (mw::battle::battlePersistentMechStateFingerprint(battlePersistentMechStateFromOwnedMech(restored, "roundtrip")) !=
+                    mw::battle::battlePersistentMechStateFingerprint(battlePersistentMechStateFromOwnedMech(ownedMechs_[i], "roundtrip")) ||
+                    mw::battle::decodeOriginalGamOwnedMechAmmunition(data, i, ammunitionCapacityForMech(restored)) != ownedMechs_[i].ammoPacks)
+                    return false;
+            }
             std::array<int, 5> familyAttitudes{};
             std::array<int, 5> positiveCounters{};
             std::array<int, 5> negativeCounters{};
@@ -13698,6 +14203,31 @@ private:
             bool experienceRoundTrip =
                 readGamU16Le(data, kGamOffsetPlayerMissionExperience) ==
                 crewMembers_.front().missionExperience;
+            const auto recruitRoundTrip = mw::battle::decodeOriginalRecruitment(data);
+            bool recruitmentRoundTrip = recruitRoundTrip.board == recruitBoard_;
+            bool crewRoundTrip = readGamU16Le(data, kGamOffsetCrewCount) == hiredCrewCount();
+            const auto savedCrew=mw::battle::decodeOriginalCrewGam(data);
+            crewRoundTrip=crewRoundTrip && savedCrew.words[mw::battle::OriginalCrewGamState::Opaque]==crewGamState_.words[mw::battle::OriginalCrewGamState::Opaque] &&
+                savedCrew.dropshipMissedPayments==crewGamState_.dropshipMissedPayments && savedCrew.unpaidCrewPayroll==crewGamState_.unpaidCrewPayroll;
+            for (size_t slot = 0; slot < crewMembers_.size(); ++slot) {
+                const auto& member = crewMembers_[slot];
+                if (!member.hired) {
+                    for(size_t plane=0;plane<7;++plane)
+                        crewRoundTrip=crewRoundTrip && savedCrew.words[plane][slot]==crewGamState_.words[plane][slot];
+                    continue;
+                }
+                if(slot>0) crewRoundTrip=crewRoundTrip && savedCrew.words[mw::battle::OriginalCrewGamState::Portrait][slot]==member.portraitEntry;
+                const auto assigned = assignedMechIndexForCrewSlot(slot);
+                const uint16_t expectedMech = member.hired && assigned >= 0
+                    ? static_cast<uint16_t>(assigned) : 0xffff;
+                const uint16_t expectedPilot = member.hired && slot > 0 && member.recruitIndex >= 0
+                    ? static_cast<uint16_t>(member.recruitIndex + 1) : 0;
+                crewRoundTrip = crewRoundTrip &&
+                    readGamU16Le(data, kGamOffsetCrewPilotIds + slot*2) == expectedPilot &&
+                    readGamU16Le(data, kGamOffsetCrewAssignedMechs + slot*2) == expectedMech &&
+                    readGamU16Le(data, kGamOffsetCrewGunnerySkills + slot*2) == (member.hired ? skillRank(member.gunnery) : 0) &&
+                    readGamU16Le(data, kGamOffsetCrewPilotingSkills + slot*2) == (member.hired ? skillRank(member.piloting) : 0);
+            }
             for (size_t recruitIndex = 0;
                  experienceRoundTrip && recruitIndex < recruitPilots_.size();
                  ++recruitIndex) {
@@ -13708,16 +14238,26 @@ private:
                     data[experienceOffset] == static_cast<uint8_t>(std::min<uint16_t>(
                         recruitPilots_[recruitIndex].missionExperience,
                         std::numeric_limits<uint8_t>::max()));
+                const auto& pilot = recruitPilots_[recruitIndex];
+                const auto& restored = recruitRoundTrip.pilots[recruitIndex];
+                recruitmentRoundTrip = recruitmentRoundTrip &&
+                    restored.gunnery == pilot.gunnerySkill && restored.piloting == pilot.pilotingSkill &&
+                    restored.unavailable == pilot.unavailable;
             }
-            return playerWealth_ <= 0xffffffffull &&
+            return data[kGamOffsetCampaignCompleted] == campaignCompleted_ &&
+                   std::equal(storyMessageFlags_.begin(), storyMessageFlags_.begin()+kGamKnownMessageFlagCount,
+                       data.begin()+kGamOffsetMessageFlags) &&
+                   playerWealth_ <= 0xffffffffull &&
                    readGamU32Le(data, kGamOffsetMoney) == playerWealth_ &&
                    readGamU16Le(data, kGamOffsetReputationPoints) == playerReputationPoints_ &&
                    readGamU16Le(data, kGamOffsetReputationTier) == playerReputationTier_ &&
+                   mw::battle::originalCampaignResultBytes(mw::battle::decodeOriginalCampaignResult(data)) ==
+                       mw::battle::originalCampaignResultBytes(campaignResultState_) &&
                    data[kGamOffsetMonthDayCounter] == currentMonthDayCounter_ &&
                    data[kGamOffsetMonth] == currentMonth_ &&
                    readGamU16Le(data, kGamOffsetYear) == currentYear_ &&
                    data[kGamOffsetPeriodic14DayCounter] == currentPeriodic14DayCounter_ &&
-                   experienceRoundTrip &&
+                   experienceRoundTrip && recruitmentRoundTrip && crewRoundTrip &&
                    familyAttitudes == familyAttitudes_ &&
                    positiveCounters == housePositiveCounters_ &&
                    negativeCounters == houseNegativeCounters_;
@@ -13729,16 +14269,43 @@ private:
     mw::battle::CampaignBattleConsequenceCommitReceipt
     commitAcceptedBattleConsequencePlan() {
         mw::battle::CampaignBattleConsequenceCommitReceipt receipt;
-        receipt.valid = acceptedBattleConsequencePlan_.valid;
-        receipt.planFingerprint = acceptedBattleConsequencePlan_.planFingerprint;
+        const bool ending = isDarkWingVictory(acceptedBattleOutcome_);
+        const bool darkWing = acceptedBattleOutcome_.launchSource == mw::battle::CampaignBattleLaunchSource::DarkWingFinal;
+        const bool applyDamage = acceptedBattleMechReturnPlan_.valid;
+        auto guardedPlan = acceptedBattleConsequencePlan_;
+        if (applyDamage) {
+            guardedPlan.valid = true;
+            guardedPlan.commitEligible = true;
+            guardedPlan.planFingerprint ^= acceptedBattleMechReturnPlan_.fingerprint;
+        }
+        if (missionSequence_.remainingExtraAmmo)
+            for (int amount : *missionSequence_.remainingExtraAmmo)
+                guardedPlan.planFingerprint=(guardedPlan.planFingerprint ^ static_cast<uint64_t>(amount))*1099511628211ull;
+        for (const auto& record:missionSequence_.salvageRecords)
+            for (auto value:{record.chassis,record.condition})
+                guardedPlan.planFingerprint=(guardedPlan.planFingerprint ^ value)*1099511628211ull;
+        guardedPlan.planFingerprint=(guardedPlan.planFingerprint ^
+            static_cast<uint64_t>(acceptedBattleOutcome_.rawResultCode))*1099511628211ull;
+        receipt.valid = guardedPlan.valid;
+        receipt.planFingerprint = guardedPlan.planFingerprint;
         receipt.deferredConsequencesPresent =
             acceptedBattleConsequencePlan_.salvageDeferred ||
             acceptedBattleConsequencePlan_.campaignTimeDeferred ||
             acceptedBattleConsequencePlan_.pilotExperienceDeferred ||
-            acceptedBattleConsequencePlan_.persistentMechDamageDeferred ||
-            acceptedBattleConsequencePlan_.repairCostDeferred ||
-            acceptedBattleConsequencePlan_.pilotDeathDeferred;
-        if (!acceptedBattleConsequencePlan_.commitEligible) {
+            (!applyDamage && acceptedBattleConsequencePlan_.persistentMechDamageDeferred) ||
+            (!applyDamage && acceptedBattleConsequencePlan_.repairCostDeferred) ||
+            (!applyDamage && acceptedBattleConsequencePlan_.pilotDeathDeferred);
+        if (applyDamage && acceptedBattleMechReturnPlan_.killedCrewSlots[0]) {
+            receipt.attempted = true;
+            receipt.reason = "campaign_commander_killed_no_continue";
+            return receipt;
+        }
+        if (acceptedBattlePersistenceReport_.requestedBindingCount != 0 && !applyDamage) {
+            receipt.attempted = true;
+            receipt.reason = acceptedBattleMechReturnPlan_.reason;
+            return receipt;
+        }
+        if (!guardedPlan.commitEligible) {
             receipt.reason = acceptedBattleConsequencePlan_.reason;
             return receipt;
         }
@@ -13746,13 +14313,19 @@ private:
         receipt.attempted = true;
         const CampaignPersistentStateSnapshot before = captureCampaignPersistentState();
         receipt.beforeStateFingerprint = before.fingerprint;
+        if (guardedPlan.planFingerprint != 0 &&
+            guardedPlan.planFingerprint == lastCommittedBattleConsequencePlanFingerprint_) {
+            receipt.duplicateRejected = true;
+            receipt.reason = "campaign_consequence_duplicate_plan";
+            return receipt;
+        }
         const uint64_t expectedFingerprint =
             acceptedBattleStateGuard_.valid && acceptedBattleStateGuard_.unchanged
                 ? acceptedBattleStateGuard_.after.fingerprint
                 : 0;
         const mw::battle::CampaignBattleConsequenceApplyGuard guard =
             mw::battle::campaignBattleConsequencePlanApplyGuard(
-                acceptedBattleConsequencePlan_,
+                guardedPlan,
                 expectedFingerprint,
                 before.fingerprint,
                 lastCommittedBattleConsequencePlanFingerprint_);
@@ -13762,9 +14335,17 @@ private:
             return receipt;
         }
 
+        const auto oldCampaignRng = repairSession_.rng;
+        const auto oldOwnedMechs = ownedMechs_;
+        const auto oldExtraAmmo = extraAmmoInHold_;
+        const auto oldCompleted = campaignCompleted_;
+        const auto oldStoryFlags = storyMessageFlags_;
         const uint64_t oldWealth = playerWealth_;
         const uint16_t oldReputationPoints = playerReputationPoints_;
         const uint8_t oldReputationTier = playerReputationTier_;
+        const auto oldResultState = campaignResultState_;
+        const auto oldCrewGamState = crewGamState_;
+        const auto oldPayrollNotice = crewPayrollNotice_;
         const std::array<int, 5> oldPositiveCounters = housePositiveCounters_;
         const std::array<int, 5> oldNegativeCounters = houseNegativeCounters_;
         const std::array<int, 5> oldFamilyAttitudes = familyAttitudes_;
@@ -13775,57 +14356,31 @@ private:
         const int oldDay = currentDay_;
         const std::array<CrewMember, 4> oldCrewMembers = crewMembers_;
         const std::vector<RecruitPilot> oldRecruitPilots = recruitPilots_;
+        const auto oldRecruitBoard = recruitBoard_;
+        const auto oldMarket = mechMarket_;
+        const auto oldMarketSelection = selectedMarketMechIndex_;
+        const auto oldMarketScroll = mechMarketScrollOffset_;
+        const auto oldContracts = activeContracts_;
+        const auto oldContractThreshold = contractClassFourThreshold_;
+        const auto oldContractIndex = activeContractIndex_;
+        const auto oldContractField = contractEditableField_;
+        const auto oldContractTerminated = contractNegotiationTerminated_;
+        const auto oldContractUnavailable = contractNegotiationUnavailable_;
+        const auto oldCrewSelection = crewSelectionIndex_;
 
-        constexpr uint64_t kGamPersistedWealthMax = 0xffffffffull;
-        const uint64_t consequenceWealthLimit =
-            std::min(kMaxPlayerWealth, kGamPersistedWealthMax);
-        for (uint64_t award : {
-                 acceptedBattleConsequencePlan_.payment,
-                 acceptedBattleConsequencePlan_.salvage}) {
-            if (playerWealth_ < consequenceWealthLimit) {
-                playerWealth_ += std::min(award, consequenceWealthLimit - playerWealth_);
-            }
-        }
-        playerReputationPoints_ = static_cast<uint16_t>(std::min<int64_t>(
-            std::numeric_limits<uint16_t>::max(),
-            static_cast<int64_t>(playerReputationPoints_) +
-                std::max(0, acceptedBattleConsequencePlan_.reputationDelta)));
-        playerReputationTier_ = reputationTierForPoints(playerReputationPoints_);
-        for (size_t index = 0; index < housePositiveCounters_.size(); ++index) {
-            housePositiveCounters_[index] = static_cast<int>(std::min<int64_t>(
-                std::numeric_limits<int16_t>::max(),
-                static_cast<int64_t>(housePositiveCounters_[index]) +
-                    std::max(0, acceptedBattleConsequencePlan_.housePositiveDelta[index])));
-            houseNegativeCounters_[index] = static_cast<int>(std::min<int64_t>(
-                std::numeric_limits<int16_t>::max(),
-                static_cast<int64_t>(houseNegativeCounters_[index]) +
-                    std::max(0, acceptedBattleConsequencePlan_.houseNegativeDelta[index])));
-            familyAttitudes_[index] = static_cast<int>(std::clamp<int64_t>(
-                static_cast<int64_t>(housePositiveCounters_[index]) -
-                    houseNegativeCounters_[index],
-                std::numeric_limits<int16_t>::min(),
-                std::numeric_limits<int16_t>::max()));
-        }
-        if (acceptedBattleConsequencePlan_.pilotExperienceAward) {
-            applyMissionExperience();
-        }
-        if (acceptedBattleConsequencePlan_.campaignDateTicks > 0) {
-            advanceCampaignDays(acceptedBattleConsequencePlan_.campaignDateTicks);
-        }
 
-        const CampaignPersistentStateSnapshot after = captureCampaignPersistentState();
-        receipt.afterStateFingerprint = after.fingerprint;
-        receipt.saveRoundTripVerified =
-            campaignConsequenceGamRoundTripMatchesCurrentState();
-        const bool expectedValuesApplied =
-            playerReputationPoints_ >= oldReputationPoints &&
-            after.valid &&
-            after.fingerprint != before.fingerprint &&
-            receipt.saveRoundTripVerified;
-        if (!expectedValuesApplied) {
+        const auto rollback = [&]() {
+            repairSession_.rng = oldCampaignRng;
+            campaignCompleted_ = oldCompleted;
+            storyMessageFlags_ = oldStoryFlags;
+            ownedMechs_ = oldOwnedMechs;
+            extraAmmoInHold_ = oldExtraAmmo;
             playerWealth_ = oldWealth;
             playerReputationPoints_ = oldReputationPoints;
             playerReputationTier_ = oldReputationTier;
+            campaignResultState_ = oldResultState;
+            crewGamState_ = oldCrewGamState;
+            crewPayrollNotice_ = oldPayrollNotice;
             housePositiveCounters_ = oldPositiveCounters;
             houseNegativeCounters_ = oldNegativeCounters;
             familyAttitudes_ = oldFamilyAttitudes;
@@ -13836,28 +14391,151 @@ private:
             currentDay_ = oldDay;
             crewMembers_ = oldCrewMembers;
             recruitPilots_ = oldRecruitPilots;
+            recruitBoard_ = oldRecruitBoard;
+            mechMarket_ = oldMarket;
+            selectedMarketMechIndex_ = oldMarketSelection;
+            mechMarketScrollOffset_ = oldMarketScroll;
+            activeContracts_ = oldContracts;
+            contractClassFourThreshold_ = oldContractThreshold;
+            activeContractIndex_ = oldContractIndex;
+            contractEditableField_ = oldContractField;
+            contractNegotiationTerminated_ = oldContractTerminated;
+            contractNegotiationUnavailable_ = oldContractUnavailable;
+            crewSelectionIndex_ = oldCrewSelection;
+        };
+        try {
+            if (missionSequence_.remainingExtraAmmo) extraAmmoInHold_=*missionSequence_.remainingExtraAmmo;
+            campaignResultState_.defeatedOpponents = acceptedBattleConsequencePlan_.defeatedOpponents;
+            if (acceptedBattleOutcome_.rawResultCode >= 0 && acceptedBattleOutcome_.rawResultCode <= 255) {
+                // BTECH382F/3B35/3BE9, then MW_MAIN147F. The sequence's
+                // trophies survive a failed final stage; the result prevents payout.
+                campaignResultState_.result = static_cast<uint8_t>(acceptedBattleOutcome_.rawResultCode);
+                campaignResultState_.salvage = missionSequence_.salvageRecords;
+                campaignResultState_.accepted = 0;
+                for (size_t slot=0;slot<4;++slot)
+                    campaignResultState_.crewStatus[slot] = applyDamage && acceptedBattleMechReturnPlan_.killedCrewSlots[slot] ? 1 : 0;
+                if (!ending) mw::battle::compactOriginalCampaignResultCrew(campaignResultState_,hiredCrewCount());
+            }
+            if (applyDamage) {
+                for (const auto& returned : acceptedBattleMechReturnPlan_.entries) {
+                    auto& mech = ownedMechs_.at(returned.ownedMechIndex);
+                    if (returned.pilotKilled &&
+                        (returned.crewSlot <= 0 || returned.crewSlot >= static_cast<int>(crewMembers_.size()) ||
+                         !crewMembers_[static_cast<size_t>(returned.crewSlot)].hired ||
+                         mech.assignedCrewSlot != returned.crewSlot))
+                        throw std::runtime_error("pilot casualty binding changed");
+                    applyBattlePersistentMechStateToOwnedMech(mech, returned.state);
+                    if (returned.ammunitionStateValid) mech.ammoPacks = returned.ammunitionByPool;
+                    finalizeLoadedMech(mech);
+                }
+            }
+
+            constexpr uint64_t kGamPersistedWealthMax = 0xffffffffull;
+            const uint64_t consequenceWealthLimit =
+                std::min(kMaxPlayerWealth, kGamPersistedWealthMax);
+            for (uint64_t award : {
+                     acceptedBattleConsequencePlan_.payment,
+                     acceptedBattleConsequencePlan_.salvage}) {
+                if (playerWealth_ < consequenceWealthLimit) {
+                    playerWealth_ += std::min(award, consequenceWealthLimit - playerWealth_);
+                }
+            }
+            if (!ending) {
+                playerReputationPoints_ = static_cast<uint16_t>(std::min<int64_t>(
+                    std::numeric_limits<uint16_t>::max(),
+                    static_cast<int64_t>(playerReputationPoints_) +
+                        std::max(0, acceptedBattleConsequencePlan_.reputationDelta)));
+                playerReputationTier_ = reputationTierForPoints(playerReputationPoints_);
+            }
+            if (acceptedBattleConsequencePlan_.pilotExperienceAward) {
+                applyMissionExperience();
+            }
+            // Award survivors using launch slots, then compact before payroll.
+            // Same result as MW_MAIN 1FC3..200C/21D9. 223F retains owned mechs
+            // and keeps a dead pilot unavailable for later recruitment.
+            if (applyDamage && !ending) {
+                size_t removed=0;
+                for(size_t slot=1;slot<crewMembers_.size();++slot)
+                    if (acceptedBattleMechReturnPlan_.killedCrewSlots[slot]) {dismissCrewSlot(slot-removed,true);++removed;}
+            }
+            if (acceptedBattleConsequencePlan_.campaignDateTicks > 0) {
+                advanceCampaignDays(acceptedBattleConsequencePlan_.campaignDateTicks);
+            }
+            if (!ending && (darkWing || acceptedBattleOutcome_.launchSource == mw::battle::CampaignBattleLaunchSource::AcceptedContract)) {
+                generateCurrentRecruitBoard(); // MW_MAIN 20E1
+                generateCurrentMechMarket(); // MW_MAIN 20E4
+                generateCurrentPlanetContracts(); // original explicit post-mission refresh
+            }
+
+            if (!ending) {
+                for (size_t index = 0; index < housePositiveCounters_.size(); ++index) {
+                    if (darkWing) continue; // 20F4 skips all house updates.
+                    housePositiveCounters_[index] = static_cast<int>(std::min<int64_t>(
+                        std::numeric_limits<int16_t>::max(),
+                        static_cast<int64_t>(housePositiveCounters_[index]) +
+                            std::max(0, acceptedBattleConsequencePlan_.housePositiveDelta[index])));
+                    houseNegativeCounters_[index] = static_cast<int>(std::min<int64_t>(
+                        std::numeric_limits<int16_t>::max(),
+                        static_cast<int64_t>(houseNegativeCounters_[index]) +
+                            std::max(0, acceptedBattleConsequencePlan_.houseNegativeDelta[index])));
+                }
+            }
+
+            if (ending) {
+                // 22A9 bypasses ordinary settlement/roster cleanup. BTECH has
+                // already returned mech condition; retain that transfer.
+                campaignCompleted_ = 1;
+                setStoryFlag(0x72);
+                setStoryFlag(0x75);
+            }
+            const CampaignPersistentStateSnapshot after = captureCampaignPersistentState();
+            receipt.afterStateFingerprint = after.fingerprint;
+            receipt.saveRoundTripVerified =
+                campaignConsequenceGamRoundTripMatchesCurrentState();
+            const bool expectedValuesApplied =
+                playerReputationPoints_ >= oldReputationPoints &&
+                after.valid &&
+                (after.fingerprint != before.fingerprint || applyDamage) &&
+                receipt.saveRoundTripVerified;
+            if (!expectedValuesApplied) {
+                rollback();
+                receipt.afterStateFingerprint = captureCampaignPersistentState().fingerprint;
+                receipt.saveRoundTripVerified = false;
+                receipt.reason = "campaign_consequence_commit_verification_failed";
+                return receipt;
+            }
+
+            receipt.committed = true;
+            receipt.verified = true;
+            receipt.reason = "campaign_consequences_and_mech_state_committed";
+            lastCommittedBattleConsequencePlanFingerprint_ =
+                guardedPlan.planFingerprint;
+            return receipt;
+        } catch (const std::exception& error) {
+            rollback();
             receipt.afterStateFingerprint = captureCampaignPersistentState().fingerprint;
-            receipt.saveRoundTripVerified = false;
-            receipt.reason = "campaign_consequence_commit_verification_failed";
+            receipt.reason = std::string("campaign_mech_commit_failed: ") + error.what();
             return receipt;
         }
-
-        receipt.committed = true;
-        receipt.verified = true;
-        receipt.reason = "accepted_contract_proven_consequences_committed";
-        lastCommittedBattleConsequencePlanFingerprint_ =
-            acceptedBattleConsequencePlan_.planFingerprint;
-        return receipt;
     }
 
     void acknowledgeAcceptedBattleOutcome() {
+        if (acceptedBattleMechReturnPlan_.valid && acceptedBattleMechReturnPlan_.killedCrewSlots[0])
+            return; // Only PLAY AGAIN / QUIT after commander death.
         const mw::battle::CampaignBattleOutcomePackage acknowledgedOutcome =
             acceptedBattleOutcome_;
         const CampaignPersistentStateSnapshot stateBeforeAcknowledge =
             captureCampaignPersistentState();
         const mw::battle::CampaignBattleConsequenceCommitReceipt consequenceCommit =
             commitAcceptedBattleConsequencePlan();
+        if (consequenceCommit.attempted && !consequenceCommit.committed && !consequenceCommit.duplicateRejected) {
+            status_ = L"Battle state transfer failed: " + widen(consequenceCommit.reason);
+            debugLog(status_);
+            return; // preserve the pending outcome/state for a retry
+        }
         contractAccepted_ = false;
+        acceptedContractFinance_.reset();
+        deploymentFailures_ = 0;
         acceptedContract_ = {};
         acceptedBattleContract_ = {};
         pendingBattleStartParams_.reset();
@@ -13865,9 +14543,11 @@ private:
         acceptedBattleOutcome_ = {};
         acceptedBattleConsequencePlan_ = {};
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleStateGuard_ = {};
         campaignBattleRuntime_ = {};
+        speaker_.stop();
         finalMissionStubActive_ = false;
         missionSequence_ = {};
         missionParticipants_.clear();
@@ -13907,6 +14587,15 @@ private:
 #endif
         acceptedBattleStateGuard_ = {};
         planetMenuIndex_ = kPlanetStatusIconIndex;
+        if (isDarkWingVictory(acknowledgedOutcome) && campaignCompleted_ == 1 &&
+            (consequenceCommit.committed || consequenceCommit.duplicateRejected)) {
+            status_.clear();
+            endingFrame_ = 0;
+            lastBattlePostResultReceipt_.extendedEndingSequenceDeferred = false;
+            lastBattlePostResultReceipt_.reason = "dark_wing_victory_ending_started";
+            changeState(ScreenState::CampaignEnding);
+            return;
+        }
         switch (lastBattlePostResultReceipt_.destination) {
         case mw::battle::CampaignBattlePostResultDestination::CampaignMainMenu:
         case mw::battle::CampaignBattlePostResultDestination::Unsupported:
@@ -13915,9 +14604,56 @@ private:
         }
     }
 
+    void applyCampaignCommandScreenAction(const mw::presentation::CampaignCommandScreenAction& action) {
+        if (action.command) {
+            campaignBattleRuntime_.world->enqueueInput(*action.command);
+            campaignBattleRuntime_.inputReplay.commands.push_back(*action.command);
+            campaignBattleRuntime_.pendingLanceOrderTick = true;
+        }
+        if (action.cockpit) campaignBattleRuntime_.presentationMode = mw::battle::CampaignBattlePresentationMode::Cockpit;
+        if (action.status && !campaignBattleRuntime_.mechStatusOwnedMechIndexes.empty()) campaignBattleRuntime_.mechStatusVisible = true;
+        campaignBattleRuntime_.lastStepTick = GetTickCount();
+        campaignBattleRuntime_.lastRenderTick = 0;
+    }
+
+    bool handleCampaignCommandPointer(int clientX, int clientY, mw::presentation::CampaignCommandPointerEvent event) {
+        if (state_ != ScreenState::MissionBattleStub || !campaignBattleRuntime_.active || !campaignBattleRuntime_.world ||
+            campaignBattleRuntime_.mechStatusVisible || campaignBattleRuntime_.presentationMode !=
+                mw::battle::CampaignBattlePresentationMode::CockpitCommandMap) return false;
+#if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
+        if (debugConsoleOpen_) return true;
+#endif
+        // Pending confirmation owns the next tick. Mouse traffic cannot postpone it.
+        if (campaignBattleRuntime_.pendingLanceOrderTick || !campaignBattleRuntime_.presentationSnapshotsValid) return true;
+        int screenX = 0, screenY = 0;
+        if (!clientToScreenPixel(clientX, clientY, screenX, screenY)) return true;
+        const auto action = mw::presentation::campaignCommandScreenPointer(
+            campaignBattleRuntime_.currentPresentationSnapshot, campaignBattleRuntime_.commandScreen, event, screenX, screenY);
+        if (event != mw::presentation::CampaignCommandPointerEvent::Move) applyCampaignCommandScreenAction(action);
+        else campaignBattleRuntime_.lastRenderTick = 0;
+        return true;
+    }
+
     bool handleCampaignBattleRuntimeKeyDown(WPARAM key) {
         if (!campaignBattleRuntime_.active || !campaignBattleRuntime_.world.has_value()) {
             return false;
+        }
+        if (campaignBattleRuntime_.pendingConfirmedRetreat) return true;
+        if (campaignBattleRuntime_.retreatPromptVisible) {
+            // Original26B drains opening/held input; 27C7 accepts only scan Y.
+            // Every other fresh key cancels, without reaching cockpit controls.
+            if (!currentKeyDownRepeat_) {
+                campaignBattleRuntime_.retreatPromptVisible = false;
+                campaignBattleRuntime_.pendingConfirmedRetreat = key == 'Y';
+                campaignBattleRuntime_.lastStepTick = GetTickCount();
+                campaignBattleRuntime_.lastRenderTick = 0;
+            }
+            return true;
+        }
+        // Opening/closing an auxiliary screen requires a fresh press. Holding
+        // its shortcut must not immediately close it or repeatedly reopen it.
+        if (currentKeyDownRepeat_ && (key == 'G' || key == 'C' || key == 'Q')) {
+            return true;
         }
 
         if (campaignBattleRuntime_.mechStatusVisible) {
@@ -13928,7 +14664,7 @@ private:
                 campaignBattleRuntime_.lastStepTick = GetTickCount();
                 campaignBattleRuntime_.lastRenderTick = 0;
                 debugLog(L"Phase 11 battle mech status -> command map.");
-            } else if (key == 'Q') {
+            } else if (key == 'Q' || key == 'G') {
                 campaignBattleRuntime_.mechStatusVisible = false;
                 campaignBattleRuntime_.presentationMode =
                     mw::battle::CampaignBattlePresentationMode::Cockpit;
@@ -13954,20 +14690,50 @@ private:
 
         if (campaignBattleRuntime_.presentationMode ==
             mw::battle::CampaignBattlePresentationMode::CockpitCommandMap) {
-            if (key == 'C' || key == VK_RETURN) {
-                campaignBattleRuntime_.presentationMode =
-                    mw::battle::CampaignBattlePresentationMode::Cockpit;
-                campaignBattleRuntime_.lastRenderTick = 0;
-                debugLog(L"Phase 11 cockpit command map closed.");
-                return true;
+            using Key = mw::presentation::CampaignCommandKey;
+            std::optional<Key> input;
+            switch (key) {
+            case VK_LEFT: input=Key::Left; break;
+            case VK_RIGHT: input=Key::Right; break;
+            case VK_UP: input=Key::Up; break;
+            case VK_DOWN: input=Key::Down; break;
+            case VK_RETURN: input=Key::Enter; break;
+            case VK_ESCAPE: input=Key::Back; break;
+            case 'C':
+            case 'Q': input=Key::Cockpit; break;
+            case 'G': input=Key::Status; break;
             }
+            if (input && !campaignBattleRuntime_.pendingLanceOrderTick) {
+                const auto action = mw::presentation::campaignCommandScreenKey(
+                    campaignBattleRuntime_.currentPresentationSnapshot,
+                    campaignBattleRuntime_.commandScreen, *input, currentKeyDownRepeat_);
+                applyCampaignCommandScreenAction(action);
+            }
+            return true;
         }
 
+        if (key == VK_ESCAPE && campaignBattleRuntime_.presentationMode ==
+                mw::battle::CampaignBattlePresentationMode::Cockpit) {
+            const auto& conclusion = campaignBattleRuntime_.world->snapshot().conclusionDelay;
+            if (conclusion.active && !conclusion.freezesSimulation)
+                campaignBattleRuntime_.pendingConclusionAcknowledgment = true;
+            else if (!conclusion.active && !campaignBattleRuntime_.world->battleResult() &&
+                     !currentKeyDownRepeat_) {
+                campaignBattleRuntime_.retreatPromptVisible = true;
+                campaignBattleRuntime_.previousPresentationSnapshot = campaignBattleRuntime_.currentPresentationSnapshot;
+                campaignBattleRuntime_.renderInterpolationAlpha = 1.0;
+                campaignBattleRuntime_.lastRenderTick = 0;
+            }
+            return true;
+        }
         if (key == 'C') {
+            campaignBattleRuntime_.pendingConclusionAcknowledgment = false;
             campaignBattleRuntime_.presentationMode =
                 campaignBattleRuntime_.presentationMode == mw::battle::CampaignBattlePresentationMode::Cockpit
                     ? mw::battle::CampaignBattlePresentationMode::CockpitCommandMap
                     : mw::battle::CampaignBattlePresentationMode::Cockpit;
+            campaignBattleRuntime_.lastStepTick = GetTickCount();
+            campaignBattleRuntime_.lastRenderTick = 0;
             debugLog(
                 L"Phase 11 battle presentation: " +
                 campaignBattlePresentationName(campaignBattleRuntime_.presentationMode));
@@ -13977,12 +14743,14 @@ private:
             campaignBattleRuntime_.presentationMode ==
                 mw::battle::CampaignBattlePresentationMode::Cockpit &&
             !campaignBattleRuntime_.mechStatusOwnedMechIndexes.empty()) {
+            campaignBattleRuntime_.pendingConclusionAcknowledgment = false;
             campaignBattleRuntime_.mechStatusVisible = true;
             campaignBattleRuntime_.lastRenderTick = 0;
             debugLog(L"Phase 11 battle mech status opened; simulation paused.");
             return true;
         }
         if (key == VK_F2) {
+            campaignBattleRuntime_.pendingConclusionAcknowledgment = false;
             campaignBattleRuntime_.presentationMode =
                 campaignBattleRuntime_.presentationMode ==
                         mw::battle::CampaignBattlePresentationMode::TacticalMap
@@ -14018,6 +14786,7 @@ private:
             return true;
         }
         if (key == VK_F3) {
+            campaignBattleRuntime_.pendingConclusionAcknowledgment = false;
             campaignBattleRuntime_.presentationMode =
                 campaignBattleRuntime_.presentationMode == mw::battle::CampaignBattlePresentationMode::External
                     ? mw::battle::CampaignBattlePresentationMode::Cockpit
@@ -14060,19 +14829,13 @@ private:
                 1.0);
             return true;
         }
-        if (key == VK_SPACE && !currentKeyDownRepeat_) {
-            campaignBattleRuntime_.pendingFireWeapon = true;
+        if (const auto weaponInput = mw::presentation::campaignCockpitWeaponKey(
+                static_cast<unsigned int>(key), currentKeyDownRepeat_)) {
+            campaignBattleRuntime_.pendingWeaponControls.push_back(*weaponInput);
             return true;
         }
-        if ((key == VK_OEM_4 || key == VK_OEM_6) &&
-            !currentKeyDownRepeat_) {
-            campaignBattleRuntime_.pendingWeaponSelectionStep +=
-                key == VK_OEM_4 ? -1 : 1;
-            return true;
-        }
-        if (key >= '0' && key <= '9' && !currentKeyDownRepeat_) {
-            campaignBattleRuntime_.pendingWeaponInstanceId =
-                key == '0' ? 10u : static_cast<uint32_t>(key - '0');
+        if (key == 'U') {
+            if (!currentKeyDownRepeat_) campaignBattleRuntime_.pendingStandUp = true;
             return true;
         }
         if (key == 'J') {
@@ -14096,6 +14859,7 @@ private:
             return true;
         }
         if (key == 'A') {
+            if (mouseLookEnabled_) { mouseLookCenterTorso_=true; return true; }
             if (const mw::battle::CombatantSnapshot* combatant =
                     playerCombatantSnapshot(
                         campaignBattleRuntime_.currentPresentationSnapshot)) {
@@ -14142,14 +14906,34 @@ private:
                        ((GetAsyncKeyState(VK_RIGHT) & 0x8000) != 0 ? -1.0 : 0.0);
         command.torsoYawStepDelta = campaignBattleRuntime_.pendingTorsoYawStepDelta;
         command.aimPitchStepDelta = campaignBattleRuntime_.pendingAimPitchStepDelta;
+        if (const auto* player=playerCombatantSnapshot(snapshot)) {
+            if (player->mouseLook.enabled!=mouseLookEnabled_) command.mouseLookEnabled=mouseLookEnabled_;
+        }
+        if (mouseLookEnabled_) {
+            command.mouseLookZoomLevel=campaignBattleRuntime_.cockpitZoomLevel;
+            command.centerTorso=mouseLookCenterTorso_;
+            if (mouseLookCaptured_ && mouseLookContextActive()) {
+                command.mouseLookYawDeltaRadians=mouseLookPendingYaw_;
+                command.mouseLookPitchDeltaRadians=mouseLookPendingPitch_;
+                command.fireLinkedWeapons=mouseLookRightHeld_;
+                command.fireWeapon=mouseLookFirePending_ && !mouseLookRightHeld_;
+            }
+        }
+        mouseLookPendingYaw_=mouseLookPendingPitch_=0.0;
+        mouseLookCenterTorso_=false;
+        // Consume even if unavailable/overridden: do not fire later on cooldown,
+        // focus recovery or release of the right button. A new click is required.
+        mouseLookFirePending_=false;
         command.jumpJetToggle = campaignBattleRuntime_.pendingJumpJetToggle;
+        command.standUp = campaignBattleRuntime_.pendingStandUp;
+        campaignBattleRuntime_.pendingStandUp = false;
+        command.acknowledgeConclusion = campaignBattleRuntime_.pendingConclusionAcknowledgment &&
+            campaignBattleRuntime_.presentationMode == mw::battle::CampaignBattlePresentationMode::Cockpit;
+        campaignBattleRuntime_.pendingConclusionAcknowledgment = false;
+        command.confirmRetreat = campaignBattleRuntime_.pendingConfirmedRetreat;
+        campaignBattleRuntime_.pendingConfirmedRetreat = false;
         command.jumpForwardThrust = jumpControl && (GetAsyncKeyState(VK_UP) & 0x8000) != 0;
         command.jumpVerticalThrust = jumpControl && (GetAsyncKeyState(VK_DOWN) & 0x8000) != 0;
-        command.fireWeapon = campaignBattleRuntime_.pendingFireWeapon;
-        command.selectedWeaponStepDelta =
-            campaignBattleRuntime_.pendingWeaponSelectionStep;
-        command.selectWeaponInstanceId =
-            campaignBattleRuntime_.pendingWeaponInstanceId;
         command.toggleCockpitRadar =
             campaignBattleRuntime_.pendingCockpitRadarToggle;
         command.cycleCockpitRadarRange =
@@ -14157,13 +14941,22 @@ private:
         command.cycleTargetScan =
             campaignBattleRuntime_.pendingTargetScanCycle;
         world.enqueueInput(command);
+        campaignBattleRuntime_.inputReplay.commands.push_back(command);
+        for (auto weaponCommand : campaignBattleRuntime_.pendingWeaponControls) {
+            weaponCommand.tickIndex = command.tickIndex;
+            weaponCommand.entityId = command.entityId;
+            weaponCommand.throttle = command.throttle;
+            weaponCommand.turn = command.turn;
+            weaponCommand.jumpForwardThrust = command.jumpForwardThrust;
+            weaponCommand.jumpVerticalThrust = command.jumpVerticalThrust;
+            world.enqueueInput(weaponCommand);
+            campaignBattleRuntime_.inputReplay.commands.push_back(weaponCommand);
+        }
+        campaignBattleRuntime_.pendingWeaponControls.clear();
 
         campaignBattleRuntime_.pendingTorsoYawStepDelta = 0;
         campaignBattleRuntime_.pendingAimPitchStepDelta = 0;
         campaignBattleRuntime_.pendingJumpJetToggle = false;
-        campaignBattleRuntime_.pendingFireWeapon = false;
-        campaignBattleRuntime_.pendingWeaponSelectionStep = 0;
-        campaignBattleRuntime_.pendingWeaponInstanceId = 0;
         campaignBattleRuntime_.pendingCockpitRadarToggle = false;
         campaignBattleRuntime_.pendingCockpitRadarRangeCycle = false;
         campaignBattleRuntime_.pendingTargetScanCycle = false;
@@ -14300,10 +15093,13 @@ private:
         acceptedBattleOutcome_ = {};
         acceptedBattleConsequencePlan_ = {};
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleStateGuard_ = {};
         campaignBattleRuntime_ = {};
+        speaker_.stop();
         lastBattlePostResultReceipt_ = {};
+        lastCommittedBattleConsequencePlanFingerprint_ = 0;
         const mw::battle::CampaignBattleLaunchSource requestedLaunchSource =
             finalMissionStubActive_
                 ? mw::battle::CampaignBattleLaunchSource::DarkWingFinal
@@ -14448,13 +15244,21 @@ private:
         pendingBattleStartParams_.reset();
     }
 
+    void updateBattleAudio(const mw::battle::BattleSnapshot& before,
+                           const mw::battle::BattleSnapshot& after) {
+        if (!soundEnabled_) { speaker_.stop(); return; }
+        for (const auto& cue : mw::presentation::battleSpeakerRequests(before, after))
+            speaker_.play(cue.effect, cue.priority);
+    }
+
     void updateCampaignBattleRuntime(DWORD now) {
         if (!campaignBattleRuntime_.active ||
             !campaignBattleRuntime_.world.has_value() ||
             acceptedBattleOutcome_.valid ||
+            campaignBattleRuntime_.retreatPromptVisible ||
             campaignBattleRuntime_.mechStatusVisible ||
-            mw::battle::campaignBattlePresentationPausesSimulation(
-                campaignBattleRuntime_.presentationMode)) {
+            (mw::battle::campaignBattlePresentationPausesSimulation(
+                campaignBattleRuntime_.presentationMode) && !campaignBattleRuntime_.pendingLanceOrderTick)) {
             return;
         }
         const DWORD simulationStepMs =
@@ -14468,11 +15272,14 @@ private:
                !mw::battle::campaignBattleDiagnosticTickLimitReached(
                    campaignBattleRuntime_.diagnosticTickLimit,
                    campaignBattleRuntime_.ticksExecuted)) {
-            enqueueCampaignBattleRuntimeInput(world);
+            const bool orderStep = campaignBattleRuntime_.pendingLanceOrderTick;
+            if (!orderStep) enqueueCampaignBattleRuntimeInput(world);
             campaignBattleRuntime_.previousPresentationSnapshot =
                 campaignBattleRuntime_.currentPresentationSnapshot;
             world.tick();
             campaignBattleRuntime_.currentPresentationSnapshot = world.snapshot();
+            updateBattleAudio(campaignBattleRuntime_.previousPresentationSnapshot,
+                              campaignBattleRuntime_.currentPresentationSnapshot);
             const mw::battle::CombatantSnapshot* player =
                 playerCombatantSnapshot(
                     campaignBattleRuntime_.currentPresentationSnapshot);
@@ -14488,9 +15295,6 @@ private:
                     campaignBattleRuntime_.lastPlayedMajorSystemWarningSequence) {
                 campaignBattleRuntime_.lastPlayedMajorSystemWarningSequence =
                     player->lastMajorSystemWarning.sequence;
-                if (soundEnabled_) {
-                    MessageBeep(MB_ICONEXCLAMATION);
-                }
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
                 debugLog(
                     L"Major system warning: sim_tick=" +
@@ -14609,6 +15413,11 @@ private:
             campaignBattleRuntime_.presentationSnapshotsValid = true;
             ++campaignBattleRuntime_.ticksExecuted;
             campaignBattleRuntime_.lastStepTick += simulationStepMs;
+            if (orderStep) {
+                campaignBattleRuntime_.pendingLanceOrderTick = false;
+                campaignBattleRuntime_.lastStepTick = now;
+                break;
+            }
         }
         campaignBattleRuntime_.renderInterpolationAlpha = 0.0;
 
@@ -14626,10 +15435,21 @@ private:
         }
         missionDebriefOverrideLines_.clear();
         mw::battle::BattleWorld& world = *campaignBattleRuntime_.world;
-        const mw::battle::BattleSnapshot finalSnapshot =
+        mw::battle::BattleSnapshot finalSnapshot =
             campaignBattleRuntime_.presentationSnapshotsValid
                 ? campaignBattleRuntime_.currentPresentationSnapshot
                 : world.snapshot();
+        battleRng_=finalSnapshot.originalRng;
+        // 3815..382F runs before pilot casualties and before the continue gate,
+        // including the final Dark Wing victory (stage1).
+        if (missionSequence_.active() && world.battleResult() &&
+            mw::battle::originalMissionStageServiceRequired(static_cast<int>(missionSequence_.stageIndex),world.battleResult()->rawResultCode)) {
+            if (!missionSequence_.remainingExtraAmmo) missionSequence_.remainingExtraAmmo=extraAmmoInHold_;
+            mw::battle::serviceOriginalMissionStage(finalSnapshot,*missionSequence_.remainingExtraAmmo,[this] {
+                return static_cast<unsigned>(battleRng_.exclusive(10));
+            });
+            finalSnapshot.originalRng=battleRng_;
+        }
         const mw::battle::CampaignBattleEntryMechStateGuard entryStateGuard =
             mw::battle::campaignBattleEntryMechStateGuardFromSnapshots(
                 campaignBattleRuntime_.startSnapshot,
@@ -14639,7 +15459,17 @@ private:
             finalSnapshot,
             world.battleResult(),
             campaignBattleRuntime_.ticksExecuted);
+        const auto* player = playerCombatantSnapshot(finalSnapshot);
+        const bool commanderKilled = player && mw::battle::originalBtechPilotKilled(true,
+            player->detailedDamage.criticalComponents[3].condition,
+            player->detailedDamage.originalCockpitCriticalFlag,
+            player->detailedDamage.criticalComponents[0].condition);
+        mw::battle::appendCampaignSalvage(missionSequence_.salvageRecords,finalSnapshot,
+            acceptedBattleOutcome_.terminal && acceptedBattleOutcome_.outcome==mw::battle::CampaignBattleOutcome::Victory);
         if (missionSequence_.hasNextStage() &&
+            mw::battle::originalMissionSequenceContinues(static_cast<int>(missionSequence_.stageIndex),
+                missionSequence_.kind==MissionSequenceKind::FinalBattle,acceptedBattleOutcome_.rawResultCode) &&
+            !commanderKilled &&
             acceptedBattleOutcome_.terminal &&
             acceptedBattleOutcome_.outcome ==
                 mw::battle::CampaignBattleOutcome::Victory) {
@@ -14650,14 +15480,16 @@ private:
                 ? battleStartParamsForDarkWingFinalMission()
                 : battleStartParamsForAcceptedContract();
             campaignBattleRuntime_ = {};
+            speaker_.stop();
             acceptedBattleOutcome_ = {};
             acceptedBattleConsequencePlan_ = {};
             acceptedBattlePersistenceReport_ = {};
+            acceptedBattleMechReturnPlan_ = {};
             acceptedBattleDamageTranslationPlan_ = {};
             acceptedBattleStateGuard_ = {};
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
             debugLog(
-                L"Wiki mission sequence advancing to stage " +
+                L"Original mission sequence advancing to stage " +
                 std::to_wstring(missionSequence_.stageIndex + 1u) + L"/" +
                 std::to_wstring(missionSequence_.stageCount));
 #endif
@@ -14669,14 +15501,52 @@ private:
                 finalSnapshot,
                 campaignBattleRuntime_.persistentRosterBindings,
                 campaignBattleRuntime_.missionParticipantCount);
+        std::vector<std::string> ownedPresets;
+        for (const auto& mech : ownedMechs_)
+            ownedPresets.push_back(battleMechPresetForChassis(mech.chassis).value_or(""));
+        acceptedBattleMechReturnPlan_ = mw::battle::campaignMechReturnPlan(acceptedBattlePersistenceReport_, ownedPresets);
+        for (const auto& returned : acceptedBattleMechReturnPlan_.entries)
+            for (auto& participant : missionParticipants_)
+                if (participant.mechIndex == static_cast<int>(returned.ownedMechIndex)) {
+                    participant.armorPercent = returned.state.armorPercent;
+                    auto displayedMech=ownedMechs_.at(returned.ownedMechIndex);
+                    applyBattlePersistentMechStateToOwnedMech(displayedMech,returned.state);
+                    participant.conditionPercent=mw::battle::campaignDebriefMechConditionPercent(
+                        mw::battle::decodeOriginalDebriefTables(mwMainData_),
+                        gamChassisId(displayedMech.chassis),repairCondition(displayedMech));
+                    participant.killed = returned.pilotKilled;
+                }
         acceptedBattleDamageTranslationPlan_ =
             mw::battle::campaignBattlePersistentDamageTranslationPlanFromReport(
                 acceptedBattlePersistenceReport_);
+        if (acceptedBattleOutcome_.terminal && !missionSequence_.campaignModuleReturned &&
+            (acceptedBattleOutcome_.launchSource==mw::battle::CampaignBattleLaunchSource::AcceptedContract ||
+             acceptedBattleOutcome_.launchSource==mw::battle::CampaignBattleLaunchSource::DarkWingFinal)) {
+            restartCampaignModuleRng(campaignModuleClockTicks());
+            missionSequence_.campaignModuleReturned=true;
+        }
+        if (acceptedBattleOutcome_.terminal &&
+            acceptedBattleOutcome_.launchSource==mw::battle::CampaignBattleLaunchSource::AcceptedContract &&
+            !missionSequence_.employerPayoutPercent)
+            missionSequence_.employerPayoutPercent=mw::battle::originalEmployerPayoutPercent(salvageTables_,
+                static_cast<uint8_t>(acceptedContract_.employerHouse),repairSession_.rng.inclusive(100));
+        auto consequenceContext=campaignBattleConsequenceContextForAcceptedContract();
+        consequenceContext.defeatedOpponents=mw::battle::campaignDefeatedOpponents(finalSnapshot);
         acceptedBattleConsequencePlan_ =
             mw::battle::campaignBattleConsequencePlanFromOutcome(
                 acceptedBattleOutcome_,
                 acceptedBattleContract_,
-                campaignBattleConsequenceContextForAcceptedContract());
+                consequenceContext);
+        if (!commanderKilled && acceptedBattleOutcome_.launchSource==mw::battle::CampaignBattleLaunchSource::DarkWingFinal &&
+            mw::battle::campaignBattleOutcomeIsMissionFailure(acceptedBattleOutcome_.outcome)) {
+            missionDebriefOverrideLines_={L"THE DARKWING CRUSH YOUR ATTACK. IN THE",
+                L"CONFUSION YOU MANAGE AN ESCAPE."}; // MW_MAIN DS:1BBC
+        }
+        if (!commanderKilled && acceptedBattleOutcome_.launchSource==mw::battle::CampaignBattleLaunchSource::AcceptedContract &&
+            acceptedBattleOutcome_.outcome==mw::battle::CampaignBattleOutcome::Victory && consequenceContext.employerPayoutPercent<100) {
+            missionDebriefOverrideLines_={L"YOUR EMPLOYER REDUCED THE PAYMENT.",
+                L"CONTRACT AND SALVAGE PAYOUT: "+std::to_wstring(consequenceContext.employerPayoutPercent)+L"%."};
+        }
         acceptedBattleStateGuard_.before =
             campaignBattleRuntime_.persistentStateBefore;
         acceptedBattleStateGuard_.after = captureCampaignPersistentState();
@@ -14766,9 +15636,20 @@ private:
             mw::battle::campaignBattleDebriefPresentationForOutcome(
                 acceptedBattleOutcome_);
         campaignBattleRuntime_ = {};
+        speaker_.stop();
+        if (!commanderKilled && isDarkWingVictory(acceptedBattleOutcome_)) {
+            // 1CF0 selects the ending before the ordinary result display.
+            missionDebriefOutcome_ = MissionOutcome::Victory;
+            missionDebriefSalvage_ = missionDebriefPayment_ = 0;
+            acknowledgeAcceptedBattleOutcome();
+            if (acceptedBattleOutcome_.valid) changeState(ScreenState::MissionDebrief); // retry on failed commit
+            return;
+        }
         if (debrief != mw::battle::CampaignBattleDebriefPresentation::None) {
             missionDebriefOutcome_ =
-                debrief == mw::battle::CampaignBattleDebriefPresentation::Victory
+                acceptedBattleMechReturnPlan_.valid && acceptedBattleMechReturnPlan_.killedCrewSlots[0]
+                    ? MissionOutcome::Death
+                    : debrief == mw::battle::CampaignBattleDebriefPresentation::Victory
                     ? MissionOutcome::Victory
                     : MissionOutcome::Defeat;
             missionDebriefSalvage_ =
@@ -14804,11 +15685,17 @@ private:
             offer->priceK = std::clamp(
                 offer->priceK + direction * kContractPriceStepK,
                 0,
-                kContractMaxPriceK);
+                offer->priceCeilingK);
         } else if (contractEditableField_ == ContractEditableField::Salvage) {
-            offer->salvagePercent = std::clamp(offer->salvagePercent + direction, 0, 100);
+            offer->salvagePercent = std::clamp(
+                offer->salvagePercent + direction,
+                0,
+                offer->salvageCeilingPercent);
         } else if (contractEditableField_ == ContractEditableField::Advance) {
-            offer->advancePercent = std::clamp(offer->advancePercent + direction, 0, 100);
+            offer->advancePercent = std::clamp(
+                offer->advancePercent + direction,
+                0,
+                offer->advanceCeilingPercent);
         }
         offer->termsModified = true;
         contractNegotiationButtonIndex_ = 0;
@@ -14831,12 +15718,14 @@ private:
             offer->houseSalvagePercent,
             offer->salvagePercent,
             offer->negotiationRounds,
-            1);
+            1,
+            offer->salvageCeilingPercent);
         offer->advancePercent = contractCounterPercent(
             offer->houseAdvancePercent,
             offer->advancePercent,
             offer->negotiationRounds,
-            1);
+            1,
+            offer->advanceCeilingPercent);
         offer->termsModified = false;
         contractEditableField_ = ContractEditableField::None;
         contractNegotiationButtonIndex_ = 0;
@@ -14844,21 +15733,47 @@ private:
 
     void acceptActiveContract() {
         const ContractOffer* offer = activeContractOffer();
-        if (!offer) {
+        if (!offer || contractAccepted_) {
             return;
         }
         acceptedContract_ = *offer;
+        acceptedContractFinance_ = mw::battle::originalContractFinance(
+            static_cast<uint16_t>(acceptedContract_.priceK),
+            static_cast<uint16_t>(acceptedContract_.advancePercent));
+        playerWealth_ = std::min(kMaxPlayerWealth,
+            playerWealth_ + acceptedContractFinance_->advanceCbills);
+        deploymentFailures_ = 0;
+        std::array<uint8_t,3> opposition{{static_cast<uint8_t>(acceptedContract_.heavyCount),
+            static_cast<uint8_t>(acceptedContract_.mediumCount),static_cast<uint8_t>(acceptedContract_.lightCount)}};
+        mw::battle::originalAcceptedOpposition(opposition,acceptedContract_.employerHouse,repairSession_.rng);
+        acceptedContract_.heavyCount=opposition[0];
+        acceptedContract_.mediumCount=opposition[1];
+        acceptedContract_.lightCount=opposition[2];
+        auto saved=mw::battle::decodeOriginalAcceptedContract(baseGamSaveData());
+        saved.missionClass=acceptedContract_.originalMissionClass;
+        saved.biome=static_cast<uint8_t>(acceptedContract_.targetEnvironmentId.value_or(0));
+        saved.opposition=opposition;
+        saved.targetTableOrder=static_cast<uint8_t>(acceptedContract_.targetPlanetTableOrder);
+        saved.missionId=acceptedContract_.originalMissionId;
+        saved.priceK=static_cast<uint16_t>(acceptedContract_.priceK);
+        saved.salvagePercent=static_cast<uint16_t>(acceptedContract_.salvagePercent);
+        saved.advancePercent=static_cast<uint16_t>(acceptedContract_.advancePercent);
+        saved.balanceK=acceptedContractFinance_->balanceK;
+        saved.targetCategory=acceptedContract_.targetCategory;
+        acceptedContractSaveState_=saved;
+        campaignResultState_.accepted=1;
         acceptedBattleContract_ = battleContractMetadataFromOffer(acceptedContract_);
         missionSequence_ = {};
         pendingBattleStartParams_.reset();
         acceptedBattleOutcome_ = {};
         acceptedBattleConsequencePlan_ = {};
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleStateGuard_ = {};
         campaignBattleRuntime_ = {};
+        speaker_.stop();
         contractAccepted_ = true;
-        activeContracts_.clear();
         activeContractIndex_ = 0;
         contractEditableField_ = ContractEditableField::None;
         planetMenuIndex_ = kPlanetContractIconIndex;
@@ -14866,20 +15781,23 @@ private:
     }
 
     void resolveUneventfulGarrisonDuty() {
+        mw::battle::clearOriginalCampaignResultForLaunch(campaignResultState_);
+        campaignResultState_.salvage = {}; // 1C67..1C7F: four FFFF chassis.
+        campaignResultState_.accepted = 0;
         missionDebriefOutcome_ = MissionOutcome::Victory;
         missionDebriefSalvage_ = 0;
+        const auto percent=mw::battle::originalEmployerPayoutPercent(salvageTables_,
+            static_cast<uint8_t>(acceptedContract_.employerHouse),repairSession_.rng.inclusive(100));
         missionDebriefPayment_ = std::min<uint64_t>(
             kMaxPlayerWealth,
-            static_cast<uint64_t>(std::max(0, acceptedContract_.priceK)) *
-                1000ull);
+            (static_cast<uint64_t>(acceptedContractBalanceK())*percent/100u)*1000ull);
         missionDebriefOverrideLines_ = {
             L"THE CONTRACT AMOUNTED TO AN",
             L"UNEVENTFUL TOUR OF GARRISON DUTY.",
         };
         playerWealth_ = std::min(
             kMaxPlayerWealth, playerWealth_ + missionDebriefPayment_);
-        applyMissionHouseConsequences(MissionOutcome::Victory);
-        addCompanyReputationPoints(missionReputationDelta(acceptedContract_));
+        // No defeated opponents on the source no-battle return.
         applyMissionExperience();
         advanceCampaignDays(missionElapsedDateTicks(acceptedContract_));
         if (acceptedContract_.generationSlot !=
@@ -14889,42 +15807,110 @@ private:
                 currentPlanetVisitSerial_,
                 acceptedContract_.generationSlot));
         }
+        generateCurrentRecruitBoard();
+        generateCurrentMechMarket();
+        generateCurrentPlanetContracts();
+        applyMissionHouseConsequences(MissionOutcome::Victory);
         contractAccepted_ = false;
+        acceptedContractFinance_.reset();
+        deploymentFailures_ = 0;
         acceptedContract_ = {};
         acceptedBattleContract_ = {};
         missionLaunchPending_ = false;
         pendingBattleStartParams_.reset();
         missionSequence_ = {};
         missionParticipants_.clear();
-        activeContracts_.clear();
         planetMenuIndex_ = kPlanetStatusIconIndex;
         missionDeathMenuIndex_ = 0;
-        changeState(ScreenState::MissionDebrief);
+        changeState(ScreenState::MissionDebrief, false); // Original 140C skips the success cue without a battle.
+    }
+
+    int acceptedContractBalanceK() const {
+        return acceptedContractFinance_ ? acceptedContractFinance_->balanceK : std::max(0,acceptedContract_.priceK);
+    }
+
+    mw::battle::OriginalDeploymentReadiness missionDeploymentReadiness() const {
+        using Readiness = mw::battle::OriginalDeploymentReadiness;
+        if (assignedMechIndexForCrewSlot(0) < 0) return Readiness::MissingCommander;
+        for (size_t crew=0; crew<crewMembers_.size(); ++crew) {
+            if (!crewMembers_[crew].hired) continue;
+            const int slot=assignedMechIndexForCrewSlot(crew);
+            if (slot<0) continue;
+            // Read the same 29-byte projection as the original pre-launch gate.
+            std::vector<uint8_t> encoded(29);
+            writeGamMechRecord(encoded,0,ownedMechs_[static_cast<size_t>(slot)]);
+            std::array<uint8_t,29> condition{};
+            std::copy(encoded.begin(),encoded.end(),condition.begin());
+            if (!mw::battle::originalMechCanDeploy(condition)) return Readiness::NonfunctionalMech;
+        }
+        return Readiness::Ready;
+    }
+
+    bool checkMissionDeployment(bool finalMission) {
+        using Readiness = mw::battle::OriginalDeploymentReadiness;
+        const auto readiness=missionDeploymentReadiness();
+        if (readiness==Readiness::Ready) return true;
+        StoryPage page;
+        if (mw::battle::originalDeploymentRejectionCancels(deploymentFailures_,finalMission)) {
+            page.lines={L"YOUR CONTRACT HAS BEEN CANCELED.",L"COME BACK WHEN YOU'RE SERIOUS",L"ABOUT FIGHTING."};
+            // 1B99..1BCA: the board sees the old money/standing, then refund,
+            // then negative counter +1. No calendar/payroll/family recomputation.
+            contractAccepted_=false;
+            campaignResultState_.accepted=0;
+            generateCurrentPlanetContracts();
+            const uint64_t advance=acceptedContractFinance_ ? acceptedContractFinance_->advanceCbills : 0;
+            playerWealth_=playerWealth_>=advance ? playerWealth_-advance : 0;
+            auto& negative=houseNegativeCounters_[currentPlanetHouseId()];
+            const auto next=static_cast<uint16_t>(negative+1);
+            negative=next<0x8000 ? next : static_cast<int>(next)-0x10000;
+            acceptedContractFinance_.reset();
+            deploymentFailures_=0;
+            acceptedContract_={};
+            acceptedBattleContract_={};
+            missionSequence_={};
+            pendingBattleStartParams_.reset();
+            missionLaunchPending_=false;
+            missionParticipants_.clear();
+        } else if (readiness==Readiness::MissingCommander) {
+            page.lines={L"GOING INTO BATTLE WITHOUT A MECH",L"IS A SURE WAY TO DIE."};
+        } else {
+            page.lines={L"IT'S DIFFICULT TO WIN A BATTLE",L"WITH A NONFUNCTIONAL MECH."};
+        }
+        beginStory({std::move(page)},StoryBackdrop::Campaign,ScreenState::MainMenu);
+        return false;
     }
 
     void beginMissionLaunch() {
         if (!contractAccepted_) {
             return;
         }
+        if (!checkMissionDeployment(false)) return;
+        mw::battle::clearOriginalCampaignResultForLaunch(campaignResultState_);
         missionParticipants_ = currentMissionParticipants();
         if (missionParticipants_.empty()) {
             return;
         }
         missionDebriefOverrideLines_.clear();
-        if (mw::battle::battleUneventfulGarrisonDutyRoll(
-                acceptedContractRuntimeSeed())) {
+        missionSequence_={};
+        if (mw::battle::originalUneventfulContract(acceptedContract_.originalMissionId,repairSession_.rng)) {
             resolveUneventfulGarrisonDuty();
             return;
         }
         beginAcceptedContractMissionSequence();
+        if (acceptedContractSaveState_) {
+            acceptedContractSaveState_->missionClass=3; // 1C90 loader memory mode, normal four-pilot build.
+            acceptedContractSaveState_->detail=static_cast<uint8_t>(detailLevel_); // 1C96
+        }
         pendingBattleStartParams_ = battleStartParamsForAcceptedContract();
         finalMissionStubActive_ = false;
         acceptedBattleOutcome_ = {};
         acceptedBattleConsequencePlan_ = {};
         acceptedBattlePersistenceReport_ = {};
+        acceptedBattleMechReturnPlan_ = {};
         acceptedBattleDamageTranslationPlan_ = {};
         acceptedBattleStateGuard_ = {};
         campaignBattleRuntime_ = {};
+        speaker_.stop();
         missionLaunchPending_ = true;
         changeState(ScreenState::TravelAnimation);
     }
@@ -15010,6 +15996,9 @@ private:
                 std::wstring(crew.name),
                 std::wstring(mech.name),
                 mech.armorPercent,
+                mw::battle::campaignDebriefMechConditionPercent(
+                    mw::battle::decodeOriginalDebriefTables(mwMainData_),
+                    gamChassisId(mech.chassis),repairCondition(mech)),
                 false,
             });
             if (participants.size() >= crewMembers_.size()) {
@@ -15040,11 +16029,14 @@ private:
         }
 
         missionDebriefOutcome_ = outcome;
-        missionDebriefSalvage_ = outcome == MissionOutcome::Victory ? missionPlaceholderSalvage() : 0;
+        // Debug-only synthetic outcome has no returned enemy records.
+        campaignResultState_.defeatedOpponents = 0;
+        campaignResultState_.accepted = 0;
+        missionDebriefSalvage_ = 0;
         missionDebriefPayment_ = outcome == MissionOutcome::Victory
             ? std::min<uint64_t>(
                   kMaxPlayerWealth,
-                  static_cast<uint64_t>(acceptedContract_.priceK) * 1000ull)
+                  static_cast<uint64_t>(acceptedContractBalanceK()) * 1000ull)
             : 0;
 
         if (outcome == MissionOutcome::Victory) {
@@ -15062,20 +16054,18 @@ private:
         }
 
         contractAccepted_ = false;
+        acceptedContractFinance_.reset();
+        deploymentFailures_ = 0;
         missionLaunchPending_ = false;
         pendingBattleStartParams_.reset();
-        activeContracts_.clear();
+        if (outcome != MissionOutcome::Death) {
+            generateCurrentRecruitBoard();
+            generateCurrentMechMarket();
+            generateCurrentPlanetContracts();
+        }
         planetMenuIndex_ = kPlanetStatusIconIndex;
         missionDeathMenuIndex_ = 0;
         changeState(ScreenState::MissionDebrief);
-    }
-
-    uint64_t missionPlaceholderSalvage() const {
-        const uint64_t enemyPool =
-            static_cast<uint64_t>(acceptedContract_.heavyCount) * 800000ull +
-            static_cast<uint64_t>(acceptedContract_.mediumCount) * 450000ull +
-            static_cast<uint64_t>(acceptedContract_.lightCount) * 180000ull;
-        return (enemyPool * static_cast<uint64_t>(acceptedContract_.salvagePercent)) / 100ull;
     }
 
     void applyMissionHouseConsequences(MissionOutcome outcome) {
@@ -15088,7 +16078,6 @@ private:
         } else if (outcome == MissionOutcome::Defeat) {
             addHouseNegativeCounter(acceptedContract_.employerHouse, 1);
         }
-        syncFamilyAttitudesFromHouseCounters();
     }
 
     void addHousePositiveCounter(uint8_t houseId, int delta) {
@@ -15146,7 +16135,8 @@ private:
     }
 
     void applyMissionExperience() {
-        std::array<bool, 4> killedCrewSlots{};
+        const auto& returned = acceptedBattleMechReturnPlan_;
+        std::array<bool, 4> killedCrewSlots = returned.valid ? returned.killedCrewSlots : std::array<bool, 4>{};
         std::array<bool, 4> eligibleCrewSlots{};
         for (const MissionParticipant& participant : missionParticipants_) {
             if (participant.crewSlot < 0 ||
@@ -15196,9 +16186,8 @@ private:
                 pilot.gunnerySkill = promotedSkill;
                 pilot.pilotingSkill = promotedSkill;
                 pilot.monthlyWage = monthlyWageForGunnery(promotedSkill);
-                member.wage = pilot.monthlyWage;
-            } else if (member.wage > 0) {
-                member.wage = monthlyWageForGunnery(promotedSkill);
+                // Original DS04EA wage rank stays fixed at hire; 21D9 only
+                // promotes skills. A later rehire uses the new asking wage.
             }
         }
 
@@ -15251,40 +16240,31 @@ private:
         if (offer.priceK <= offer.housePriceK) {
             return offer.priceK;
         }
-        return std::clamp(roundToNearest10(offer.housePriceK + concession), 0, kContractMaxPriceK);
+        return std::clamp(
+            roundToNearest10(offer.housePriceK + concession),
+            0,
+            offer.priceCeilingK);
     }
 
-    static int contractCounterPercent(int houseValue, int requestedValue, int negotiationRounds, int concessionPerRound) {
+    static int contractCounterPercent(
+        int houseValue,
+        int requestedValue,
+        int negotiationRounds,
+        int concessionPerRound,
+        int ceilingValue) {
         if (requestedValue <= houseValue) {
-            return requestedValue;
+            return std::clamp(requestedValue, 0, ceilingValue);
         }
         const int concession = std::min(requestedValue - houseValue, negotiationRounds * concessionPerRound);
-        return std::clamp(houseValue + concession, 0, 100);
+        return std::clamp(houseValue + concession, 0, ceilingValue);
     }
 
     void terminateContractNegotiations() {
-        if (!planets_.empty()) {
-            const size_t planetIndex = static_cast<size_t>(
-                std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1));
-            if (planetIndex < contractNegotiationLockedVisitByPlanet_.size()) {
-                contractNegotiationLockedVisitByPlanet_[planetIndex] = currentPlanetVisitSerial_;
-            }
-        }
         activeContracts_.clear();
         activeContractIndex_ = 0;
         contractEditableField_ = ContractEditableField::None;
         contractNegotiationButtonIndex_ = 2;
         contractNegotiationTerminated_ = true;
-    }
-
-    bool currentPlanetContractsLocked() const {
-        if (planets_.empty()) {
-            return false;
-        }
-        const size_t planetIndex = static_cast<size_t>(
-            std::clamp(currentPlanetIndex_, 0, static_cast<int>(planets_.size()) - 1));
-        return planetIndex < contractNegotiationLockedVisitByPlanet_.size() &&
-            contractNegotiationLockedVisitByPlanet_[planetIndex] == currentPlanetVisitSerial_;
     }
 
     void cycleContractEditableField() {
@@ -15956,6 +16936,12 @@ private:
         GetClientRect(hwnd, &client);
         const int clientW = client.right - client.left;
         const int clientH = client.bottom - client.top;
+        paintFramebuffer(hdc, clientW, clientH);
+
+        EndPaint(hwnd, &ps);
+    }
+
+    void paintFramebuffer(HDC hdc, int clientW, int clientH) const {
         const RectI displayRect = displayRectForClient(clientW, clientH);
 
         HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
@@ -15971,6 +16957,7 @@ private:
             }
         }
         DeleteObject(brush);
+        if (displayRect.width == 0 || displayRect.height == 0) return;
 
         BITMAPINFO info{};
         info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -15996,41 +16983,11 @@ private:
             DIB_RGB_COLORS,
             SRCCOPY);
 
-        EndPaint(hwnd, &ps);
     }
 
     RectI displayRectForClient(int clientW, int clientH) const {
-        int pixelW = 1;
-        int pixelH = 1;
-        const std::array<std::pair<int, int>, 5> displayModes = {{
-            {kExactDisplayPixelWidth, kExactDisplayPixelHeight},
-            {kCompactDisplayPixelWidth, kCompactDisplayPixelHeight},
-            {3, 4},
-            {2, 2},
-            {1, 1},
-        }};
-        for (const auto& [candidateW, candidateH] : displayModes) {
-            if (clientW >= kScreenWidth * candidateW &&
-                clientH >= kScreenHeight * candidateH) {
-                pixelW = candidateW;
-                pixelH = candidateH;
-                break;
-            }
-        }
-
-        const int scale = std::max(
-            1,
-            std::min(
-                clientW / (kScreenWidth * pixelW),
-                clientH / (kScreenHeight * pixelH)));
-        const int drawW = kScreenWidth * pixelW * scale;
-        const int drawH = kScreenHeight * pixelH * scale;
-        return {
-            (clientW - drawW) / 2,
-            (clientH - drawH) / 2,
-            drawW,
-            drawH,
-        };
+        const auto r = mw::presentation::pixelDisplayRect(clientW, clientH, displaySettings_);
+        return {r.x, r.y, r.width, r.height};
     }
 
 #if defined(MW_DEBUG_TOOLS) && MW_DEBUG_TOOLS
@@ -16042,7 +16999,18 @@ private:
 #endif
     HINSTANCE instance_ = nullptr;
     HWND hwnd_ = nullptr;
+    bool mouseLookEnabled_=false,mouseLookCaptured_=false;
+    bool mouseLookSizing_=false;
+    bool mouseLookLeftHeld_=false,mouseLookRightHeld_=false,mouseLookCenterTorso_=false;
+    bool mouseLookFirePending_=false;
+    double mouseLookPendingYaw_=0.0,mouseLookPendingPitch_=0.0;
+    std::optional<POINT> mouseLookAbsolutePoint_;
+    mw::presentation::DisplaySettings displaySettings_;
+    fs::path settingsPath_;
+    bool applyingDisplaySettings_ = false;
+    bool displaySettingsSaveFailed_ = false;
     bool currentKeyDownRepeat_ = false;
+    std::optional<std::pair<int,int>> lastCommandPointer_;
     mw::presentation::CampaignBattleGlViewport campaignBattleGlViewport_;
     mw::presentation::CampaignCockpitBackdropImage campaignCockpitBackdrop_;
     mw::presentation::CampaignCockpitDynamicLayers campaignCockpitDynamicLayers_;
@@ -16089,24 +17057,37 @@ private:
     std::vector<std::wstring> newsNetNoOtherLines_;
     std::vector<std::wstring> missionVictoryLines_;
     std::vector<std::wstring> missionDefeatLines_;
+    std::array<std::vector<std::wstring>,5> missionHouseVictoryLines_,missionHouseDefeatLines_;
     std::vector<std::wstring> missionDeathPromptLines_;
     std::vector<std::wstring> missionDebriefOverrideLines_;
     std::vector<size_t> activeNewsNetMessageIndexes_;
     std::vector<RecruitPilot> recruitPilots_;
-    std::vector<PlanetRecruitPool> planetRecruitPools_;
-    std::vector<int> recruitLastPlanetIndex_;
-    std::vector<int> recruitLastMonthKey_;
-    std::vector<size_t> previousPlanetRecruitIndexes_;
-    std::vector<PlanetMechMarket> planetMechMarkets_;
-    std::vector<int> contractNegotiationLockedVisitByPlanet_;
+    mw::battle::OriginalRecruitBoard recruitBoard_{};
+    size_t recruitBoardCursor_ = 0;
+    size_t activeRecruitBoardSlot_ = 8;
+    CurrentMechMarket mechMarket_;
+    mw::battle::OriginalMarketTables marketTables_;
+    mw::battle::OriginalSalvageTables salvageTables_;
+    mw::battle::OriginalRepairTables repairTables_;
+    // One MW_MAIN stream shared by boards, prices, repairs and settlement.
+    mw::battle::OriginalRepairSession repairSession_{{}, {1557,6536}};
+    bool hostClockRng_ = false;
+    mw::battle::OriginalBtechRng battleRng_;
+    std::wstring repairNotice_;
+    uint16_t serviceFactor_ = 0;
+    uint16_t contactNegotiationSkill_ = 0; // original GAM59E, not a new field
     std::vector<ContractOffer> activeContracts_;
     ContractOffer acceptedContract_;
+    std::optional<mw::battle::OriginalContractFinance> acceptedContractFinance_;
+    std::optional<mw::battle::OriginalAcceptedContractState> acceptedContractSaveState_;
+    uint8_t deploymentFailures_ = 0; // DS0FBF, RAM only, resets on acceptance.
     mw::battle::BattleContractMetadata acceptedBattleContract_;
     MissionSequenceState missionSequence_;
     std::optional<mw::battle::BattleStartParams> pendingBattleStartParams_;
     mw::battle::CampaignBattleOutcomePackage acceptedBattleOutcome_;
     mw::battle::CampaignBattleConsequencePlan acceptedBattleConsequencePlan_;
     mw::battle::CampaignBattlePersistenceReport acceptedBattlePersistenceReport_;
+    mw::battle::CampaignMechReturnPlan acceptedBattleMechReturnPlan_;
     mw::battle::CampaignBattlePersistentDamageTranslationPlan
         acceptedBattleDamageTranslationPlan_;
     CampaignBattleStateGuard acceptedBattleStateGuard_;
@@ -16122,6 +17103,7 @@ private:
     std::wstring kearneyDestinationPlanet_;
     std::wstring blackWidowDestinationPlanet_;
     std::wstring darkWingDestinationPlanet_;
+    std::array<uint16_t,6> storyDestinationSaveIds_{};
     std::wstring status_;
     ScreenState state_ = ScreenState::ActivisionSplash;
     DWORD stateStartedTick_ = GetTickCount();
@@ -16147,6 +17129,7 @@ private:
     bool contractAccepted_ = false;
     bool contractNegotiationTerminated_ = false;
     bool contractNegotiationUnavailable_ = false;
+    uint8_t contractClassFourThreshold_ = 0;
     bool missionLaunchPending_ = false;
     bool finalMissionStubActive_ = false;
     size_t battleStubButtonIndex_ = 0;
@@ -16163,6 +17146,10 @@ private:
     StoryAction pendingStoryDefaultAction_ = StoryAction::None;
     ScreenState pendingStoryReturnState_ = ScreenState::MainMenu;
     StoryBackdrop storyBackdrop_ = StoryBackdrop::Campaign;
+    uint8_t campaignCompleted_ = 0; // preserve imported original byte verbatim
+    size_t endingFrame_ = 0; // RAM presentation only
+    PicsArchive endingArchive_;
+    PicsArchive endingBackground_;
     size_t mechLabMenuIndex_ = 0;
     size_t selectedMechIndex_ = 0;
     size_t mechStatusMenuIndex_ = 0;
@@ -16177,7 +17164,6 @@ private:
     BarDialogState barDialogState_ = BarDialogState::None;
     int activeRecruitIndex_ = -1;
     size_t recruitChoiceIndex_ = 0;
-    uint32_t recruitmentSeed_ = 0;
     int planetVisitSerialCounter_ = 1;
     int currentPlanetVisitSerial_ = 1;
     mw::battle::CampaignContractVisitLedger completedContractVisitLedger_;
@@ -16193,10 +17179,15 @@ private:
     DWORD mechLabWeldDurationMs_ = kMechLabWeldDurations.front();
     size_t mechLabWeldSequence_ = 0;
     bool soundEnabled_ = true;
+    mw::audio::MusicPlayer music_;
+    mw::audio::SpeakerPlayer speaker_;
     int detailLevel_ = 0;
     std::wstring_view commanderName_ = L"G BRAVER";
     uint16_t playerReputationPoints_ = 0;
     uint8_t playerReputationTier_ = 0;
+    mw::battle::OriginalCampaignResultState campaignResultState_; // Existing GAM09..20.
+    mw::battle::OriginalCrewGamState crewGamState_;
+    mw::battle::CrewPayrollNotice crewPayrollNotice_=mw::battle::CrewPayrollNotice::None;
     uint64_t playerWealth_ = 1000000;
     std::array<int, 6> extraAmmoInHold_ = {};
     std::vector<OwnedMech> ownedMechs_ = {{makeStartingJenner()}};
@@ -16255,9 +17246,9 @@ fs::path findResourceRoot() {
         // Portable install: the replacement executable lives directly beside
         // the player's original unsorted DOS files.
         exeDir,
+        exeDir / L"Original",
         cwd,
         cwd / L"Original",
-        exeDir / L"Original",
         exeDir.parent_path() / L"Original",
         exeDir.parent_path().parent_path() / L"Original",
     };
@@ -16272,13 +17263,25 @@ fs::path findResourceRoot() {
 
 int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand) {
     try {
-        SetProcessDPIAware();
+        SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
         if (mw::battle::battleWorldLibraryAbiFingerprint() !=
             mw::battle::battleWorldHeaderAbiFingerprint()) {
             throw std::runtime_error(
                 "battle runtime ABI mismatch; perform a clean rebuild");
         }
-        App app(findResourceRoot());
+        const auto resourceRoot = findResourceRoot();
+        if (!fs::is_regular_file(resourceRoot / L"MW_MAIN.EXE") ||
+            !fs::is_regular_file(resourceRoot / L"MW_1PICS.BIN")) {
+            MessageBoxW(nullptr,
+                L"Original MechWarrior (1989 DOS) files were not found.\n\n"
+                L"Copy ALL files from your installed DOS game into the Original folder "
+                L"next to Mech1989.exe, then launch again.\n"
+                L"Keep MW_MAIN.EXE: it supplies game data and is not replaced.\n\n"
+                L"See README_EN.txt / README_RU.txt for setup and music instructions.",
+                L"Mech1989: Recoded - game files required", MB_ICONINFORMATION);
+            return 1;
+        }
+        App app(resourceRoot);
         if (!app.initialize(instance, showCommand)) {
             return 1;
         }
@@ -16286,7 +17289,7 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int showCommand) {
     } catch (const std::exception& error) {
         std::wstring message = L"Fatal error: ";
         message += widen(error.what());
-        MessageBoxW(nullptr, message.c_str(), L"MW Main Recomp", MB_ICONERROR);
+        MessageBoxW(nullptr, message.c_str(), L"Mech1989: Recoded", MB_ICONERROR);
         return 1;
     }
 }

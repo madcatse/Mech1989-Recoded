@@ -2006,7 +2006,7 @@ void resolveOriginalBattlefieldSetup(Options& options) {
     options.battleSetup = mw::battle::decodeOriginalBattlefieldSetup(
         options.terrainScenarioPath,
         *options.terrainScenarioIndex,
-        options.battleMission.originalId,
+        mw::battle::originalBattlePlacementSelectorForMission(options.battleMission.originalId),
         static_cast<double>(options.terrainCellSize));
     options.terrainScenarioIndex = options.battleSetup->scenarioIndex;
     options.terrainScenarioMode = static_cast<int>(options.battleSetup->terrainMode);
@@ -2063,7 +2063,7 @@ mw::battle::BattleStartParams battleStartParamsFromOptions(const Options& option
     }
     if (options.battleStartHeadingRadians.has_value()) {
         params.playerStartTransform.headingRadians = *options.battleStartHeadingRadians;
-    } else if (options.battleCommandMap || options.battleOriginalPlacement) {
+    } else if (options.battleCommandMap && !options.battleSetup.has_value()) {
         const std::pair<double, double> targetWorld =
             params.objective.valid
                 ? std::pair<double, double>{params.objective.transform.x, params.objective.transform.z}
@@ -4156,6 +4156,10 @@ private:
                 updateTitle();
                 return 0;
             }
+            if (wparam == 'U' && battleInteractiveMode(options_)) {
+                if ((lparam & (LPARAM{1} << 30)) == 0) pendingStandUp_ = true;
+                return 0;
+            }
             if (wparam == 'J' && battleInteractiveMode(options_)) {
                 if ((lparam & (LPARAM{1} << 30)) == 0) {
                     pendingJumpJetToggle_ = true;
@@ -4400,9 +4404,9 @@ private:
             static_cast<float>(camera.transform.z),
         };
         const Vec3 target{
-            eye.x + std::sin(heading) * 1000.0f,
-            eye.y,
-            eye.z + std::cos(heading) * 1000.0f,
+            eye.x + std::sin(heading) * std::cos(static_cast<float>(camera.posturePitchRadians+camera.ridgePitchRadians-camera.mouseLookPitchRadians)) * 1000.0f,
+            eye.y - std::sin(static_cast<float>(camera.posturePitchRadians+camera.ridgePitchRadians-camera.mouseLookPitchRadians)) * 1000.0f,
+            eye.z + std::cos(heading) * std::cos(static_cast<float>(camera.posturePitchRadians+camera.ridgePitchRadians-camera.mouseLookPitchRadians)) * 1000.0f,
         };
         applyLookAt(eye, target, Vec3{0.0f, 1.0f, 0.0f});
     }
@@ -5165,7 +5169,6 @@ private:
             key == 'R' ||
             key == 'S' ||
             key == 'T' ||
-            key == 'U' ||
             key == 'W' ||
             key == 'Z') {
             return true;
@@ -5551,6 +5554,8 @@ private:
             command.aimPitchStepDelta = pendingDriveAimPitchStepDelta_;
             pendingDriveAimPitchStepDelta_ = 0;
             command.jumpJetToggle = pendingJumpJetToggle_;
+            command.standUp = pendingStandUp_;
+            pendingStandUp_ = false;
             pendingJumpJetToggle_ = false;
             command.jumpForwardThrust = jumpForwardThrust;
             command.jumpVerticalThrust = jumpVerticalThrust;
@@ -6715,11 +6720,14 @@ private:
                 const int rightHudLabelX = virtualViewport.x + virtualViewport.width -
                                            (layout.family == CockpitFamily::Heavy ? 87 : std::max(72, virtualViewport.width / 4)) -
                                            12;
+                const auto* awsPlayer = options_.battleSnapshot
+                    ? primaryCombatantSnapshot(*options_.battleSnapshot) : nullptr;
+                const bool awsEnabled = awsPlayer && awsPlayer->automaticWeaponsEnabled;
                 if (layout.family == CockpitFamily::Heavy) {
                     drawCockpitFontText(zoomText.str(), leftHudLabelX, virtualViewport.y + virtualViewport.height - 7, hudColor.rgb);
-                    drawCockpitFontText("AWS", rightHudLabelX, virtualViewport.y + virtualViewport.height - 7, hudColor.rgb);
+                    if (awsEnabled) drawCockpitFontText("AWS", rightHudLabelX, virtualViewport.y + virtualViewport.height - 7, hudColor.rgb);
                 } else {
-                    drawCockpitFontText("AWS", leftHudLabelX, virtualViewport.y + virtualViewport.height - 7, hudColor.rgb);
+                    if (awsEnabled) drawCockpitFontText("AWS", leftHudLabelX, virtualViewport.y + virtualViewport.height - 7, hudColor.rgb);
                     drawCockpitFontText(zoomText.str(), rightHudLabelX, virtualViewport.y + virtualViewport.height - 7, hudColor.rgb);
                 }
             } else {
@@ -7287,8 +7295,8 @@ private:
             y,
             battleInteractiveMode(options_)
             ? (options_.battleCockpit
-                   ? "Cockpit: Up/Down speed | Left/Right turn | PgUp/PgDn scenario | RMB freelook | B bob | G grid | K sky | </> torso | A align | P pause | Q quit | F3 camera | F12 screenshot"
-                   : "Drive: Up/Down speed | Left/Right turn | PgUp/PgDn scenario | RMB freelook | G grid | K sky | </> torso | A align | P pause | Q quit | F3 camera | F12 screenshot")
+                   ? "Cockpit: Up/Down speed | Left/Right turn | PgUp/PgDn scenario | RMB freelook | U stand up | B bob | G grid | K sky | </> torso | A align | P pause | Q quit | F3 camera | F12 screenshot"
+                   : "Drive: Up/Down speed | Left/Right turn | PgUp/PgDn scenario | RMB freelook | U stand up | G grid | K sky | </> torso | A align | P pause | Q quit | F3 camera | F12 screenshot")
                 : "F1 overlay | F2 component debug | F3 pose demo | F4 target | F5 pivot | F6 axis | F7 hide target | F8 clear hidden | Space pause | F9/F10 step | F11 pose amp | </> torso | PgUp/PgDn arena | T terrain color | K sky | G grid | [/] record | A assembled | S shade | W wire | O projection | P/F12 screenshot | R reset");
         y += 18;
         const mw::mech3d::ResolvedMechRuntimeState runtimeState = resolvedRuntimeState();
@@ -7753,6 +7761,7 @@ private:
     int pendingDriveTorsoYawStepDelta_ = 0;
     int pendingDriveAimPitchStepDelta_ = 0;
     bool pendingJumpJetToggle_ = false;
+    bool pendingStandUp_ = false;
     int screenshotRequests_ = 0;
     GLuint fontBase_ = 0;
     GLuint cockpitTexture_ = 0;

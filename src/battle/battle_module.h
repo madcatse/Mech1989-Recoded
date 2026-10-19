@@ -46,6 +46,9 @@ bool campaignBattleDiagnosticTickLimitReached(
 const std::array<size_t, 20>& campaignBattleTerrainScenarioIndices();
 size_t campaignBattleTerrainScenarioIndexFromTargetPlanetTableOrder(
     uint16_t oneBasedTableOrder);
+std::optional<int> campaignBattleEnvironmentIdFromPlanetTerrainCode(
+    uint8_t terrainCode);
+BattleSkyMode campaignBattleSkyModeFromOriginalRoll(uint32_t randomValue);
 
 enum class CampaignBattleLaunchSource : uint8_t {
     Unknown,
@@ -134,6 +137,7 @@ struct CampaignBattleConsequencePlan {
     uint64_t payment = 0;
     uint64_t salvage = 0;
     int reputationDelta = 0;
+    uint8_t defeatedOpponents = 0; // BTECH context1D survives even an ending with no reputation award.
     std::array<int, 5> housePositiveDelta{};
     std::array<int, 5> houseNegativeDelta{};
     uint32_t campaignDateTicks = 0;
@@ -150,7 +154,10 @@ struct CampaignBattleConsequencePlan {
 };
 
 struct CampaignBattleConsequenceContext {
+    uint8_t defeatedOpponents = 0; // BTECH context+1D, last stage only.
     uint64_t salvage = 0;
+    uint16_t employerPayoutPercent = 100;
+    std::optional<uint16_t> contractBalanceK; // DS0A00; absent for standalone diagnostics.
     uint32_t campaignDateTicks = 0;
     bool pilotExperienceAward = false;
     bool salvageBetaValidationRequired = false;
@@ -219,8 +226,12 @@ struct CampaignBattlePersistentCombatantReport {
     std::string mechPresetId;
     CombatantMissionStatus missionStatus = CombatantMissionStatus::Active;
     bool mechDestroyed = false;
+    bool playerControlled = false;
     BattleMechSystemsSnapshot mechSystems;
     BattlePersistentMechState persistentMechState;
+    BattlePersistentMechState returnedMechState;
+    bool ammunitionStateValid = false;
+    std::array<int, 6> ammunitionByPool{};
     std::vector<int> destroyedComponentIds;
     std::vector<int> disabledComponentIds;
 };
@@ -387,6 +398,7 @@ struct CampaignBattleRenderVisualInstance {
     double maxReverseSpeed = 0.0;
     double torsoYawRadians = 0.0;
     int aimPitchStep = 0;
+    bool mouseLookEnabled = false;
     std::string animationId;
     uint64_t animationElapsedMs = 0;
     bool mechDestroyed = false;
@@ -490,11 +502,20 @@ struct CampaignBattleRenderImpactInstance {
     bool sphereRasterizationProven = false;
 };
 
+// Presentation-only emitters derived from immutable damage state. No particle
+// timers, random draws or renderer callbacks enter BattleWorld/replay.
+struct CampaignBattleRenderDamageSmokeEmitter {
+    EntityId entityId{};
+    mech3d::MechInternalSectionId section = mech3d::MechInternalSectionId::CenterTorso;
+    bool wreck = false;
+};
+
 struct CampaignBattleRenderTerrainResources {
     bool valid = false;
     size_t scenarioIndex = 0;
     uint8_t terrainMode = 0;
     std::optional<int> environmentId;
+    BattleSkyMode skyMode = BattleSkyMode::BiomeBright;
     double boundsMinX = 0.0;
     double boundsMaxX = 0.0;
     double boundsMinZ = 0.0;
@@ -523,6 +544,8 @@ struct CampaignBattleRenderScenePackage {
     CampaignBattlePresentationMode mode = CampaignBattlePresentationMode::TacticalMap;
     uint64_t snapshotFingerprint = 0;
     uint64_t authoritativeTickIndex = 0;
+    uint64_t presentationElapsedMs = 0;
+    bool playerWeaponHitFlash = false;
     bool playerCollisionFlashEvent = false;
     uint64_t playerCollisionSequence = 0;
     CameraSnapshot camera;
@@ -531,6 +554,7 @@ struct CampaignBattleRenderScenePackage {
     BattlefieldBoundaryState battlefieldBoundary;
     double cockpitCameraBobOffsetY = 0.0;
     bool cockpitCrosshairVisible = true;
+    bool cockpitAutomaticWeaponsEnabled = false;
     bool cockpitReactorShutdown = false;
     bool cockpitReactorShutdownMessageVisible = false;
     CampaignBattleRenderTerrainResources terrain;
@@ -544,6 +568,8 @@ struct CampaignBattleRenderScenePackage {
     std::vector<CampaignBattleRenderMachineGunFlashInstance>
         machineGunFlashVisuals;
     std::vector<CampaignBattleRenderImpactInstance> impactVisuals;
+    std::filesystem::path damageSmokeResourcePath;
+    std::vector<CampaignBattleRenderDamageSmokeEmitter> damageSmokeEmitters;
     CampaignBattleRenderObjectiveInstance objective;
     size_t playerVisualCount = 0;
     size_t opposingVisualCount = 0;
@@ -564,28 +590,6 @@ int campaignBattleMachineGunFlashSpriteIndex(
 double campaignBattleProjectileSpinDegrees(
     uint64_t launchTickIndex,
     uint64_t snapshotTickIndex);
-
-struct BattleCockpitBobTuning {
-    double cycleMs = 720.0;
-    double maxWorldUnits = 45.0;
-};
-
-constexpr BattleCockpitBobTuning battleCockpitBobPrototypeTuning() {
-    return {};
-}
-
-double battleCockpitBobSpeedRatio(
-    double forwardSpeed,
-    double maxForwardSpeed,
-    double maxReverseSpeed);
-
-double battleCockpitBobOffsetWorldUnits(
-    double forwardSpeed,
-    double maxForwardSpeed,
-    double maxReverseSpeed,
-    double animationPhaseElapsedMs,
-    bool mechDestroyed,
-    const BattleCockpitBobTuning& tuning = battleCockpitBobPrototypeTuning());
 
 // Resolves an original DOS resource from either a flat installation directory
 // (root/FILE.EXT) or the repository's categorized evidence layout

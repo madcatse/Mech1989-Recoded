@@ -1,6 +1,9 @@
 #pragma once
 
 #include "battle/battle_opposition.h"
+#include "battle/battle_posture.h"
+#include "battle/original_rng.h"
+#include "battle/battle_ai_jump.h"
 #include "battle/mission_contract.h"
 #include "legacy3d/terrain_parser.h"
 #include "mech3d/mech_runtime_state.h"
@@ -38,6 +41,9 @@ struct CameraSnapshot {
     Transform transform{};
     double localForwardOffset = 0.0;
     double localHeight = 0.0;
+    double posturePitchRadians = 0.0;
+    double mouseLookPitchRadians = 0.0; // Positive looks up; independent of falling posture.
+    double ridgePitchRadians = 0.0; // Positive down; converted from DOS body pitch.
 };
 
 enum class CombatantMissionStatus {
@@ -208,6 +214,44 @@ enum class BattleOriginalAiOrderTargetInput : uint8_t {
     LiveObjectOrBase = 3,
 };
 
+// Player order history is separate from the mission AI's transient assignment.
+// The six selectable values reuse the already audited BTECH order domain.
+using BattleLanceOrderKind = BattleOriginalAiLanceOrder;
+enum class BattleLanceTargetKind : uint8_t { None, Combatant, Objective, WorldPoint };
+enum class BattleLanceOrderPhase : uint8_t {
+    MissionDefault, Travelling, Waiting, Engaging, Returning, Arrived,
+    Released, Retreating, Inactive,
+};
+enum class BattleLanceOrderReason : uint8_t {
+    MissionDefault, Accepted, Travelling, AtDestination, EnemyNear, Spotted,
+    TargetEngaged, TargetDestroyed, ContactLost, GuardReturn, AvoidingCombat,
+    DamageRetreat, MovementRestricted, RecipientInactive,
+};
+struct BattleLanceOrderCommand {
+    EntityId recipient{};
+    EntityId issuer{};
+    uint64_t issueTickIndex = 0;
+    BattleLanceOrderKind kind = BattleLanceOrderKind::ActOnOwn;
+    BattleLanceTargetKind targetKind = BattleLanceTargetKind::None;
+    EntityId targetEntityId{};
+    Transform destination{};
+};
+struct BattleLanceOrderState {
+    uint64_t sequence = 0;
+    BattleLanceOrderCommand issued;
+    uint64_t acceptTickIndex = 0;
+    BattleLanceOrderPhase phase = BattleLanceOrderPhase::MissionDefault;
+    BattleLanceOrderReason reason = BattleLanceOrderReason::MissionDefault;
+    bool activated = false;
+    uint64_t activationTickIndex = 0;
+    bool arrived = false;
+    uint64_t arrivalTickIndex = 0;
+    uint64_t releaseTickIndex = 0;
+};
+
+const char* battleLanceOrderLabel(BattleLanceOrderKind kind);
+const char* battleLanceOrderStatusLabel(const BattleLanceOrderState& state);
+
 struct BattleOriginalAiLanceOrderDiagnostic {
     bool exact = false;
     int16_t controlWord00 = -1;
@@ -306,6 +350,15 @@ struct BattleCombatantRosterMetadata {
     std::string sourceSlot;
     std::optional<uint8_t> originalLiveObjectSlot;
     uint8_t gunnerySkill = 1;
+    uint8_t pilotingSkill = 1; // BTECH recovery bound = 5 - skill (GAM B2 + 2*crew).
+};
+
+// BTECH chooses the battlefield palette from the target planet, then makes a
+// separate one-in-three roll for a black sky.  The other two outcomes use the
+// bright sky color associated with the selected biome palette.
+enum class BattleSkyMode : uint8_t {
+    BiomeBright,
+    Black,
 };
 
 struct BattleTerrainSnapshot {
@@ -314,6 +367,7 @@ struct BattleTerrainSnapshot {
     uint8_t terrainMode = 0;
     std::vector<std::string> tileNames;
     std::optional<int> environmentId;
+    BattleSkyMode skyMode = BattleSkyMode::BiomeBright;
     double boundsMinX = 0.0;
     double boundsMaxX = 0.0;
     double boundsMinZ = 0.0;
@@ -377,7 +431,7 @@ struct BattleTerrainDriveableSurfaceFeature {
     double halfExtentX = 0.0;
     double halfExtentZ = 0.0;
     double height = 0.0;
-    std::string interaction = "slope_pitch_deferred_nonblocking";
+    std::string interaction = "original_GI_height_and_player_pitch_nonblocking";
 };
 
 struct BattleTerrainCollisionObstacles {
@@ -519,6 +573,8 @@ struct BattleResult {
 
 struct BattleMissionConclusionDelayState {
     bool active = false;
+    // Main0135 enters a separate presentation loop: no more battle updates.
+    bool freezesSimulation = false;
     BattleMissionRuntimeState pendingState =
         BattleMissionRuntimeState::InProgress;
     std::string reason;
@@ -642,6 +698,7 @@ struct BattleContractMetadata {
     std::string targetPlanetName;
     uint8_t targetPlanetTerrainCode = 0;
     std::optional<int> targetEnvironmentId;
+    BattleSkyMode skyMode = BattleSkyMode::BiomeBright;
     size_t terrainScenarioIndex = 2;
     std::string terrainScenarioProvenance = "phase11_fixed_scenario_2";
     int estimatedHeavyMechs = 0;
@@ -653,6 +710,17 @@ struct BattleContractMetadata {
     int priceK = 0;
     int salvagePercent = 0;
     int advancePercent = 0;
+};
+
+// Exact replacement state accompanying the legacy 29-byte campaign summary.
+// No heat, timers, targeting or movement state crosses a campaign transition.
+struct BattlePersistentDamage {
+    mech3d::MechDetailedDamageState detailed;
+    bool mechDestroyed = false;
+    bool mechDisabled = false;
+    std::vector<int> destroyedComponentIds;
+    std::vector<int> hiddenComponentIds;
+    std::vector<int> disabledComponentIds;
 };
 
 struct BattlePersistentMechState {
@@ -672,7 +740,9 @@ struct BattlePersistentMechState {
     uint8_t jumpJetsTotal = 0;
     uint8_t armorPercent = 100;
     std::array<uint8_t, 10> weaponConditions{};
+    // Named MechArmorSectionId order; distinct from raw GAM side-torso 7/8.
     std::array<uint8_t, 9> armorDamage{};
+    std::optional<BattlePersistentDamage> exactDamage;
 };
 
 enum class BattleWeaponAmmunitionOwnership : uint8_t {
@@ -2111,18 +2181,41 @@ struct BattleMechHitTriangle {
     bool torsoComposite = false;
 };
 
+struct BattleMechHitPose {
+    mech3d::ModelAssembly assembly;
+    // Component-local vertices, before pose matrices and centering.
+    std::vector<BattleMechHitTriangle> triangles;
+};
+
 struct BattleMechHitProfile {
     bool valid = false;
     std::string mechPresetId;
     std::vector<BattleMechHitTriangle> triangles;
+    BattleMechHitPose bindPose;
+    std::vector<BattleMechHitPose> walkPoses;
+    mech3d::ModelAnimationDefinition walkAnimation;
+    bool cockpitBobAffectsAim = false;
     double aimOriginHeight = 0.0;
+    int cockpitViewportWidth = 0;
     int cockpitViewportHeight = 0;
+    double neutralCrosshairX = 0.0;
     double neutralCrosshairY = 0.0;
     double crosshairPixelsPerAimStep = 3.0;
     double verticalFieldOfViewDegrees = 45.0;
     uint64_t geometryFingerprint = 0;
     std::string provenance;
 };
+
+struct BattleCockpitBobTuning {
+    double cycleMs = 720.0;
+    double maxWorldUnits = 45.0;
+};
+constexpr BattleCockpitBobTuning battleCockpitBobPrototypeTuning() { return {}; }
+double battleCockpitBobSpeedRatio(double forwardSpeed, double maxForwardSpeed, double maxReverseSpeed);
+double battleCockpitBobOffsetWorldUnits(
+    double forwardSpeed, double maxForwardSpeed, double maxReverseSpeed,
+    double animationPhaseElapsedMs, bool mechDestroyed,
+    const BattleCockpitBobTuning& tuning = battleCockpitBobPrototypeTuning());
 
 struct BattleProjectileHitProfile {
     bool valid = false;
@@ -2176,6 +2269,7 @@ struct BattleWeaponInstanceState {
     bool originalProjectileDefinitionProven = false;
     BattleWeaponReadiness readiness = BattleWeaponReadiness::Ready;
     bool selected = false;
+    bool awsLinked = false;
     uint64_t shotsFired = 0;
 };
 
@@ -2381,10 +2475,12 @@ struct BattleMechCollisionProfile {
 };
 
 struct BattleStartParams {
+    OriginalBtechRng originalRng; // unsaved shared simulator stream
     BattleMissionBriefing mission;
     std::filesystem::path terrainScenarioPath;
     size_t terrainScenarioIndex = 2;
     std::optional<int> terrainEnvironmentId;
+    BattleSkyMode terrainSkyMode = BattleSkyMode::BiomeBright;
     double terrainCellSize = 500.0;
     std::string playerMechPresetId = "locust";
     Transform playerStartTransform{43500.0, 0.0, 23500.0, 0.0};
@@ -2455,7 +2551,13 @@ struct BattleStartParams {
     int enemyRetreatRemainingDurabilityPercent = 35;
     int objectiveMaxDamage = 3;
     double objectiveRetaliationSeconds = 12.0;
+    // Ordinary20-frame scheduling is a host adapter; 5s explicitly retained
+    // by the user (2026-10-18), not claimed as recovered DOS wall time.
     double combatConclusionDelaySeconds = 5.0;
+    // Original1C0:20 waits of6;293C multiplies by4. Timer16390 uses
+    // floor(65535/13)=5041 PIT clocks per IRQ (1193182Hz). Excludes renderer
+    // overhead and initial IRQ phase; rounded up to a host simulation tick.
+    double fatalConclusionDelaySeconds = 20.0 * 6.0 * 4.0 * 5041.0 / 1193182.0;
     BattleContractMetadata contract;
     BattleOppositionRosterMetadata oppositionRoster;
     BattleSetupMetadata setupMetadata;
@@ -2515,6 +2617,20 @@ void applyBattleDriveRuntimeTuning(
     BattleStartParams& params,
     const BattleDriveRuntimeTuning& tuning = battleDrivePrototypeTuning());
 
+struct BattleMouseLookState {
+    bool enabled = false;
+    double yawRadians = 0.0;
+    double pitchRadians = 0.0;
+    int zoomLevel = 1;
+};
+
+struct BattleMouseLookLimits {
+    double yawRadians = 0.0;
+    double pitchUpRadians = 0.0;
+    double pitchDownRadians = 0.0;
+};
+BattleMouseLookLimits battleMouseLookLimits(const BattleStartParams& params, const std::string& preset);
+
 struct BattleInputCommand {
     uint64_t tickIndex = 0;
     EntityId entityId{};
@@ -2531,6 +2647,22 @@ struct BattleInputCommand {
     bool toggleCockpitRadar = false;
     bool cycleCockpitRadarRange = false;
     bool cycleTargetScan = false;
+    // An order envelope never also changes the issuer's drive/fire controls.
+    std::optional<BattleLanceOrderCommand> lanceOrder;
+    bool toggleAutomaticWeapons = false;
+    bool toggleSelectedWeaponLink = false;
+    bool fireLinkedWeapons = false;
+    bool standUp = false;
+    // Cockpit Escape after an ordinary outcome: original main018C..019A.
+    // This never requests retreat and cannot skip fatal-pilot presentation.
+    bool acknowledgeConclusion = false;
+    // Fresh Y in the paused original27C7 retreat prompt, before an outcome.
+    bool confirmRetreat = false;
+    std::optional<bool> mouseLookEnabled;
+    double mouseLookYawDeltaRadians = 0.0;
+    double mouseLookPitchDeltaRadians = 0.0;
+    bool centerTorso = false;
+    int mouseLookZoomLevel = 0; // Zero keeps the current zoom; cockpit sends 1..3.
 };
 
 constexpr uint16_t battleCockpitRadarRangeMeters(uint8_t rangeIndex) {
@@ -2664,6 +2796,15 @@ struct BattleOriginalAiMotionRuntimeState {
     uint64_t lastPoseCommitTickIndex = 0;
 };
 
+struct BattleRidgeState {
+    double groundHeight = 0.0;
+    int16_t pitch = 0;
+    int16_t nextPitchControl = 0;
+    double updateAccumulator = 0.0;
+    std::optional<size_t> cachedObject;
+    std::optional<uint8_t> cachedSubrecord;
+};
+
 struct Combatant {
     EntityId id{};
     std::string mechPresetId;
@@ -2679,6 +2820,8 @@ struct Combatant {
     double maxReverseSpeed = 0.0;
     int torsoYawStep = 0;
     int aimPitchStep = 0;
+    BattleMouseLookState mouseLook;
+    BattleRidgeState ridge;
     bool boundaryContact = false;
     bool collisionContact = false;
     uint64_t collisionCount = 0;
@@ -2687,6 +2830,8 @@ struct Combatant {
     double collisionRadiusWorld = 0.0;
     BattleEnemyAiState enemyAiState = BattleEnemyAiState::None;
     BattleReplacementAiState replacementAi;
+    BattleAiJumpRuntime aiJump;
+    BattleLanceOrderState lanceOrder;
     BattleEnemyAiTargetKind enemyAiTargetKind = BattleEnemyAiTargetKind::None;
     EntityId enemyAiTargetEntityId{};
     Transform enemyAiTargetTransform{};
@@ -2707,6 +2852,7 @@ struct Combatant {
     bool airborne = false;
     bool hardLanding = false;
     bool knockdownCandidate = false;
+    BattlePostureRuntime posture;
     double jumpFuel = 1.5;
     double jumpMaxFuel = 1.5;
     double jumpActivationFuel = 0.975;
@@ -2717,7 +2863,9 @@ struct Combatant {
     bool minimalRepairApplied = false;
     bool fragileAfterMinimalRepair = false;
     bool fireWeaponRequested = false;
+    bool fireLinkedWeaponsRequested = false;
     uint32_t selectedWeaponInstanceId = 0;
+    bool automaticWeaponsEnabled = false;
     std::vector<BattleWeaponInstanceState> weapons;
     bool ammunitionStateValid = false;
     std::array<int, 6> ammunitionByPool{};
@@ -2758,6 +2906,8 @@ struct CombatantSnapshot {
     int torsoYawStep = 0;
     double torsoYawRadians = 0.0;
     int aimPitchStep = 0;
+    BattleMouseLookState mouseLook;
+    BattleRidgeState ridge;
     bool boundaryContact = false;
     bool collisionContact = false;
     uint64_t collisionCount = 0;
@@ -2766,6 +2916,8 @@ struct CombatantSnapshot {
     double collisionRadiusWorld = 0.0;
     BattleEnemyAiState enemyAiState = BattleEnemyAiState::None;
     BattleReplacementAiState replacementAi;
+    BattleAiJumpRuntime aiJump;
+    BattleLanceOrderState lanceOrder;
     BattleEnemyAiTargetKind enemyAiTargetKind = BattleEnemyAiTargetKind::None;
     EntityId enemyAiTargetEntityId{};
     Transform enemyAiTargetTransform{};
@@ -2785,6 +2937,7 @@ struct CombatantSnapshot {
     bool airborne = false;
     bool hardLanding = false;
     bool knockdownCandidate = false;
+    BattlePostureRuntime posture;
     double jumpFuel = 1.5;
     double jumpMaxFuel = 1.5;
     double jumpActivationFuel = 0.975;
@@ -2801,7 +2954,10 @@ struct CombatantSnapshot {
     BattleMechSystemRole lastWeaponTargetSystem = BattleMechSystemRole::Unknown;
     EntityId lastDamageSourceEntityId{};
     uint32_t selectedWeaponInstanceId = 0;
+    bool automaticWeaponsEnabled = false;
     std::vector<BattleWeaponInstanceState> weapons;
+    bool ammunitionStateValid = false;
+    std::array<int, 6> ammunitionByPool{};
     uint64_t lastFireRequestTickIndex = 0;
     uint32_t lastFireRequestWeaponInstanceId = 0;
     bool lastFireRequestAccepted = false;
@@ -2820,6 +2976,7 @@ struct CombatantSnapshot {
 };
 
 struct BattleSnapshot {
+    OriginalBtechRng originalRng; // unsaved shared simulator stream
     uint64_t tickIndex = 0;
     uint64_t elapsedMs = 0;
     BattleCombatAiPolicy combatAiPolicy = BattleCombatAiPolicy::Disabled;
@@ -2844,11 +3001,21 @@ struct BattleSnapshot {
     BattleCollisionDiagnostic lastCollision;
     BattleCockpitRadarState cockpitRadar;
     BattleTargetScanState targetScan;
+    std::vector<BattleInputCommand> pendingLanceOrders;
 };
 
 struct BattleReplay {
     std::vector<BattleInputCommand> commands;
 };
+
+bool battleLanceOrderRecipientEligible(const CombatantSnapshot& combatant);
+bool battleLanceOrderTargetKnown(const BattleSnapshot& snapshot, EntityId target);
+bool battleLanceOrderObjectiveEligible(const BattleSnapshot& snapshot);
+bool battleLanceOrderCommandValid(
+    const BattleSnapshot& snapshot, const BattleInputCommand& command);
+// Versioned, locale-independent input log, including all ordinary controls.
+std::string serializeBattleReplay(const BattleReplay& replay);
+BattleReplay parseBattleReplay(const std::string& text);
 
 // Header dependencies must not be allowed to produce a silently mixed battle
 // ABI.  This value is evaluated in every caller and compared with the copy
@@ -2864,6 +3031,10 @@ constexpr uint64_t battleWorldHeaderAbiFingerprint() noexcept {
     };
     mix(sizeof(BattleStartParams));
     mix(alignof(BattleStartParams));
+    mix(sizeof(BattleMechHitProfile));
+    mix(alignof(BattleMechHitProfile));
+    mix(sizeof(BattleMechHitPose));
+    mix(alignof(BattleMechHitPose));
     mix(sizeof(BattleInputCommand));
     mix(alignof(BattleInputCommand));
     mix(sizeof(BattleWeaponInstanceState));
@@ -2921,12 +3092,19 @@ private:
     void updateDeterministicEnemyRuntime();
     void updateReplacementCombatAi();
     void updateReplacementCombatAiRequests();
+    bool teamDetectsCombatant(BattleTeam team, const Combatant& target) const;
+    void applyLanceOrder(const BattleInputCommand& command);
+    bool resolveManualLanceOrder(Combatant& actor, Combatant*& target,
+                                 bool& objectiveTarget);
     void updateOriginalMovement();
     void updateOriginalCombatAiRequests();
     void updateIndividualWeaponRuntime();
+    void fireIndividualWeapon(Combatant& attacker, BattleWeaponInstanceState& weapon);
     void updateBattleProjectiles();
     void updateImpactEventHistory();
     void updateMajorSystemRuntime();
+    void applyHardLanding(Combatant& combatant);
+    bool updateAiJumpRuntime(Combatant& combatant);
     void updateOriginalHeatRuntime();
     void updateDeterministicCombatRuntime();
     void cycleTargetScan();
@@ -2935,11 +3113,15 @@ private:
         const std::vector<Transform>& previousTransforms);
     void updateReplacementMissionRuntime();
     void evaluateMissionRuntimeAfterMovement();
-    void evaluateMissionRuntimeAfterCombat();
-    void evaluateMissionRuntimeAfterObjective();
+    void evaluateMissionRuntimeAfterCombat(std::optional<BattleResult> objectiveResult);
+    std::optional<BattleResult> evaluateMissionRuntimeAfterObjective();
+    bool commanderPilotKilled() const;
+    void latchMissionConclusion(BattleResult result, bool contactWin = false);
+    void resolveMissionConclusion(bool acknowledged = false);
     void completeMission(BattleResult result);
 
     BattleStartParams params_{};
+    OriginalBtechRng originalRng_;
     BattleTerrainSnapshot terrain_{};
     BattleObjectiveState objective_{};
     BattleRetrievalRuntimeState retrieval_{};

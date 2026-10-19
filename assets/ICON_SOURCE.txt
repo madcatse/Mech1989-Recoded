@@ -1,0 +1,29 @@
+Mech1989: Recoded application icon
+
+Source artwork: the blue Warhammer in MechWarrior (1989)'s title screen,
+MW_TPICS.BIN entry 1. Reference used in this workspace:
+research/extract/rendered_pics_bin_png_display/MW_TPICS/entry_001_320x200.png
+
+Created 2026-10-19 with the built-in image_gen tool (background-extraction),
+transparent_background=true. The source game files were not modified.
+This is an adapted cutout, not a claim of pixel-identical extraction.
+Original MechWarrior artwork belongs to its respective rights holders.
+
+Project master: assets/mw1989.png (RGBA, actual alpha).
+Windows resource: assets/mw1989.ico. Rebuild with tools/build_icon.ps1.
+The ICO has 32-bit RGBA PNG frames at 16, 20, 24, 32, 40, 48, 64, 128 and 256 px.
+Its frames are embedded in src/resources/game.rc as IDI_MW1989 (101).
+
+Final image-generation prompt:
+Use case: background-extraction. Asset type: Windows game application icon.
+Input image is the edit target: the original MechWarrior 1989 title screen.
+Extract ONLY the blue Warhammer mech at the center. Preserve the exact original
+blue/cyan pixel-art silhouette, facing direction, distinctive asymmetrical raised
+right-side arm cannon, long left-side arm cannon, small upper missile housing,
+armored torso, skull knee and stepping legs. Remove the MECHWARRIOR lettering,
+all explosions, lasers outside the gun barrels, rocks, debris and all background.
+Preserve solid dark/black shading inside the mech, do not turn interior shadows
+into holes. The complete mech should be centered on a square transparent canvas
+with a small margin around the whole figure. Keep pixel-art edges and original
+limited EGA colors, no photorealistic redraw, no new design, no text, no border,
+no badge, no cast shadow. Actual transparent alpha background.

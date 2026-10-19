@@ -1,4 +1,6 @@
 #include "battle/battle_module.h"
+#include "battle/battle_hit_geometry.h"
+#include "battle/campaign_mech_persistence.h"
 
 #include "legacy3d/shape_parser.h"
 #include "mech3d/mech_catalog.h"
@@ -67,7 +69,8 @@ CampaignBattleLaunchSource campaignLaunchSourceFromSnapshot(
     if (startSnapshot.oppositionRoster.valid &&
         startSnapshot.oppositionRoster.compositionProven &&
         startSnapshot.oppositionRoster.sourceContextMissionByte == 0x63u &&
-        startSnapshot.oppositionRoster.initialMissionSelector == 12u) {
+        (startSnapshot.oppositionRoster.initialMissionSelector == 16u ||
+         startSnapshot.oppositionRoster.initialMissionSelector == 12u)) {
         return CampaignBattleLaunchSource::DarkWingFinal;
     }
     return CampaignBattleLaunchSource::Unknown;
@@ -88,6 +91,7 @@ uint64_t campaignBattleConsequencePlanFingerprint(
     append(plan.payment);
     append(plan.salvage);
     append(static_cast<uint64_t>(static_cast<int64_t>(plan.reputationDelta)));
+    append(plan.defeatedOpponents);
     for (int delta : plan.housePositiveDelta) {
         append(static_cast<uint64_t>(static_cast<int64_t>(delta)));
     }
@@ -537,39 +541,6 @@ CampaignPilotExperienceState campaignPilotExperienceAfterSurvivedMission(
     return result;
 }
 
-double battleCockpitBobSpeedRatio(
-    double forwardSpeed,
-    double maxForwardSpeed,
-    double maxReverseSpeed) {
-    const double maxSpeed = forwardSpeed < 0.0 ? maxReverseSpeed : maxForwardSpeed;
-    if (maxSpeed <= 0.0) {
-        return 0.0;
-    }
-    return std::clamp(std::abs(forwardSpeed) / maxSpeed, 0.0, 1.0);
-}
-
-double battleCockpitBobOffsetWorldUnits(
-    double forwardSpeed,
-    double maxForwardSpeed,
-    double maxReverseSpeed,
-    double animationPhaseElapsedMs,
-    bool mechDestroyed,
-    const BattleCockpitBobTuning& tuning) {
-    if (mechDestroyed || tuning.cycleMs <= 0.0 || tuning.maxWorldUnits <= 0.0) {
-        return 0.0;
-    }
-    const double speedRatio = battleCockpitBobSpeedRatio(
-        forwardSpeed,
-        maxForwardSpeed,
-        maxReverseSpeed);
-    if (speedRatio <= 0.001) {
-        return 0.0;
-    }
-    constexpr double kPi = 3.14159265358979323846;
-    const double phase = 2.0 * kPi * animationPhaseElapsedMs / tuning.cycleMs;
-    return std::sin(phase) * tuning.maxWorldUnits * speedRatio;
-}
-
 double campaignBattleCatalogCockpitCameraHeight(
     const std::filesystem::path& sortedOriginalFilesRoot,
     const std::string& mechPresetId) {
@@ -607,36 +578,6 @@ BattleMechHitProfile campaignBattleCatalogHitProfile(
         catalogResourcePathAtRoot(sortedOriginalFilesRoot, mechPresetId);
     const std::vector<legacy3d::RuntimeRecord> records =
         legacy3d::loadRuntimeShapeRecords(resourcePath);
-    const mech3d::MechRenderInstance instance = mech3d::buildMechRenderInstance(
-        mech3d::makeCatalogMechModelDefinition(mechPresetId),
-        records,
-        {});
-    if (!instance.assembly.bounds.valid) {
-        throw std::runtime_error(
-            "catalog mech hit profile has no assembly bounds: " + mechPresetId);
-    }
-
-    const auto transformPoint = [](
-        const mech3d::Mat4f& matrix,
-        const BattleHitPoint& point) {
-        return BattleHitPoint{
-            matrix[0] * point.x + matrix[4] * point.y +
-                matrix[8] * point.z + matrix[12],
-            matrix[1] * point.x + matrix[5] * point.y +
-                matrix[9] * point.z + matrix[13],
-            matrix[2] * point.x + matrix[6] * point.y +
-                matrix[10] * point.z + matrix[14],
-        };
-    };
-    const auto componentForId = [&instance](int componentId) {
-        const auto found = std::find_if(
-            instance.assembly.components.begin(),
-            instance.assembly.components.end(),
-            [componentId](const mech3d::ModelAssemblyComponent& component) {
-                return component.componentId == componentId;
-            });
-        return found == instance.assembly.components.end() ? nullptr : &*found;
-    };
     const auto sectionForLabel = [](const std::string& label) {
         if (label.find("left_arm") != std::string::npos) {
             return mech3d::MechArmorSectionId::LeftArm;
@@ -662,67 +603,49 @@ BattleMechHitProfile campaignBattleCatalogHitProfile(
     profile.aimOriginHeight = static_cast<double>(
         mech3d::catalogCockpitCameraHeight(mechPresetId, records));
     const CampaignCockpitFamily family = cockpitFamilyForMechPreset(mechPresetId);
+    profile.cockpitViewportWidth = family == CampaignCockpitFamily::Light ? 297 :
+        family == CampaignCockpitFamily::Medium ? 301 : 320;
+    profile.neutralCrosshairX = profile.cockpitViewportWidth / 2;
     profile.cockpitViewportHeight =
         family == CampaignCockpitFamily::Light ? 92 : 103;
     profile.neutralCrosshairY = 51.0;
+    profile.cockpitBobAffectsAim = true;
     profile.provenance =
-        "original_component_mesh_stationary_bind_pose_triangles_"
-        "FUN_1000_47f7_identity_"
-        "replacement_projection_provisional_torso_partition";
-
-    const mech3d::Bounds& bounds = instance.assembly.bounds;
-    const BattleHitPoint centerGroundOffset{
-        -static_cast<double>(bounds.center.x),
-        -static_cast<double>(bounds.min.y),
-        -static_cast<double>(bounds.center.z),
-    };
-    const auto vertexAt = [&instance](uint32_t index) {
-        const size_t offset = static_cast<size_t>(index) * 6u;
-        if (offset + 2u >= instance.batch.vertices.size()) {
-            throw std::runtime_error("catalog mech hit triangle vertex is out of range");
-        }
-        return BattleHitPoint{
-            instance.batch.vertices[offset],
-            instance.batch.vertices[offset + 1u],
-            instance.batch.vertices[offset + 2u],
-        };
-    };
-    for (const mech3d::ComponentRenderRange& range : instance.ranges) {
-        const mech3d::ModelAssemblyComponent* component =
-            componentForId(range.componentId);
-        if (component == nullptr) {
-            throw std::runtime_error("catalog mech hit component is missing");
-        }
-        const bool torsoComposite =
-            component->debugLabel.find("torso") != std::string::npos;
-        const mech3d::MechArmorSectionId section =
-            sectionForLabel(component->debugLabel);
-        const size_t begin = range.triangleIndexOffset;
-        const size_t end = std::min(
-            instance.batch.triangleIndices.size(),
-            static_cast<size_t>(range.triangleIndexOffset +
-                                range.triangleIndexCount));
-        for (size_t index = begin; index + 2u < end; index += 3u) {
-            BattleMechHitTriangle triangle;
-            triangle.componentId = range.componentId;
-            triangle.directArmorSection = section;
-            triangle.torsoComposite = torsoComposite;
-            BattleHitPoint* points[] = {&triangle.a, &triangle.b, &triangle.c};
-            for (size_t corner = 0; corner < 3u; ++corner) {
-                const BattleHitPoint local = vertexAt(
-                    instance.batch.triangleIndices[index + corner]);
-                *points[corner] = transformPoint(component->worldMatrix, local);
-                points[corner]->x += centerGroundOffset.x;
-                points[corner]->y += centerGroundOffset.y;
-                points[corner]->z += centerGroundOffset.z;
+        "original_component_mesh_fixed_tick_walk_torso_pose_"
+        "FUN_1000_47f7_identity_replacement_projection_bob_provisional_torso_partition";
+    const auto decodePose = [&records, &sectionForLabel](const mech3d::MechModelDefinition& definition) {
+        const auto instance = mech3d::buildMechRenderInstance(definition, records, {});
+        if (!instance.assembly.bounds.valid) throw std::runtime_error("mech hit pose has no bounds");
+        BattleMechHitPose result;
+        result.assembly = instance.assembly;
+        for (const auto& range : instance.ranges) {
+            const auto component = std::find_if(instance.assembly.components.begin(), instance.assembly.components.end(),
+                [&](const auto& c) { return c.componentId == range.componentId; });
+            if (component == instance.assembly.components.end()) throw std::runtime_error("mech hit component missing");
+            for (size_t i = range.triangleIndexOffset; i < static_cast<size_t>(range.triangleIndexOffset) + range.triangleIndexCount; i += 3) {
+                BattleMechHitTriangle t;
+                t.componentId = range.componentId;
+                t.directArmorSection = sectionForLabel(component->debugLabel);
+                t.torsoComposite = component->debugLabel.find("torso") != std::string::npos;
+                BattleHitPoint* points[] = {&t.a, &t.b, &t.c};
+                for (size_t k = 0; k < 3; ++k) {
+                    const size_t v = static_cast<size_t>(instance.batch.triangleIndices.at(i+k))*6u;
+                    *points[k] = {instance.batch.vertices.at(v), instance.batch.vertices.at(v+1), instance.batch.vertices.at(v+2)};
+                }
+                result.triangles.push_back(t);
             }
-            profile.triangles.push_back(triangle);
         }
-    }
-    if (profile.triangles.empty()) {
-        throw std::runtime_error(
-            "catalog mech hit profile has no triangles: " + mechPresetId);
-    }
+        if (result.triangles.empty()) throw std::runtime_error("mech hit pose has no triangles");
+        return result;
+    };
+    const auto definition = mech3d::makeCatalogMechModelDefinition(mechPresetId);
+    profile.bindPose = decodePose(definition);
+    profile.walkAnimation = mech3d::makeCatalogAnimationDefinition(mechPresetId, "walk");
+    for (int frame = 0; frame < mech3d::animationFrameCount(profile.walkAnimation); ++frame)
+        profile.walkPoses.push_back(decodePose(mech3d::applyAnimationFrame(definition, profile.walkAnimation, frame)));
+    // Keep the stable bind surface for existing mount/AI diagnostics. Only the
+    // visible-component raycast uses the fixed-tick posed surface.
+    profile.triangles = battleMechHitPose(profile, false, 0, 0, 0).triangles;
 
     uint64_t hash = 1469598103934665603ull;
     const auto append = [&hash](uint64_t value) {
@@ -731,20 +654,40 @@ BattleMechHitProfile campaignBattleCatalogHitProfile(
             hash *= 1099511628211ull;
         }
     };
-    append(static_cast<uint64_t>(profile.triangles.size()));
-    for (const BattleMechHitTriangle& triangle : profile.triangles) {
-        append(static_cast<uint64_t>(triangle.componentId));
-        append(static_cast<uint64_t>(triangle.directArmorSection));
-        append(triangle.torsoComposite ? 1u : 0u);
-        for (const BattleHitPoint* point : {&triangle.a, &triangle.b, &triangle.c}) {
-            append(static_cast<uint64_t>(static_cast<int64_t>(
-                std::llround(point->x * 1000.0))));
-            append(static_cast<uint64_t>(static_cast<int64_t>(
-                std::llround(point->y * 1000.0))));
-            append(static_cast<uint64_t>(static_cast<int64_t>(
-                std::llround(point->z * 1000.0))));
+    const auto appendReal = [&append](double value) {
+        append(static_cast<uint64_t>(static_cast<int64_t>(std::llround(value*1000000.0))));
+    };
+    const auto appendPose = [&](const BattleMechHitPose& pose) {
+        append(pose.triangles.size());
+        for (const auto& t : pose.triangles) {
+            append(t.componentId); append(static_cast<uint64_t>(t.directArmorSection)); append(t.torsoComposite);
+            for (const auto* p : {&t.a, &t.b, &t.c}) { appendReal(p->x); appendReal(p->y); appendReal(p->z); }
         }
+        append(pose.assembly.components.size());
+        for (const auto& c : pose.assembly.components) {
+            append(c.componentId); append(c.parentComponentId); append(c.sourceRecordIndex);
+            for (float v : c.localMatrix) appendReal(v);
+            for (const auto& p : {c.localBounds.min, c.localBounds.max, c.localPivot}) {
+                appendReal(p.x); appendReal(p.y); appendReal(p.z);
+            }
+            for (unsigned char ch : c.debugLabel) append(ch);
+            append(0);
+        }
+    };
+    appendPose(profile.bindPose);
+    append(profile.walkPoses.size());
+    for (const auto& pose : profile.walkPoses) appendPose(pose);
+    for (const auto& sequence : profile.walkAnimation.sequences) {
+        append(sequence.componentId); append(sequence.frameDurationMs);
+        for (int index : sequence.sourceRecordIndices) append(index);
     }
+    append(profile.cockpitBobAffectsAim);
+    appendReal(profile.aimOriginHeight); append(profile.cockpitViewportHeight);
+    append(profile.cockpitViewportWidth); appendReal(profile.neutralCrosshairX);
+    appendReal(profile.neutralCrosshairY); appendReal(profile.crosshairPixelsPerAimStep);
+    appendReal(profile.verticalFieldOfViewDegrees);
+    appendReal(battleCockpitBobPrototypeTuning().cycleMs);
+    appendReal(battleCockpitBobPrototypeTuning().maxWorldUnits);
     profile.geometryFingerprint = hash;
     return profile;
 }
@@ -874,6 +817,20 @@ size_t campaignBattleTerrainScenarioIndexFromTargetPlanetTableOrder(
     return static_cast<size_t>(oneBasedTableOrder) % 20u;
 }
 
+std::optional<int> campaignBattleEnvironmentIdFromPlanetTerrainCode(
+    uint8_t terrainCode) {
+    if (terrainCode == 0u) {
+        return std::nullopt;
+    }
+    return static_cast<int>((static_cast<uint32_t>(terrainCode) - 1u) % 3u);
+}
+
+BattleSkyMode campaignBattleSkyModeFromOriginalRoll(uint32_t randomValue) {
+    return randomValue % 3u == 0u
+        ? BattleSkyMode::Black
+        : BattleSkyMode::BiomeBright;
+}
+
 const char* campaignBattleLaunchSourceName(CampaignBattleLaunchSource source) {
     switch (source) {
     case CampaignBattleLaunchSource::Unknown:
@@ -914,7 +871,8 @@ const char* campaignBattlePresentationModeName(CampaignBattlePresentationMode mo
 }
 
 bool campaignBattlePresentationPausesSimulation(CampaignBattlePresentationMode mode) {
-    return mode == CampaignBattlePresentationMode::MissionStatus;
+    return mode == CampaignBattlePresentationMode::MissionStatus ||
+           mode == CampaignBattlePresentationMode::CockpitCommandMap;
 }
 
 const char* campaignCockpitFamilyName(CampaignCockpitFamily family) {
@@ -984,7 +942,28 @@ CampaignBattleConsequencePlan campaignBattleConsequencePlanFromOutcome(
     }
 
     plan.valid = true;
-    if (outcome.launchSource != CampaignBattleLaunchSource::AcceptedContract) {
+    plan.defeatedOpponents = std::min<uint8_t>(4, context.defeatedOpponents);
+    if (outcome.launchSource == CampaignBattleLaunchSource::DarkWingFinal &&
+        outcome.terminal && outcome.outcome == CampaignBattleOutcome::Victory && outcome.rawResultCode == 0) {
+        // MW_MAIN 1CF0/22A9 bypass payment, salvage, experience, date and houses.
+        plan.commitEligible = true;
+        plan.salvageDeferred = false;
+        plan.campaignTimeDeferred = false;
+        plan.pilotExperienceDeferred = false;
+        plan.reason = "dark_wing_victory_original_ending_ready";
+    } else if (outcome.launchSource == CampaignBattleLaunchSource::DarkWingFinal &&
+        outcome.terminal && campaignBattleOutcomeIsMissionFailure(outcome.outcome) && outcome.rawResultCode != 0) {
+        // MW_MAIN 1FB9..21CF: no money/house changes; surviving crew gain XP,
+        // reputation uses the returned count, and AX=28 advances half-days.
+        plan.commitEligible = true;
+        plan.salvageDeferred = false;
+        plan.campaignTimeDeferred = false;
+        plan.pilotExperienceDeferred = false;
+        plan.campaignDateTicks = 28;
+        plan.pilotExperienceAward = true;
+        plan.reputationDelta = std::min<int>(4, context.defeatedOpponents);
+        plan.reason = "dark_wing_failure_original_consequences_ready";
+    } else if (outcome.launchSource != CampaignBattleLaunchSource::AcceptedContract) {
         plan.reason = outcome.launchSource == CampaignBattleLaunchSource::DarkWingFinal
             ? "dark_wing_final_consequences_deferred"
             : "campaign_battle_source_has_no_consequence_plan";
@@ -995,6 +974,9 @@ CampaignBattleConsequencePlan campaignBattleConsequencePlanFromOutcome(
     } else if (outcome.outcome == CampaignBattleOutcome::Victory ||
                campaignBattleOutcomeIsMissionFailure(outcome.outcome)) {
         plan.commitEligible = true;
+        // 200C uses BTECH context+1D after either victory or failure. The
+        // return overwrites that count each stage; estimates are not awards.
+        plan.reputationDelta = std::min<int>(4, context.defeatedOpponents);
         if (context.salvageEstimateAvailable) {
             plan.salvageDeferred = false;
             plan.salvageBetaValidationRequired = context.salvageBetaValidationRequired;
@@ -1016,16 +998,14 @@ CampaignBattleConsequencePlan campaignBattleConsequencePlanFromOutcome(
             plan.houseNegativeDelta[targetIndex] += 2;
         }
         if (outcome.outcome == CampaignBattleOutcome::Victory) {
-            plan.payment = static_cast<uint64_t>(std::max(0, contract.priceK)) * 1000ull;
-            const int64_t estimatedOpposition =
-                static_cast<int64_t>(std::max(0, contract.estimatedHeavyMechs)) +
-                static_cast<int64_t>(std::max(0, contract.estimatedMediumMechs)) +
-                static_cast<int64_t>(std::max(0, contract.estimatedLightMechs));
-            plan.reputationDelta = static_cast<int>(std::min<int64_t>(
-                estimatedOpposition,
-                std::numeric_limits<int>::max()));
+            // MW_MAIN 1F7E: employer percentage truncates in thousands first.
+            plan.payment = (static_cast<uint64_t>(context.contractBalanceK
+                ? *context.contractBalanceK : std::max(0, contract.priceK)) *
+                context.employerPayoutPercent / 100ull) * 1000ull;
             plan.housePositiveDelta[employerIndex] += 2;
-        } else {
+        } else if (outcome.rawResultCode == 2) {
+            // MW_MAIN213B..2142 penalizes withdrawal only. Ordinary raw1
+            // defeat still applies the hostile target's delta above.
             plan.houseNegativeDelta[employerIndex] += 1;
         }
         plan.reason = "accepted_contract_proven_consequences_ready";
@@ -1124,8 +1104,12 @@ CampaignBattlePersistenceReport campaignBattlePersistenceReportFromSnapshot(
         combatantReport.mechPresetId = matchedCombatant->mechPresetId;
         combatantReport.missionStatus = matchedCombatant->missionStatus;
         combatantReport.mechDestroyed = matchedCombatant->mechDestroyed;
+        combatantReport.playerControlled = matchedCombatant->playerControlled;
         combatantReport.mechSystems = matchedCombatant->mechSystems;
         combatantReport.persistentMechState = matchedCombatant->persistentMechState;
+        combatantReport.returnedMechState = campaignMechStateFromCombatant(*matchedCombatant);
+        combatantReport.ammunitionStateValid = matchedCombatant->ammunitionStateValid;
+        combatantReport.ammunitionByPool = matchedCombatant->ammunitionByPool;
         combatantReport.destroyedComponentIds = matchedCombatant->destroyedComponentIds;
         combatantReport.disabledComponentIds = matchedCombatant->disabledComponentIds;
         report.combatants.push_back(std::move(combatantReport));
@@ -1194,8 +1178,12 @@ CampaignBattlePersistenceReport campaignBattlePersistenceReportFromSnapshot(
         append(combatant.entityId.value);
         append(static_cast<uint64_t>(combatant.missionStatus));
         append(combatant.mechDestroyed ? 1u : 0u);
+        append(combatant.playerControlled ? 1u : 0u);
         append(combatant.mechSystems.valid ? 1u : 0u);
         append(battlePersistentMechStateFingerprint(combatant.persistentMechState));
+        append(battlePersistentMechStateFingerprint(combatant.returnedMechState));
+        append(combatant.ammunitionStateValid);
+        for (int count : combatant.ammunitionByPool) append(count);
         for (const BattleMechSystemSnapshot& system : combatant.mechSystems.systems) {
             appendString(system.systemId);
             append(static_cast<uint64_t>(system.status));
@@ -1605,7 +1593,8 @@ CampaignBattlePostResultReceipt campaignBattlePostResultReceiptFromOutcome(
     receipt.safeCampaignReturn = persistentStateUnchanged || receipt.settlementCommitted;
     receipt.extendedEndingSequenceExecuted = false;
     receipt.extendedEndingSequenceDeferred =
-        outcome.launchSource == CampaignBattleLaunchSource::DarkWingFinal;
+        outcome.launchSource == CampaignBattleLaunchSource::DarkWingFinal &&
+        !campaignBattleOutcomeIsMissionFailure(outcome.outcome);
     receipt.terminal = outcome.terminal;
     receipt.rawResultCode = outcome.rawResultCode;
     receipt.finalSnapshotFingerprint = outcome.finalSnapshotFingerprint;
@@ -1693,7 +1682,7 @@ CampaignBattlePresentationPackage campaignBattlePresentationPackageFromSnapshot(
         package.playerHeadingDegrees = headingDegrees(package.playerHeadingRadians);
         package.cameraHeadingDegrees = headingDegrees(package.cameraHeadingRadians);
         package.torsoYawDegrees = signedDegrees(package.torsoYawRadians);
-        package.aimPitchStep = player->aimPitchStep;
+        package.aimPitchStep = player->mouseLook.enabled ? 0 : player->aimPitchStep;
         package.speed = static_cast<int>(player->forwardSpeed + (player->forwardSpeed >= 0.0 ? 0.5 : -0.5));
         package.jumpCapable = player->jumpCapable;
         package.jumpJetReady = player->jumpJetReady;
@@ -1780,6 +1769,7 @@ CampaignBattleRenderScenePackage campaignBattleRenderSceneFromSnapshot(
     scene.mode = mode;
     scene.snapshotFingerprint = battleSnapshotFingerprint(snapshot);
     scene.authoritativeTickIndex = snapshot.tickIndex;
+    scene.presentationElapsedMs = snapshot.elapsedMs;
     scene.camera = snapshot.camera;
     scene.mission = snapshot.mission;
     scene.setup = snapshot.setup;
@@ -1802,6 +1792,7 @@ CampaignBattleRenderScenePackage campaignBattleRenderSceneFromSnapshot(
     scene.terrain.scenarioIndex = snapshot.terrain.scenarioIndex;
     scene.terrain.terrainMode = snapshot.terrain.terrainMode;
     scene.terrain.environmentId = snapshot.terrain.environmentId;
+    scene.terrain.skyMode = snapshot.terrain.skyMode;
     scene.terrain.boundsMinX = snapshot.terrain.boundsMinX;
     scene.terrain.boundsMaxX = snapshot.terrain.boundsMaxX;
     scene.terrain.boundsMinZ = snapshot.terrain.boundsMinZ;
@@ -1838,8 +1829,23 @@ CampaignBattleRenderScenePackage campaignBattleRenderSceneFromSnapshot(
     scene.playerCollisionSequence = scene.playerCollisionFlashEvent
         ? snapshot.lastCollision.sequence
         : 0u;
+    // Contacts are retained by the fixed-tick weapon pipeline, including
+    // delayed projectile arrivals. A launch, miss or terrain impact cannot
+    // flash the player's cockpit. Three ticks is replacement presentation
+    // timing (150 ms at campaign cadence), not an original DOS timer claim.
+    scene.playerWeaponHitFlash = std::any_of(
+        snapshot.impactEvents.begin(), snapshot.impactEvents.end(),
+        [&](const BattleImpactEvent& event) {
+            return event.valid && event.targetKind == BattleShotTargetKind::Combatant &&
+                event.targetEntityId == player->id &&
+                (event.deliveryState == BattleShotDeliveryState::Immediate ||
+                 event.deliveryState == BattleShotDeliveryState::ProjectileImpact) &&
+                snapshot.tickIndex > event.impactTickIndex &&
+                snapshot.tickIndex - event.impactTickIndex <= 3u;
+        });
     scene.cockpit.valid = snapshot.camera.valid;
     scene.cockpit.family = cockpitFamilyForMechPreset(player->mechPresetId);
+    scene.cockpitAutomaticWeaponsEnabled = player->automaticWeaponsEnabled;
     scene.cockpitCrosshairVisible =
         !player->majorSystems.enabled || player->majorSystems.crosshairVisible;
     scene.cockpitReactorShutdown =
@@ -1876,6 +1882,9 @@ CampaignBattleRenderScenePackage campaignBattleRenderSceneFromSnapshot(
         std::filesystem::path("BMP") / "SM_MECHS.BMP");
 
     scene.combatantVisuals.reserve(snapshot.combatants.size());
+    scene.damageSmokeResourcePath = campaignBattleOriginalResourcePath(
+        sortedOriginalFilesRoot,
+        std::filesystem::path("TBL") / "viewer8" / "OTHPCK.TBL");
     try {
         for (const CombatantSnapshot& combatant : snapshot.combatants) {
             if (combatant.missionStatus ==
@@ -1896,6 +1905,7 @@ CampaignBattleRenderScenePackage campaignBattleRenderSceneFromSnapshot(
             visual.maxReverseSpeed = combatant.maxReverseSpeed;
             visual.torsoYawRadians = combatant.torsoYawRadians;
             visual.aimPitchStep = combatant.aimPitchStep;
+            visual.mouseLookEnabled = combatant.mouseLook.enabled;
             visual.animationId = combatant.activeAnimationId;
             visual.animationElapsedMs = combatant.walkAnimationElapsedMs;
             visual.mechDestroyed = combatant.mechDestroyed;
@@ -1903,6 +1913,16 @@ CampaignBattleRenderScenePackage campaignBattleRenderSceneFromSnapshot(
             visual.hiddenComponentIds = combatant.hiddenComponentIds;
             visual.disabledComponentIds = combatant.disabledComponentIds;
             scene.combatantVisuals.push_back(std::move(visual));
+            if (combatant.mechDestroyed) {
+                scene.damageSmokeEmitters.push_back({combatant.id,
+                    mech3d::MechInternalSectionId::CenterTorso, true});
+            } else if (combatant.detailedDamage.valid) {
+                for (const auto& section : combatant.detailedDamage.internalSections) {
+                    if (section.structureMaximum > 0u && section.structureRemaining == 0u) {
+                        scene.damageSmokeEmitters.push_back({combatant.id, section.section, false});
+                    }
+                }
+            }
             if (combatant.playerControlled || combatant.roster.team == BattleTeam::Player) {
                 ++scene.playerVisualCount;
             } else if (combatant.roster.team == BattleTeam::Opposing) {
@@ -2214,6 +2234,12 @@ CampaignBattleRenderScenePackage campaignBattleInterpolatedRenderSceneFromSnapsh
             previousSnapshot.camera.transform,
             currentSnapshot.camera.transform,
             scene.interpolationAlpha);
+        scene.camera.mouseLookPitchRadians = interpolateScalar(
+            previousSnapshot.camera.mouseLookPitchRadians,
+            currentSnapshot.camera.mouseLookPitchRadians, scene.interpolationAlpha);
+        scene.camera.ridgePitchRadians = interpolateScalar(
+            previousSnapshot.camera.ridgePitchRadians,
+            currentSnapshot.camera.ridgePitchRadians, scene.interpolationAlpha);
     }
 
     for (CampaignBattleRenderVisualInstance& visual : scene.combatantVisuals) {

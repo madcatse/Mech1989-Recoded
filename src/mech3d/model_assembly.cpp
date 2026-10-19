@@ -12,15 +12,6 @@
 namespace mw::mech3d {
 namespace {
 
-const legacy3d::RuntimeRecord& selectRecord(const std::vector<legacy3d::RuntimeRecord>& records, int recordIndex) {
-    for (const legacy3d::RuntimeRecord& record : records) {
-        if (record.recordIndex == recordIndex) {
-            return record;
-        }
-    }
-    throw std::runtime_error("assembly source record not found: " + std::to_string(recordIndex));
-}
-
 Vec3f transformPoint(const Mat4f& matrix, Vec3f point) {
     return Vec3f{
         matrix[0] * point.x + matrix[4] * point.y + matrix[8] * point.z + matrix[12],
@@ -666,7 +657,7 @@ ModelAssembly buildModelAssembly(
     assembly.components.reserve(definition.components.size());
     for (size_t i = 0; i < definition.components.size(); ++i) {
         const MechComponentDefinition& source = definition.components[i];
-        const legacy3d::RuntimeRecord& record = selectRecord(records, source.sourceRecordIndex);
+        const auto record = resolveModelGeometryRecord(records, source.sourceRecordIndex, definition.geometryPatch);
         const legacy3d::GpuBatch componentBatch = legacy3d::buildGpuBatch(record, batchOptions);
 
         ModelAssemblyComponent component;
@@ -695,7 +686,7 @@ MechRenderInstance buildMechRenderInstance(
 
     int groupOffset = 0;
     for (const ModelAssemblyComponent& component : instance.assembly.components) {
-        const legacy3d::RuntimeRecord& record = selectRecord(records, component.sourceRecordIndex);
+        const auto record = resolveModelGeometryRecord(records, component.sourceRecordIndex, definition.geometryPatch);
         const legacy3d::GpuBatch sourceBatch = legacy3d::buildGpuBatch(record, batchOptions);
         int maxGroup = -1;
         for (const auto& entry : sourceBatch.groupMatrices) {

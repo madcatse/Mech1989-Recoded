@@ -1,6 +1,7 @@
 #pragma once
 
 #include "battle/battle_module.h"
+#include "presentation/campaign_command_screen.h"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -14,9 +15,24 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace mw::presentation {
+
+struct CampaignBattleDamageSmokePuff {
+    battle::EntityId entityId{};
+    mech3d::MechInternalSectionId section = mech3d::MechInternalSectionId::CenterTorso;
+    battle::BattleHitPoint anchor;
+    battle::BattleHitPoint position;
+    int recordIndex = 10;
+    float opacity = 0.0f;
+    float stageFraction = 0.0f;
+};
+
+// Ordered 4x4 coverage, expanded to a 32x32 OpenGL stipple mask. Supported
+// pixel sizes are 1, 2, 4, 8; coverage is 0..16 opaque cells, never RGB blending.
+std::array<uint8_t,128> campaignBattleDamageSmokeStipple(int coverage, int pixelSize);
 
 struct CampaignBattleGlResourceProbe {
     bool valid = false;
@@ -34,9 +50,12 @@ struct CampaignBattleGlResourceProbe {
     size_t visualCount = 0;
     size_t mechVertexCount = 0;
     size_t mechTriangleCount = 0;
+    size_t mechDitherVertexCount = 0;
+    size_t mechColoredVertexCount = 0;
     size_t projectileVisualCount = 0;
     size_t projectileVertexCount = 0;
     size_t projectileTriangleCount = 0;
+    uint16_t rocketFillEgaColorMask = 0;
     bool projectileRecord0Loaded = false;
     bool projectileRecord1Loaded = false;
     size_t projectileWeaponMountCount = 0;
@@ -53,6 +72,10 @@ struct CampaignBattleGlResourceProbe {
     uint16_t impactFlatEgaColorMask = 0;
     bool impactStageColorsFlat = true;
     float impactMaximumWorldRadius = 0.0f;
+    std::vector<CampaignBattleDamageSmokePuff> damageSmokePuffs;
+    size_t damageSmokeSphereCount = 0;
+    uint8_t damageSmokeRecordMask = 0;
+    uint16_t damageSmokeColorMask = 0;
     size_t beamWeaponMountCount = 0;
     bool playerBeamCockpitBobApplied = false;
     size_t playerCockpitBeamCount = 0;
@@ -60,6 +83,7 @@ struct CampaignBattleGlResourceProbe {
     bool playerBeamStartsBeyondNearClip = true;
     bool objectiveLoaded = false;
     size_t objectiveVertexCount = 0;
+    uint16_t objectiveFillEgaColorMask = 0;
     bool gpuBatchContractPreserved = false;
 };
 
@@ -83,9 +107,21 @@ CampaignBattleFarGroundApron campaignBattleFarGroundApron(
     const battle::CampaignBattleRenderTerrainResources& terrain,
     double viewDistance = campaignBattleFarClipDistance());
 
+// Exact EGA colors used by the original battlefield backgrounds.  The biome
+// selects the bright sky; BattleSkyMode independently selects black sky.
+std::array<float, 3> campaignBattleTerrainGroundRgb(
+    const std::optional<int>& environmentId);
+
+std::array<float, 3> campaignBattleTerrainSkyRgb(
+    const std::optional<int>& environmentId,
+    battle::BattleSkyMode skyMode);
+
 struct CampaignBattleGlCockpitOptions {
     int zoomLevel = 1;
+    bool retreatPromptVisible = false;
     std::array<float, 3> hudRgb{85.0f / 255.0f, 1.0f, 1.0f};
+    CampaignCommandMapOverlay commandOverlay;
+    std::vector<battle::EntityId> knownCommandMapEnemies;
 };
 
 struct CampaignBattleExternalCameraOrbit {
@@ -134,6 +170,11 @@ public:
     void setCockpitOptions(const CampaignBattleGlCockpitOptions& options);
     bool updateScene(const battle::CampaignBattleRenderScenePackage& scene);
     void render();
+    // Diagnostic readback of the actual Command Map renderer, at current bounds.
+    // Does not advance simulation or require a visible desktop window.
+    std::vector<uint32_t> captureCommandMapPixels();
+    // Read back any scene through the game renderer without presenting/advancing it.
+    std::vector<uint32_t> captureScenePixels();
 
     bool initialized() const;
     bool ready() const;

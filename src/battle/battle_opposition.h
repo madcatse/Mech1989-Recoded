@@ -1,4 +1,5 @@
 #pragma once
+#include "battle/original_rng.h"
 
 #include <array>
 #include <cstddef>
@@ -71,6 +72,23 @@ uint8_t mwMainContractReputationStrength(uint16_t reputationPoints);
 int mwMainContractForceScore(
     uint16_t reputationPoints,
     uint16_t assignedMechStrengthTotal);
+int mwMainContractPriceCeilingK(
+    int adjustedForceScore,
+    uint8_t employerHouseId,
+    uint32_t priceRoll);
+int mwMainContractOpeningPriceK(int priceCeilingK);
+
+struct MwMainContractTerms {
+    int salvageCeilingPercent = 0;
+    int advanceCeilingPercent = 0;
+    int salvageOpeningPercent = 0;
+    int advanceOpeningPercent = 0;
+};
+
+MwMainContractTerms mwMainContractTerms(
+    uint8_t employerHouseId,
+    int positiveStandingCounter,
+    int negativeStandingCounter);
 std::array<uint8_t, 3> mwMainContractOppositionCounts(
     int adjustedForceScore,
     uint8_t heavyMixRoll);
@@ -78,6 +96,9 @@ std::array<uint8_t, 3> mwMainContractOppositionCounts(
 std::array<uint8_t, 3> btechExtendedStageOppositionCounts(
     std::array<uint8_t, 3> sourceCounts,
     size_t stageIndex);
+
+BattleOppositionSpawnPlan resolveBtechOppositionSpawnPlan(
+    std::array<uint8_t,3> sourceCounts, OriginalBtechRng& rng, std::string provenance);
 
 BattleOppositionSpawnPlan resolveBtechOppositionSpawnPlan(
     std::array<uint8_t, 3> sourceCounts,

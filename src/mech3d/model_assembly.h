@@ -1,6 +1,7 @@
 #pragma once
 
 #include "legacy3d/shape_parser.h"
+#include "mech3d/model_geometry_patch.h"
 
 #include <array>
 #include <cstdint>
@@ -46,6 +47,7 @@ struct MechComponentDefinition {
 struct MechModelDefinition {
     std::string debugName;
     std::vector<MechComponentDefinition> components;
+    ModelGeometryPatch geometryPatch = ModelGeometryPatch::None;
 };
 
 struct ComponentPoseOverride {

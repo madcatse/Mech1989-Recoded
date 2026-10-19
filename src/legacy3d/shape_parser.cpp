@@ -690,6 +690,12 @@ GpuBatch buildGpuBatch(const RuntimeRecord& record, const GpuBatchOptions& optio
     };
 
     const std::array<float, 3> lineRgb{0.94f, 0.94f, 0.94f};
+    const auto originalColor = [&](uint8_t index, bool fill) {
+        if (index >= options.originalEga->colorPairs.size())
+            throw ParseError("original EGA primitive color exceeds 32-color palette");
+        const uint8_t pair = options.originalEga->colorPairs[index];
+        return egaRgb(fill && options.originalEga->alternatePixels ? pair >> 4u : pair & 15u);
+    };
 
     for (const RuntimePart& part : record.parts) {
         for (const RuntimeCommand& cmd : part.commands) {
@@ -703,7 +709,8 @@ GpuBatch buildGpuBatch(const RuntimeRecord& record, const GpuBatchOptions& optio
                     if (options.showLines && options.showEdges) {
                         const uint32_t start = static_cast<uint32_t>(batch.vertices.size() / 6u);
                         for (int idx : valid) {
-                            appendVertex(transformed[static_cast<size_t>(idx)], lineRgb);
+                            appendVertex(transformed[static_cast<size_t>(idx)], options.originalEga
+                                ? originalColor(prim.shadeBytes[2], false) : lineRgb);
                         }
                         for (size_t i = 0; i + 1 < valid.size(); ++i) {
                             batch.lineIndices.push_back(start + static_cast<uint32_t>(i));
@@ -721,7 +728,10 @@ GpuBatch buildGpuBatch(const RuntimeRecord& record, const GpuBatchOptions& optio
                 const Vec3f p1 = transformed[static_cast<size_t>(valid[1])];
                 const Vec3f p2 = transformed[static_cast<size_t>(valid[2])];
                 const Vec3f normal = normalize(cross(sub(p1, p0), sub(p2, p0)));
-                const std::array<float, 3> rgb = primitiveRgb(prim, normal, options.shadeMode);
+                // BTECH F8F5, EGA branch (2E6F=0): descriptor +3 is outline,
+                // +4 is fill. The other pair belongs to the alternate driver path.
+                const std::array<float, 3> rgb = options.originalEga
+                    ? originalColor(prim.shadeBytes[3], true) : primitiveRgb(prim, normal, options.shadeMode);
 
                 const uint32_t start = static_cast<uint32_t>(batch.vertices.size() / 6u);
                 for (int idx : valid) {
@@ -736,7 +746,8 @@ GpuBatch buildGpuBatch(const RuntimeRecord& record, const GpuBatchOptions& optio
                 if (options.showEdges) {
                     const uint32_t edgeStart = static_cast<uint32_t>(batch.vertices.size() / 6u);
                     for (int idx : valid) {
-                        appendVertex(transformed[static_cast<size_t>(idx)], options.edgeRgb);
+                        appendVertex(transformed[static_cast<size_t>(idx)], options.originalEga
+                            ? originalColor(prim.shadeBytes[2], false) : options.edgeRgb);
                     }
                     for (size_t j = 0; j < valid.size(); ++j) {
                         batch.lineIndices.push_back(edgeStart + static_cast<uint32_t>(j));

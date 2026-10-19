@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -100,6 +101,12 @@ struct GpuBatchStats {
     int colorCount = 0;
 };
 
+struct OriginalEgaColorOptions {
+    // PAL:EGA first 32 logical colors, each stored as a pair of pixel nibbles.
+    std::array<uint8_t, 32> colorPairs{};
+    bool alternatePixels = false;
+};
+
 struct GpuBatchOptions {
     std::string indexMode = "raw";
     std::string shadeMode = "stored";
@@ -108,6 +115,8 @@ struct GpuBatchOptions {
     bool showLines = true;
     bool showEdges = true;
     std::array<float, 3> edgeRgb{0.02f, 0.02f, 0.02f};
+    // Opt-in original edge/fill mapping. Legacy diagnostic modes stay unchanged.
+    std::optional<OriginalEgaColorOptions> originalEga;
 };
 
 struct GpuBatch {

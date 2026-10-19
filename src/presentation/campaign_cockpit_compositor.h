@@ -51,6 +51,11 @@ struct CampaignCockpitWeaponTextColors {
     uint32_t rangeBgra = 0;
 };
 
+// Win32 virtual-key values; no Win32 dependency. Repeated keydown is ignored.
+std::optional<battle::BattleInputCommand> campaignCockpitWeaponKey(unsigned int key, bool repeated);
+// Original 6x5 selected lamp surrounded by its 8x7 AWS membership outline.
+std::array<uint32_t, 56> campaignCockpitWeaponLamp(bool selected, bool linked, bool awsEnabled);
+
 const CampaignCockpitLayout& campaignCockpitLayout(
     battle::CampaignCockpitFamily family);
 const CampaignCockpitWeaponPanelLayout& campaignCockpitWeaponPanelLayout(
@@ -249,6 +254,7 @@ struct CampaignCockpitDynamicLayers {
     std::vector<CampaignCockpitSprite> widgets;
     std::vector<CampaignCockpitSprite> hudNumbers;
     CampaignCockpitFont font;
+    CampaignCockpitBackdropImage retreatPrompt;
 };
 
 struct CampaignCockpitSpritePlacement {

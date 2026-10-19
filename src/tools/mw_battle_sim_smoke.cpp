@@ -8,6 +8,7 @@
 #include <array>
 #include <cmath>
 #include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <optional>
@@ -273,6 +274,8 @@ int main(int argc, char** argv) {
         params.playerRoster.factionHouseName = "DAVION";
         params.playerRoster.provenance = "accepted_campaign_contract";
         params.playerRoster.sourceSlot = "player:0";
+        // Synthetic result/precedence fixture; actual original placement is
+        // checked separately against executable tables and all SNARIO layouts.
         params.objective.valid = true;
         params.objective.role = "target";
         params.objective.provenance = "setup_derived_diagnostic";
@@ -473,7 +476,7 @@ int main(int argc, char** argv) {
             }
         }
         std::vector<uint8_t> ammunitionGamProbe(
-            mw::battle::kOriginalGamExtraAmmunitionBase + 12u,
+            0x718,
             uint8_t{0xa5});
         const std::array<int, 6> warhammerCapacities{{
             0, 0, 0, 0, 15, 200}};
@@ -835,6 +838,8 @@ int main(int argc, char** argv) {
         selectAndFire.tickIndex = 0;
         selectAndFire.entityId = weaponWorld.playerEntityId();
         selectAndFire.selectWeaponInstanceId = 2u;
+        // This pre-AWS fixture tests a manually selected single weapon.
+        selectAndFire.toggleAutomaticWeapons = true;
         selectAndFire.cycleTargetScan = true;
         selectAndFire.fireWeapon = true;
         weaponWorld.enqueueInput(selectAndFire);
@@ -1989,6 +1994,15 @@ int main(int argc, char** argv) {
             "snapshot/render cadence changed battle-owned projectile state");
 
         mw::battle::BattleStartParams penetrationParams = weaponParams;
+        // Supply real additive-generator state for these specific critical paths.
+        // First fifteen outputs use the untouched zero second-index words;
+        // desired+1 is a nonzero remainder. Do not depend on old per-shot hashes.
+        const auto criticalRngPrefix=[](std::initializer_list<uint16_t> rolls) {
+            mw::battle::OriginalBtechRng rng; rng.words.fill(0);
+            size_t i=0; for(auto roll:rolls)rng.words.at(i++)=static_cast<uint16_t>(roll+1);
+            return rng;
+        };
+        penetrationParams.originalRng=criticalRngPrefix({5,3,10,6}); // 2d6=10, weapon then gyro.
         penetrationParams.playerLaunchState->mechPresetId = "locust";
         penetrationParams.combatantLaunchStates[0].mechPresetId = "locust";
         penetrationParams.combatantLaunchStates[0].ammunitionByPool.fill(0);
@@ -1998,6 +2012,8 @@ int main(int argc, char** argv) {
         firstCriticalLaser.tickIndex = 0u;
         firstCriticalLaser.entityId = penetrationWorld.playerEntityId();
         firstCriticalLaser.selectWeaponInstanceId = 1u;
+        // Repeat the same gun for the critical-damage oracle, without AWS cycling.
+        firstCriticalLaser.toggleAutomaticWeapons = true;
         firstCriticalLaser.cycleTargetScan = true;
         firstCriticalLaser.fireWeapon = true;
         penetrationWorld.enqueueInput(firstCriticalLaser);
@@ -2103,6 +2119,7 @@ int main(int argc, char** argv) {
             "render cadence changed authoritative critical resolution");
 
         mw::battle::BattleStartParams destroyedCriticalParams = weaponParams;
+        destroyedCriticalParams.originalRng=criticalRngPrefix({0,1,0}); // 2d6=3, post-destruction engine.
         destroyedCriticalParams.playerLaunchState->mechPresetId = "warhammer";
         auto& destroyedCriticalTarget =
             destroyedCriticalParams.combatantLaunchStates[0];
@@ -2141,13 +2158,15 @@ int main(int argc, char** argv) {
             "successful post-internal FUN_4c0a attempt must consume remaining damage before E4C");
 
         mw::battle::BattleStartParams ammoCriticalParams = weaponParams;
+        ammoCriticalParams.originalRng=criticalRngPrefix({0,1,5,3,0}); // First hit:3, second:10 + first candidate.
         ammoCriticalParams.playerLaunchState->mechPresetId = "warhammer";
         auto& ammoCriticalTarget = ammoCriticalParams.combatantLaunchStates[0];
         ammoCriticalTarget.mechPresetId = "rifleman";
         ammoCriticalTarget.ammunitionByPool.fill(0);
         ammoCriticalTarget.ammunitionByPool[0] = 4;
         ammoCriticalTarget.persistentMechState.engine = 3u;
-        ammoCriticalTarget.persistentMechState.gyros = 2u;
+        // Saturate original gyro word at 2: raw GAM JUNK (3), not HEAVY (2 -> 1).
+        ammoCriticalTarget.persistentMechState.gyros = 3u;
         ammoCriticalTarget.persistentMechState.weaponConditions.fill(3u);
         ammoCriticalTarget.persistentMechState.armorDamage[static_cast<size_t>(
             mw::mech3d::MechArmorSectionId::CenterTorso)] = 1u;
@@ -2396,7 +2415,7 @@ int main(int argc, char** argv) {
             limbContinuationParams.combatantLaunchStates[0];
         limbTargetLaunch.ammunitionByPool.fill(0);
         limbTargetLaunch.persistentMechState.engine = 3u;
-        limbTargetLaunch.persistentMechState.gyros = 2u;
+        limbTargetLaunch.persistentMechState.gyros = 3u; // original saturated word 2
         limbTargetLaunch.persistentMechState.leftArmActuator = 3u;
         limbTargetLaunch.persistentMechState.rightArmActuator = 3u;
         limbTargetLaunch.persistentMechState.leftLegActuator = 3u;
@@ -3472,6 +3491,72 @@ int main(int argc, char** argv) {
         expect(mw::battle::mwMainContractForceScore(36, 12) == 150,
                "MW_MAIN full heavy lance contract score changed");
         expect(
+            mw::battle::mwMainContractPriceCeilingK(10, 0, 0) == 530 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 0, 9) == 480 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 1, 0) == 660 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 1, 9) == 720 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 2, 0) == 560 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 2, 9) == 510 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 3, 0) == 630 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 3, 9) == 690 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 4, 0) == 600 &&
+                mw::battle::mwMainContractPriceCeilingK(10, 4, 9) == 600,
+            "MW_MAIN initial Jenner contract price ceilings changed");
+        expect(
+            mw::battle::mwMainContractPriceCeilingK(5, 0, 9) == 240 &&
+                mw::battle::mwMainContractPriceCeilingK(5, 1, 9) == 360 &&
+                mw::battle::mwMainContractPriceCeilingK(5, 2, 9) == 250 &&
+                mw::battle::mwMainContractPriceCeilingK(5, 3, 9) == 340 &&
+                mw::battle::mwMainContractPriceCeilingK(5, 4, 9) == 300 &&
+                mw::battle::mwMainContractPriceCeilingK(150, 0, 2) == 7920,
+            "MW_MAIN easy contract ceiling or 16-bit price arithmetic changed");
+        expect(
+            mw::battle::mwMainContractOpeningPriceK(600) == 150 &&
+                mw::battle::mwMainContractOpeningPriceK(530) == 130 &&
+                mw::battle::mwMainContractOpeningPriceK(480) == 120 &&
+                mw::battle::mwMainContractOpeningPriceK(720) == 180 &&
+                mw::battle::mwMainContractOpeningPriceK(300) == 100 &&
+                mw::battle::mwMainContractOpeningPriceK(100) == 100,
+            "MW_MAIN opening offer must be the floored quarter-price with a 100K minimum");
+        const mw::battle::MwMainContractTerms kuritaTerms =
+            mw::battle::mwMainContractTerms(0, 0, 0);
+        const mw::battle::MwMainContractTerms steinerTerms =
+            mw::battle::mwMainContractTerms(1, 0, 0);
+        const mw::battle::MwMainContractTerms marikTerms =
+            mw::battle::mwMainContractTerms(2, 0, 0);
+        const mw::battle::MwMainContractTerms liaoTerms =
+            mw::battle::mwMainContractTerms(3, 0, 0);
+        const mw::battle::MwMainContractTerms davionTerms =
+            mw::battle::mwMainContractTerms(4, 0, 0);
+        expect(
+            kuritaTerms.salvageCeilingPercent == 5 &&
+                kuritaTerms.advanceCeilingPercent == 5 &&
+                kuritaTerms.salvageOpeningPercent == 1 &&
+                kuritaTerms.advanceOpeningPercent == 1 &&
+                steinerTerms.salvageOpeningPercent == 3 &&
+                steinerTerms.advanceOpeningPercent == 2 &&
+                marikTerms.salvageOpeningPercent == 5 &&
+                marikTerms.advanceOpeningPercent == 3 &&
+                liaoTerms.salvageOpeningPercent == 6 &&
+                liaoTerms.advanceOpeningPercent == 5 &&
+                davionTerms.salvageOpeningPercent == 5 &&
+                davionTerms.advanceOpeningPercent == 6,
+            "MW_MAIN neutral House contract terms changed");
+        const mw::battle::MwMainContractTerms positiveKuritaTerms =
+            mw::battle::mwMainContractTerms(0, 3, 0);
+        const mw::battle::MwMainContractTerms negativeKuritaTerms =
+            mw::battle::mwMainContractTerms(0, 0, 3);
+        expect(
+            positiveKuritaTerms.salvageCeilingPercent == 15 &&
+                positiveKuritaTerms.advanceCeilingPercent == 15 &&
+                positiveKuritaTerms.salvageOpeningPercent == 3 &&
+                positiveKuritaTerms.advanceOpeningPercent == 3 &&
+                negativeKuritaTerms.salvageCeilingPercent == 0 &&
+                negativeKuritaTerms.advanceCeilingPercent == 0 &&
+                negativeKuritaTerms.salvageOpeningPercent == 0 &&
+                negativeKuritaTerms.advanceOpeningPercent == 0,
+            "MW_MAIN standing adjustment for contract terms changed");
+        expect(
             mw::battle::mwMainContractOppositionCounts(122, 0) ==
                 std::array<uint8_t, 3>{{4, 0, 0}},
             "MW_MAIN count cap must discard light and medium buckets first");
@@ -3516,7 +3601,7 @@ int main(int argc, char** argv) {
                "Dark Wing final opposition composition must be marked proven");
         expect(finalRosterSnapshot.oppositionRoster.sourceContextMissionByte == 0x63,
                "Dark Wing final source context mission byte changed");
-        expect(finalRosterSnapshot.oppositionRoster.initialMissionSelector == 12u,
+        expect(finalRosterSnapshot.oppositionRoster.initialMissionSelector == 16u,
                "Dark Wing final initial mission selector changed");
         expect(finalRosterSnapshot.oppositionRoster.spawnOrderProven,
                "Dark Wing final spawn order should be proven");
@@ -3554,18 +3639,18 @@ int main(int argc, char** argv) {
                 options.snarioPath,
                 options.scenarioIndex,
                 500.0);
-        expect(finalBattleSetup.missionSelector == 12u,
+        expect(finalBattleSetup.missionSelector == 16u,
                "Dark Wing final setup must use the special-path initial selector");
-        expect(finalBattleSetup.metadata.playerMode == 3 && finalBattleSetup.metadata.opposingMode == 3,
+        expect(finalBattleSetup.metadata.playerMode == 0 && finalBattleSetup.metadata.opposingMode == 0,
                "Dark Wing final placement modes changed");
         expect(finalBattleSetup.objective.damagePolicyProven &&
-                   finalBattleSetup.objective.damageSuppressed &&
+                   !finalBattleSetup.objective.damageSuppressed &&
                    !finalBattleSetup.objective.missionSemanticsProven,
-               "Dark Wing final selector-12 objective policy metadata changed");
+               "Dark Wing first-stage selector-16 objective policy metadata changed");
 
         mw::battle::BattleStartParams contractSpawnParams = params;
         contractSpawnParams.mission = mw::battle::battleMissionBriefingFromDefinition(
-            *mw::battle::battleMissionDefinitionById(12));
+            *mw::battle::battleMissionDefinitionById(16));
         contractSpawnParams.playerStartTransform = finalBattleSetup.playerStartTransform;
         contractSpawnParams.setupMetadata = finalBattleSetup.metadata;
         contractSpawnParams.objective = {};
@@ -3598,7 +3683,7 @@ int main(int argc, char** argv) {
 
         mw::battle::BattleStartParams finalSpawnParams = params;
         finalSpawnParams.mission = mw::battle::battleMissionBriefingFromDefinition(
-            *mw::battle::battleMissionDefinitionById(12));
+            *mw::battle::battleMissionDefinitionById(16));
         finalSpawnParams.playerStartTransform = finalBattleSetup.playerStartTransform;
         finalSpawnParams.setupMetadata = finalBattleSetup.metadata;
         finalSpawnParams.objective = {};
@@ -3614,7 +3699,7 @@ int main(int argc, char** argv) {
         expect(finalSpawnSnapshot.combatants.size() == 5u,
                "Dark Wing final setup should create the player and four static opponents");
         expect(!finalSpawnSnapshot.objective.valid,
-               "Dark Wing final roster bridge must not invent a factory objective for selector 12");
+               "Dark Wing first stage has no dedicated objective");
         for (size_t slotIndex = 0; slotIndex < 4; ++slotIndex) {
             const mw::battle::CombatantSnapshot& opponent = finalSpawnSnapshot.combatants[slotIndex + 1u];
             const mw::battle::BattleOppositionRosterSlot& rosterSlot =
@@ -3690,13 +3775,13 @@ int main(int argc, char** argv) {
 
         const mw::battle::OriginalBattlefieldSetup lockedSetup =
             mw::battle::decodeOriginalBattlefieldSetup(options.snarioPath, options.scenarioIndex, 10, 500.0);
-        const std::array<int, 35> expectedPlayerModes{{
-            4, 4, 4, 4, 4, 4, 4, 0, 2, 3, 3, 3, 3, 3, 4, 0, 3, 2,
-            1, 1, 2, 3, 3, 3, 3, 3, 3, 3, 0, 3, 3, 0, 3, 3, 3,
+        const std::array<int, 36> expectedPlayerModes{{
+            4,4,4,4,4,4,4,4,0,2,3,3,3,3,3,4,0,3,
+            2,1,1,2,3,3,3,3,3,3,3,0,3,3,0,3,3,3,
         }};
-        const std::array<int, 35> expectedOpposingModes{{
-            0, 0, 0, 0, 0, 0, 0, 2, 4, 3, 3, 3, 3, 3, 0, 2, 3, 4,
-            1, 1, 4, 3, 3, 3, 3, 3, 3, 3, 2, 3, 3, 2, 3, 3, 3,
+        const std::array<int, 36> expectedOpposingModes{{
+            3,3,3,3,3,3,3,3,0,1,4,4,4,4,4,3,0,4,
+            1,2,2,1,4,4,4,4,4,4,4,0,4,4,0,4,4,4,
         }};
         for (size_t selector = 0; selector < expectedPlayerModes.size(); ++selector) {
             const mw::battle::OriginalBattleMissionPlacementModes modes =
@@ -3723,18 +3808,18 @@ int main(int argc, char** argv) {
             expect(modes.specialObjectDepletionResultCode == expectedDepletionResult,
                    "BTECH special-object depletion result code changed");
         }
-        expect(lockedSetup.metadata.playerMode == 3 && lockedSetup.metadata.opposingMode == 3,
+        expect(lockedSetup.metadata.playerMode == 3 && lockedSetup.metadata.opposingMode == 4,
                "selector 10 placement modes changed");
-        expectNear(lockedSetup.placement.opposingSide.positions[0].gridX, 113.25, 0.001,
+        expectNear(lockedSetup.placement.opposingSide.positions[0].gridX, 141.25, 0.001,
                    "selector 10 opposing slot 0 grid x");
-        expectNear(lockedSetup.placement.opposingSide.positions[0].gridY, 51.875, 0.001,
+        expectNear(lockedSetup.placement.opposingSide.positions[0].gridY, 58.875, 0.001,
                    "selector 10 opposing slot 0 grid y");
-        expectNear(lockedSetup.objective.gridX, 110.25, 0.001,
+        expectNear(lockedSetup.objective.gridX, 152.25, 0.001,
                    "selector 10 diagnostic objective grid x");
-        expectNear(lockedSetup.objective.gridY, 65.875, 0.001,
+        expectNear(lockedSetup.objective.gridY, 75.875, 0.001,
                    "selector 10 diagnostic objective grid y");
-        expect(!lockedSetup.metadata.dedicatedObjective.valid,
-               "selector 10 must keep its opposing:1 objective diagnostic separate from mode-4 objective data");
+        expect(lockedSetup.metadata.dedicatedObjective.valid,
+               "selector 10 must use the dedicated opposing mode-4 object");
         expect(lockedSetup.metadata.missionSelectorContractProven &&
                    lockedSetup.metadata.briefingMissionIdValid &&
                    lockedSetup.metadata.briefingMissionId == 10u &&
@@ -3746,7 +3831,7 @@ int main(int argc, char** argv) {
                    lockedSetup.metadata.missionSelectorProvenance ==
                        "mw_main_context7_minus_one_direct",
                "selector 10 mission handoff contract changed");
-        expect(lockedSetup.objective.transformProven && !lockedSetup.objective.activeObjectProven &&
+        expect(lockedSetup.objective.transformProven && lockedSetup.objective.activeObjectProven &&
                    !lockedSetup.objective.missionSemanticsProven,
                "selector 10 objective evidence flags changed");
         expect(lockedSetup.objective.missionIntent ==
@@ -3760,7 +3845,7 @@ int main(int argc, char** argv) {
                "selector 10 objective damage-suppression metadata changed");
         expect(lockedSetup.objective.depletionPolicyProven &&
                    lockedSetup.objective.depletionSetsPlayerWinCondition &&
-                   lockedSetup.objective.depletionSetsPlayerLossCondition &&
+                   !lockedSetup.objective.depletionSetsPlayerLossCondition &&
                    lockedSetup.objective.depletionResultCode == 0,
                "selector 10 objective depletion outcome metadata changed");
         expect(lockedSetup.battlefieldBoundary.valid &&
@@ -3795,13 +3880,12 @@ int main(int argc, char** argv) {
                "original player-exit outcome metadata changed");
 
         const mw::battle::OriginalBattlefieldSetup mode1Setup =
-            mw::battle::decodeOriginalBattlefieldSetup(options.snarioPath, options.scenarioIndex, 18, 500.0);
-        expect(mode1Setup.metadata.playerMode == 1 && mode1Setup.metadata.opposingMode == 1,
-               "selector 18 must retain mode-1 exit handling for both sides");
+            mw::battle::decodeOriginalBattlefieldSetup(options.snarioPath, options.scenarioIndex, 19, 500.0);
+        expect(mode1Setup.metadata.playerMode == 1 && mode1Setup.metadata.opposingMode == 2,
+               "selector 19 must use mode-1 player / mode-2 opponents");
         expect(mode1Setup.battlefieldBoundary.playerAllowedExitMask ==
                    mw::battle::battlefieldBoundaryEdgeMask(mw::battle::BattlefieldBoundaryEdge::West) &&
-                   mode1Setup.battlefieldBoundary.opposingAllowedExitMask ==
-                       mw::battle::battlefieldBoundaryEdgeMask(mw::battle::BattlefieldBoundaryEdge::West),
+                   mode1Setup.battlefieldBoundary.opposingAllowedExitMask == 0,
                "scenario 2 mode-1 west-exit masks changed");
         expect(mw::battle::battlefieldActorExitStatus(mw::battle::BattlefieldBoundaryEdge::North) == -2 &&
                    mw::battle::battlefieldActorExitStatus(mw::battle::BattlefieldBoundaryEdge::South) == -3 &&
@@ -3811,7 +3895,7 @@ int main(int argc, char** argv) {
 
         mw::battle::BattleStartParams boundaryContractParams = params;
         boundaryContractParams.mission = mw::battle::battleMissionBriefingFromDefinition(
-            *mw::battle::battleMissionDefinitionById(18));
+            *mw::battle::battleMissionDefinitionById(19));
         boundaryContractParams.setupMetadata = mode1Setup.metadata;
         boundaryContractParams.objective = mode1Setup.objective;
         boundaryContractParams.battlefieldBoundary = mode1Setup.battlefieldBoundary;
@@ -3930,8 +4014,8 @@ int main(int argc, char** argv) {
                "selector 0 objective damage policy changed");
         expect(playerMode4Setup.objective.depletionPolicyProven &&
                    !playerMode4Setup.objective.depletionSetsPlayerWinCondition &&
-                   !playerMode4Setup.objective.depletionSetsPlayerLossCondition &&
-                   playerMode4Setup.objective.depletionResultCode == -1,
+                   playerMode4Setup.objective.depletionSetsPlayerLossCondition &&
+                   playerMode4Setup.objective.depletionResultCode == 1,
                "selector 0 objective depletion policy changed");
         expect(playerMode4Setup.objective.sourceSlot == "dedicated:player" &&
                    playerMode4Setup.objective.provenance == "btech_mode4_dedicated_object",
@@ -3954,6 +4038,8 @@ int main(int argc, char** argv) {
             playerMode4Setup.playerStartTransform;
         phase13MotionOwnershipParams.setupMetadata =
             playerMode4Setup.metadata;
+        // Synthetic mode-0 ownership branch; Defense now correctly decodes 4/3.
+        phase13MotionOwnershipParams.setupMetadata.opposingMode = 0;
         phase13MotionOwnershipParams.playerAlliedLaunchStates.clear();
         phase13MotionOwnershipParams.combatantLaunchStates.clear();
         mw::battle::BattleCombatantLaunchState phase13ModeZeroOpponent;
@@ -4141,14 +4227,14 @@ int main(int argc, char** argv) {
             mw::battle::runStandaloneBattle(
                 protectObjectiveRuntimeParams,
                 mw::battle::BattleReplay{},
-                mw::battle::StandaloneBattleRunOptions{12, true});
+                mw::battle::StandaloneBattleRunOptions{72, true});
         expect(protectObjectiveResult.terminal && protectObjectiveResult.result.has_value(),
                "protect objective runtime should produce a terminal result");
         expect(protectObjectiveResult.result->state == mw::battle::BattleMissionRuntimeState::Defeat &&
                    protectObjectiveResult.result->rawResultCode == 1 &&
-                   protectObjectiveResult.result->reason == "protected_objective_depleted",
+                   protectObjectiveResult.result->reason == "objective_depletion_player_loss",
                "protect objective depletion result changed");
-        expect(protectObjectiveResult.ticksExecuted == 7,
+        expect(protectObjectiveResult.ticksExecuted == 57,
                "protect objective depletion terminal tick changed");
         expect(protectObjectiveResult.finalSnapshot.objective.depleted &&
                    protectObjectiveResult.finalSnapshot.objective.damage == 3 &&
@@ -4215,18 +4301,18 @@ int main(int argc, char** argv) {
 
         const mw::battle::OriginalBattlefieldSetup unboundProtectSetup =
             mw::battle::decodeOriginalBattlefieldSetup(options.snarioPath, options.scenarioIndex, 7, 500.0);
-        expect(!unboundProtectSetup.objective.activeObjectProven &&
+        expect(unboundProtectSetup.objective.activeObjectProven &&
                    unboundProtectSetup.objective.missionIntent ==
                        mw::battle::BattleMissionObjectiveIntent::Protect &&
                    unboundProtectSetup.objective.missionIntentProven &&
                    unboundProtectSetup.objective.missionTargetKind == "landing_facilities" &&
-                   !unboundProtectSetup.objective.missionIntentBoundToObjective &&
-                   !unboundProtectSetup.objective.missionSemanticsProven,
-               "selector 7 protect briefing must remain unbound from its diagnostic transform");
+                   unboundProtectSetup.objective.missionIntentBoundToObjective &&
+                   unboundProtectSetup.objective.missionSemanticsProven,
+               "selector 7 must bind landing facilities to its dedicated player-side object");
 
         const mw::battle::OriginalBattlefieldSetup destroySetup =
             mw::battle::decodeOriginalBattlefieldSetup(options.snarioPath, options.scenarioIndex, 22, 500.0);
-        expect(!destroySetup.objective.activeObjectProven &&
+        expect(destroySetup.objective.activeObjectProven &&
                    destroySetup.objective.missionIntent ==
                        mw::battle::BattleMissionObjectiveIntent::Destroy &&
                    destroySetup.objective.missionIntentProven &&
@@ -4257,12 +4343,12 @@ int main(int argc, char** argv) {
         expect(opposingMode4Setup.metadata.dedicatedObjective.valid &&
                    opposingMode4Setup.metadata.dedicatedObjective.sourceSide == 1,
                "selector 17 should expose the opposing-side dedicated objective transform");
-        expect(opposingMode4Setup.metadata.dedicatedObjective.bankId == 8 &&
-                   opposingMode4Setup.metadata.dedicatedObjective.coordinateOffset == 0x0e00,
+        expect(opposingMode4Setup.metadata.dedicatedObjective.bankId == 15 &&
+                   opposingMode4Setup.metadata.dedicatedObjective.coordinateOffset == 0x0e38,
                "selector 17 dedicated objective bank changed");
-        expectNear(opposingMode4Setup.metadata.dedicatedObjective.gridX, 43.125, 0.001,
+        expectNear(opposingMode4Setup.metadata.dedicatedObjective.gridX, 152.25, 0.001,
                    "selector 17 dedicated objective grid x");
-        expectNear(opposingMode4Setup.metadata.dedicatedObjective.gridY, 66.40625, 0.001,
+        expectNear(opposingMode4Setup.metadata.dedicatedObjective.gridY, 75.875, 0.001,
                    "selector 17 dedicated objective grid y");
         expect(opposingMode4Setup.objective.sourceSlot == "dedicated:opposing" &&
                    opposingMode4Setup.objective.activeObjectProven,
@@ -4418,10 +4504,19 @@ int main(int argc, char** argv) {
                 mw::battle::Transform{12000.0, 0.0, 8000.0, 0.25});
         expect(damagedCampaignLaunch.persistentMechState.armorDamage[
                        static_cast<size_t>(
-                           mw::mech3d::MechArmorSectionId::RightArm)] > 0u &&
+                           mw::mech3d::MechArmorSectionId::RightArm)] == 0u &&
+                   damagedCampaignLaunch.persistentMechState.exactDamage &&
+                   damagedCampaignLaunch.persistentMechState.exactDamage->detailed.armorSections[
+                       static_cast<size_t>(mw::mech3d::MechArmorSectionId::RightArm)].armorRemaining == carriedArmor.armorRemaining &&
                    damagedCampaignLaunch.persistentMechState.engine == 2u &&
+                   // Original binary weapon exit retains the prior GAM grade
+                   // while functionality is unchanged; exact counters survive.
                    damagedCampaignLaunch.persistentMechState.
-                           weaponConditions[0] == 1u &&
+                           weaponConditions[0] == 0u &&
+                   damagedCampaignLaunch.persistentMechState.exactDamage->detailed.
+                           installedWeapons[0].condition == 1u &&
+                   damagedCampaignLaunch.persistentMechState.exactDamage->detailed.
+                           installedWeapons[0].battleDamage == 1 &&
                    damagedCampaignLaunch.persistentMechState.provenance ==
                        "wiki_campaign_intermission:carry_damage_without_full_repair",
                "extended campaign intermission must carry armor, critical and weapon damage");
@@ -4602,7 +4697,7 @@ int main(int argc, char** argv) {
             }
         }
         expect(landingPlayer.has_value(), "jump test should return to the ground");
-        expect(landingPlayer->forwardSpeed > 0.0, "landing should preserve horizontal momentum for the landing tick");
+        expect(landingPlayer->forwardSpeed == 0.0 && landingPlayer->posture.posture == mw::battle::BattlePosture::Falling, "hard landing must stop movement and start a recoverable fall");
         expect(landingPlayer->landingImpactSpeed > 0.0, "landing should record impact speed");
         expect(landingPlayer->hardLanding, "unsoftened jump should mark a hard landing");
         expect(landingPlayer->knockdownCandidate, "hard landing should prepare knockdown candidate state");
@@ -6577,6 +6672,12 @@ int main(int argc, char** argv) {
                 *mw::battle::battleMissionDefinitionById(7));
         phase13LiveMovementParams.setupMetadata =
             phase13LiveSourceSetup.metadata;
+        // These Phase 13 branch tests deliberately construct a 0/2 laboratory
+        // fixture. It is not the original Landing Facilities placement.
+        phase13LiveMovementParams.setupMetadata.playerMode = 0;
+        phase13LiveMovementParams.setupMetadata.opposingMode = 2;
+        phase13LiveMovementParams.setupMetadata.dedicatedObjective = {};
+        phase13LiveMovementParams.setupMetadata.objectiveSourceSlot = "opposing:1";
         phase13LiveMovementParams.objective = {};
         phase13LiveMovementParams.battlefieldBoundary = {};
         phase13LiveMovementParams.playerLaunchState.reset();
@@ -7755,6 +7856,45 @@ int main(int argc, char** argv) {
         const auto phase13CampaignMode3BothNoObjectiveActivation =
             mw::battle::battleOriginalAiCampaignMovementActivation(
                 phase13CampaignMode3BothNoObjective);
+        // Historical compatibility-policy fixtures intentionally retain the old
+        // 3/3 and 2/4 laboratory arrangements. They are NOT decoded mission
+        // placement: the executable-backed start-placement smoke covers that.
+        const auto phase13HistoricalFixture = [&options](mw::battle::BattleStartParams& fixture, int playerMode, int enemyMode) {
+            auto& setup = fixture.setupMetadata;
+            setup.playerMode = playerMode; setup.opposingMode = enemyMode;
+            setup.playerBankId = 3; setup.opposingBankId = enemyMode == 4 ? 8 : 15;
+            std::ifstream source(options.snarioPath, std::ios::binary);
+            for (int side = 0; side < 2; ++side) {
+                auto& slots = side == 0 ? setup.playerSlots : setup.opposingSlots;
+                const int bank = side == 0 ? setup.playerBankId : setup.opposingBankId;
+                const int mode = side == 0 ? playerMode : enemyMode;
+                for (size_t i = 0; i < slots.size(); ++i) {
+                    source.seekg(0x3c0 + bank * 160 + mode * 32 + i * 8);
+                    std::array<unsigned char,8> bytes{};
+                    source.read(reinterpret_cast<char*>(bytes.data()), bytes.size());
+                    const auto dword = [&](size_t n) { return static_cast<int32_t>(
+                        static_cast<uint32_t>(bytes[n]) | (static_cast<uint32_t>(bytes[n+1]) << 8) |
+                        (static_cast<uint32_t>(bytes[n+2]) << 16) | (static_cast<uint32_t>(bytes[n+3]) << 24)); };
+                    auto& slot=slots[i]; slot.originalRawX=dword(0); slot.originalRawZ=dword(4);
+                    slot.gridX=(slot.originalRawX+44160.0)/512.0; slot.gridY=(24000.0-slot.originalRawZ)/512.0;
+                    slot.transform={slot.gridX*500.0,0,slot.gridY*500.0,0};
+                }
+            }
+            fixture.playerStartTransform=setup.playerSlots[0].transform;
+            for(size_t i=0;i<fixture.playerAlliedLaunchStates.size();++i)
+                fixture.playerAlliedLaunchStates[i].startTransform=setup.playerSlots[i+1].transform;
+            for(size_t i=0;i<fixture.combatantLaunchStates.size();++i)
+                fixture.combatantLaunchStates[i].startTransform=setup.opposingSlots[i].transform;
+            setup.dedicatedObjective={}; setup.objectiveSourceSlot="opposing:1";
+            fixture.objective.activeObjectProven=false;
+            fixture.objective.sourceSlot="opposing:1";
+            fixture.objective.transform=setup.opposingSlots[1].transform;
+            fixture.objective.gridX=setup.opposingSlots[1].gridX;
+            fixture.objective.gridY=setup.opposingSlots[1].gridY;
+            fixture.objective.depletionSetsPlayerWinCondition=playerMode==3;
+            fixture.objective.depletionSetsPlayerLossCondition=enemyMode==3;
+            fixture.objective.depletionResultCode=playerMode==3?0:(enemyMode==3?1:-1);
+        };
         const mw::battle::OriginalBattlefieldSetup
             phase13CampaignMode3ObjectiveSetup =
                 mw::battle::decodeOriginalBattlefieldSetup(
@@ -7794,6 +7934,7 @@ int main(int argc, char** argv) {
         phase13CampaignMode3Objective.combatantLaunchStates[0].startTransform =
             phase13CampaignMode3ObjectiveSetup.metadata.opposingSlots[0].
                 transform;
+        phase13HistoricalFixture(phase13CampaignMode3Objective, 3, 3);
         const auto phase13CampaignMode3ObjectiveActivation =
             mw::battle::battleOriginalAiCampaignMovementActivation(
                 phase13CampaignMode3Objective);
@@ -7818,7 +7959,7 @@ int main(int argc, char** argv) {
                 mw::battle::decodeOriginalBattlefieldSetup(
                     options.snarioPath,
                     options.scenarioIndex,
-                    missionId,
+                    mw::battle::originalBattlePlacementSelectorForMission(missionId),
                     500.0);
             auto fixture = phase13CampaignMovementParams;
             fixture.combatAiPolicy =
@@ -8652,8 +8793,14 @@ int main(int argc, char** argv) {
             phase14RetrieveContactParams.objective.transform;
         phase14RetrieveContactParams.playerLaunchState =
             phase14RetrievePlayerLaunch;
-        const auto phase14RetrieveContact = mw::battle::runBattleReplay(
-            phase14RetrieveContactParams, {}, 2u);
+        auto phase14RetrieveContactWorld = mw::battle::BattleWorld::create(phase14RetrieveContactParams);
+        phase14RetrieveContactWorld.runTicks(2u);
+        const auto retrievalPending = phase14RetrieveContactWorld.snapshot();
+        expect(retrievalPending.conclusionDelay.active && !retrievalPending.result.valid &&
+                   !retrievalPending.conclusionDelay.freezesSimulation,
+               "retrieval must latch its flag and leave the normal conclusion window");
+        phase14RetrieveContactWorld.runTicks(retrievalPending.conclusionDelay.resolveTickIndex + 1u - retrievalPending.tickIndex);
+        const auto phase14RetrieveContact = phase14RetrieveContactWorld.snapshot();
         expect(phase14RetrieveContact.retrieval.active &&
                    phase14RetrieveContact.retrieval.phase ==
                        mw::battle::BattleRetrievalPhase::ContactedByPlayer &&
@@ -8668,8 +8815,8 @@ int main(int argc, char** argv) {
                    phase14RetrieveContact.result.rawResultCode == 0 &&
                    phase14RetrieveContact.result.reason ==
                        "retrieval_structure_contact" &&
-                   phase14RetrieveContact.tickIndex == 1u,
-               "phase14 Wiki retrieval contact must immediately complete Victory");
+                   phase14RetrieveContact.tickIndex == retrievalPending.conclusionDelay.resolveTickIndex + 1u,
+               "retrieval contact must complete Victory at the latched deadline");
         expectNear(
             phase14RetrieveContact.retrieval.contactAnchor.x,
             68000.0,
@@ -8712,7 +8859,7 @@ int main(int argc, char** argv) {
         phase14RetrievalFieldHashed(
             [](auto& s) { ++s.contactTickIndex; }, "contactTickIndex");
         const auto phase14RetrieveContactRepeat =
-            mw::battle::runBattleReplay(phase14RetrieveContactParams, {}, 2u);
+            mw::battle::runBattleReplay(phase14RetrieveContactParams, {}, phase14RetrieveContact.tickIndex);
         expect(mw::battle::battleSnapshotFingerprint(phase14RetrieveContact) ==
                    mw::battle::battleSnapshotFingerprint(
                        phase14RetrieveContactRepeat),
@@ -8720,6 +8867,7 @@ int main(int argc, char** argv) {
 
         auto phase14UnprovenRetrieveParams = phase14RetrieveParams;
         phase14UnprovenRetrieveParams.objective.transformProven = false;
+        phase14UnprovenRetrieveParams.objective.activeObjectProven = false;
         const auto phase14UnprovenRetrieve = mw::battle::runBattleReplay(
             phase14UnprovenRetrieveParams, {}, 1u);
         expect(!phase14UnprovenRetrieve.retrieval.active &&
@@ -9037,8 +9185,13 @@ int main(int argc, char** argv) {
 
         auto phase14ProtectDepletionParams = phase14ProtectAssaultParams;
         phase14ProtectDepletionParams.objectiveMaxDamage = 1;
-        const auto phase14ProtectDepletion = mw::battle::runBattleReplay(
-            phase14ProtectDepletionParams, {}, 1u);
+        auto phase14ProtectDepletionWorld = mw::battle::BattleWorld::create(phase14ProtectDepletionParams);
+        phase14ProtectDepletionWorld.tick();
+        const auto protectPending = phase14ProtectDepletionWorld.snapshot();
+        expect(protectPending.objective.depleted && protectPending.conclusionDelay.active && !protectPending.result.valid,
+               "protected objective loss must retain the normal conclusion window");
+        phase14ProtectDepletionWorld.runTicks(protectPending.conclusionDelay.resolveTickIndex + 1u - protectPending.tickIndex);
+        const auto phase14ProtectDepletion = phase14ProtectDepletionWorld.snapshot();
         expect(phase14ProtectDepletion.objective.depleted &&
                    phase14ProtectDepletion.missionRuntimeState ==
                        mw::battle::BattleMissionRuntimeState::Defeat &&
@@ -9725,6 +9878,10 @@ int main(int argc, char** argv) {
         wikiAssaultObjectiveFire.fireWeapon = true;
         wikiAssaultObjectiveWorld.enqueueInput(wikiAssaultObjectiveFire);
         wikiAssaultObjectiveWorld.tick();
+        const auto assaultPending = wikiAssaultObjectiveWorld.snapshot();
+        expect(assaultPending.objective.depleted && assaultPending.conclusionDelay.active && !assaultPending.result.valid,
+               "assault objective must retain the normal conclusion window");
+        wikiAssaultObjectiveWorld.runTicks(assaultPending.conclusionDelay.resolveTickIndex + 1u - assaultPending.tickIndex);
         const auto wikiAssaultObjective =
             wikiAssaultObjectiveWorld.snapshot();
         expect(wikiAssaultObjective.objective.depleted &&
@@ -9774,10 +9931,11 @@ int main(int argc, char** argv) {
         const auto wikiFlee = wikiFleeWorld.snapshot();
         expect(wikiFlee.result.valid &&
                    wikiFlee.result.state ==
-                       mw::battle::BattleMissionRuntimeState::Defeat &&
-                   wikiFlee.result.reason == "player_fled_battlefield" &&
+                       mw::battle::BattleMissionRuntimeState::Withdraw &&
+                   wikiFlee.result.rawResultCode == 2 &&
+                   wikiFlee.result.reason == "player_ordinary_boundary_exit" &&
                    !wikiFlee.result.exitAllowed,
-               "crossing any map edge must count as fleeing in Wiki missions");
+               "ordinary boundary departure must retain original withdrawal code2");
 
         auto wikiSprintParams = phase13CampaignFixtureForMission(9u);
         wikiSprintParams.combatAiPolicy =
@@ -9859,11 +10017,13 @@ int main(int argc, char** argv) {
                 phase13DefenseMission);
         auto phase13SuppressionMission =
             phase13CampaignFixtureForMission(8u);
+        phase13HistoricalFixture(phase13SuppressionMission, 2, 4);
         const auto phase13SuppressionActivation =
             mw::battle::battleOriginalAiCampaignMovementActivation(
                 phase13SuppressionMission);
         auto phase13RescueMission =
             phase13CampaignFixtureForMission(11u);
+        phase13HistoricalFixture(phase13RescueMission, 3, 3);
         const auto phase13RescueActivation =
             mw::battle::battleOriginalAiCampaignMovementActivation(
                 phase13RescueMission);
@@ -11217,7 +11377,7 @@ int main(int argc, char** argv) {
             << ":" << combatCoreStatus
             << " final_roster=battlemaster:3,warhammer:1"
             << " final_roster_provenance=" << finalRosterSnapshot.oppositionRoster.provenance
-            << " final_roster_context=0x63->selector12"
+            << " final_roster_context=0x63->selector16"
             << " final_roster_slots=" << joinOppositionRosterSlots(finalRosterSnapshot.oppositionRoster)
             << " final_roster_spawn_order=proven"
             << " final_roster_placement=proven"
@@ -11227,20 +11387,20 @@ int main(int argc, char** argv) {
             << " placement_mode_table=BTECH.EXE:DS092C+DS08D8"
             << " mission_handoff_selector10=briefing:10,handoff:11,placement:10"
             << " mission_extended_selector17=pre_remap_diagnostic"
-            << " placement_selector10_modes=3:3"
-            << " placement_mode4_selectors=0,1,2,3,4,5,6,8,14,17,20"
+            << " placement_selector10_modes=3:4"
+            << " placement_mode4_selectors=0-7,10-15,17,22-28,30-31,33-35"
             << " placement_damage_suppressed_selectors=10,11,12,13"
             << " placement_depletion_result=BTECH:mode3->flags:player_win_precedence"
             << " objective_intent_catalog=MW_MAIN.EXE:exact_titles"
             << " objective_retrieve_selectors=10,11,12,13,32,33:title_typed"
             << " objective_protect_selector2=bound:water_factory"
-            << " objective_protect_selector7=diagnostic:landing_facilities"
+            << " objective_protect_selector7=bound:landing_facilities"
             << " objective_destroy_selector22=diagnostic:water_factory"
             << " objective_disable_selector23=diagnostic:weapons_factory"
             << " battlefield_bounds=-44160..44160,-24000..24000"
             << " battlefield_exit_status=-2:north,-3:south,-4:west,-5:east"
             << " battlefield_exit_bits=1:north,2:south,4:west,8:east"
-            << " battlefield_mode1_selector18_masks="
+            << " battlefield_mode1_selector19_masks="
             << static_cast<int>(mode1Setup.battlefieldBoundary.playerAllowedExitMask) << ","
             << static_cast<int>(mode1Setup.battlefieldBoundary.opposingAllowedExitMask)
             << " battlefield_player_exit_results=ordinary:2,allowed:0"
@@ -11259,9 +11419,9 @@ int main(int argc, char** argv) {
             << ":status" << allowedExitSnapshot.result.actorExitStatus
             << " mission_result_api=available"
             << " battle_launch_result_api=standalone"
-            << " dedicated_objective_selector10=absent_diagnostic"
+            << " dedicated_objective_selector10=opposing:15@0x0e38"
             << " dedicated_objective_selector0=player:15@0x0e38"
-            << " dedicated_objective_selector17=opposing:8@0x0e00"
+            << " dedicated_objective_selector17=opposing:15@0x0e38"
             << " objective=yes"
             << " objective_provenance=" << finalA.objective.provenance
             << " objective_slot=" << finalA.objective.sourceSlot

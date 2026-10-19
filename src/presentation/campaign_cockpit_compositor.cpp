@@ -15,13 +15,39 @@
 
 namespace mw::presentation {
 
+std::optional<battle::BattleInputCommand> campaignCockpitWeaponKey(unsigned int key, bool repeated) {
+    if (repeated) return std::nullopt;
+    battle::BattleInputCommand c;
+    switch (key) {
+    case 'W': c.toggleAutomaticWeapons = true; break;
+    case 'O': c.toggleSelectedWeaponLink = true; break;
+    case 0x09: c.fireLinkedWeapons = true; break; // Tab
+    case 0x20: c.fireWeapon = true; break; // Space
+    case 0x6b: case 0xdd: c.selectedWeaponStepDelta = 1; break; // keypad + / ]
+    case 0x6d: case 0xdb: c.selectedWeaponStepDelta = -1; break; // keypad - / [
+    default:
+        if (key < '0' || key > '9') return std::nullopt;
+        c.selectWeaponInstanceId = key == '0' ? 10u : key - '0';
+    }
+    return c;
+}
+
+std::array<uint32_t, 56> campaignCockpitWeaponLamp(bool selected, bool linked, bool awsEnabled) {
+    std::array<uint32_t, 56> pixels{};
+    pixels.fill(linked && awsEnabled ? 0xffff5555u : 0xff555555u);
+    for (int y = 1; y < 6; ++y)
+        for (int x = 1; x < 7; ++x)
+            pixels[y * 8 + x] = selected ? 0xff55ff55u : 0xff5555ffu;
+    return pixels;
+}
+
 namespace {
 
 constexpr int kScreenWidth = 320;
 constexpr int kScreenHeight = 200;
-constexpr int kSpeedGaugeX = 236;
+constexpr int kSpeedGaugeX = 238;
 constexpr int kSpeedGaugeY = 177;
-constexpr int kHeavySpeedGaugeX = 22;
+constexpr int kHeavySpeedGaugeX = 21;
 constexpr int kHeavySpeedGaugeY = 186;
 constexpr int kSpeedGaugeBarCount = 31;
 constexpr int kSpeedGaugeZeroIndex = 9;
@@ -490,7 +516,7 @@ int campaignCockpitWeaponPanelRowY(
 }
 
 CampaignCockpitWeaponTextColors campaignCockpitWeaponTextColors(
-    battle::CampaignCockpitFamily family,
+    battle::CampaignCockpitFamily /*family*/,
     battle::BattleWeaponReadiness readiness,
     bool selectedTargetWithinMaximumRange,
     bool cooldownActive) {
@@ -506,7 +532,7 @@ CampaignCockpitWeaponTextColors campaignCockpitWeaponTextColors(
         readiness == battle::BattleWeaponReadiness::Cooldown;
     return {
         unavailable
-            ? (family == battle::CampaignCockpitFamily::Heavy ? kBlack : kWhite)
+            ? kBlack
             : coolingDown
                 ? kRed
                 : kWhite,
@@ -598,12 +624,12 @@ CampaignCockpitRect campaignCockpitMinimapRect() {
 CampaignCockpitRadarGeometry campaignCockpitRadarGeometry() {
     CampaignCockpitRadarGeometry geometry;
     geometry.rect = campaignCockpitMinimapRect();
-    geometry.leftX = geometry.rect.x + 2;
-    geometry.rightX = geometry.rect.x + geometry.rect.width - 3;
-    geometry.topY = geometry.rect.y + 2;
+    geometry.leftX = geometry.rect.x;
+    geometry.rightX = geometry.rect.x + geometry.rect.width - 1;
+    geometry.topY = geometry.rect.y;
     geometry.apexX = geometry.rect.x + geometry.rect.width / 2;
-    geometry.apexY = geometry.rect.y + 43;
-    geometry.labelY = geometry.rect.y + 56;
+    geometry.apexY = geometry.rect.y + 36;
+    geometry.labelY = geometry.rect.y + 59;
     return geometry;
 }
 
@@ -993,12 +1019,11 @@ CampaignBattleMapPlayerMarker campaignBattleMapPlayerMarker(
     case 3:
         return {
             CampaignBattleMapPlayerMarkerShape::Plus,
-            0xff00aa00u,
-            2u,
+            mode == battle::CampaignBattlePresentationMode::CockpitCommandMap ? 0xff55ff55u : 0xff00aa00u,
+            static_cast<uint8_t>(mode == battle::CampaignBattlePresentationMode::CockpitCommandMap ? 10u : 2u),
             kPlus,
             environmentId == 1 &&
                 (mode == battle::CampaignBattlePresentationMode::MissionStatus ||
-                 mode == battle::CampaignBattlePresentationMode::CockpitCommandMap ||
                  mode == battle::CampaignBattlePresentationMode::TacticalMap),
         };
     default:
@@ -1094,6 +1119,44 @@ CampaignCockpitDynamicLayers loadCampaignCockpitDynamicLayers(
         layers.widgets = loadSprites(resources.widgetsPath, resources.palettePath);
         layers.hudNumbers = loadSprites(resources.hudNumbersPath, resources.palettePath);
         layers.font = loadFont(resources.hudFontPath);
+        // Original27F4: PROMPT.BMP record0 at107,87; two centred 6px lines.
+        // Keep this optional so a missing modal asset cannot disable a cockpit.
+        try {
+            auto sprites = loadSprites(resources.widgetsPath.parent_path() / "PROMPT.BMP", resources.palettePath);
+            const auto& sprite = sprites.at(0);
+            auto& prompt = layers.retreatPrompt;
+            if (sprite.width != 112 || sprite.height != 27)
+                throw std::runtime_error("unexpected retreat prompt dimensions");
+            // INF stores112 pixels including right padding; original captures
+            // and restores107 columns. Keep only that actual dialog rectangle.
+            prompt.width = 107; prompt.height = sprite.height;
+            for (int y = 0; y < prompt.height; ++y) for (int x = 0; x < prompt.width; ++x) {
+                const size_t i = (static_cast<size_t>(y) * sprite.width + x) * 4u;
+                prompt.bgraPixels.push_back(0xff000000u |
+                    (uint32_t(sprite.rgbaPixels[i]) << 16) |
+                    (uint32_t(sprite.rgbaPixels[i+1]) << 8) | sprite.rgbaPixels[i+2]);
+            }
+            const auto palette = loadPalette(resources.palettePath);
+            const auto& rgb = palette[7];
+            const uint32_t color = 0xff000000u | (uint32_t(rgb[0]) << 16) | (uint32_t(rgb[1]) << 8) | rgb[2];
+            const auto& font = layers.font;
+            int y = 7;
+            for (const std::string line : {"DO YOU WANT TO", "RETREAT (Y/N)"}) {
+                int x = 53 - static_cast<int>(line.size()) * 3;
+                for (unsigned char c : line) {
+                    const int glyph = c - font.firstCode;
+                    if (glyph >= 0 && glyph < font.glyphCount)
+                        for (int row = 0; row < font.height; ++row)
+                            for (int col = 0; col < font.width; ++col)
+                                if ((font.rows[glyph * font.height + row] & (0x80u >> col)) &&
+                                    x+col >= 0 && x+col < prompt.width && y+row < prompt.height)
+                                    prompt.bgraPixels[(y+row)*prompt.width+x+col] = color;
+                    x += 6;
+                }
+                y += 8;
+            }
+            prompt.valid = true;
+        } catch (const std::exception& error) { layers.retreatPrompt.reason = error.what(); }
         layers.valid =
             !layers.struts.empty() &&
             !layers.widgets.empty() &&

@@ -61,14 +61,20 @@ void encodeOriginalGamOwnedMechAmmunition(
     std::vector<uint8_t>& data,
     size_t ownedMechSlot,
     const std::array<int, 6>& capacityByPool,
-    const std::array<int, 6>& ammunitionByPool) {
+    const std::array<int, 6>& ammunitionByPool,
+    bool preserveOriginalSlot) {
+    if (ownedMechSlot >= kOriginalGamOwnedMechSlotCount ||
+        std::count_if(capacityByPool.begin(),capacityByPool.end(),[](int n) { return n>0; }) > 3 ||
+        data.size() < kOriginalGamOwnedAmmoTypesBase + 3*0x18)
+        throw std::runtime_error("invalid GAM owned ammunition layout");
     for (size_t ordinal = 0;
-         ordinal < kOriginalGamOwnedMechAmmunitionPlaneCount;
+         !preserveOriginalSlot && ordinal < kOriginalGamOwnedMechAmmunitionPlaneCount;
          ++ordinal) {
         writeU16Le(
             data,
             originalGamOwnedMechAmmunitionOffset(ordinal, ownedMechSlot),
             0u);
+        writeU16Le(data, kOriginalGamOwnedAmmoTypesBase + ordinal*0x18 + ownedMechSlot*2, 0u);
     }
 
     size_t ordinal = 0;
@@ -81,6 +87,10 @@ void encodeOriginalGamOwnedMechAmmunition(
             originalGamOwnedMechAmmunitionOffset(ordinal, ownedMechSlot),
             static_cast<uint16_t>(std::clamp(
                 ammunitionByPool[pool], 0, capacityByPool[pool])));
+        if (!preserveOriginalSlot) {
+            writeU16Le(data, kOriginalGamOwnedAmmoTypesBase + ordinal*0x18 + ownedMechSlot*2,
+                static_cast<uint16_t>(pool));
+        }
         ++ordinal;
     }
 }

@@ -173,6 +173,72 @@ int mwMainContractForceScore(
         assignedMechStrengthTotal) * 10;
 }
 
+int mwMainContractPriceCeilingK(
+    int adjustedForceScore,
+    uint8_t employerHouseId,
+    uint32_t priceRoll) {
+    // FUN_101b_4f6e at MW_MAIN 101B:5050.  These signed words are stored at
+    // DS:4B41 and DS:4B4B in House order Kurita..Davion.
+    static constexpr std::array<int16_t, 5> kHouseBias{{10, 10, 5, 5, 0}};
+    static constexpr std::array<int16_t, 5> kHouseMultiplier{{-1, 1, -1, 1, 0}};
+
+    const size_t house = std::min<size_t>(employerHouseId, 4u);
+    const uint16_t score = static_cast<uint16_t>(
+        std::clamp(adjustedForceScore, 0, 0xffff));
+    const uint16_t basePrice = static_cast<uint16_t>(
+        static_cast<uint8_t>((score >> 1u) + 1u) * 100u);
+    const uint16_t randomTerm = static_cast<uint16_t>(
+        priceRoll % 10u + 1u + static_cast<uint16_t>(kHouseBias[house]));
+
+    // The original performs unsigned 16-bit MUL first and then signed IMUL on
+    // the low AX word.  Preserve that wrap before the signed /100 adjustment.
+    const uint16_t lowProduct = static_cast<uint16_t>(randomTerm * basePrice);
+    const int32_t signedLowProduct = lowProduct >= 0x8000u
+        ? static_cast<int32_t>(lowProduct) - 0x10000
+        : static_cast<int32_t>(lowProduct);
+    const int32_t signedAdjustment =
+        (signedLowProduct * kHouseMultiplier[house]) / 100;
+    const uint16_t adjustedPrice = static_cast<uint16_t>(
+        signedAdjustment + static_cast<int32_t>(basePrice));
+    const int roundedDownPrice = static_cast<int>(adjustedPrice / 10u) * 10;
+    return std::clamp(roundedDownPrice, 100, 9990);
+}
+
+int mwMainContractOpeningPriceK(int priceCeilingK) {
+    // Immediately after storing the calculated ceiling in DS:09C2,
+    // FUN_101b_4f6e shifts it right twice, rounds down to tens, clamps to 100,
+    // and stores the House's opening offer in DS:099E.
+    const int openingPrice = (std::max(0, priceCeilingK) / 4 / 10) * 10;
+    return std::max(100, openingPrice);
+}
+
+MwMainContractTerms mwMainContractTerms(
+    uint8_t employerHouseId,
+    int positiveStandingCounter,
+    int negativeStandingCounter) {
+    // FUN_101b_4f6e stores the full negotiated limits at DS:09CE/09DA and
+    // their quarter-sized opening offers at DS:09AA/09B6.  DS:4B5F and
+    // DS:4B69 contain these House bases in Kurita..Davion order.
+    static constexpr std::array<int, 5> kSalvageCeilingBase{{5, 15, 20, 25, 20}};
+    static constexpr std::array<int, 5> kAdvanceCeilingBase{{5, 10, 15, 20, 25}};
+
+    const size_t house = std::min<size_t>(employerHouseId, 4u);
+    const int64_t rawStandingDelta =
+        (static_cast<int64_t>(positiveStandingCounter) -
+         static_cast<int64_t>(negativeStandingCounter)) * 4;
+    const int standingDelta = static_cast<int>(
+        std::clamp<int64_t>(rawStandingDelta, -10, 10));
+
+    MwMainContractTerms terms;
+    terms.salvageCeilingPercent = std::max(
+        0, kSalvageCeilingBase[house] + standingDelta);
+    terms.advanceCeilingPercent = std::max(
+        0, kAdvanceCeilingBase[house] + standingDelta);
+    terms.salvageOpeningPercent = terms.salvageCeilingPercent >> 2;
+    terms.advanceOpeningPercent = terms.advanceCeilingPercent >> 2;
+    return terms;
+}
+
 std::array<uint8_t, 3> mwMainContractOppositionCounts(
     int adjustedForceScore,
     uint8_t heavyMixRoll) {
@@ -258,6 +324,37 @@ BattleOppositionSpawnPlan resolveBtechOppositionSpawnPlan(
     return plan;
 }
 
+BattleOppositionSpawnPlan resolveBtechOppositionSpawnPlan(
+    std::array<uint8_t, 3> sourceCounts,
+    OriginalBtechRng& rng,
+    std::string provenance) {
+    BattleOppositionSpawnPlan plan = decodeFreshBtechOppositionSpawnPlan(
+        sourceCounts, std::move(provenance));
+    plan.selectedTypeMappingProven = true;
+    for (BtechOppositionSpawnRequest& request : plan.requests) {
+        const uint32_t randomValue = rng.exclusive(128);
+        uint8_t typeId = 0;
+        switch (request.estimatedClass) {
+        case BtechOppositionEstimateClass::Heavy:
+            typeId = static_cast<uint8_t>(((randomValue & 0x0cu) >> 2u) + 4u);
+            break;
+        case BtechOppositionEstimateClass::Medium:
+            typeId = static_cast<uint8_t>(((randomValue & 0x04u) >> 2u) + 2u);
+            break;
+        case BtechOppositionEstimateClass::Light:
+            typeId = static_cast<uint8_t>((randomValue & 0x04u) >> 2u);
+            break;
+        }
+        const std::optional<BtechMechTypeDefinition> definition =
+            btechMechTypeDefinitionById(typeId);
+        if (definition) {
+            request.selectedTypeId = typeId;
+            request.selectedMechPresetId = std::string(definition->mechPresetId);
+        }
+    }
+    return plan;
+}
+
 BattleOppositionRosterMetadata btechOppositionRosterFromSpawnPlan(
     const BattleOppositionSpawnPlan& plan,
     std::string provenance) {
@@ -307,7 +404,7 @@ BattleOppositionRosterMetadata originalDarkWingFinalOppositionRoster() {
     roster.valid = true;
     roster.provenance = "original_btech_special_context_63";
     roster.sourceContextMissionByte = static_cast<uint8_t>(0x63);
-    roster.initialMissionSelector = 12;
+    roster.initialMissionSelector = 16; // DS:08F6 row8: selectors16,12.
     roster.compositionProven = true;
     roster.spawnOrderProven = true;
     roster.placementProven = true;

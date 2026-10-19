@@ -76,6 +76,19 @@ const std::array<BattleMissionDefinition, 34>& battleMissionDefinitions() {
     return kMissionDefinitions;
 }
 
+size_t originalBattlePlacementSelectorForMission(size_t catalogId) {
+    if (catalogId >= kMissionDefinitions.size()) {
+        throw std::runtime_error("battle mission catalog id is out of range");
+    }
+    return catalogId < 27u ? catalogId : catalogId + 2u;
+}
+
+std::optional<size_t> battleMissionIdForOriginalPlacementSelector(size_t selector) {
+    if (selector < 27u) return selector;
+    if (selector >= 29u && selector <= 35u) return selector - 2u;
+    return std::nullopt;
+}
+
 const char* battleMissionFamilyName(BattleMissionFamily family) {
     switch (family) {
     case BattleMissionFamily::Defense:
@@ -211,46 +224,36 @@ BattleMissionObjectiveBriefing battleMissionObjectiveBriefingById(size_t id) {
 }
 
 BattleMissionSequencePlan battleExtendedCampaignPlan(uint32_t randomSeed) {
-    BattleMissionSequencePlan plan;
-    std::array<uint8_t, 31> singleMissionIds{};
-    size_t singleMissionCount = 0u;
-    for (const BattleMissionDefinition& definition : kMissionDefinitions) {
-        if (definition.extended ||
-            definition.family == BattleMissionFamily::Extended) {
-            continue;
-        }
-        if (singleMissionCount >= singleMissionIds.size()) {
-            return plan;
-        }
-        singleMissionIds[singleMissionCount++] = definition.originalId;
-    }
-    if (singleMissionCount != singleMissionIds.size()) {
-        return plan;
-    }
+    // CB7F(8) selects 0..7 once. Local seed remains a replacement adapter;
+    // the global DOS RNG stream is not reconstructed.
+    const auto state = (randomSeed ^ 0x4D573343u) * 1664525u + 1013904223u;
+    return originalBattleSequencePlan(static_cast<uint8_t>(state % 8u));
+}
 
-    uint32_t state = randomSeed ^ 0x4D573343u;
-    for (size_t i = 0; i < plan.missionIds.size(); ++i) {
-        state = state * 1664525u + 1013904223u;
-        plan.missionIds[i] =
-            singleMissionIds[state % singleMissionIds.size()];
-    }
+BattleMissionSequencePlan originalBattleSequencePlan(uint8_t row) {
+    // BTECH DS:08F6: one-based original descriptors, NOT contiguous catalog IDs.
+    constexpr std::array<std::array<uint8_t, 3>, 9> rows{{
+        {{21,26,6}}, {{20,27,19}}, {{35,32,7}}, {{17,8,30}},
+        {{30,30,30}}, {{8,8,8}}, {{26,25,14}}, {{22,33,5}}, {{17,13,0}}
+    }};
+    BattleMissionSequencePlan plan;
+    if (row >= rows.size()) return plan;
     plan.valid = true;
-    plan.stageCount = 3u;
-    plan.provenance =
-        "wiki_extended_campaign:three_random_single_missions:lcg_seeded";
+    plan.originalRow = row;
+    plan.stageCount = row == 8 ? 2u : 3u;
+    for (size_t stage = 0; stage < plan.stageCount; ++stage)
+        plan.missionIds[stage] = static_cast<uint8_t>(
+            *battleMissionIdForOriginalPlacementSelector(rows[row][stage] - 1u));
+    plan.provenance = "original_btech_2DFB_DS08F6";
     return plan;
 }
 
-BattleMissionSequencePlan battleFinalMissionPlan() {
-    BattleMissionSequencePlan plan;
-    plan.valid = true;
-    plan.stageCount = 2u;
-    plan.missionIds[0] = 8u;
-    plan.missionIds[1] = 12u;
-    plan.provenance =
-        "wiki_final_battle:deathmatch_then_retrieval";
-    return plan;
+size_t originalBattleSequenceScenario(size_t initialScenario, uint8_t row, size_t stage) {
+    // 2E9E: rows4/5 retain the initial map; all others advance with wrap.
+    return (initialScenario + ((row == 4 || row == 5) ? 0u : stage)) % 20u;
 }
+
+BattleMissionSequencePlan battleFinalMissionPlan() { return originalBattleSequencePlan(8); }
 
 bool battleUneventfulGarrisonDutyRoll(uint32_t randomSeed) {
     const uint32_t mixed =

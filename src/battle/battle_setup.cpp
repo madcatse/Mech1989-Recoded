@@ -10,20 +10,34 @@ namespace mw::battle {
 namespace {
 
 constexpr double kPi = 3.14159265358979323846;
-constexpr size_t kDarkWingFinalMissionSelector = 12;
-constexpr size_t kMissionBriefingCount = 34;
+constexpr size_t kDarkWingFinalMissionSelector = 16;
 constexpr int32_t kOriginalBoundaryMinX = -0xac80;
 constexpr int32_t kOriginalBoundaryMaxX = 0xac80;
 constexpr int32_t kOriginalBoundaryMinZ = -24000;
 constexpr int32_t kOriginalBoundaryMaxZ = 24000;
 constexpr double kOriginalGridCellSize = 512.0;
 
-double oppositeHeading(double headingRadians) {
-    return headingRadians + kPi;
-}
-
-double headingToward(const Transform& from, const Transform& to) {
-    return std::atan2(to.x - from.x, to.z - from.z);
+double initialSideHeading(const OriginalBattlePlacement& placement, bool opposing) {
+    const auto& side = opposing ? placement.opposingSide : placement.playerSide;
+    BattleOriginalAiInitialBodyPoseDiagnosticInput input;
+    input.liveObjectSlot = opposing ? 4 : 0;
+    input.liveObjectOccupied = true;
+    input.numericSideModeWord = static_cast<int16_t>(side.mode);
+    input.anchorsAvailable = true;
+    input.slot0RawX = placement.playerSide.positions[0].originalWorldX;
+    input.slot0RawZ = placement.playerSide.positions[0].originalWorldZ;
+    input.slot4RawX = placement.opposingSide.positions[0].originalWorldX;
+    input.slot4RawZ = placement.opposingSide.positions[0].originalWorldZ;
+    input.sideHeadingFlagsAvailable = true;
+    input.sideHeadingFlags = placement.scenarioRaw[opposing ? 15u : 14u];
+    input.separateObjectiveRawPoseAvailable = placement.dedicatedObjective.valid;
+    input.separateObjectiveRawX = placement.dedicatedObjective.position.originalWorldX;
+    input.separateObjectiveRawZ = placement.dedicatedObjective.position.originalWorldZ;
+    const auto pose = battleOriginalAiInitialBodyPose1a22(input);
+    if (!pose.exact) throw std::runtime_error("original placement has no initial facing");
+    // Raw Z is inverted in the public world. This is the same conversion as
+    // the existing typed original movement policy.
+    return std::remainder(static_cast<double>(pose.heading) * (2.0 * kPi) / 65536.0 + kPi, 2.0 * kPi);
 }
 
 bool requiresExtendedSequenceRemap(size_t missionSelector) {
@@ -52,9 +66,10 @@ BattleSetupMetadata setupMetadataFromOriginalSetup(const OriginalBattlefieldSetu
     metadata.valid = true;
     metadata.provenance = "original_btech_snario_diagnostic";
     metadata.scenarioIndex = setup.scenarioIndex;
-    metadata.briefingMissionIdValid = setup.missionSelector < kMissionBriefingCount;
+    const auto catalogId = battleMissionIdForOriginalPlacementSelector(setup.missionSelector);
+    metadata.briefingMissionIdValid = catalogId.has_value();
     metadata.missionSelectorContractProven = metadata.briefingMissionIdValid;
-    metadata.briefingMissionId = setup.missionSelector;
+    metadata.briefingMissionId = catalogId.value_or(0u);
     metadata.handoffMissionId = metadata.briefingMissionIdValid
         ? static_cast<uint8_t>(setup.missionSelector + 1u)
         : 0u;
@@ -115,8 +130,9 @@ BattleSetupMetadata setupMetadataFromOriginalSetup(const OriginalBattlefieldSetu
 BattleObjectiveState objectiveFromOriginalSetup(const OriginalBattlefieldSetup& setup) {
     const OriginalBattleMissionPlacementModes modes =
         originalBattleMissionPlacementModes(setup.missionSelector);
-    const BattleMissionObjectiveBriefing missionObjective =
-        battleMissionObjectiveBriefingById(setup.missionSelector);
+    const auto catalogId = battleMissionIdForOriginalPlacementSelector(setup.missionSelector);
+    const BattleMissionObjectiveBriefing missionObjective = catalogId
+        ? battleMissionObjectiveBriefingById(*catalogId) : BattleMissionObjectiveBriefing{};
     BattleObjectiveState objective;
     objective.valid = true;
     objective.role = "target";
@@ -227,8 +243,12 @@ OriginalBattlefieldSetup decodeOriginalBattlefieldSetup(
         ? setup.placement.dedicatedObjective.position.transform
         : setup.placement.opposingSide.positions[1].transform;
 
-    setup.playerStartTransform.headingRadians = setup.placement.playerHeadingToOpposingSlot1Radians;
-    setup.enemyStartTransform.headingRadians = oppositeHeading(setup.placement.playerHeadingToOpposingSlot0Radians);
+    setup.playerStartTransform.headingRadians = initialSideHeading(setup.placement, false);
+    setup.enemyStartTransform.headingRadians = initialSideHeading(setup.placement, true);
+    for (auto& position : setup.placement.playerSide.positions)
+        position.transform.headingRadians = setup.playerStartTransform.headingRadians;
+    for (auto& position : setup.placement.opposingSide.positions)
+        position.transform.headingRadians = setup.enemyStartTransform.headingRadians;
     setup.metadata = setupMetadataFromOriginalSetup(setup);
     setup.objective = objectiveFromOriginalSetup(setup);
     setup.battlefieldBoundary = battlefieldBoundaryFromOriginalSetup(setup, terrainCellSize);
@@ -252,9 +272,10 @@ void applyOriginalDarkWingFinalOpposition(
     std::optional<uint8_t> factionHouseId,
     std::string factionHouseName) {
     BattleOppositionRosterMetadata roster = originalDarkWingFinalOppositionRoster();
-    if (!roster.initialMissionSelector || setup.missionSelector != *roster.initialMissionSelector) {
+    if (setup.missionSelector != 16 && setup.missionSelector != 12) {
         throw std::runtime_error("Dark Wing final opposition requires the proven BTECH mission selector");
     }
+    roster.initialMissionSelector = setup.missionSelector;
     if (!params.combatantLaunchStates.empty()) {
         throw std::runtime_error("Dark Wing final opposition cannot be mixed with existing non-player launch states");
     }
@@ -270,7 +291,6 @@ void applyOriginalDarkWingFinalOpposition(
         BattleCombatantLaunchState launch;
         launch.mechPresetId = slot.mechPresetId;
         launch.startTransform = setup.placement.opposingSide.positions[slot.opposingPlacementSlot].transform;
-        launch.startTransform.headingRadians = headingToward(launch.startTransform, setup.playerStartTransform);
         launch.roster.team = BattleTeam::Opposing;
         launch.roster.factionHouseId = factionHouseId;
         launch.roster.factionHouseName = factionHouseName;
@@ -309,8 +329,6 @@ void applyOriginalContractOpposition(
         launch.mechPresetId = slot.mechPresetId;
         launch.startTransform =
             setup.placement.opposingSide.positions[slot.opposingPlacementSlot].transform;
-        launch.startTransform.headingRadians =
-            headingToward(launch.startTransform, setup.playerStartTransform);
         launch.roster.team = BattleTeam::Opposing;
         launch.roster.factionHouseId = factionHouseId;
         launch.roster.factionHouseName = factionHouseName;

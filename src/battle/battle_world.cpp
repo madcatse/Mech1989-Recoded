@@ -1,4 +1,6 @@
 #include "battle/battle_world.h"
+#include "battle/battle_hit_geometry.h"
+#include "battle/campaign_mech_persistence.h"
 
 #include "legacy3d/shape_parser.h"
 #include "legacy3d/terrain_parser.h"
@@ -20,6 +22,8 @@
 namespace mw::battle {
 
 bool combatantMechDestroyed(const Combatant& combatant);
+void applyDetailedCombatantDamage(const BattleStartParams&, OriginalBtechRng&, Combatant&, Combatant&, int, BattleShotDiagnostic&);
+
 
 namespace {
 
@@ -1491,6 +1495,7 @@ bool combatantUsesWalkAnimation(const Combatant& combatant) {
         combatant.originalAiMotion.rawSpeedWord3c != 0;
     return combatant.missionStatus == CombatantMissionStatus::Active &&
            !combatant.deathAnimationStarted &&
+           combatant.posture.posture == BattlePosture::Upright &&
            !combatant.airborne &&
            (std::abs(combatant.forwardSpeed) > kMovementEpsilon ||
             std::abs(combatant.turn) > kTurnEpsilon ||
@@ -1509,13 +1514,21 @@ bool combatantControlShutdown(const Combatant& combatant) {
 }
 
 bool combatantMovementBlocked(const Combatant& combatant) {
-    return combatant.missionStatus == CombatantMissionStatus::Destroyed ||
+    const auto& damage = combatant.mechRuntime.detailedDamage;
+    if (damage.valid &&
+        (!damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::LeftLeg)].structureRemaining ||
+         !damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::RightLeg)].structureRemaining)) return true;
+    return combatant.posture.posture != BattlePosture::Upright || combatant.missionStatus == CombatantMissionStatus::Destroyed ||
            combatantReactorShutdown(combatant) ||
            (combatant.majorSystems.enabled &&
             combatant.majorSystems.movementBlocked);
 }
 
 bool canActivateJumpJets(const BattleStartParams& params, const Combatant& combatant) {
+    if (combatant.aiJump.enabled) {
+        return !combatantMovementBlocked(combatant) &&
+               combatant.aiJump.phase == BattleAiJumpPhase::Ground && combatant.aiJump.fuel > 500;
+    }
     return !combatantMovementBlocked(combatant) &&
            combatant.jumpCapable &&
            combatant.jumpFuel + 0.0001 >= params.jumpJetActivationFuel;
@@ -1561,6 +1574,7 @@ BattleTerrainSnapshot makeTerrainSnapshot(const BattleStartParams& params) {
     BattleTerrainSnapshot snapshot;
     snapshot.scenarioIndex = params.terrainScenarioIndex;
     snapshot.environmentId = params.terrainEnvironmentId;
+    snapshot.skyMode = params.terrainSkyMode;
     snapshot.boundsMinX = 0.0;
     snapshot.boundsMinZ = 0.0;
     snapshot.boundsMaxX = static_cast<double>(kScenarioTilesWide - 1) * params.terrainCellSize;
@@ -1689,6 +1703,10 @@ void hashRosterMetadata(uint64_t& hash, const BattleCombatantRosterMetadata& ros
     if (roster.gunnerySkill != 1u) {
         hashUint64(hash, 0x47554e4e45525931ull);
         hashUint64(hash, roster.gunnerySkill);
+    }
+    if (roster.pilotingSkill != 1u) {
+        hashString(hash, "piloting_skill_v1");
+        hashUint64(hash, roster.pilotingSkill);
     }
 }
 
@@ -1836,6 +1854,40 @@ void hashReplacementAiState(
     hashTransform(hash, state.retreatDestination);
 }
 
+void hashLanceOrderCommand(uint64_t& hash, const BattleLanceOrderCommand& order) {
+    hashUint64(hash, order.recipient.value);
+    hashUint64(hash, order.issuer.value);
+    hashUint64(hash, order.issueTickIndex);
+    hashUint64(hash, static_cast<uint64_t>(order.kind));
+    hashUint64(hash, static_cast<uint64_t>(order.targetKind));
+    hashUint64(hash, order.targetEntityId.value);
+    hashTransform(hash, order.destination);
+}
+
+void hashLanceOrderState(uint64_t& hash, const BattleLanceOrderState& state) {
+    const auto& issued = state.issued;
+    if (state.sequence == 0u && !isValid(issued.recipient) && !isValid(issued.issuer) &&
+        issued.issueTickIndex == 0u && issued.kind == BattleLanceOrderKind::ActOnOwn &&
+        issued.targetKind == BattleLanceTargetKind::None && !isValid(issued.targetEntityId) &&
+        issued.destination.x == 0.0 && issued.destination.y == 0.0 && issued.destination.z == 0.0 &&
+        issued.destination.headingRadians == 0.0 && state.acceptTickIndex == 0u &&
+        state.phase == BattleLanceOrderPhase::MissionDefault && state.reason == BattleLanceOrderReason::MissionDefault &&
+        !state.activated && state.activationTickIndex == 0u && !state.arrived &&
+        state.arrivalTickIndex == 0u && state.releaseTickIndex == 0u) return;
+    // Omit only the canonical untouched state, preserving pre-order goldens.
+    hashUint64(hash, 0x4c414e43454f5244ull);
+    hashUint64(hash, state.sequence);
+    hashLanceOrderCommand(hash, state.issued);
+    hashUint64(hash, state.acceptTickIndex);
+    hashUint64(hash, static_cast<uint64_t>(state.phase));
+    hashUint64(hash, static_cast<uint64_t>(state.reason));
+    hashUint64(hash, state.activated);
+    hashUint64(hash, state.activationTickIndex);
+    hashUint64(hash, state.arrived);
+    hashUint64(hash, state.arrivalTickIndex);
+    hashUint64(hash, state.releaseTickIndex);
+}
+
 void hashRetrievalRuntimeState(
     uint64_t& hash,
     const BattleRetrievalRuntimeState& state) {
@@ -1937,12 +1989,15 @@ void hashWeaponDiagnostics(uint64_t& hash, const CombatantSnapshot& combatant) {
     hashUint64(hash, static_cast<uint64_t>(combatant.lastWeaponTargetSystem));
     hashUint64(hash, combatant.lastDamageSourceEntityId.value);
     hashUint64(hash, combatant.selectedWeaponInstanceId);
+    // Sparse extension preserves fingerprints of pre-weapon runtime policies.
+    if (combatant.automaticWeaponsEnabled) hashUint64(hash, 0x41575301ull);
     hashUint64(hash, combatant.lastFireRequestTickIndex);
     hashUint64(hash, combatant.lastFireRequestWeaponInstanceId);
     hashUint64(hash, combatant.lastFireRequestAccepted ? 1ull : 0ull);
     hashUint64(hash, static_cast<uint64_t>(combatant.weapons.size()));
     for (const BattleWeaponInstanceState& weapon : combatant.weapons) {
         hashUint64(hash, weapon.weaponInstanceId);
+        if (weapon.awsLinked) hashUint64(hash, 0x41575302ull);
         hashUint64(hash, weapon.slotIndex);
         hashString(hash, weapon.weaponTypeId);
         hashString(hash, weapon.displayName);
@@ -2868,6 +2923,9 @@ void hashContractMetadata(uint64_t& hash, const BattleContractMetadata& contract
     hashString(hash, contract.targetPlanetName);
     hashUint64(hash, contract.targetPlanetTerrainCode);
     hashOptionalInt(hash, contract.targetEnvironmentId);
+    if (contract.skyMode == BattleSkyMode::Black) {
+        hashUint64(hash, 0x424c41434b534b59ull);
+    }
     hashUint64(hash, static_cast<uint64_t>(contract.terrainScenarioIndex));
     hashString(hash, contract.terrainScenarioProvenance);
     hashInt64(hash, contract.estimatedHeavyMechs);
@@ -2886,6 +2944,32 @@ double torsoYawRadians(const BattleStartParams& params, int torsoYawStep) {
         throw std::runtime_error("battle player torso yaw limits must be non-negative");
     }
     return static_cast<double>(torsoYawStep) * params.playerTorsoYawStepRadians;
+}
+
+double torsoYawRadians(const BattleStartParams& params, const Combatant& c) {
+    return c.mouseLook.enabled ? c.mouseLook.yawRadians : torsoYawRadians(params, c.torsoYawStep);
+}
+
+struct AimPitchProjection { double neutralSlope, stepSlope; };
+AimPitchProjection aimPitchProjection(const BattleStartParams& params, const std::string& preset) {
+    // Same optical profile as the original movable crosshair. Fallback is for
+    // worlds without mesh hit profiles; campaign combat supplies the full profile.
+    double height = preset == "locust" || preset == "jenner" ? 92.0 : 103.0;
+    double neutral = 51.0, pixels = 3.0, fov = 45.0;
+    for (const auto& p : params.mechHitProfiles) if (p.valid && p.mechPresetId == preset && p.cockpitViewportHeight > 0) {
+        height=p.cockpitViewportHeight;neutral=p.neutralCrosshairY;
+        pixels=p.crosshairPixelsPerAimStep;fov=p.verticalFieldOfViewDegrees;break;
+    }
+    const double scale = std::tan(fov * 3.14159265358979323846 / 360.0) / (height * 0.5);
+    return {(height * 0.5 - neutral) * scale, pixels * scale};
+}
+double pitchFromAimSteps(const BattleStartParams& params, const std::string& preset, double steps) {
+    const auto p=aimPitchProjection(params,preset);
+    return std::atan(p.neutralSlope + steps*p.stepSlope)-std::atan(p.neutralSlope);
+}
+double aimStepsFromPitch(const BattleStartParams& params, const std::string& preset, double pitch) {
+    const auto p=aimPitchProjection(params,preset);
+    return p.stepSlope>0 ? (std::tan(pitch+std::atan(p.neutralSlope))-p.neutralSlope)/p.stepSlope : 0.0;
 }
 
 void validateAimPitchLimits(const BattleStartParams& params) {
@@ -2972,8 +3056,9 @@ void validateMissionSetupContract(const BattleStartParams& params) {
             setup.briefingMissionId != params.mission.originalId) {
             throw std::runtime_error("battle mission id must match the original setup briefing id");
         }
-        if (setup.handoffMissionId != setup.briefingMissionId + 1u ||
-            setup.initialPlacementSelector != setup.briefingMissionId) {
+        const size_t expectedSelector = originalBattlePlacementSelectorForMission(setup.briefingMissionId);
+        if (setup.handoffMissionId != expectedSelector + 1u ||
+            setup.initialPlacementSelector != expectedSelector) {
             throw std::runtime_error("battle mission handoff selector contract is inconsistent");
         }
         if (setup.extendedSequenceRemapRequired == setup.placementSelectorRuntimeResolved) {
@@ -3161,8 +3246,10 @@ CombatantSnapshot makeCombatantSnapshot(const BattleStartParams& params, const C
     snapshot.maxForwardSpeed = combatant.maxForwardSpeed;
     snapshot.maxReverseSpeed = combatant.maxReverseSpeed;
     snapshot.torsoYawStep = combatant.torsoYawStep;
-    snapshot.torsoYawRadians = torsoYawRadians(params, combatant.torsoYawStep);
+    snapshot.torsoYawRadians = torsoYawRadians(params, combatant);
     snapshot.aimPitchStep = combatant.aimPitchStep;
+    snapshot.mouseLook = combatant.mouseLook;
+    snapshot.ridge = combatant.ridge;
     snapshot.boundaryContact = combatant.boundaryContact;
     snapshot.collisionContact = combatant.collisionContact;
     snapshot.collisionCount = combatant.collisionCount;
@@ -3172,6 +3259,8 @@ CombatantSnapshot makeCombatantSnapshot(const BattleStartParams& params, const C
     snapshot.collisionRadiusWorld = combatant.collisionRadiusWorld;
     snapshot.enemyAiState = combatant.enemyAiState;
     snapshot.replacementAi = combatant.replacementAi;
+    snapshot.aiJump = combatant.aiJump;
+    snapshot.lanceOrder = combatant.lanceOrder;
     snapshot.enemyAiTargetKind = combatant.enemyAiTargetKind;
     snapshot.enemyAiTargetEntityId = combatant.enemyAiTargetEntityId;
     snapshot.enemyAiTargetTransform = combatant.enemyAiTargetTransform;
@@ -3192,6 +3281,7 @@ CombatantSnapshot makeCombatantSnapshot(const BattleStartParams& params, const C
     snapshot.airborne = combatant.airborne;
     snapshot.hardLanding = combatant.hardLanding;
     snapshot.knockdownCandidate = combatant.knockdownCandidate;
+    snapshot.posture = combatant.posture;
     snapshot.jumpFuel = combatant.jumpFuel;
     snapshot.jumpMaxFuel = combatant.jumpMaxFuel;
     snapshot.jumpActivationFuel = combatant.jumpActivationFuel;
@@ -3208,7 +3298,10 @@ CombatantSnapshot makeCombatantSnapshot(const BattleStartParams& params, const C
     snapshot.lastWeaponTargetSystem = combatant.lastWeaponTargetSystem;
     snapshot.lastDamageSourceEntityId = combatant.lastDamageSourceEntityId;
     snapshot.selectedWeaponInstanceId = combatant.selectedWeaponInstanceId;
+    snapshot.automaticWeaponsEnabled = combatant.automaticWeaponsEnabled;
     snapshot.weapons = combatant.weapons;
+    snapshot.ammunitionStateValid = combatant.ammunitionStateValid;
+    snapshot.ammunitionByPool = combatant.ammunitionByPool;
     snapshot.lastFireRequestTickIndex = combatant.lastFireRequestTickIndex;
     snapshot.lastFireRequestWeaponInstanceId = combatant.lastFireRequestWeaponInstanceId;
     snapshot.lastFireRequestAccepted = combatant.lastFireRequestAccepted;
@@ -3220,6 +3313,14 @@ CombatantSnapshot makeCombatantSnapshot(const BattleStartParams& params, const C
     snapshot.mechDestroyed = missionStatus == CombatantMissionStatus::Destroyed;
     if (snapshot.mechDestroyed && snapshot.activeAnimationId != "death") {
         snapshot.activeAnimationId = "death";
+    } else if (!snapshot.mechDestroyed && combatant.posture.sequence != 0) {
+        snapshot.activeAnimationId = battlePostureAnimation(combatant.posture);
+        const uint8_t last = combatant.posture.sequence == 5 ? 3 : 4;
+        snapshot.walkAnimationElapsedMs = std::min(combatant.posture.frame, last) * 50u;
+    } else if (!snapshot.mechDestroyed && combatant.aiJump.enabled &&
+               combatant.aiJump.animationSequence != 0) {
+        snapshot.activeAnimationId = combatant.aiJump.animationSequence == 2 ? "jump_start" : "jump_land";
+        snapshot.walkAnimationElapsedMs = combatant.aiJump.frame * 50u;
     } else if (!snapshot.mechDestroyed && !combatantUsesWalkAnimation(combatant)) {
         snapshot.activeAnimationId = "idle";
     } else if (!snapshot.mechDestroyed && snapshot.activeAnimationId == "idle") {
@@ -3330,7 +3431,7 @@ void initializeCombatantWeapons(
     }
 
     const mech3d::MechCatalogDamageProfile damageProfile =
-        mech3d::catalogDamageProfile(combatant.mechPresetId);
+        mech3d::catalogDamageProfile(combatant.mechPresetId, params.playerRoster.gunnerySkill > 1u);
     constexpr std::array<mech3d::MechArmorSectionId, 9>
         kBtechExternalToRuntime{{
             mech3d::MechArmorSectionId::LeftArm,
@@ -3389,6 +3490,13 @@ void initializeCombatantWeapons(
             armor.armorRemaining = 0;
         }
     }
+    // Original BTECH 2FCC..2FE7 clamps the two leg internals after all nine
+    // armor writes. Exact saved states below override this legacy entry bridge.
+    for (auto leg : {mech3d::MechInternalSectionId::LeftLeg,
+                     mech3d::MechInternalSectionId::RightLeg}) {
+        auto& remaining = detailed.internalSections[internalSectionIndex(leg)].structureRemaining;
+        if (remaining == 0u) remaining = 1u;
+    }
     const std::array<uint8_t, 10> criticalConditions{{
         combatant.persistentMechState.engine,
         combatant.persistentMechState.gyros,
@@ -3405,15 +3513,13 @@ void initializeCombatantWeapons(
         auto& component = detailed.criticalComponents[index];
         component.component =
             static_cast<mech3d::MechCriticalComponentId>(index);
-        component.condition = criticalConditions[index];
-        component.functional = component.condition < 3u;
+        component.condition = originalBtechCriticalCondition(index,criticalConditions[index]);
+        component.functional = component.condition < (index>=1 && index<=3 ? 2u : 3u);
         component.workingCount = component.functional ? 1u : 0u;
         component.totalCount = 1u;
     }
-    // Battle entry initializes the four actuator words as four minus the
-    // campaign damage conversion (BTECH.EXE.c:9005..9010).  JUNK maps to no
-    // remaining actuator points; the intermediate campaign table is still a
-    // bridge, so retain condition as the persistent display state.
+    // DS:08D0 maps GAM levels 0/1/2/3 to remaining actuator words 4/3/1/0.
+    // condition remains the display grade; workingCount drives the mechanics.
     for (mech3d::MechCriticalComponentId id : {
              mech3d::MechCriticalComponentId::LeftArmActuator,
              mech3d::MechCriticalComponentId::RightArmActuator,
@@ -3422,9 +3528,7 @@ void initializeCombatantWeapons(
         auto& actuator = detailed.criticalComponents[
             criticalComponentIndex(id)];
         actuator.totalCount = 4u;
-        actuator.workingCount = actuator.condition >= 3u
-            ? 0u
-            : static_cast<uint8_t>(4u - actuator.condition);
+        actuator.workingCount = originalBtechActuatorWorkingCount(actuator.condition);
         actuator.functional = actuator.workingCount != 0u;
     }
     auto& heatSinks = detailed.criticalComponents[
@@ -3443,7 +3547,37 @@ void initializeCombatantWeapons(
         installed.condition = combatant.persistentMechState.valid
             ? combatant.persistentMechState.weaponConditions[index]
             : 0u;
-        installed.functional = installed.condition < 3u;
+        installed.functional = originalBtechWeaponFunctional(installed.condition);
+    }
+
+    if (combatant.persistentMechState.exactDamage) {
+        if (!validatePersistentMechDamage(combatant.persistentMechState, combatant.mechPresetId))
+            throw std::runtime_error("invalid exact campaign mech damage: " + combatant.mechPresetId);
+        const auto& saved = *combatant.persistentMechState.exactDamage;
+        detailed = saved.detailed;
+        // Exact v1 saves include their maxima. A skill promotion or explicit
+        // tester demotion changes the profile on the next launch; preserve
+        // each leg's remaining fraction, including a completely lost leg.
+        // Same-profile stage transitions retain every exact point unchanged.
+        for (size_t leg : {size_t(2), size_t(3)}) {
+            auto& armor = detailed.armorSections[armorSectionIndex(kBtechExternalToRuntime[leg])];
+            auto& internal = detailed.internalSections[internalSectionIndex(kBtechInternalToRuntime[leg])];
+            const auto armorMax = damageProfile.externalArmorMaximumBtechOrder[leg];
+            const auto internalMax = damageProfile.internalStructureMaximumBtechOrder[leg];
+            if (armor.armorMaximum != armorMax) {
+                armor.armorRemaining = static_cast<uint16_t>(uint32_t(armor.armorRemaining) * armorMax / armor.armorMaximum);
+                armor.armorMaximum = armorMax;
+                armor.battleDamage = armorMax - armor.armorRemaining;
+            }
+            if (internal.structureMaximum != internalMax) {
+                internal.structureRemaining = static_cast<uint16_t>(uint32_t(internal.structureRemaining) * internalMax / internal.structureMaximum);
+                internal.structureMaximum = internalMax;
+                internal.battleDamage = internalMax - internal.structureRemaining;
+            }
+        }
+        combatant.mechRuntime.destroyedComponentIds = saved.destroyedComponentIds;
+        combatant.mechRuntime.hiddenComponentIds = saved.hiddenComponentIds;
+        combatant.mechRuntime.disabledComponentIds = saved.disabledComponentIds;
     }
 
     combatant.weapons.clear();
@@ -3461,10 +3595,10 @@ void initializeCombatantWeapons(
         const auto& installedDamage =
             detailed.installedWeapons[mount.slotIndex];
         weapon.condition = installedDamage.condition;
-        // The original runtime owns a binary slot-functional byte. The exact
-        // .GAM light/heavy conversion is not yet proven, so only JUNK is made
-        // nonfunctional in this bridge.
+        // DS:08C0: original LIGHT remains functional; HEAVY and JUNK do not.
+        // An exact companion, when present, has already overridden this entry.
         weapon.functional = installedDamage.functional;
+        weapon.awsLinked = params.individualWeaponRuntimeEnabled && combatant.playerControlled && weapon.functional;
         weapon.ammunitionPoolIndex = mount.ammunitionPoolIndex;
         weapon.ammunitionOwnership = mount.usesAmmunition()
             ? BattleWeaponAmmunitionOwnership::SharedAmmunitionPool
@@ -3509,6 +3643,73 @@ void initializeCombatantWeapons(
         ? 0u
         : combatant.weapons.front().weaponInstanceId;
     refreshCombatantWeaponState(params, combatant);
+    combatant.automaticWeaponsEnabled = params.individualWeaponRuntimeEnabled &&
+        combatant.playerControlled && !combatant.weapons.empty();
+}
+
+BattleOriginalTerrainSceneQueryDiagnostic playerRidgeQuery(
+    const BattleStartParams& params, const Combatant& player) {
+    if (!player.playerControlled || !params.originalTerrainSceneCatalog.valid) return {};
+    const double scale = 512.0 / params.terrainCellSize;
+    const auto raw = [](double value) {
+        return static_cast<int32_t>(std::clamp(std::round(value), -2147483648.0, 2147483647.0));
+    };
+    constexpr double tau = 6.28318530717958647692;
+    const uint16_t heading = static_cast<uint16_t>(static_cast<int64_t>(std::llround(
+        std::remainder(player.transform.headingRadians - tau * .5, tau) * 65536.0 / tau)) & 65535);
+    return battleOriginalTerrainSceneQuery(params.originalTerrainSceneCatalog,
+        raw(player.transform.x * scale - 44160.0), raw(24000.0 - player.transform.z * scale),
+        static_cast<uint8_t>(static_cast<uint16_t>(player.ridge.pitch) >> 8), 0,
+        static_cast<uint8_t>(heading >> 8), player.ridge.cachedObject, player.ridge.cachedSubrecord);
+}
+
+bool isDriveableRidge(const BattleOriginalTerrainSceneQueryDiagnostic& query) {
+    return query.exact && query.hit && query.selectedPriority == 0 && query.selectedResultByte == 0;
+}
+
+double playerGroundHeight(const BattleStartParams& params, const Combatant& player) {
+    const auto query = playerRidgeQuery(params, player);
+    return isDriveableRidge(query) ? query.worldHeight * params.terrainCellSize / 512.0 : 0.0;
+}
+
+void updatePlayerRidge(const BattleStartParams& params, Combatant& player, bool initialize = false) {
+    if (!player.playerControlled || !params.originalTerrainSceneCatalog.valid) return;
+    auto& state = player.ridge;
+    auto query = playerRidgeQuery(params, player);
+    const bool ridge = isDriveableRidge(query);
+    state.groundHeight = ridge ? query.worldHeight * params.terrainCellSize / 512.0 : 0.0;
+    if (ridge) {
+        state.cachedObject = query.selectedSceneObjectIndex;
+        state.cachedSubrecord = query.selectedSubrecordIndex;
+    } else {
+        state.cachedObject.reset(); state.cachedSubrecord.reset();
+    }
+    if (initialize) {
+        if (player.transform.y <= state.groundHeight) player.transform.y = state.groundHeight;
+        return;
+    }
+    if (player.airborne || player.jumpJetsEnabled || player.posture.posture != BattlePosture::Upright || player.collisionContact) {
+        state.nextPitchControl = 0;
+        state.updateAccumulator = 0;
+        if (!player.airborne && !player.jumpJetsEnabled) player.transform.y = state.groundHeight;
+        return;
+    }
+    player.transform.y = state.groundHeight;
+    if (!ridge && state.pitch == 0 && state.nextPitchControl == 0) {
+        state.updateAccumulator = 0;
+        return;
+    }
+    // Original c5ac consumes the previous control; c42e prepares the next one.
+    // As with the existing original-AI bridge, 0.1s is our simulation cadence,
+    // not a claim about DOS wall-clock speed. Render snapshots interpolate it.
+    state.updateAccumulator += params.fixedTickSeconds;
+    while (state.updateAccumulator + 1e-12 >= .1) {
+        state.updateAccumulator -= .1;
+        state.pitch = static_cast<int16_t>(static_cast<uint16_t>(state.pitch + state.nextPitchControl));
+        query = playerRidgeQuery(params, player);
+        if (isDriveableRidge(query)) state.nextPitchControl = query.contactCorrection.controlWord30;
+        else state.nextPitchControl = state.pitch > 0 ? -0x100 : (state.pitch < 0 ? 0x100 : 0);
+    }
 }
 
 CameraSnapshot makeCameraSnapshot(const BattleStartParams& params, const Combatant* player) {
@@ -3520,17 +3721,47 @@ CameraSnapshot makeCameraSnapshot(const BattleStartParams& params, const Combata
     camera.attachedEntityId = player->id;
     camera.localForwardOffset = params.cockpitCameraForwardOffset;
     camera.localHeight = params.cockpitCameraHeight;
-    const double cameraHeading = player->transform.headingRadians + torsoYawRadians(params, player->torsoYawStep);
+    camera.mouseLookPitchRadians = player->mouseLook.enabled ? player->mouseLook.pitchRadians : 0.0;
+    // DOS positive body pitch raises the view; our camera's positive pitch
+    // points down. Live ridge eye-offset and horizon captures pin this sign.
+    camera.ridgePitchRadians = -player->ridge.pitch * (6.28318530717958647692 / 65536.0);
+    const double cameraHeading = player->transform.headingRadians + torsoYawRadians(params, *player);
     camera.transform.headingRadians = cameraHeading;
     camera.transform.x =
         player->transform.x + std::sin(cameraHeading) * params.cockpitCameraForwardOffset;
     camera.transform.y = player->transform.y + params.cockpitCameraHeight;
     camera.transform.z =
         player->transform.z + std::cos(cameraHeading) * params.cockpitCameraForwardOffset;
+    if (player->posture.sequence != 0) {
+        const auto pose = originalPostureCameraFrame(player->posture.sequence, player->posture.frame);
+        // Source offsets and pitch, with a replacement ground clearance: our
+        // geometry-derived cockpit heights are not the original profile heights.
+        camera.localHeight = std::max(params.cockpitCameraHeight * 0.1,
+                                     params.cockpitCameraHeight + pose.height);
+        camera.localForwardOffset += pose.forward;
+        camera.transform.y = player->transform.y + camera.localHeight;
+        camera.transform.x += std::sin(cameraHeading) * pose.forward;
+        camera.transform.z += std::cos(cameraHeading) * pose.forward;
+        camera.posturePitchRadians = pose.pitch * (6.28318530717958647692 / 65536.0);
+    }
+    if (camera.ridgePitchRadians != 0.0) {
+        const double c = std::cos(camera.ridgePitchRadians), s = std::sin(camera.ridgePitchRadians);
+        const double forward = camera.localForwardOffset * c + camera.localHeight * s;
+        camera.transform.x = player->transform.x + std::sin(cameraHeading) * forward;
+        camera.transform.y = player->transform.y + camera.localHeight * c - camera.localForwardOffset * s;
+        camera.transform.z = player->transform.z + std::cos(cameraHeading) * forward;
+    }
     return camera;
 }
 
 } // namespace
+
+BattleMouseLookLimits battleMouseLookLimits(const BattleStartParams& params, const std::string& preset) {
+    validateAimPitchLimits(params);
+    return {torsoYawRadians(params, params.maxPlayerTorsoYawSteps),
+        pitchFromAimSteps(params,preset,params.maxPlayerAimPitchUpSteps),
+        -pitchFromAimSteps(params,preset,-params.maxPlayerAimPitchDownSteps)};
+}
 
 bool operator==(EntityId a, EntityId b) {
     return a.value == b.value;
@@ -3554,6 +3785,18 @@ const char* battleTeamName(BattleTeam team) {
         return "neutral";
     }
     return "unknown";
+}
+
+uint64_t persistentMechDamageFingerprint(const BattlePersistentDamage& damage) {
+    uint64_t hash = kFnvOffset;
+    hashDetailedDamageState(hash, damage.detailed);
+    hashUint64(hash, damage.mechDestroyed);
+    hashUint64(hash, damage.mechDisabled);
+    for (const auto* ids : {&damage.destroyedComponentIds, &damage.hiddenComponentIds, &damage.disabledComponentIds}) {
+        hashUint64(hash, ids->size());
+        for (int id : *ids) hashInt64(hash, id);
+    }
+    return hash;
 }
 
 uint64_t battlePersistentMechStateFingerprint(
@@ -3585,11 +3828,30 @@ uint64_t battlePersistentMechStateFingerprint(
     for (uint8_t value : state.armorDamage) {
         hashUint64(hash, value);
     }
+    if (state.exactDamage) {
+        hashUint64(hash, 0x4558414354444d47ull);
+        hashUint64(hash, persistentMechDamageFingerprint(*state.exactDamage));
+    }
     return hash;
 }
 
 bool battlePersistentMechStateIsPristine(
     const BattlePersistentMechState& state) {
+    if (state.exactDamage) {
+        const auto& saved = *state.exactDamage;
+        const auto& d = saved.detailed;
+        if (saved.mechDestroyed || saved.mechDisabled || !saved.destroyedComponentIds.empty() ||
+            !saved.hiddenComponentIds.empty() || !saved.disabledComponentIds.empty() ||
+            d.originalCockpitCriticalFlag || d.originalJumpJetCriticalDestroyedMask ||
+            std::any_of(d.armorSections.begin(), d.armorSections.end(),
+                [](const auto& a) { return a.armorRemaining != a.armorMaximum; }) ||
+            std::any_of(d.internalSections.begin(), d.internalSections.end(),
+                [](const auto& a) { return a.structureRemaining != a.structureMaximum; }) ||
+            std::any_of(d.criticalComponents.begin(), d.criticalComponents.end(),
+                [](const auto& c) { return c.condition || c.workingCount != c.totalCount || !c.functional; }) ||
+            std::any_of(d.installedWeapons.begin(), d.installedWeapons.end(),
+                [](const auto& w) { return w.condition || !w.functional; })) return false;
+    }
     if (!state.valid ||
         state.engine != 0u ||
         state.gyros != 0u ||
@@ -3712,8 +3974,8 @@ BattleMajorSystemRuntimeState battleMajorSystemRuntimeState(
     state.lifeSupport = status(lifeSupport);
 
     // BTECH's damaged-sensor branch makes sight visibility intermittent, but
-    // the raw four-condition-to-internal conversion does not expose separate
-    // light/heavy periods.  These two wall-clock cadences are therefore typed
+    // original LIGHT and HEAVY both import as internal condition 1. The second
+    // cadence remains for older exact condition-2 functional states. These are
     // presentation/gameplay policy: light loses 0.3 s every 4 s; heavy loses
     // 0.4 s every 0.8 s.  They depend only on authoritative elapsed time.
     const uint64_t originalUpdate = elapsedMs / 100u;
@@ -3813,6 +4075,7 @@ BattleWorld BattleWorld::create(
     }
     BattleWorld world;
     world.params_ = params;
+    world.originalRng_ = params.originalRng;
     validateObjectiveState(params.objective);
     validateMissionSetupContract(params);
     validateBattlefieldBoundary(params.battlefieldBoundary);
@@ -3829,8 +4092,10 @@ BattleWorld BattleWorld::create(
     }
     if (params.objectiveRetaliationSeconds < 0.0 ||
         params.combatConclusionDelaySeconds < 0.0 ||
+        params.fatalConclusionDelaySeconds < 0.0 ||
         !std::isfinite(params.objectiveRetaliationSeconds) ||
-        !std::isfinite(params.combatConclusionDelaySeconds)) {
+        !std::isfinite(params.combatConclusionDelaySeconds) ||
+        !std::isfinite(params.fatalConclusionDelaySeconds)) {
         throw std::runtime_error(
             "battle combat timing tuning is outside its deterministic domain");
     }
@@ -4148,6 +4413,14 @@ BattleWorld BattleWorld::create(
             mech3d::destroyMechRuntimeComponent(combatant->mechRuntime, componentId);
         }
     }
+    for (auto& combatant : world.combatants_) {
+        if (combatant.persistentMechState.exactDamage) {
+            const auto& saved = *combatant.persistentMechState.exactDamage;
+            if (saved.mechDestroyed) combatant.missionStatus = CombatantMissionStatus::Destroyed;
+            else if (saved.mechDisabled && !combatant.minimalRepairApplied)
+                combatant.missionStatus = CombatantMissionStatus::Disabled;
+        }
+    }
     const auto initializeOriginalAiMotion = [&world]() {
         const BattleSetupMetadata& setup = world.params_.setupMetadata;
         if (!setup.valid || setup.playerSlots.empty() ||
@@ -4306,6 +4579,7 @@ BattleWorld BattleWorld::create(
         world.retrieval_.contactRadius = 250.0;
     }
     world.updateMajorSystemRuntime();
+    if (auto* player = world.findCombatant(world.playerEntityId_)) updatePlayerRidge(params, *player, true);
     world.missionStartSnapshot_ = world.snapshot();
     return world;
 }
@@ -4335,7 +4609,15 @@ std::optional<BattleResult> BattleWorld::battleResult() const {
 }
 
 void BattleWorld::enqueueInput(BattleInputCommand command) {
-    if (!isValid(command.entityId)) {
+    if (command.lanceOrder) {
+        const auto& p = command.lanceOrder->destination;
+        // Reject non-finite/outlandish coordinates before storing/hashing; live
+        // ownership, contacts and recipient status are checked at acceptance.
+        if (!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z) ||
+            !std::isfinite(p.headingRadians) || std::abs(p.x) > 1.0e9 ||
+            std::abs(p.y) > 1.0e9 || std::abs(p.z) > 1.0e9 || std::abs(p.headingRadians) > 1.0e9) return;
+    }
+    if (!command.lanceOrder && !isValid(command.entityId)) {
         command.entityId = playerEntityId_;
     }
     command.throttle = clampUnit(command.throttle);
@@ -4639,6 +4921,38 @@ void BattleWorld::resolveDeterministicCollisions(
             const double bVelocityTowardA =
                 (std::sin(b.transform.headingRadians) * -nx +
                  std::cos(b.transform.headingRadians) * -nz) * b.forwardSpeed;
+            if (a.roster.team != b.roster.team &&
+                a.roster.team != BattleTeam::Neutral && b.roster.team != BattleTeam::Neutral) {
+                // Contact geometry and world-speed calibration remain replacement policy.
+                // Original 8Axx caller requires mover speed >=6 and different sides.
+                const auto rawSpeed = [](const Combatant& c) {
+                    const auto mobility = mech3d::catalogMobility(c.mechPresetId);
+                    return static_cast<int16_t>(std::clamp(std::lround(c.forwardSpeed /
+                        c.maxForwardSpeed * mobility.originalBtechDefinitionSpeedWord06), -32768L, 32767L));
+                };
+                const auto mass = [](const Combatant& c) {
+                    const std::array<const char*,8> names{{"locust","jenner","phoenix_hawk","shadow_hawk","rifleman","warhammer","marauder","battlemaster"}};
+                    constexpr std::array<int,8> masses{{20,35,45,55,60,70,75,85}};
+                    for (size_t i=0;i<names.size();++i) if(c.mechPresetId==names[i]) return masses[i];
+                    return 0;
+                };
+                const auto heading = [](const Combatant& c) {
+                    return static_cast<uint16_t>(static_cast<int64_t>(std::llround(
+                        c.transform.headingRadians * 65536.0 / 6.28318530717958647692)) & 65535);
+                };
+                Combatant* mover = &a; Combatant* other = &b;
+                if (!(aVelocityTowardB > 0 && rawSpeed(a) >= 6)) {
+                    if (bVelocityTowardA > 0 && rawSpeed(b) >= 6) { mover = &b; other = &a; }
+                    else mover = nullptr;
+                }
+                if (mover) {
+                    const auto result = originalCollisionFall(mass(*mover), mass(*other),
+                        rawSpeed(*mover), rawSpeed(*other), heading(*mover), heading(*other),
+                        other->missionStatus == CombatantMissionStatus::Disabled ? -1 : 0);
+                    if (result.moverFalls) beginBattleFall(mover->posture, tickIndex_);
+                    if (result.otherFalls) beginBattleFall(other->posture, tickIndex_);
+                }
+            }
             if (aVelocityTowardB > 0.0) {
                 a.forwardSpeed = 0.0;
                 a.targetForwardSpeed = 0.0;
@@ -4736,11 +5050,192 @@ void BattleWorld::updateMajorSystemRuntime() {
     }
 }
 
+void BattleWorld::applyHardLanding(Combatant& combatant) {
+    beginBattleFall(combatant.posture, tickIndex_);
+    combatant.throttle = combatant.turn = 0.0;
+    combatant.forwardSpeed = combatant.targetForwardSpeed = 0.0;
+    Combatant environment;
+    environment.roster.team = combatant.roster.team;
+    const EntityId previousSource = combatant.lastDamageSourceEntityId;
+    for (uint8_t leg = 0; leg < 2; ++leg) {
+        const auto damage = originalLandingLegDamage(static_cast<uint8_t>(originalRng_.exclusive(4)));
+        if (leg == 0) combatant.posture.leftLandingDamage = damage;
+        else combatant.posture.rightLandingDamage = damage;
+        BattleShotDiagnostic shot;
+        shot.tickIndex = tickIndex_;
+        shot.sequence = (tickIndex_ << 2) + leg + 1;
+        shot.armorSection = leg == 0 ? mech3d::MechArmorSectionId::LeftLeg : mech3d::MechArmorSectionId::RightLeg;
+        shot.provenance = "BTECH_92AA_hard_landing";
+        applyDetailedCombatantDamage(params_, originalRng_, environment, combatant, damage, shot);
+    }
+    combatant.lastDamageSourceEntityId = previousSource;
+    enterCombatantDeathState(combatant);
+}
+
+bool BattleWorld::updateAiJumpRuntime(Combatant& actor) {
+    auto& s=actor.aiJump;
+    if(!s.enabled)return false;
+    s.pendingHeat=0;
+    const auto mobility=mech3d::catalogMobility(actor.mechPresetId);
+    const auto& damage=actor.mechRuntime.detailedDamage;
+    const auto& jets=damage.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::JumpJets)];
+    const int missing=jets.totalCount-jets.workingCount;
+    const int installed=mobility.originalBtechInstalledJetsWord08;
+    const int left=damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::LeftLeg)].structureRemaining;
+    const int right=damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::RightLeg)].structureRemaining;
+    const int gyro=damage.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::Gyros)].condition;
+    const int status=actor.missionStatus==CombatantMissionStatus::Active && left && right ? 1 : -1;
+    if(combatantMechDestroyed(actor)) {
+        s.phase=BattleAiJumpPhase::Ground;s.animationSequence=0;
+        return false; // Existing destroyed-body gravity owns any remaining descent.
+    }
+    if(actor.posture.posture!=BattlePosture::Upright && s.phase!=BattleAiJumpPhase::Flying) {
+        s.phase=BattleAiJumpPhase::Ground;s.animationSequence=0;
+    }
+    // Existing original-AI coordinate bridge, not a new distance calibration.
+    const double scale=params_.terrainCellSize/512.0;
+    constexpr double step=0.1; // Replacement cadence; original wall-clock rate is not claimed.
+    constexpr double tau=6.28318530717958647692;
+    const auto headingWord=[&](double h) {
+        return static_cast<uint16_t>(static_cast<int64_t>(std::llround(std::remainder(h,tau)*65536.0/tau))&65535);
+    };
+    bool owns=s.phase!=BattleAiJumpPhase::Ground;
+    s.accumulator+=params_.fixedTickSeconds;
+    while(s.accumulator+1.0e-12>=step) {
+        s.accumulator-=step;
+        s.fuel=originalAiJumpRecharge(s.fuel,s.phase==BattleAiJumpPhase::Flying);
+        if(s.phase==BattleAiJumpPhase::Ground) {
+            if(!actor.replacementAi.active || !s.moveRequested || actor.airborne ||
+                combatantMovementBlocked(actor) || actor.missionStatus!=CombatantMissionStatus::Active)continue;
+            const double distance=std::hypot(s.destinationX-actor.transform.x,s.destinationZ-actor.transform.z)/scale;
+            const int32_t rawDistance=static_cast<int32_t>(std::clamp(distance,0.0,2147483647.0));
+            BattleAiJumpReason reason=BattleAiJumpReason::None;
+            if(originalAiDestinationJumpDue(installed,missing,status,gyro,0,s.fuel,rawDistance)) {
+                ++s.eligibleDraws; s.lastRoll=static_cast<uint8_t>(originalRng_.exclusive(25));
+                if(s.lastRoll==0)reason=BattleAiJumpReason::Destination;
+            }
+            const auto* player=findCombatant(playerEntityId_);
+            if(originalAiObstacleJumpDue(s.obstacleAhead,0,s.actionMode,installed,
+                    player && combatantReactorShutdown(*player)?1:0,0,s.fuel,rawDistance))
+                reason=BattleAiJumpReason::Obstacle;
+            if(reason==BattleAiJumpReason::None)continue;
+            s.phase=BattleAiJumpPhase::Preparing;s.animationSequence=2;s.frame=0;s.lastReason=reason;
+            actor.hardLanding=false;actor.knockdownCandidate=false;actor.landingImpactSpeed=0;
+            owns=true;
+        } else if(s.phase==BattleAiJumpPhase::Preparing) {
+            if(combatantMovementBlocked(actor) || status<0 || !s.moveRequested) {
+                s.phase=BattleAiJumpPhase::Ground;s.animationSequence=0;continue;
+            }
+            if(++s.frame==5) {
+                s.phase=BattleAiJumpPhase::Flying;++s.launches;
+                s.fuel=static_cast<int16_t>(s.fuel-100);
+                s.vertical=static_cast<int16_t>(mobility.originalBtechJumpSpeedWord0c*2);
+                s.forward=static_cast<int16_t>(mobility.originalBtechJumpSpeedWord0c);
+                actor.airborne=true;
+                // 00DD applies drag after the actor FSM's launch event.
+                originalAiFlightDrag(s.vertical,s.forward,s.turn);
+            }
+        } else if(s.phase==BattleAiJumpPhase::Flying) {
+            OriginalAiFlightInput input;
+            input.acceleration=static_cast<int16_t>(mobility.originalBtechJumpAccelerationWord0a);
+            input.speedCap=static_cast<int16_t>(mobility.originalBtechJumpSpeedWord0c);
+            input.height=static_cast<int32_t>(std::llround(actor.transform.y/scale));
+            input.vertical=s.vertical;input.forward=s.forward;input.fuel=s.fuel;
+            input.status=status;input.leftLeg=left;input.rightLeg=right;
+            input.installed=installed;input.missing=missing;
+            input.movementMode=!s.moveRequested || combatantControlShutdown(actor)?2:0;
+            input.heading=headingWord(actor.transform.headingRadians);
+            input.desiredHeading=headingWord(std::atan2(s.destinationX-actor.transform.x,s.destinationZ-actor.transform.z));
+            // C43A's terrain code2 is adapted to the existing occupied footprint.
+            // Ground height stays the current flat-world convention; no roof landing is invented.
+            for(const auto& obstacle:params_.terrainCollisionObstacles.entries)
+                if(terrainFootprintContact(obstacle,actor.transform,actor.collisionRadiusWorld,nullptr)) {input.terrainProbe=2;break;}
+            const auto output=originalAiFlightControl(input);
+            s.vertical=output.vertical;s.forward=output.forward;s.fuel=output.fuel;s.turn=output.turn;
+            s.pendingHeat+=output.heat;
+            actor.jumpJetThrusting=output.heat!=0;
+            actor.jumpForwardThrusting=output.heat==8 || output.heat==20;
+            actor.transform.headingRadians+=s.turn*tau/65536.0;
+            actor.transform.x+=std::sin(actor.transform.headingRadians)*s.forward*scale;
+            actor.transform.z+=std::cos(actor.transform.headingRadians)*s.forward*scale;
+            actor.transform.y+=s.vertical*scale;
+            if(s.animationSequence==2 && ++s.frame==7) {s.animationSequence=0;s.frame=0;}
+            if(actor.transform.y<0) {
+                actor.landingImpactSpeed=std::max(0.0,-s.vertical*scale/step);
+                actor.hardLanding=originalHardLanding(s.vertical);
+                actor.transform.y=0;actor.airborne=false;s.vertical=0;
+                actor.knockdownCandidate=originalAiLandingFlag(status,left,right)==1;
+                ++s.landings;s.phase=BattleAiJumpPhase::Landing;s.animationSequence=6;s.frame=0;
+                if(actor.knockdownCandidate) {
+                    beginBattleFall(actor.posture,tickIndex_);
+                    s.phase=BattleAiJumpPhase::Ground;s.animationSequence=0;
+                }
+            } else originalAiFlightDrag(s.vertical,s.forward,s.turn);
+        } else if(s.phase==BattleAiJumpPhase::Landing) {
+            if(++s.frame==4) {s.phase=BattleAiJumpPhase::Ground;s.animationSequence=0;s.frame=0;}
+        }
+        if(owns)evaluateMissionRuntimeAfterMovement();
+    }
+    s.accumulator=std::max(0.0,s.accumulator);
+    actor.jumpFuel=actor.jumpMaxFuel*s.fuel/800.0;
+    actor.jumpJetsEnabled=s.phase==BattleAiJumpPhase::Flying;
+    if(s.phase!=BattleAiJumpPhase::Flying) {
+        actor.jumpJetThrusting=false;actor.jumpForwardThrusting=false;
+    }
+    actor.jumpLaunchImpulseRemaining=0;
+    if(owns) {
+        actor.forwardSpeed=s.phase==BattleAiJumpPhase::Flying?s.forward*scale/step:0;
+        actor.verticalSpeed=s.phase==BattleAiJumpPhase::Flying?s.vertical*scale/step:0;
+        actor.targetForwardSpeed=actor.forwardSpeed;
+        actor.throttle=actor.turn=0;actor.walkAnimationElapsedMs=0;
+        if(params_.constrainToTerrainBounds)actor.boundaryContact=clampToTerrainBounds(terrain_,actor.transform);
+    }
+    return owns;
+}
+
 void BattleWorld::tick() {
     if (missionTerminal(missionRuntimeState_)) {
         return;
     }
+    if (conclusionDelay_.active && conclusionDelay_.freezesSimulation) {
+        // Original1C0 calls presentation/wait routines, never the main combat
+        // loop. Only the host presentation clock advances; inputs cannot fire,
+        // move a mech, consume RNG or change the posthumous campaign damage.
+        queuedInputs_.clear();
+        resolveMissionConclusion();
+        ++tickIndex_;
+        elapsedMs_ += fixedTickMs(params_);
+        return;
+    }
 
+    // Original0B84 -> 27C7 -> 37F7(2) exits before the next combat update.
+    // A pending victory/loss bypasses that prompt and cannot become retreat.
+    const bool retreat = !conclusionDelay_.active && std::any_of(
+        queuedInputs_.begin(), queuedInputs_.end(), [this](const BattleInputCommand& command) {
+            return command.tickIndex == tickIndex_ && !command.lanceOrder &&
+                command.entityId == playerEntityId_ && command.confirmRetreat;
+        });
+    if (retreat) {
+        BattleResult result;
+        result.valid = true;
+        result.state = BattleMissionRuntimeState::Withdraw;
+        result.rawResultCode = 2;
+        result.reason = "player_confirmed_retreat";
+        result.sourceEntityId = playerEntityId_;
+        result.terminalTickIndex = tickIndex_;
+        result.terminalElapsedMs = elapsedMs_;
+        queuedInputs_.clear();
+        completeMission(std::move(result));
+        return;
+    }
+
+    // Capture only this tick's commander input before applyQueuedInputs erases
+    // it. Resolve after combat/boundary/fatal arbitration, as original main does.
+    const bool acknowledged = std::any_of(queuedInputs_.begin(), queuedInputs_.end(),
+        [this](const BattleInputCommand& command) {
+            return command.tickIndex == tickIndex_ && !command.lanceOrder &&
+                command.entityId == playerEntityId_ && command.acknowledgeConclusion;
+        });
     shotEvents_.clear();
     impactEvents_.erase(
         std::remove_if(
@@ -4753,6 +5248,29 @@ void BattleWorld::tick() {
             }),
         impactEvents_.end());
     updateMajorSystemRuntime();
+    for (auto& actor : combatants_) {
+        const auto& d = actor.mechRuntime.detailedDamage;
+        if (!d.valid || combatantMechDestroyed(actor)) continue;
+        const int left = d.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::LeftLeg)].structureRemaining;
+        const int right = d.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::RightLeg)].structureRemaining;
+        if ((!left || !right) && !actor.airborne) {
+            beginBattleFall(actor.posture, tickIndex_);
+            actor.missionStatus = CombatantMissionStatus::Disabled;
+        }
+        if (!actor.playerControlled) {
+            const auto bound = static_cast<uint8_t>(5 - std::min<uint8_t>(3, actor.roster.pilotingSkill));
+            const int la=d.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::LeftLegActuator)].workingCount;
+            const int ra=d.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::RightLegActuator)].workingCount;
+            const int status=actor.missionStatus==CombatantMissionStatus::Active ? 0 : -1;
+            const auto roll=originalAiStandUpDue(static_cast<int>(actor.posture.posture),status,left,right,la,ra,tickIndex_)
+                ? static_cast<uint8_t>(originalRng_.exclusive(bound)) : uint8_t{0};
+            updateAiBattlePosture(actor.posture, tickIndex_,
+                actor.missionStatus == CombatantMissionStatus::Active ? 0 : -1, left, right,
+                d.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::LeftLegActuator)].workingCount,
+                d.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::RightLegActuator)].workingCount,
+                roll);
+        }
+    }
     applyQueuedInputs();
     updateDeterministicEnemyRuntime();
 
@@ -4765,6 +5283,24 @@ void BattleWorld::tick() {
     const uint64_t tickMs = fixedTickMs(params_);
     const double dt = params_.fixedTickSeconds;
     for (Combatant& combatant : combatants_) {
+        if (combatant.playerControlled) advanceBattlePosture(combatant.posture, tickIndex_);
+        const auto& postureDamage = combatant.mechRuntime.detailedDamage;
+        if (combatant.missionStatus == CombatantMissionStatus::Active && postureDamage.valid &&
+            battleActuatorLossDisables(combatant.posture.posture,
+                postureDamage.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::LeftLegActuator)].workingCount,
+                postureDamage.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::RightLegActuator)].workingCount)) {
+            // Same actor-local predicate as campaign salvage. Disable only
+            // after reaching prone1, preserving fall animation and pilot life.
+            combatant.missionStatus = CombatantMissionStatus::Disabled;
+        }
+        if(updateAiJumpRuntime(combatant))continue;
+        if (combatant.posture.posture != BattlePosture::Upright) {
+            combatant.throttle = 0.0;
+            combatant.turn = 0.0;
+            combatant.jumpJetsEnabled = false;
+            combatant.jumpJetThrusting = false;
+            combatant.jumpForwardThrusting = false;
+        }
         combatant.turn = clampUnit(combatant.turn);
         combatant.throttle = clampUnit(combatant.throttle);
         if (combatantMovementBlocked(combatant)) {
@@ -4791,8 +5327,9 @@ void BattleWorld::tick() {
         }
         combatant.transform.headingRadians +=
             combatant.turn * params_.maxTurnRateRadians * dt;
-        combatant.transform.x += std::sin(combatant.transform.headingRadians) * combatant.forwardSpeed * dt;
-        combatant.transform.z += std::cos(combatant.transform.headingRadians) * combatant.forwardSpeed * dt;
+        const double planarScale = std::cos(combatant.ridge.pitch * (6.28318530717958647692 / 65536.0));
+        combatant.transform.x += std::sin(combatant.transform.headingRadians) * combatant.forwardSpeed * dt * planarScale;
+        combatant.transform.z += std::cos(combatant.transform.headingRadians) * combatant.forwardSpeed * dt * planarScale;
         evaluateMissionRuntimeAfterMovement();
         combatant.boundaryContact = false;
         if (params_.constrainToTerrainBounds) {
@@ -4805,20 +5342,22 @@ void BattleWorld::tick() {
             combatant.originalAiMotion.acceptedPoseCommitCount > 0u &&
             !combatant.airborne &&
             !combatant.jumpJetsEnabled;
+        const double surfaceHeight = playerGroundHeight(params_, combatant);
         if (originalAiGroundPoseOwned) {
             combatant.verticalSpeed = 0.0;
             combatant.jumpLaunchImpulseRemaining = 0.0;
             combatant.jumpJetThrusting = false;
             combatant.jumpForwardThrusting = false;
-            if (combatant.jumpCapable) {
+            if (combatant.jumpCapable && !combatant.aiJump.enabled) {
                 combatant.jumpFuel = std::min(
                     combatant.jumpMaxFuel,
                     combatant.jumpFuel +
                         params_.jumpJetFuelRechargePerSecond * dt);
-            } else {
+            } else if(!combatant.aiJump.enabled) {
                 combatant.jumpFuel = 0.0;
             }
-        } else if (combatant.airborne || combatant.jumpJetsEnabled || combatant.transform.y > 0.0) {
+        } else if (combatant.airborne || combatant.jumpJetsEnabled ||
+                   combatant.transform.y > combatant.ridge.groundHeight + 1e-9) {
             bool launchThrusting = false;
             double fuelBurnSeconds = 0.0;
             if (combatant.jumpJetsEnabled && combatant.jumpLaunchImpulseRemaining > 0.0 && combatant.jumpFuel > 0.0) {
@@ -4845,29 +5384,46 @@ void BattleWorld::tick() {
             combatant.verticalSpeed -= params_.jumpJetGravity * dt;
             combatant.transform.y += combatant.verticalSpeed * dt;
             combatant.airborne = true;
-            if (combatant.transform.y <= 0.0) {
+            if (combatant.transform.y <= surfaceHeight) {
                 const double impactSpeed = std::max(0.0, -combatant.verticalSpeed);
                 combatant.landingImpactSpeed = impactSpeed;
+                // -100 is the proven DOS cutoff. 420 world units/s is the
+                // existing replacement-physics calibration, not a recovered unit conversion.
                 combatant.hardLanding = impactSpeed > params_.jumpJetHardLandingSpeed;
-                combatant.knockdownCandidate = combatant.hardLanding;
-                combatant.transform.y = 0.0;
+                const auto& damage = combatant.mechRuntime.detailedDamage;
+                const bool aiLandingFall = !combatant.playerControlled &&
+                    originalAiLandingFlag(
+                        combatant.missionStatus == CombatantMissionStatus::Disabled ? -1 : 0,
+                        damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::LeftLeg)].structureRemaining,
+                        damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::RightLeg)].structureRemaining) == 1;
+                // The source has distinct landing paths: 92AA damages the
+                // player's legs; 8895 requests AI landing/fall without a hit.
+                combatant.knockdownCandidate = combatant.playerControlled
+                    ? combatant.hardLanding : aiLandingFall;
+                combatant.transform.y = surfaceHeight;
                 combatant.verticalSpeed = 0.0;
                 combatant.airborne = false;
                 combatant.jumpJetsEnabled = false;
                 combatant.jumpLaunchImpulseRemaining = 0.0;
+                if (combatant.playerControlled && combatant.hardLanding) applyHardLanding(combatant);
+                if (aiLandingFall) {
+                    beginBattleFall(combatant.posture, tickIndex_);
+                    combatant.throttle = combatant.turn = 0.0;
+                    combatant.forwardSpeed = combatant.targetForwardSpeed = 0.0;
+                }
             }
         } else {
-            combatant.transform.y = 0.0;
+            combatant.transform.y = surfaceHeight;
             combatant.verticalSpeed = 0.0;
             combatant.jumpLaunchImpulseRemaining = 0.0;
             combatant.airborne = false;
             combatant.jumpJetThrusting = false;
             combatant.jumpForwardThrusting = false;
-            if (combatant.jumpCapable) {
+            if (combatant.jumpCapable && !combatant.aiJump.enabled) {
                 combatant.jumpFuel = std::min(
                     combatant.jumpMaxFuel,
                     combatant.jumpFuel + params_.jumpJetFuelRechargePerSecond * dt);
-            } else {
+            } else if(!combatant.aiJump.enabled) {
                 combatant.jumpFuel = 0.0;
             }
         }
@@ -4886,18 +5442,27 @@ void BattleWorld::tick() {
     }
 
     resolveDeterministicCollisions(previousTransforms);
-    updateReplacementMissionRuntime();
+    if (auto* player = findCombatant(playerEntityId_)) updatePlayerRidge(params_, *player);
+    // BTECH main0125 checks fatal pilot damage before delayed mission flags.
+    // An intact lancemate or retrieval contact cannot keep a dead commander alive.
+    if (!commanderPilotKilled()) updateReplacementMissionRuntime();
 
     if (!missionTerminal(missionRuntimeState_)) {
         updateDeterministicCombatRuntime();
         updateImpactEventHistory();
         updateMajorSystemRuntime();
-        evaluateMissionRuntimeAfterObjective();
-        evaluateMissionRuntimeAfterCombat();
+        evaluateMissionRuntimeAfterCombat(commanderPilotKilled()
+            ? std::nullopt : evaluateMissionRuntimeAfterObjective());
+        resolveMissionConclusion(acknowledged);
     }
 
     refreshTargetScanState();
 
+    for (auto& actor : combatants_) if (actor.lanceOrder.sequence &&
+        (actor.missionStatus != CombatantMissionStatus::Active || combatantMechDestroyed(actor))) {
+        actor.lanceOrder.phase = BattleLanceOrderPhase::Inactive;
+        actor.lanceOrder.reason = BattleLanceOrderReason::RecipientInactive;
+    }
     ++tickIndex_;
     elapsedMs_ += tickMs;
 }
@@ -4914,6 +5479,7 @@ const BattleSnapshot& BattleWorld::missionStartSnapshot() const {
 
 BattleSnapshot BattleWorld::snapshot() const {
     BattleSnapshot result;
+    result.originalRng=originalRng_;
     result.tickIndex = tickIndex_;
     result.elapsedMs = elapsedMs_;
     result.combatAiPolicy = params_.combatAiPolicy;
@@ -4947,6 +5513,9 @@ BattleSnapshot BattleWorld::snapshot() const {
     result.lastCollision = lastCollision_;
     result.cockpitRadar = cockpitRadar_;
     result.targetScan = targetScan_;
+    for (const auto& command : queuedInputs_) {
+        if (command.lanceOrder) result.pendingLanceOrders.push_back(command);
+    }
     return result;
 }
 
@@ -4987,6 +5556,8 @@ EntityId BattleWorld::spawnCombatant(
     combatant.jumpFuel = combatant.jumpCapable ? params_.jumpJetMaxFuel : 0.0;
     combatant.jumpMaxFuel = combatant.jumpCapable ? params_.jumpJetMaxFuel : 0.0;
     combatant.jumpActivationFuel = combatant.jumpCapable ? params_.jumpJetActivationFuel : 0.0;
+    combatant.aiJump.enabled=!playerControlled && mobility.originalBtechJumpSpeedWord0c>0 &&
+        params_.combatAiPolicy==BattleCombatAiPolicy::ReplacementDeterministicCombatAi;
     combatant.mechRuntime.currentAnimationId = "walk";
     combatant.damageRules = mech3d::catalogComponentDamageRules(combatant.mechPresetId);
     initializeCombatantWeapons(params_, combatant);
@@ -5249,6 +5820,8 @@ void BattleWorld::refreshTargetScanState() {
 }
 
 bool combatantCanFireWeapon(const BattleStartParams& params, const Combatant& combatant) {
+    // The original 72E9 branch bypasses AI steering and weapon requests in 1/4/5.
+    if (!combatant.playerControlled && combatant.posture.posture != BattlePosture::Upright) return false;
     if (combatant.missionStatus != CombatantMissionStatus::Active || combatantMechDestroyed(combatant)) {
         return false;
     }
@@ -5425,29 +5998,54 @@ BattleAimRay crosshairAimRay(
     const BattleMechHitProfile& profile) {
     constexpr double kPi = 3.14159265358979323846;
     const double heading = attacker.transform.headingRadians +
-        torsoYawRadians(params, attacker.torsoYawStep);
+        torsoYawRadians(params, attacker);
     const double crosshairY = profile.neutralCrosshairY -
-        static_cast<double>(attacker.aimPitchStep) *
+        static_cast<double>(attacker.mouseLook.enabled ? 0 : attacker.aimPitchStep) *
             profile.crosshairPixelsPerAimStep;
     const double halfHeight =
         static_cast<double>(profile.cockpitViewportHeight) * 0.5;
     const double normalizedScreenY =
         halfHeight > 0.0 ? (halfHeight - crosshairY) / halfHeight : 0.0;
+    const double zoom = attacker.mouseLook.enabled ? std::clamp(attacker.mouseLook.zoomLevel,1,3) : 1;
     const double verticalSlope = normalizedScreenY * std::tan(
-        profile.verticalFieldOfViewDegrees * kPi / 360.0);
+        profile.verticalFieldOfViewDegrees * kPi / 360.0) / zoom;
+    // The integer HUD center is half a virtual pixel left of the optical
+    // center in the odd-width light/medium apertures. Camera right points
+    // opposite the body's local +X axis when looking down world +Z.
+    const double horizontalSlope = halfHeight > 0.0 && profile.cockpitViewportWidth > 0
+        ? (profile.cockpitViewportWidth * 0.5 - profile.neutralCrosshairX) / halfHeight *
+            std::tan(profile.verticalFieldOfViewDegrees * kPi / 360.0) / zoom : 0.0;
     BattleAimRay ray;
     ray.direction = normalized({
-        std::sin(heading),
+        std::sin(heading) + std::cos(heading) * horizontalSlope,
         verticalSlope,
-        std::cos(heading),
+        std::cos(heading) - std::sin(heading) * horizontalSlope,
     });
     ray.origin = {
         attacker.transform.x +
             std::sin(heading) * params.cockpitCameraForwardOffset,
-        attacker.transform.y + profile.aimOriginHeight,
+        attacker.transform.y + profile.aimOriginHeight +
+            (profile.cockpitBobAffectsAim ? battleCockpitBobOffsetWorldUnits(
+                attacker.forwardSpeed, attacker.maxForwardSpeed, attacker.maxReverseSpeed,
+                static_cast<double>(attacker.walkAnimationElapsedMs), false) : 0.0),
         attacker.transform.z +
             std::cos(heading) * params.cockpitCameraForwardOffset,
     };
+    if (attacker.posture.sequence != 0 || attacker.mouseLook.enabled || attacker.ridge.pitch != 0) {
+        const auto camera = makeCameraSnapshot(params, &attacker);
+        const double pitch = camera.posturePitchRadians + camera.ridgePitchRadians - camera.mouseLookPitchRadians;
+        const double forward = std::cos(pitch) + verticalSlope * std::sin(pitch);
+        ray.direction = normalized({
+            std::sin(heading) * forward + std::cos(heading) * horizontalSlope,
+            -std::sin(pitch) + verticalSlope * std::cos(pitch),
+            std::cos(heading) * forward - std::sin(heading) * horizontalSlope});
+        if (attacker.posture.sequence != 0 || attacker.ridge.pitch != 0)
+            ray.origin = {camera.transform.x, camera.transform.y, camera.transform.z};
+        if (attacker.ridge.pitch != 0 && attacker.posture.sequence == 0 && profile.cockpitBobAffectsAim)
+            ray.origin.y += battleCockpitBobOffsetWorldUnits(attacker.forwardSpeed,
+                attacker.maxForwardSpeed, attacker.maxReverseSpeed,
+                static_cast<double>(attacker.walkAnimationElapsedMs), false);
+    }
     return ray;
 }
 
@@ -5505,12 +6103,16 @@ bool rayTriangleDistance(
     const double inverse = 1.0 / determinant;
     const BattleHitPoint translated = subtract(origin, triangle.a);
     const double u = dot(translated, p) * inverse;
-    if (u < 0.0 || u > 1.0) {
+    // Roundoff at an authored edge must not open a crack between adjacent
+    // triangles. This dimensionless tolerance is sub-microscopic at model
+    // scale; it is not a screen-pixel or weapon hitbox expansion.
+    constexpr double kBarycentricEpsilon = 1.0e-10;
+    if (u < -kBarycentricEpsilon || u > 1.0 + kBarycentricEpsilon) {
         return false;
     }
     const BattleHitPoint q = cross(translated, edge1);
     const double v = dot(direction, q) * inverse;
-    if (v < 0.0 || u + v > 1.0) {
+    if (v < -kBarycentricEpsilon || u + v > 1.0 + kBarycentricEpsilon) {
         return false;
     }
     const double candidate = dot(edge2, q) * inverse;
@@ -5879,13 +6481,14 @@ struct BattleMechRayHit {
     BattleHitPoint worldPoint;
     BattleHitPoint localPoint;
     BattleHitPoint localDirection;
-    const BattleMechHitTriangle* triangle = nullptr;
+    BattleMechHitTriangle triangle;
 };
 
 BattleMechRayHit raycastMech(
     const BattleAimRay& ray,
     const Combatant& target,
-    const BattleMechHitProfile& profile) {
+    const BattleMechHitProfile& profile,
+    const BattleStartParams& params) {
     BattleMechRayHit result;
     const BattleHitPoint localOrigin =
         worldPointToTargetLocal(ray.origin, target.transform);
@@ -5897,7 +6500,9 @@ BattleMechRayHit raycastMech(
             containsComponentId(
                 target.mechRuntime.disabledComponentIds, componentId);
     };
-    for (const BattleMechHitTriangle& triangle : profile.triangles) {
+    const auto posed = battleMechHitPose(profile, combatantUsesWalkAnimation(target),
+        target.walkAnimationElapsedMs, target.forwardSpeed, torsoYawRadians(params, target));
+    for (const BattleMechHitTriangle& triangle : posed.triangles) {
         if (hidden(triangle.componentId)) {
             continue;
         }
@@ -5914,7 +6519,11 @@ BattleMechRayHit raycastMech(
         result.worldPoint = add(
             ray.origin, multiply(ray.direction, distance));
         result.localDirection = localDirection;
-        result.triangle = &triangle;
+        result.triangle = triangle;
+    }
+    if (result.valid && result.triangle.torsoComposite) {
+        result.localPoint = battleMechHitPointToBind(result.localPoint, result.triangle.componentId, posed, profile.bindPose, false);
+        result.localDirection = battleMechHitPointToBind(result.localDirection, result.triangle.componentId, posed, profile.bindPose, true);
     }
     return result;
 }
@@ -5998,23 +6607,9 @@ BattleHitPoint steerProjectileDirection(
         multiply(desired, std::sin(fraction * angle) / sine)));
 }
 
-uint64_t projectileImpactRandomWord(
-    const BattleProjectileState& projectile,
-    uint64_t impactTickIndex) {
-    // The original impact tables and their 2d6 indexing are closed, but the
-    // executable's global PRNG sequencing is not. Keep that boundary explicit
-    // while providing a stable battle-owned roll for replay determinism.
-    uint64_t value = projectile.pendingShot.sequence;
-    value ^= static_cast<uint64_t>(projectile.projectileId) << 32u;
-    value ^= impactTickIndex + 0x9e3779b97f4a7c15ull;
-    value = (value ^ (value >> 30u)) * 0xbf58476d1ce4e5b9ull;
-    value = (value ^ (value >> 27u)) * 0x94d049bb133111ebull;
-    return value ^ (value >> 31u);
-}
-
 int projectileImpactDamage(
     const BattleProjectileState& projectile,
-    uint64_t impactTickIndex,
+    OriginalBtechRng& rng,
     BattleShotDiagnostic& shot) {
     constexpr std::array<uint8_t, 11> kLrm5Hits{
         1, 2, 2, 3, 3, 3, 3, 4, 4, 5, 5};
@@ -6029,10 +6624,12 @@ int projectileImpactDamage(
         // FUN_1000_5d76 loads the fixed AC/5 value from DS:0F5A.
         return 5;
     }
-    const uint64_t random = projectileImpactRandomWord(
-        projectile, impactTickIndex);
-    const size_t rollIndex = static_cast<size_t>(
-        (random % 6u) + ((random >> 8u) % 6u));
+    if (projectile.originalDamageClass<6u || projectile.originalDamageClass>9u) {
+        shot.missileClusterTableProven=false;
+        return static_cast<int>(shot.originalDamage);
+    }
+    const size_t firstDie=rng.exclusive(6);
+    const size_t rollIndex=firstDie+rng.exclusive(6);
     shot.missileClusterRollIndex = static_cast<uint8_t>(rollIndex);
     shot.missileClusterTableProven = true;
     switch (projectile.originalDamageClass) {
@@ -6098,24 +6695,6 @@ bool weaponMountMatchesCriticalLocation(
     return weapon.locationId == expected;
 }
 
-uint64_t criticalRandomWord(
-    const BattleShotDiagnostic& shot,
-    const Combatant& target,
-    mech3d::MechInternalSectionId section,
-    uint64_t drawIndex) {
-    // FUN_1000_cb73 call sites and all bounds are proven. The sequencing of
-    // the original global PRNG is not, so use a stable battle-owned stream and
-    // expose that boundary in BattleShotDiagnostic.
-    uint64_t value = shot.sequence;
-    value ^= static_cast<uint64_t>(shot.weaponInstanceId) << 16u;
-    value ^= static_cast<uint64_t>(target.id.value) << 32u;
-    value ^= static_cast<uint64_t>(originalCriticalLocationIndex(section)) << 56u;
-    value ^= (drawIndex + 1u) * 0x9e3779b97f4a7c15ull;
-    value = (value ^ (value >> 30u)) * 0xbf58476d1ce4e5b9ull;
-    value = (value ^ (value >> 27u)) * 0x94d049bb133111ebull;
-    return value ^ (value >> 31u);
-}
-
 enum class CriticalAttemptResult : uint8_t {
     Applied,
     NoCandidate,
@@ -6126,11 +6705,11 @@ CriticalAttemptResult scanOriginalCriticalAttempt(
     Combatant& target,
     mech3d::MechInternalSectionId location,
     BattleShotDiagnostic& shot,
-    uint64_t& drawIndex) {
+    OriginalBtechRng& drawIndex) {
     auto& detailed = target.mechRuntime.detailedDamage;
     const int originalLocation = originalCriticalLocationIndex(location);
     int budget = static_cast<int>(
-        criticalRandomWord(shot, target, location, drawIndex++) % 12u) + 1;
+        drawIndex.exclusive(12)) + 1;
     if (originalLocation == 2 || originalLocation == 3 ||
         originalLocation == 7) {
         budget = (budget + 1) >> 1;
@@ -6194,8 +6773,7 @@ CriticalAttemptResult scanOriginalCriticalAttempt(
             if (budget < 1) {
                 detailed.originalCockpitCriticalFlag = true;
                 // FUN_1000_4106 treats the one-byte cockpit critical flag as
-                // nonfunctional. Keep the battle consequence local; campaign
-                // pilot death/write-back remains Phase 14.
+                // nonfunctional. Campaign return uses BTECH's casualty rule.
                 target.missionStatus = CombatantMissionStatus::Disabled;
                 shot.lastCriticalHitKind = BattleCriticalHitKind::CockpitFlag;
                 shot.lastCriticalHitIndex = 0u;
@@ -6317,7 +6895,7 @@ CriticalAttemptResult applyOriginalCriticalAttempt(
     Combatant& target,
     mech3d::MechInternalSectionId location,
     BattleShotDiagnostic& shot,
-    uint64_t& drawIndex) {
+    OriginalBtechRng& drawIndex) {
     for (int reroll = 0; reroll < 4096; ++reroll) {
         const CriticalAttemptResult result = scanOriginalCriticalAttempt(
             target, location, shot, drawIndex);
@@ -6333,13 +6911,13 @@ void resolveOriginalCriticals(
     Combatant& target,
     mech3d::MechInternalSectionId location,
     BattleShotDiagnostic& shot,
-    uint64_t& drawIndex) {
+    OriginalBtechRng& drawIndex) {
     shot.criticalResolutionAttempted = true;
     auto& detailed = target.mechRuntime.detailedDamage;
     const int firstDie = static_cast<int>(
-        criticalRandomWord(shot, target, location, drawIndex++) % 6u) + 1;
+        drawIndex.exclusive(6)) + 1;
     const int secondDie = static_cast<int>(
-        criticalRandomWord(shot, target, location, drawIndex++) % 6u) + 1;
+        drawIndex.exclusive(6)) + 1;
     int roll = firstDie + secondDie;
     shot.criticalRoll = static_cast<uint8_t>(roll);
     shot.criticalAttemptsRequested = static_cast<uint8_t>(
@@ -6430,16 +7008,20 @@ void applyOriginalDestroyedSectionVisual(
     if (rule == target.damageRules.end()) {
         return;
     }
-    mech3d::destroyMechRuntimeComponent(
-        target.mechRuntime, rule->componentId);
     if (detachOnDeath) {
+        // Zero leg structure causes fall and viability=-1, not chassis destruction.
+        // Old saved destroyed IDs remain authoritative on restore.
         mech3d::hideMechRuntimeComponent(
             target.mechRuntime, rule->componentId);
+        mech3d::disableMechRuntimeComponent(target.mechRuntime, rule->componentId);
+    } else {
+        mech3d::destroyMechRuntimeComponent(target.mechRuntime, rule->componentId);
     }
 }
 
 void applyDetailedCombatantDamage(
     const BattleStartParams& params,
+    OriginalBtechRng& rng,
     Combatant& attacker,
     Combatant& target,
     int damageAmount,
@@ -6456,12 +7038,15 @@ void applyDetailedCombatantDamage(
     shot.damageBefore =
         initialSection.battleDamage + initialInternal.battleDamage;
     int damageRemaining = std::max(0, damageAmount);
-    uint64_t criticalDrawIndex = 0u;
+    auto& criticalDrawIndex = rng;
     mech3d::MechArmorSectionId currentArmorSection = initialArmorSection;
     constexpr std::array<int, 9> kDestroyedInternalContinuation{{
         6, 7, 6, 7, 5, 4, 4, 4, 4}};
 
-    for (int propagationGuard = 0; propagationGuard < 10; ++propagationGuard) {
+    // Original 4F9A tests the initial amount too: a zero hit must not roll
+    // criticals on a bare section. Exact positive armor equality still does.
+    for (int propagationGuard = 0; propagationGuard < 10 && damageRemaining != 0;
+         ++propagationGuard) {
         auto& section = detailed.armorSections[
             armorSectionIndex(currentArmorSection)];
         const mech3d::MechInternalSectionId internalSectionId =
@@ -6672,6 +7257,7 @@ void BattleWorld::updateDeterministicEnemyRuntime() {
         if (combatant.playerControlled || combatant.roster.team != BattleTeam::Opposing) {
             continue;
         }
+        if (combatant.posture.posture != BattlePosture::Upright) continue;
         if (combatant.missionStatus != CombatantMissionStatus::Active) {
             combatant.enemyAiState = BattleEnemyAiState::Retreat;
             combatant.enemyAiTargetKind = BattleEnemyAiTargetKind::None;
@@ -6916,7 +7502,7 @@ ReplacementAiAimSolution replacementAiAimSolution(
     }
 
     const double torsoHeading = shooter.transform.headingRadians +
-        torsoYawRadians(params, shooter.torsoYawStep);
+        torsoYawRadians(params, shooter);
     const BattleMechHitProfile* shooterProfile =
         hitProfileForPreset(params, shooter.mechPresetId);
     const double shooterAimHeight = shooterProfile != nullptr
@@ -6933,7 +7519,7 @@ ReplacementAiAimSolution replacementAiAimSolution(
             *shooterProfile,
             weapon.locationId,
             shooter.transform,
-            torsoYawRadians(params, shooter.torsoYawStep));
+            torsoYawRadians(params, shooter));
         if (mount.has_value()) {
             result.origin = *mount;
         }
@@ -6987,7 +7573,153 @@ ReplacementAiAimSolution replacementAiAimSolution(
 
 } // namespace
 
+bool BattleWorld::teamDetectsCombatant(BattleTeam team, const Combatant& target) const {
+    for (const Combatant& observer : combatants_) {
+        if (observer.roster.team == team &&
+            observer.missionStatus == CombatantMissionStatus::Active &&
+            !combatantMechDestroyed(observer) &&
+            (!observer.majorSystems.enabled || observer.majorSystems.radarContactsVisible) &&
+            distance2d(observer.transform, target.transform) <= battleRadarContactRangeWorldUnits()) return true;
+    }
+    return false;
+}
+
+void BattleWorld::applyLanceOrder(const BattleInputCommand& command) {
+    if (!battleLanceOrderCommandValid(snapshot(), command)) return;
+    Combatant& actor = *findCombatant(command.lanceOrder->recipient);
+    const uint64_t sequence = actor.lanceOrder.sequence + 1u;
+    actor.lanceOrder = {};
+    actor.lanceOrder.sequence = sequence;
+    actor.lanceOrder.issued = *command.lanceOrder;
+    actor.lanceOrder.acceptTickIndex = tickIndex_;
+    actor.lanceOrder.reason = BattleLanceOrderReason::Accepted;
+    // Clear only assignment/recovery. In particular, never clear a latched retreat.
+    auto& ai = actor.replacementAi;
+    ai.targetKind = BattleReplacementAiTargetKind::None;
+    ai.combatTargetEntityId = {};
+    ai.targetLockUntilTickIndex = 0;
+    ai.navigationWaypointActive = false;
+    ai.stuckDecisionCount = 0;
+    ai.detourDecisionsRemaining = 0;
+    ai.detourAttempts = 0;
+    ai.lastDestinationDistance = 0.0;
+    ai.nextPathRetryTickIndex = tickIndex_;
+    ai.arrivalReached = false;
+    ai.combatOrbitActive = false;
+    actor.fireWeaponRequested = false;
+}
+
+bool BattleWorld::resolveManualLanceOrder(Combatant& actor, Combatant*& target, bool& objectiveTarget) {
+    auto& order = actor.lanceOrder;
+    if (actor.roster.team != BattleTeam::Player || actor.playerControlled || order.sequence == 0u) return false;
+    if (actor.replacementAi.retreating) {
+        order.phase = BattleLanceOrderPhase::Retreating;
+        order.reason = BattleLanceOrderReason::DamageRetreat;
+        return false;
+    }
+    if (order.phase == BattleLanceOrderPhase::Released) return false;
+    const auto& issued = order.issued;
+    if (issued.targetKind == BattleLanceTargetKind::None) {
+        order.phase = BattleLanceOrderPhase::MissionDefault;
+        order.reason = BattleLanceOrderReason::MissionDefault;
+        return false;
+    }
+    const auto liveHostile = [](const Combatant* candidate) {
+        return candidate && candidate->roster.team == BattleTeam::Opposing &&
+            candidate->missionStatus == CombatantMissionStatus::Active && !combatantMechDestroyed(*candidate);
+    };
+    if (issued.targetKind == BattleLanceTargetKind::Combatant || issued.targetKind == BattleLanceTargetKind::Objective) {
+        target = issued.targetKind == BattleLanceTargetKind::Combatant ? findCombatant(issued.targetEntityId) : nullptr;
+        objectiveTarget = issued.targetKind == BattleLanceTargetKind::Objective &&
+            params_.mission.family == BattleMissionFamily::Assault && objectiveCanTakeDamage(objective_) &&
+            objective_.damagePolicyProven && !objective_.damageSuppressed && !battleObjectiveProtectedByPlayer(objective_);
+        const bool alive = issued.targetKind == BattleLanceTargetKind::Combatant ? liveHostile(target) : objectiveTarget;
+        if (!alive || (target && !teamDetectsCombatant(BattleTeam::Player, *target))) {
+            order.phase = BattleLanceOrderPhase::Released;
+            order.reason = alive ? BattleLanceOrderReason::ContactLost : BattleLanceOrderReason::TargetDestroyed;
+            order.releaseTickIndex = tickIndex_;
+            target = nullptr;
+            objectiveTarget = false;
+            return false;
+        }
+        order.phase = BattleLanceOrderPhase::Engaging;
+        order.reason = BattleLanceOrderReason::TargetEngaged;
+        if (!order.activated) { order.activated = true; order.activationTickIndex = tickIndex_; }
+        return true;
+    }
+    const double distance = distance2d(actor.transform, issued.destination);
+    if (order.arrived && distance > 250.0) order.arrived = false;
+    if (!order.arrived && distance <= 125.0) {
+        order.arrived = true;
+        order.arrivalTickIndex = tickIndex_;
+    }
+    const bool ambush = issued.kind == BattleLanceOrderKind::Ambush;
+    const bool defend = issued.kind == BattleLanceOrderKind::Defend;
+    const bool avoid = issued.kind == BattleLanceOrderKind::MoveAvoid;
+    const bool wasEngaging = order.phase == BattleLanceOrderPhase::Engaging;
+    if (avoid) {
+        order.phase = order.arrived ? BattleLanceOrderPhase::Arrived : BattleLanceOrderPhase::Travelling;
+        order.reason = order.arrived ? BattleLanceOrderReason::AtDestination : BattleLanceOrderReason::AvoidingCombat;
+        return true;
+    }
+    if (defend && order.arrived && !order.activated) {
+        order.activated = true;
+        order.activationTickIndex = tickIndex_;
+    }
+    if (ambush && !order.activated && order.arrived) {
+        bool near = false;
+        for (const auto& enemy : combatants_) {
+            if (liveHostile(&enemy) && teamDetectsCombatant(BattleTeam::Player, enemy) &&
+                distance2d(actor.transform, enemy.transform) <= 6000.0) near = true;
+        }
+        const bool spotted = teamDetectsCombatant(BattleTeam::Opposing, actor);
+        if (near || spotted) {
+            order.activated = true;
+            order.activationTickIndex = tickIndex_;
+            order.reason = near ? BattleLanceOrderReason::EnemyNear : BattleLanceOrderReason::Spotted;
+        }
+    }
+    const bool canAcquire = (!ambush && !defend) || order.activated;
+    Combatant* previous = findCombatant(actor.replacementAi.combatTargetEntityId);
+    const auto eligible = [&](const Combatant* candidate, bool retain) {
+        if (!liveHostile(candidate) || !teamDetectsCombatant(BattleTeam::Player, *candidate)) return false;
+        if (defend) return distance2d(issued.destination, candidate->transform) <= (retain ? 7000.0 : 6000.0);
+        // Move (attack) encounters are local, though team sensors establish knowledge.
+        if (issued.kind == BattleLanceOrderKind::MoveAttack)
+            return distance2d(actor.transform, candidate->transform) <= (retain ? 7000.0 : 6000.0);
+        return true;
+    };
+    if (canAcquire) {
+        if (eligible(previous, true)) target = previous;
+        else {
+            double best = std::numeric_limits<double>::max();
+            for (auto& candidate : combatants_) {
+                if (!eligible(&candidate, false)) continue;
+                const double d = distance2d(defend ? issued.destination : actor.transform, candidate.transform);
+                if (d < best || (d == best && target && candidate.id.value < target->id.value)) {
+                    best = d;
+                    target = &candidate;
+                }
+            }
+        }
+    }
+    if (target) {
+        order.phase = BattleLanceOrderPhase::Engaging;
+        if (order.reason != BattleLanceOrderReason::EnemyNear && order.reason != BattleLanceOrderReason::Spotted)
+            order.reason = BattleLanceOrderReason::TargetEngaged;
+    } else {
+        if (wasEngaging) order.releaseTickIndex = tickIndex_;
+        order.phase = order.arrived ? ((ambush || defend) ? BattleLanceOrderPhase::Waiting : BattleLanceOrderPhase::Arrived)
+            : (defend && order.activated) ? BattleLanceOrderPhase::Returning : BattleLanceOrderPhase::Travelling;
+        order.reason = order.arrived ? BattleLanceOrderReason::AtDestination
+            : defend && order.activated ? BattleLanceOrderReason::GuardReturn : BattleLanceOrderReason::Travelling;
+    }
+    if (combatantMovementBlocked(actor)) order.reason = BattleLanceOrderReason::MovementRestricted;
+    return true;
+}
+
 void BattleWorld::updateReplacementCombatAi() {
+    for(auto& actor:combatants_)if(actor.aiJump.enabled)actor.aiJump.moveRequested=false;
     constexpr double kPi = 3.14159265358979323846;
     constexpr double kTwoPi = 2.0 * kPi;
     const bool singleMission = params_.mission.valid && !params_.mission.extended;
@@ -7015,10 +7747,15 @@ void BattleWorld::updateReplacementCombatAi() {
             (combatant.roster.team == BattleTeam::Player ||
              combatant.roster.team == BattleTeam::Opposing);
         if (replacementActor) {
+            if (combatant.posture.posture != BattlePosture::Upright) continue;
             if (combatant.missionStatus == CombatantMissionStatus::Active &&
                 !combatantMechDestroyed(combatant)) {
                 actors.push_back(&combatant);
             } else {
+                if (combatant.lanceOrder.sequence != 0u) {
+                    combatant.lanceOrder.phase = BattleLanceOrderPhase::Inactive;
+                    combatant.lanceOrder.reason = BattleLanceOrderReason::RecipientInactive;
+                }
                 combatant.replacementAi.active = false;
                 combatant.replacementAi.missionSlice =
                     BattleReplacementAiMissionSlice::None;
@@ -7140,22 +7877,6 @@ void BattleWorld::updateReplacementCombatAi() {
     } else {
         opposingLaunchCentroid = params_.playerStartTransform;
     }
-
-    const auto teamDetectsCombatant =
-        [this](BattleTeam observerTeam, const Combatant& target) {
-            for (const Combatant& observer : combatants_) {
-                if (observer.roster.team == observerTeam &&
-                    observer.missionStatus == CombatantMissionStatus::Active &&
-                    !combatantMechDestroyed(observer) &&
-                    (!observer.majorSystems.enabled ||
-                     observer.majorSystems.radarContactsVisible) &&
-                    distance2d(observer.transform, target.transform) <=
-                        battleRadarContactRangeWorldUnits()) {
-                    return true;
-                }
-            }
-            return false;
-        };
 
     bool objectiveGuardTriggered = false;
     if (assaultEngagement || retrievalEngagement) {
@@ -7353,6 +8074,11 @@ void BattleWorld::updateReplacementCombatAi() {
                              retreatThreat->transform);
         }
         const bool retreatingFromDamage = state.retreating;
+        Combatant* manualTarget = nullptr;
+        bool manualObjective = false;
+        const bool manualControls = resolveManualLanceOrder(companion, manualTarget, manualObjective);
+        const bool manualLocation = manualControls &&
+            companion.lanceOrder.issued.targetKind == BattleLanceTargetKind::WorldPoint;
         state.active = true;
         state.missionSlice = missionSlice;
         state.missionTriggered = objectiveGuard
@@ -7402,7 +8128,7 @@ void BattleWorld::updateReplacementCombatAi() {
                 : retrieveRoute ? 600.0
                 : sprintRunner ? 400.0 : 800.0;
         const double arrivalRadius =
-            defenseReaction || retrieveRoute || deathmatchEngagement ||
+            manualLocation || defenseReaction || retrieveRoute || deathmatchEngagement ||
                     sprintInterception || objectiveGuard
                 ? 125.0 : 100.0;
         const double lateral =
@@ -7438,6 +8164,19 @@ void BattleWorld::updateReplacementCombatAi() {
         }
         if (retreatingFromDamage) {
             state.movementDestination = state.retreatDestination;
+        } else if (manualLocation) {
+            state.missionAnchor = companion.lanceOrder.issued.destination;
+            state.movementDestination = state.missionAnchor;
+        } else if (manualObjective) {
+            state.missionAnchor = objective_.transform;
+            // Stand off from the separate structure using the same weapon-derived spacing.
+            const auto origin = launchTransformFor(companion);
+            const double d = std::max(1.0, distance2d(origin, objective_.transform));
+            const double standOff = std::max(params_.objectiveCollisionRadiusWorld +
+                companion.collisionRadiusWorld + 150.0, missionCombatDistance);
+            state.movementDestination = objective_.transform;
+            state.movementDestination.x += (origin.x - objective_.transform.x) / d * standOff;
+            state.movementDestination.z += (origin.z - objective_.transform.z) / d * standOff;
         }
         if (previousMissionSlice != state.missionSlice ||
             previousAnchor.x != state.missionAnchor.x ||
@@ -7455,8 +8194,9 @@ void BattleWorld::updateReplacementCombatAi() {
             state.arrivalTickIndex = 0;
         }
 
-        Combatant* obstruction = nullptr;
+        Combatant* obstruction = manualTarget;
         state.proximityThreatOverride = false;
+        if (!manualControls) {
         const auto activeHostile = [&companion](const Combatant* candidate) {
             return candidate != nullptr &&
                 candidate->roster.team != companion.roster.team &&
@@ -7618,9 +8358,10 @@ void BattleWorld::updateReplacementCombatAi() {
                 }
             }
         }
+        }
         state.targetKind = retreatingFromDamage
             ? BattleReplacementAiTargetKind::None
-            : objectiveAssault && obstruction == nullptr
+            : (manualObjective || (!manualControls && objectiveAssault && obstruction == nullptr))
             ? BattleReplacementAiTargetKind::Objective
             : obstruction == nullptr
                 ? BattleReplacementAiTargetKind::None
@@ -7636,7 +8377,7 @@ void BattleWorld::updateReplacementCombatAi() {
             state.navigationWaypointActive = false;
             state.pathFailureCount = 0u;
             state.nextPathRetryTickIndex = tickIndex_;
-            state.nextFireDecisionTickIndex = tickIndex_;
+            if (companion.lanceOrder.sequence == 0u) state.nextFireDecisionTickIndex = tickIndex_;
             state.targetLockUntilTickIndex = obstruction == nullptr
                 ? 0u
                 : tickIndex_ + static_cast<uint64_t>(std::ceil(
@@ -7728,7 +8469,7 @@ void BattleWorld::updateReplacementCombatAi() {
                     companion.transform, *aimTarget);
                 const double remainingAimError = std::remainder(
                     combatBodyRelativeAim -
-                        torsoYawRadians(params_, companion.torsoYawStep),
+                        torsoYawRadians(params_, companion),
                     kTwoPi);
                 constexpr double kAimRecoveryThresholdRadians =
                     12.0 * kPi / 180.0;
@@ -7747,7 +8488,10 @@ void BattleWorld::updateReplacementCombatAi() {
 
         const double destinationDistance =
             distance2d(companion.transform, state.movementDestination);
-        if (!retrieveRoute) {
+        if (manualLocation) {
+            state.arrivalReached = companion.lanceOrder.arrived;
+            state.arrivalTickIndex = companion.lanceOrder.arrivalTickIndex;
+        } else if (!retrieveRoute) {
             state.arrivalReached = false;
             state.arrivalTickIndex = 0;
         } else {
@@ -7844,6 +8588,13 @@ void BattleWorld::updateReplacementCombatAi() {
             movingMissionMode =
                 BattleReplacementAiNavMode::RetreatToBoundary;
             combatMode = BattleReplacementAiNavMode::RetreatToBoundary;
+        } else if (manualControls) {
+            stationaryMissionMode = manualObjective ? BattleReplacementAiNavMode::AssaultObjective
+                : companion.lanceOrder.issued.kind == BattleLanceOrderKind::Defend ||
+                  companion.lanceOrder.issued.kind == BattleLanceOrderKind::Ambush
+                    ? BattleReplacementAiNavMode::Guarding : BattleReplacementAiNavMode::Arrived;
+            movingMissionMode = BattleReplacementAiNavMode::ApproachObjective;
+            combatMode = BattleReplacementAiNavMode::EngageOpponent;
         } else if (objectiveAssault) {
             stationaryMissionMode = BattleReplacementAiNavMode::AssaultObjective;
             movingMissionMode = BattleReplacementAiNavMode::AssaultObjective;
@@ -7955,7 +8706,7 @@ void BattleWorld::updateReplacementCombatAi() {
             state.stuckDecisionCount = static_cast<uint8_t>(std::min(
                 8, static_cast<int>(state.stuckDecisionCount) + 1));
         }
-        if (retrieveRoute && state.arrivalReached && obstruction == nullptr) {
+        if ((manualLocation || (retrieveRoute && !manualControls)) && state.arrivalReached && obstruction == nullptr && !retreatingFromDamage) {
             state.navMode = BattleReplacementAiNavMode::Arrived;
             state.stuckDecisionCount = 0;
             state.detourDecisionsRemaining = 0;
@@ -7995,7 +8746,7 @@ void BattleWorld::updateReplacementCombatAi() {
             companion.throttle = retreatingFromDamage
                 ? 1.0 : state.combatOrbitActive ? 0.5 : 0.6;
         }
-        const Transform& facingGoal = objectiveAssault &&
+        const Transform& facingGoal = (objectiveAssault || manualObjective) &&
                 goalDistance <= stopDistance &&
                 state.detourDecisionsRemaining == 0 &&
                 !state.navigationWaypointActive
@@ -8034,6 +8785,20 @@ void BattleWorld::updateReplacementCombatAi() {
             } else if (std::abs(delta) > kPi / 6.0) {
                 companion.throttle *= 0.25;
             }
+        }
+        if(companion.aiJump.enabled) {
+            auto& jump=companion.aiJump;
+            jump.destinationX=finalGoal.x;jump.destinationZ=finalGoal.z;
+            jump.moveRequested=finalGoalDistance>finalStopDistance && !state.combatOrbitActive && !state.aimRecoveryActive;
+            jump.actionMode=retreatingFromDamage?4:obstruction?2:(objectiveAssault||manualObjective)?6:1;
+            // A short forward probe, not the entire possibly obstructed route.
+            Transform ahead=companion.transform;
+            const double reach=2048.0*params_.terrainCellSize/512.0;
+            const double heading=std::atan2(finalGoal.x-ahead.x,finalGoal.z-ahead.z);
+            ahead.x+=std::sin(heading)*std::min(reach,finalGoalDistance);
+            ahead.z+=std::cos(heading)*std::min(reach,finalGoalDistance);
+            jump.obstacleAhead=!replacementPathSegmentClear(params_.terrainCollisionObstacles,
+                companion.transform,ahead,companion.collisionRadiusWorld+100.0);
         }
     }
 }
@@ -8145,6 +8910,7 @@ void BattleWorld::updateOriginalMovement() {
         for (uint8_t movingSlot = 1u; movingSlot < 4u; ++movingSlot) {
             Combatant* mover = liveCombatants[movingSlot];
             if (mover == nullptr || mover->playerControlled ||
+                mover->posture.posture != BattlePosture::Upright ||
                 mover->roster.team != BattleTeam::Player ||
                 !mover->originalAiMotion.initialized ||
                 mover->originalAiMotion.numericSideModeWord != 3) {
@@ -8483,6 +9249,7 @@ void BattleWorld::updateOriginalMovement() {
             ? BattleTeam::Player
             : BattleTeam::Opposing;
         if (mover == nullptr || mover->playerControlled ||
+            mover->posture.posture != BattlePosture::Upright ||
             mover->roster.team != expectedMoverTeam ||
             !mover->originalAiMotion.initialized ||
             (selectedLiveTargetModesPolicy
@@ -9013,29 +9780,8 @@ constexpr double kOriginalAiUpdateSeconds = 0.1;
 constexpr double kOriginalWeaponRangeScale = 480.0;
 constexpr int kOriginalAiHeatGate = 0x5a0;
 
-uint64_t originalAiRandomWord(
-    const Combatant& shooter,
-    const Combatant& target,
-    uint64_t decisionSequence,
-    uint64_t drawIndex) {
-    uint64_t value = decisionSequence;
-    value ^= static_cast<uint64_t>(shooter.id.value) << 16u;
-    value ^= static_cast<uint64_t>(target.id.value) << 32u;
-    value ^= (drawIndex + 1u) * 0x9e3779b97f4a7c15ull;
-    value = (value ^ (value >> 30u)) * 0xbf58476d1ce4e5b9ull;
-    value = (value ^ (value >> 27u)) * 0x94d049bb133111ebull;
-    return value ^ (value >> 31u);
-}
-
-uint8_t originalAiD6(
-    const Combatant& shooter,
-    const Combatant& target,
-    uint64_t decisionSequence,
-    uint64_t drawIndex) {
-    return static_cast<uint8_t>(
-        originalAiRandomWord(shooter, target, decisionSequence, drawIndex) %
-            6u +
-        1u);
+uint8_t originalAiD6(OriginalBtechRng& rng) {
+    return static_cast<uint8_t>(rng.exclusive(6)+1);
 }
 
 BattleOriginalAiAttackAspect originalAiAttackAspect(
@@ -11760,7 +12506,7 @@ void BattleWorld::updateOriginalCombatAiRequests() {
             "1AA6_0953_table/a79f/a86d/aae0:"
             "stationary_integer_zero_pitch_3d_target_and_friendly_lane:"
             "0.1s_cadence_bridge:"
-            "deterministic_non_original_prng";
+            "original_CB7F_shared_rng:replacement_update_schedule";
 
         if (!originalAiStationary(shooter)) {
             decision.result = BattleOriginalAiDecisionResult::
@@ -11859,7 +12605,7 @@ void BattleWorld::updateOriginalCombatAiRequests() {
                 break;
             }
 
-            if (shooter.aimPitchStep != 0 || shooter.torsoYawStep != 0) {
+            if (shooter.mouseLook.enabled || shooter.aimPitchStep != 0 || shooter.torsoYawStep != 0) {
                 candidateAimGeometryOpen = true;
                 break;
             }
@@ -12069,18 +12815,14 @@ void BattleWorld::updateOriginalCombatAiRequests() {
             targetNumber -= 4;
         }
         decision.targetNumber = static_cast<int16_t>(targetNumber);
-        const uint8_t firstHitDie = originalAiD6(
-            shooter, *target, decision.sequence, 0u);
-        const uint8_t secondHitDie = originalAiD6(
-            shooter, *target, decision.sequence, 1u);
+        const uint8_t firstHitDie = originalAiD6(originalRng_);
+        const uint8_t secondHitDie = originalAiD6(originalRng_);
         decision.hitRoll = static_cast<uint8_t>(firstHitDie + secondHitDie);
         decision.hit = decision.hitRoll >= decision.targetNumber;
         decision.attackAspect = originalAiAttackAspect(shooter, *target);
         if (decision.hit) {
-            const uint8_t firstLocationDie = originalAiD6(
-                shooter, *target, decision.sequence, 2u);
-            const uint8_t secondLocationDie = originalAiD6(
-                shooter, *target, decision.sequence, 3u);
+            const uint8_t firstLocationDie = originalAiD6(originalRng_);
+            const uint8_t secondLocationDie = originalAiD6(originalRng_);
             decision.locationRollIndex = static_cast<uint8_t>(
                 firstLocationDie + secondLocationDie - 2u);
             decision.armorSection = originalAiLocation(
@@ -12254,14 +12996,14 @@ void BattleWorld::updateBattleProjectiles() {
                 impact.impactPoint = targetPoint;
                 impact.projectileMotionTimingProven = false;
                 const int damage = projectileImpactDamage(
-                    projectile, tickIndex_, impact);
+                    projectile, originalRng_, impact);
                 impact.impactDamage = static_cast<uint16_t>(
                     std::max(0, damage));
                 Combatant* attacker = findCombatant(
                     projectile.shooterEntityId);
                 if (attacker != nullptr && target != nullptr) {
                     applyDetailedCombatantDamage(
-                        params_, *attacker, *target, damage, impact);
+                        params_, originalRng_, *attacker, *target, damage, impact);
                 } else if (attacker != nullptr &&
                            projectile.targetKind ==
                                BattleShotTargetKind::Objective) {
@@ -12501,9 +13243,14 @@ void BattleWorld::updateReplacementCombatAiRequests() {
             targetTransform = &target->transform;
         } else if (state.targetKind ==
                    BattleReplacementAiTargetKind::Objective) {
-            if (state.missionSlice !=
+            const bool hostileStructure = shooter.roster.team == BattleTeam::Player &&
+                shooter.lanceOrder.phase == BattleLanceOrderPhase::Engaging &&
+                shooter.lanceOrder.issued.targetKind == BattleLanceTargetKind::Objective &&
+                params_.mission.family == BattleMissionFamily::Assault &&
+                !battleObjectiveProtectedByPlayer(objective_);
+            if ((!hostileStructure && (state.missionSlice !=
                     BattleReplacementAiMissionSlice::ProtectGarrisonDefense ||
-                shooter.roster.team != BattleTeam::Opposing ||
+                shooter.roster.team != BattleTeam::Opposing)) ||
                 !objectiveCanTakeDamage(objective_) ||
                 !objective_.damagePolicyProven ||
                 objective_.damageSuppressed) {
@@ -12585,6 +13332,764 @@ void BattleWorld::updateReplacementCombatAiRequests() {
     }
 }
 
+void BattleWorld::fireIndividualWeapon(Combatant& attacker, BattleWeaponInstanceState& weapon) {
+    // Earlier salvo shots can consume shared ammo or damage the shooter.
+    refreshCombatantWeaponState(params_, attacker);
+    attacker.lastFireRequestTickIndex = tickIndex_;
+    attacker.lastFireRequestWeaponInstanceId = weapon.weaponInstanceId;
+    attacker.lastFireRequestAccepted = false;
+    if (weapon.readiness != BattleWeaponReadiness::Ready) return;
+    attacker.lastFireRequestAccepted = true;
+    const bool originalAiShot =
+        params_.combatAiPolicy ==
+            BattleCombatAiPolicy::OriginalBtechStationarySingleTargetFire &&
+        attacker.lastOriginalAiDecision.valid &&
+        attacker.lastOriginalAiDecision.result ==
+            BattleOriginalAiDecisionResult::FireRequested &&
+        attacker.lastOriginalAiDecision.decisionTickIndex == tickIndex_ &&
+        attacker.lastOriginalAiDecision.weaponInstanceId ==
+            weapon.weaponInstanceId;
+    const bool replacementAiShot =
+        params_.combatAiPolicy ==
+            BattleCombatAiPolicy::ReplacementDeterministicCombatAi &&
+        attacker.replacementAi.active &&
+        !attacker.playerControlled &&
+        attacker.replacementAi.selectedWeaponInstanceId ==
+            weapon.weaponInstanceId &&
+        attacker.replacementAi.targetKind !=
+            BattleReplacementAiTargetKind::None;
+    if (originalAiShot) {
+        attacker.lastOriginalAiDecision.fireTickIndex = tickIndex_;
+    }
+    attacker.weaponShotsFired += 1;
+    weapon.shotsFired += 1;
+    weapon.cooldownTicksRemaining = weapon.cooldownTicksOnFire;
+    if (attacker.heat.enabled) {
+        attacker.heat.lastWeaponHeatAdded +=
+            static_cast<int>(weapon.originalHeat);
+        attacker.heat.rawHeat = std::clamp(
+            attacker.heat.rawHeat +
+                static_cast<int>(weapon.originalHeat),
+            0,
+            battleMaximumRawHeat());
+    }
+    if (weapon.ammunitionOwnership ==
+        BattleWeaponAmmunitionOwnership::SharedAmmunitionPool) {
+        const size_t poolIndex =
+            static_cast<size_t>(weapon.ammunitionPoolIndex);
+        if (poolIndex < attacker.ammunitionByPool.size() &&
+            attacker.ammunitionByPool[poolIndex] > 0) {
+            --attacker.ammunitionByPool[poolIndex];
+        }
+    }
+
+    BattleShotDiagnostic shot;
+    shot.valid = true;
+    shot.sequence = ++shotSequence_;
+    shot.tickIndex = tickIndex_;
+    shot.shooterEntityId = attacker.id;
+    shot.weaponInstanceId = weapon.weaponInstanceId;
+    shot.maximumRange = weapon.maximumRange;
+    shot.originalDamage = weapon.originalDamage;
+    shot.originalDamageValueProven = weapon.originalDamageValueProven;
+    if (originalAiShot) {
+        shot.originalAiDecision = attacker.lastOriginalAiDecision;
+    }
+
+    Combatant* target = nullptr;
+    bool targetObjective = false;
+    bool targetPolicyRejected = false;
+    bool crosshairRayPolicy = false;
+    BattleMechRayHit geometryHit;
+    BattleProjectileState* interceptedProjectile = nullptr;
+    BattleProjectileRayHit projectileGeometryHit;
+    BattleAimRay aimRay;
+    bool aimRayAvailable = false;
+    ReplacementAiAimSolution replacementAim;
+    std::optional<ReplacementAiHitResolution> replacementHit;
+    if (originalAiShot) {
+        target = findCombatant(
+            attacker.lastOriginalAiDecision.targetEntityId);
+        if (target == nullptr ||
+            target->missionStatus != CombatantMissionStatus::Active ||
+            combatantMechDestroyed(*target)) {
+            target = nullptr;
+            targetPolicyRejected = true;
+        }
+        shot.provenance =
+            "phase13_original_stationary_single_target_ai_common_pipeline";
+    } else if (replacementAiShot) {
+        if (attacker.replacementAi.targetKind ==
+            BattleReplacementAiTargetKind::Objective) {
+            targetObjective = objectiveCanTakeDamage(objective_) &&
+                objective_.damagePolicyProven &&
+                !objective_.damageSuppressed &&
+                ((attacker.roster.team == BattleTeam::Opposing &&
+                attacker.replacementAi.missionSlice ==
+                    BattleReplacementAiMissionSlice::
+                        ProtectGarrisonDefense) ||
+                 (attacker.roster.team == BattleTeam::Player &&
+                  attacker.lanceOrder.phase == BattleLanceOrderPhase::Engaging &&
+                  attacker.lanceOrder.issued.targetKind == BattleLanceTargetKind::Objective &&
+                  params_.mission.family == BattleMissionFamily::Assault &&
+                  !battleObjectiveProtectedByPlayer(objective_)));
+            targetPolicyRejected = !targetObjective;
+            shot.provenance =
+                "replacement_phase14_protect_objective_assault_common_pipeline";
+        } else {
+            target = findCombatant(
+                attacker.replacementAi.combatTargetEntityId);
+            if (target == nullptr ||
+                target->roster.team == attacker.roster.team ||
+                target->missionStatus != CombatantMissionStatus::Active ||
+                combatantMechDestroyed(*target)) {
+                target = nullptr;
+                targetPolicyRejected = true;
+            }
+        }
+        if (attacker.replacementAi.targetKind ==
+                BattleReplacementAiTargetKind::Combatant &&
+            attacker.replacementAi.missionSlice ==
+            BattleReplacementAiMissionSlice::DeathmatchEngagement) {
+            shot.provenance =
+                "replacement_phase14_balanced_opponent_common_pipeline";
+        } else if (attacker.replacementAi.targetKind ==
+                       BattleReplacementAiTargetKind::Combatant &&
+                   attacker.replacementAi.missionSlice ==
+                   BattleReplacementAiMissionSlice::
+                       ProtectGarrisonDefense) {
+            shot.provenance = attacker.roster.team == BattleTeam::Opposing
+                ? "replacement_phase14_garrison_assault_common_pipeline"
+                : "replacement_phase14_assigned_defense_threat_common_pipeline";
+        } else if (attacker.replacementAi.targetKind ==
+                   BattleReplacementAiTargetKind::Combatant) {
+            shot.provenance =
+                "replacement_phase14_assigned_obstruction_common_pipeline";
+        }
+    } else if (params_.weaponTargetPolicy ==
+         BattleWeaponTargetPolicy::SelectedScannerTargetProvisional) {
+        if (targetScan_.selectedTargetKind ==
+                BattleTargetScanTargetKind::Combatant) {
+            target = findCombatant(targetScan_.selectedTargetEntityId);
+            if (target == nullptr ||
+                target->roster.team != BattleTeam::Opposing ||
+                target->missionStatus != CombatantMissionStatus::Active ||
+                combatantMechDestroyed(*target)) {
+                target = nullptr;
+                targetPolicyRejected = true;
+            }
+        } else if (targetScan_.selectedTargetKind ==
+                       BattleTargetScanTargetKind::Objective) {
+            targetObjective = objectiveCanTakeDamage(objective_) &&
+                objective_.damagePolicyProven &&
+                !objective_.damageSuppressed;
+            targetPolicyRejected = !targetObjective;
+        }
+        shot.provenance =
+            "phase12_selected_scanner_target_provisional_stationary_lab";
+    } else if (params_.weaponTargetPolicy ==
+               BattleWeaponTargetPolicy::
+                   CrosshairRayVisibleCombatantProvisional ||
+               params_.weaponTargetPolicy ==
+                   BattleWeaponTargetPolicy::
+                       SelectedScannerTargetCrosshairRayProvisional) {
+        crosshairRayPolicy = true;
+        if (attacker.playerControlled) {
+            if (targetScan_.selectedTargetKind ==
+                           BattleTargetScanTargetKind::Objective) {
+                targetObjective = objectiveCanTakeDamage(objective_) &&
+                    objective_.damagePolicyProven &&
+                    !objective_.damageSuppressed;
+            }
+        } else if (attacker.enemyAiTargetKind ==
+                       BattleEnemyAiTargetKind::Objective) {
+            targetObjective = objectiveCanTakeDamage(objective_) &&
+                objective_.damagePolicyProven &&
+                !objective_.damageSuppressed;
+        }
+        shot.provenance =
+            "phase12_crosshair_visible_combatant_component_ray_"
+            "provisional_projection";
+    } else if (params_.weaponTargetPolicy ==
+               BattleWeaponTargetPolicy::LegacyNearestOpposingDiagnostic) {
+        double nearestDistance = std::numeric_limits<double>::max();
+        for (Combatant& candidate : combatants_) {
+            if (candidate.roster.team != BattleTeam::Opposing ||
+                candidate.missionStatus != CombatantMissionStatus::Active ||
+                combatantMechDestroyed(candidate)) {
+                continue;
+            }
+            const double distance =
+                distance2d(attacker.transform, candidate.transform);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                target = &candidate;
+            }
+        }
+        shot.provenance =
+            "phase12_typed_legacy_nearest_opposing_diagnostic";
+    } else {
+        targetPolicyRejected = true;
+        shot.provenance = "phase12_unresolved_target_policy_fail_closed";
+    }
+
+    if (replacementAiShot &&
+        !params_.stationaryTargetHitDiagnosticEnabled &&
+        !targetPolicyRejected) {
+        replacementAim = replacementAiAimSolution(
+            params_,
+            attacker,
+            weapon,
+            target,
+            targetObjective ? &objective_ : nullptr);
+        shot.replacementFireSolution = replacementAim.valid;
+        shot.replacementTerrainLineOfSightClear =
+            replacementAim.valid &&
+            replacementAim.terrainLineOfSightClear;
+        shot.replacementAimAligned =
+            replacementAim.valid && replacementAim.aimAligned;
+        shot.replacementGunnerySkill = attacker.roster.gunnerySkill;
+        if (replacementAim.valid) {
+            shot.aimOrigin = replacementAim.origin;
+            shot.aimDirection = replacementAim.direction;
+            shot.impactPoint = replacementAim.targetPoint;
+            shot.aimProjectionProven = false;
+        }
+        if (!replacementAim.valid ||
+            !replacementAim.terrainLineOfSightClear ||
+            !replacementAim.aimAligned) {
+            targetPolicyRejected = true;
+            shot.provenance +=
+                ":replacement_fire_solution_changed_before_delivery";
+        }
+    }
+
+    if (crosshairRayPolicy && !targetObjective) {
+        const BattleMechHitProfile* shooterProfile =
+            hitProfileForPreset(params_, attacker.mechPresetId);
+        if (shooterProfile == nullptr) {
+            targetPolicyRejected = true;
+            shot.provenance += ":missing_shooter_catalog_hit_profile";
+        } else {
+            const BattleAimRay ray =
+                crosshairAimRay(params_, attacker, *shooterProfile);
+            aimRay = ray;
+            aimRayAvailable = true;
+            shot.aimOrigin = ray.origin;
+            shot.aimDirection = ray.direction;
+            shot.aimProjectionProven = false;
+            double nearestRayDistance =
+                std::numeric_limits<double>::max();
+            for (Combatant& candidate : combatants_) {
+                if (candidate.id == attacker.id ||
+                    (!attacker.playerControlled &&
+                     candidate.roster.team == attacker.roster.team) ||
+                    candidate.missionStatus !=
+                        CombatantMissionStatus::Active ||
+                    combatantMechDestroyed(candidate)) {
+                    continue;
+                }
+                const BattleMechHitProfile* candidateProfile =
+                    hitProfileForPreset(params_, candidate.mechPresetId);
+                if (candidateProfile == nullptr) {
+                    continue;
+                }
+                const BattleMechRayHit candidateHit =
+                    raycastMech(ray, candidate, *candidateProfile, params_);
+                if (!candidateHit.valid ||
+                    candidateHit.distance >= nearestRayDistance) {
+                    continue;
+                }
+                nearestRayDistance = candidateHit.distance;
+                target = &candidate;
+                geometryHit = candidateHit;
+                shot.hitGeometryFingerprint =
+                    candidateProfile->geometryFingerprint;
+                shot.impactPoint = candidateHit.worldPoint;
+                shot.hitComponentId =
+                    candidateHit.triangle.componentId;
+                if (candidateHit.triangle.torsoComposite) {
+                    shot.hitLocation = BattleShotHitLocation::
+                        TorsoPartitionProvisional;
+                    shot.hitLocationProven = false;
+                    shot.armorSection = provisionalTorsoSection(
+                        candidateHit, *candidateProfile);
+                } else {
+                    shot.hitLocation = BattleShotHitLocation::
+                        VisibleComponentOriginalIdentity;
+                    shot.hitLocationProven = true;
+                    shot.armorSection = candidateHit.triangle.
+                        directArmorSection;
+                }
+                shot.affectedSystem =
+                    systemRoleForArmorSection(shot.armorSection);
+            }
+            if (attacker.playerControlled && target != nullptr &&
+                target->roster.team == attacker.roster.team) {
+                shot.provenance +=
+                    ":BTECH_47f7_player_visible_friendly_component";
+            }
+        }
+    }
+
+    const bool laserInterceptionWeapon =
+        weapon.weaponTypeId == "small_laser" ||
+        weapon.weaponTypeId == "medium_laser" ||
+        weapon.weaponTypeId == "large_laser";
+    if (crosshairRayPolicy && laserInterceptionWeapon) {
+        if (!aimRayAvailable) {
+            const BattleMechHitProfile* shooterProfile =
+                hitProfileForPreset(params_, attacker.mechPresetId);
+            if (shooterProfile != nullptr) {
+                aimRay = crosshairAimRay(
+                    params_, attacker, *shooterProfile);
+                aimRayAvailable = true;
+                shot.aimOrigin = aimRay.origin;
+                shot.aimDirection = aimRay.direction;
+                shot.aimProjectionProven = false;
+            }
+        }
+        if (aimRayAvailable) {
+            double nearestRayDistance = geometryHit.valid
+                ? geometryHit.distance
+                : std::numeric_limits<double>::max();
+            for (BattleProjectileState& projectile : projectiles_) {
+                if (!projectile.valid || !projectile.laserInterceptible) {
+                    continue;
+                }
+                const BattleProjectileHitProfile* profile =
+                    projectileHitProfileForVisualClass(
+                        params_, projectile.originalVisualClass);
+                if (profile == nullptr || profile->triangles.empty()) {
+                    continue;
+                }
+                bool projectileTargetPointValid = false;
+                BattleHitPoint projectileTargetPoint;
+                if (projectile.targetBound &&
+                    projectile.targetKind ==
+                        BattleShotTargetKind::Combatant) {
+                    const Combatant* projectileTarget = findCombatant(
+                        projectile.targetEntityId);
+                    if (projectileTarget != nullptr) {
+                        projectileTargetPoint = targetLocalPointToWorld(
+                            projectile.targetLocalPoint,
+                            projectileTarget->transform);
+                        projectileTargetPointValid = true;
+                    }
+                } else if (projectile.targetBound &&
+                           projectile.targetKind ==
+                               BattleShotTargetKind::Objective &&
+                           objective_.valid) {
+                    projectileTargetPoint = targetLocalPointToWorld(
+                        projectile.targetLocalPoint,
+                        objective_.transform);
+                    projectileTargetPointValid = true;
+                }
+                const BattleProjectileModelPose modelPose =
+                    battleProjectileModelPose(
+                        projectile,
+                        projectileTargetPointValid,
+                        projectileTargetPoint);
+                const BattleProjectileRayHit candidateHit =
+                    raycastProjectileModel(
+                        aimRay,
+                        projectile,
+                        *profile,
+                        modelPose,
+                        tickIndex_);
+                if (!candidateHit.valid ||
+                    candidateHit.distance >= nearestRayDistance) {
+                    continue;
+                }
+                nearestRayDistance = candidateHit.distance;
+                interceptedProjectile = &projectile;
+                projectileGeometryHit = candidateHit;
+                target = nullptr;
+                targetObjective = false;
+                geometryHit = {};
+                shot.hitGeometryFingerprint =
+                    profile->geometryFingerprint;
+                shot.impactPoint = candidateHit.worldPoint;
+                shot.hitComponentId = -1;
+                shot.hitLocation = BattleShotHitLocation::
+                    UnresolvedOriginalDistribution;
+                shot.hitLocationProven = false;
+                shot.affectedSystem = BattleMechSystemRole::Unknown;
+            }
+        }
+    }
+
+    if (interceptedProjectile != nullptr) {
+        shot.targetKind = BattleShotTargetKind::Projectile;
+        shot.targetEntityId = {};
+        shot.targetProjectileId =
+            interceptedProjectile->projectileId;
+        shot.targetDistance = projectileGeometryHit.distance;
+        shot.provenance +=
+            ":laser_ray_exact_OTHPCK_missile_model_intersection_"
+            "spin_compatibility_timing";
+    } else if (target != nullptr) {
+        shot.targetKind = BattleShotTargetKind::Combatant;
+        shot.targetEntityId = target->id;
+        shot.targetDistance = originalAiShot
+            ? attacker.lastOriginalAiDecision.targetDistance
+            : distance2d(attacker.transform, target->transform);
+    } else if (targetObjective) {
+        shot.targetKind = BattleShotTargetKind::Objective;
+        shot.targetDistance = distance2d(
+            attacker.transform,
+            objective_.transform);
+    }
+
+    if (replacementAiShot &&
+        !params_.stationaryTargetHitDiagnosticEnabled &&
+        !targetPolicyRejected &&
+        shot.targetKind != BattleShotTargetKind::None) {
+        replacementHit = replacementAiHitResolution(
+            attacker,
+            target,
+            weapon,
+            shot.targetDistance,
+            attacker.replacementAi.decisionSequence);
+        shot.replacementTargetNumber = replacementHit->targetNumber;
+        shot.replacementHitRoll = replacementHit->hitRoll;
+    }
+
+    if (targetPolicyRejected) {
+        shot.result = BattleShotResult::RejectedTargetPolicy;
+    } else if (crosshairRayPolicy && !targetObjective &&
+               target == nullptr && interceptedProjectile == nullptr) {
+        shot.result = BattleShotResult::MissCrosshairRay;
+        shot.provenance += ":ray_missed_visible_component_mesh";
+    } else if (shot.targetKind == BattleShotTargetKind::None) {
+        shot.result = BattleShotResult::RejectedNoTarget;
+    } else if (originalAiShot) {
+        shot.rangeGatePassed =
+            shot.originalAiDecision.strictRangeGatePassed &&
+            shot.originalAiDecision.minimumRange < shot.targetDistance &&
+            shot.targetDistance < shot.originalAiDecision.maximumRange;
+        if (!shot.rangeGatePassed) {
+            shot.result = BattleShotResult::MissOutOfRange;
+        } else {
+            shot.hit = shot.originalAiDecision.hit;
+            shot.result = shot.hit ? BattleShotResult::Hit
+                                   : BattleShotResult::MissUnresolved;
+        }
+    } else {
+        shot.rangeGatePassed = shot.targetDistance <= shot.maximumRange;
+        if (!shot.rangeGatePassed) {
+            shot.result = BattleShotResult::MissOutOfRange;
+        } else if (crosshairRayPolicy && target != nullptr &&
+                   !geometryHit.valid) {
+            shot.result = BattleShotResult::MissCrosshairRay;
+            shot.provenance += ":ray_missed_visible_component_mesh";
+        } else if (crosshairRayPolicy) {
+            // Objective ray geometry remains separate; preserve the
+            // existing proven objective ownership while mech aiming moves
+            // to component geometry.
+            shot.result = BattleShotResult::Hit;
+            shot.hit = true;
+        } else if (replacementHit.has_value()) {
+            shot.hit = replacementHit->hit;
+            shot.result = shot.hit ? BattleShotResult::Hit
+                                   : BattleShotResult::MissUnresolved;
+            if (!shot.hit) {
+                const uint64_t targetIdentity = target != nullptr
+                    ? static_cast<uint64_t>(target->id.value) : 0xffffu;
+                shot.aimDirection = replacementAiMissDirection(
+                    replacementAim.direction,
+                    attacker,
+                    targetIdentity,
+                    attacker.replacementAi.decisionSequence,
+                    replacementHit->targetNumber);
+                shot.impactPoint = {};
+            }
+            shot.provenance +=
+                ":replacement_gunnery_range_motion_2d6";
+        } else if (!params_.stationaryTargetHitDiagnosticEnabled) {
+            shot.result = BattleShotResult::MissUnresolved;
+        } else {
+            shot.result = BattleShotResult::Hit;
+            shot.hit = true;
+        }
+    }
+
+    if (shot.hit && target != nullptr) {
+        if (originalAiShot) {
+            shot.hitLocation =
+                BattleShotHitLocation::OriginalAiAspect2d6Table;
+            shot.hitLocationProven = true;
+            shot.armorSection =
+                shot.originalAiDecision.armorSection;
+            shot.affectedSystem =
+                systemRoleForArmorSection(shot.armorSection);
+        } else if (replacementHit.has_value()) {
+            shot.hitLocation =
+                BattleShotHitLocation::OriginalAiAspect2d6Table;
+            shot.hitLocationProven = true;
+            shot.armorSection = replacementHit->armorSection;
+            shot.affectedSystem =
+                systemRoleForArmorSection(shot.armorSection);
+        } else if (!crosshairRayPolicy) {
+            shot.hitLocation =
+                BattleShotHitLocation::
+                    CenterTorsoProvisionalStationaryLab;
+            shot.hitLocationProven = false;
+            shot.armorSection =
+                mech3d::MechArmorSectionId::CenterTorso;
+            shot.affectedSystem = BattleMechSystemRole::Core;
+        }
+    }
+
+    const bool originalProjectileDelivery =
+        params_.originalProjectileRuntimeEnabled &&
+        weapon.deliveryMode ==
+            BattleWeaponDeliveryMode::OriginalProjectilePool &&
+        weapon.originalProjectileDefinitionProven &&
+        weapon.originalProjectileTypeIndex >= 0 &&
+        weapon.originalProjectileSpeedRaw > 0u &&
+        weapon.originalProjectileLifetimeUpdates > 0u;
+    const bool projectileLaunchRequested = originalProjectileDelivery &&
+        (shot.hit ||
+         shot.result == BattleShotResult::MissOutOfRange ||
+         shot.result == BattleShotResult::MissCrosshairRay ||
+         shot.result == BattleShotResult::MissUnresolved);
+    constexpr size_t kOriginalProjectilePoolCapacity = 32u;
+    if (projectileLaunchRequested &&
+        projectiles_.size() >= kOriginalProjectilePoolCapacity) {
+        shot.hit = false;
+        shot.result = BattleShotResult::RejectedProjectilePoolFull;
+        shot.deliveryState = BattleShotDeliveryState::None;
+        shot.provenance +=
+            ":BTECH_5654_32_record_pool_full_fail_closed";
+    } else if (projectileLaunchRequested) {
+        BattleProjectileState projectile;
+        projectile.valid = true;
+        projectile.projectileId = nextProjectileId_++;
+        projectile.launchTickIndex = tickIndex_;
+        projectile.shooterEntityId = attacker.id;
+        projectile.weaponInstanceId = weapon.weaponInstanceId;
+        projectile.weaponTypeId = weapon.weaponTypeId;
+        projectile.launchShooterTransform = attacker.transform;
+        projectile.launchTorsoYawRadians = torsoYawRadians(
+            params_, attacker);
+        projectile.targetKind = shot.targetKind;
+        projectile.targetEntityId = shot.targetEntityId;
+        projectile.targetBound = shot.hit &&
+            (target != nullptr || targetObjective);
+        projectile.originalProjectileTypeIndex =
+            weapon.originalProjectileTypeIndex;
+        projectile.originalSpeedRaw =
+            weapon.originalProjectileSpeedRaw;
+        projectile.originalLifetimeUpdates =
+            weapon.originalProjectileLifetimeUpdates;
+        projectile.originalLifetimeUpdatesRemaining =
+            weapon.originalProjectileLifetimeUpdates;
+        projectile.originalDamageClass =
+            weapon.originalProjectileDamageClass;
+        projectile.originalVisualClass =
+            weapon.originalProjectileVisualClass;
+        const BattleProjectileHitProfile* projectileHitProfile =
+            projectileHitProfileForVisualClass(
+                params_, projectile.originalVisualClass);
+        if (projectileHitProfile != nullptr) {
+            projectile.collisionGeometryFingerprint =
+                projectileHitProfile->geometryFingerprint;
+            projectile.collisionGeometryProven =
+                projectileHitProfile->originalModelGeometryProven;
+        }
+        projectile.laserInterceptible =
+            projectile.originalVisualClass == 1u &&
+            projectileHitProfile != nullptr &&
+            !projectileHitProfile->triangles.empty();
+        projectile.originalTargetTrackingProven =
+            projectile.targetBound;
+        projectile.motionScaleProven = false;
+
+        const BattleMechHitProfile* shooterProfile =
+            hitProfileForPreset(params_, attacker.mechPresetId);
+        if (shooterProfile != nullptr) {
+            const std::optional<BattleHitPoint> modelMount =
+                battleModelWeaponMount(
+                    *shooterProfile,
+                    weapon.locationId,
+                    attacker.transform,
+                    projectile.launchTorsoYawRadians);
+            if (modelMount.has_value()) {
+                projectile.launchModelMount = *modelMount;
+                projectile.launchModelMountValid = true;
+                projectile.launchModelMountPolicyProven = false;
+            }
+        }
+        const double heading = attacker.transform.headingRadians +
+            torsoYawRadians(params_, attacker);
+        projectile.position = shot.aimOrigin;
+        if (dot(projectile.position, projectile.position) <= 0.0) {
+            projectile.position = {
+                attacker.transform.x +
+                    std::sin(heading) *
+                        params_.cockpitCameraForwardOffset,
+                attacker.transform.y +
+                    (shooterProfile != nullptr
+                         ? shooterProfile->aimOriginHeight
+                         : 0.0),
+                attacker.transform.z +
+                    std::cos(heading) *
+                        params_.cockpitCameraForwardOffset,
+            };
+        }
+        BattleHitPoint targetPoint = shot.impactPoint;
+        if (target != nullptr) {
+            if (dot(targetPoint, targetPoint) <= 0.0) {
+                const BattleMechHitProfile* targetProfile =
+                    hitProfileForPreset(params_, target->mechPresetId);
+                targetPoint = {
+                    target->transform.x,
+                    target->transform.y +
+                        (targetProfile != nullptr
+                             ? targetProfile->aimOriginHeight * 0.55
+                             : 0.0),
+                    target->transform.z,
+                };
+            }
+            projectile.targetLocalPoint = worldPointToTargetLocal(
+                targetPoint, target->transform);
+        } else if (targetObjective) {
+            if (dot(targetPoint, targetPoint) <= 0.0) {
+                targetPoint = {
+                    objective_.transform.x,
+                    objective_.transform.y,
+                    objective_.transform.z,
+                };
+            }
+            projectile.targetLocalPoint = worldPointToTargetLocal(
+                targetPoint, objective_.transform);
+        }
+
+        projectile.direction = normalized(
+            subtract(targetPoint, projectile.position));
+        if (!projectile.targetBound ||
+            dot(projectile.direction, projectile.direction) <= 0.0) {
+            projectile.direction = normalized(shot.aimDirection);
+        }
+        if (dot(projectile.direction, projectile.direction) <= 0.0) {
+            projectile.direction = {
+                std::sin(heading), 0.0, std::cos(heading)};
+        }
+
+        // The captured OTHPCK models extend behind their local origin by
+        // 45 units (AC/5 record 000) and 405 units (rocket record 001).
+        // Start the model origin that far forward so its rear edge begins
+        // at the established aim origin instead of behind the cockpit.
+        // The resource bounds are exact; their coupling to the original
+        // launch hardpoint remains an explicit compatibility policy.
+        double modelRearExtent = 0.0;
+        if (projectile.originalVisualClass == 0u) {
+            modelRearExtent = 45.0;
+        } else if (projectile.originalVisualClass == 1u) {
+            modelRearExtent = 405.0;
+        }
+        projectile.launchForwardOffset = modelRearExtent;
+        if (projectile.targetBound) {
+            const BattleHitPoint remaining = subtract(
+                targetPoint,
+                projectile.position);
+            const double remainingDistance = std::sqrt(dot(
+                remaining,
+                remaining));
+            projectile.launchForwardOffset = std::min(
+                projectile.launchForwardOffset,
+                std::max(
+                    0.0,
+                    remainingDistance -
+                        static_cast<double>(
+                            projectile.originalSpeedRaw)));
+        }
+        projectile.launchForwardOffsetProven = false;
+        const BattleHitPoint launchOrigin = projectile.position;
+        projectile.position.x +=
+            projectile.direction.x * projectile.launchForwardOffset;
+        projectile.position.y +=
+            projectile.direction.y * projectile.launchForwardOffset;
+        projectile.position.z +=
+            projectile.direction.z * projectile.launchForwardOffset;
+        const BattleProjectileTerrainHit launchTerrainHit =
+            projectileTerrainContact(
+                params_, launchOrigin, projectile.position);
+        if (launchTerrainHit.valid) {
+            projectile.launchForwardOffset *=
+                launchTerrainHit.segmentFraction;
+            projectile.position = launchTerrainHit.point;
+        }
+        projectile.previousPosition = projectile.position;
+
+        shot.deliveryState =
+            BattleShotDeliveryState::ProjectileInFlight;
+        shot.projectileId = projectile.projectileId;
+        shot.impactTickIndex = 0;
+        shot.impactDamage = 0;
+        shot.projectileMotionTimingProven = false;
+        shot.runtimeEffect = BattleShotRuntimeEffect::None;
+        shot.damageBefore = 0;
+        shot.damageApplied = 0;
+        shot.damageAfter = 0;
+        shot.provenance +=
+            ":BTECH_original_projectile_pool_launch_"
+            "compatibility_tick_scale";
+        projectile.pendingShot = shot;
+        projectile.provenance =
+            "BTECH.EXE:FUN_1000_5654/FUN_1000_578b:"
+            "five_substeps_per_0.1s_compatibility_policy:"
+            "OTHPCK_rear_extent_launch_offset_beta";
+        if (launchTerrainHit.valid) {
+            projectile.provenance +=
+                ":launch_offset_clipped_to_terrain_contact";
+        }
+        projectiles_.push_back(std::move(projectile));
+    } else if (shot.hit && interceptedProjectile != nullptr) {
+        shot.result = BattleShotResult::HitProjectile;
+        shot.deliveryState =
+            BattleShotDeliveryState::ProjectileIntercepted;
+        shot.impactTickIndex = tickIndex_;
+        shot.projectileId = 0u;
+        shot.impactDamage = 0u;
+        shot.runtimeEffect =
+            BattleShotRuntimeEffect::ProjectileInterceptedNoDamage;
+        shot.damageBefore = 0;
+        shot.damageApplied = 0;
+        shot.damageAfter = 0;
+        interceptedProjectile->valid = false;
+        interceptedProjectile->targetBound = false;
+        shot.provenance +=
+            ":missile_airburst_removed_without_damage";
+    } else if (shot.hit && target != nullptr) {
+        shot.deliveryState = BattleShotDeliveryState::Immediate;
+        shot.impactTickIndex = tickIndex_;
+        shot.impactDamage = weapon.originalDamage;
+        applyDetailedCombatantDamage(
+            params_, originalRng_,
+            attacker,
+            *target,
+            static_cast<int>(weapon.originalDamage),
+            shot);
+    } else if (shot.hit && targetObjective) {
+        shot.deliveryState = BattleShotDeliveryState::Immediate;
+        shot.impactTickIndex = tickIndex_;
+        shot.impactDamage = weapon.originalDamage;
+        shot.runtimeEffect = BattleShotRuntimeEffect::ObjectiveDamage;
+        shot.damageBefore = objective_.damage;
+        applyDeterministicObjectiveDamage(
+            attacker,
+            objective_,
+            static_cast<int>(weapon.originalDamage));
+        shot.damageAfter = objective_.damage;
+        shot.damageApplied = shot.damageAfter - shot.damageBefore;
+    }
+    shotEvents_.push_back(shot);
+    lastShot_ = std::move(shot);
+    refreshCombatantWeaponState(params_, attacker);
+}
+
 void BattleWorld::updateIndividualWeaponRuntime() {
     for (Combatant& combatant : combatants_) {
         combatant.heat.lastWeaponHeatAdded = 0;
@@ -12604,773 +14109,35 @@ void BattleWorld::updateIndividualWeaponRuntime() {
     updateBattleProjectiles();
 
     for (Combatant& attacker : combatants_) {
-        if (!attacker.fireWeaponRequested) {
-            continue;
-        }
-        attacker.lastFireRequestTickIndex = tickIndex_;
-        attacker.lastFireRequestWeaponInstanceId =
-            attacker.selectedWeaponInstanceId;
-        attacker.lastFireRequestAccepted = false;
-
-        const auto selected = std::find_if(
-            attacker.weapons.begin(),
-            attacker.weapons.end(),
-            [&attacker](const BattleWeaponInstanceState& weapon) {
-                return weapon.weaponInstanceId ==
-                    attacker.selectedWeaponInstanceId;
-            });
-        if (selected == attacker.weapons.end() ||
-            selected->readiness != BattleWeaponReadiness::Ready) {
-            attacker.fireWeaponRequested = false;
-            continue;
-        }
-
-        BattleWeaponInstanceState& weapon = *selected;
-        attacker.lastFireRequestAccepted = true;
-        const bool originalAiShot =
-            params_.combatAiPolicy ==
-                BattleCombatAiPolicy::OriginalBtechStationarySingleTargetFire &&
-            attacker.lastOriginalAiDecision.valid &&
-            attacker.lastOriginalAiDecision.result ==
-                BattleOriginalAiDecisionResult::FireRequested &&
-            attacker.lastOriginalAiDecision.decisionTickIndex == tickIndex_ &&
-            attacker.lastOriginalAiDecision.weaponInstanceId ==
-                weapon.weaponInstanceId;
-        const bool replacementAiShot =
-            params_.combatAiPolicy ==
-                BattleCombatAiPolicy::ReplacementDeterministicCombatAi &&
-            attacker.replacementAi.active &&
-            !attacker.playerControlled &&
-            attacker.replacementAi.selectedWeaponInstanceId ==
-                weapon.weaponInstanceId &&
-            attacker.replacementAi.targetKind !=
-                BattleReplacementAiTargetKind::None;
-        if (originalAiShot) {
-            attacker.lastOriginalAiDecision.fireTickIndex = tickIndex_;
-        }
-        attacker.weaponShotsFired += 1;
-        weapon.shotsFired += 1;
-        weapon.cooldownTicksRemaining = weapon.cooldownTicksOnFire;
-        if (attacker.heat.enabled) {
-            attacker.heat.lastWeaponHeatAdded =
-                static_cast<int>(weapon.originalHeat);
-            attacker.heat.rawHeat = std::clamp(
-                attacker.heat.rawHeat +
-                    attacker.heat.lastWeaponHeatAdded,
-                0,
-                battleMaximumRawHeat());
-        }
-        if (weapon.ammunitionOwnership ==
-            BattleWeaponAmmunitionOwnership::SharedAmmunitionPool) {
-            const size_t poolIndex =
-                static_cast<size_t>(weapon.ammunitionPoolIndex);
-            if (poolIndex < attacker.ammunitionByPool.size() &&
-                attacker.ammunitionByPool[poolIndex] > 0) {
-                --attacker.ammunitionByPool[poolIndex];
-            }
-        }
-
-        BattleShotDiagnostic shot;
-        shot.valid = true;
-        shot.sequence = ++shotSequence_;
-        shot.tickIndex = tickIndex_;
-        shot.shooterEntityId = attacker.id;
-        shot.weaponInstanceId = weapon.weaponInstanceId;
-        shot.maximumRange = weapon.maximumRange;
-        shot.originalDamage = weapon.originalDamage;
-        shot.originalDamageValueProven = weapon.originalDamageValueProven;
-        if (originalAiShot) {
-            shot.originalAiDecision = attacker.lastOriginalAiDecision;
-        }
-
-        Combatant* target = nullptr;
-        bool targetObjective = false;
-        bool targetPolicyRejected = false;
-        bool crosshairRayPolicy = false;
-        BattleMechRayHit geometryHit;
-        BattleProjectileState* interceptedProjectile = nullptr;
-        BattleProjectileRayHit projectileGeometryHit;
-        BattleAimRay aimRay;
-        bool aimRayAvailable = false;
-        ReplacementAiAimSolution replacementAim;
-        std::optional<ReplacementAiHitResolution> replacementHit;
-        if (originalAiShot) {
-            target = findCombatant(
-                attacker.lastOriginalAiDecision.targetEntityId);
-            if (target == nullptr ||
-                target->missionStatus != CombatantMissionStatus::Active ||
-                combatantMechDestroyed(*target)) {
-                target = nullptr;
-                targetPolicyRejected = true;
-            }
-            shot.provenance =
-                "phase13_original_stationary_single_target_ai_common_pipeline";
-        } else if (replacementAiShot) {
-            if (attacker.replacementAi.targetKind ==
-                BattleReplacementAiTargetKind::Objective) {
-                targetObjective = objectiveCanTakeDamage(objective_) &&
-                    objective_.damagePolicyProven &&
-                    !objective_.damageSuppressed &&
-                    attacker.roster.team == BattleTeam::Opposing &&
-                    attacker.replacementAi.missionSlice ==
-                        BattleReplacementAiMissionSlice::
-                            ProtectGarrisonDefense;
-                targetPolicyRejected = !targetObjective;
-                shot.provenance =
-                    "replacement_phase14_protect_objective_assault_common_pipeline";
-            } else {
-                target = findCombatant(
-                    attacker.replacementAi.combatTargetEntityId);
-                if (target == nullptr ||
-                    target->roster.team == attacker.roster.team ||
-                    target->missionStatus != CombatantMissionStatus::Active ||
-                    combatantMechDestroyed(*target)) {
-                    target = nullptr;
-                    targetPolicyRejected = true;
-                }
-            }
-            if (attacker.replacementAi.targetKind ==
-                    BattleReplacementAiTargetKind::Combatant &&
-                attacker.replacementAi.missionSlice ==
-                BattleReplacementAiMissionSlice::DeathmatchEngagement) {
-                shot.provenance =
-                    "replacement_phase14_balanced_opponent_common_pipeline";
-            } else if (attacker.replacementAi.targetKind ==
-                           BattleReplacementAiTargetKind::Combatant &&
-                       attacker.replacementAi.missionSlice ==
-                       BattleReplacementAiMissionSlice::
-                           ProtectGarrisonDefense) {
-                shot.provenance = attacker.roster.team == BattleTeam::Opposing
-                    ? "replacement_phase14_garrison_assault_common_pipeline"
-                    : "replacement_phase14_assigned_defense_threat_common_pipeline";
-            } else if (attacker.replacementAi.targetKind ==
-                       BattleReplacementAiTargetKind::Combatant) {
-                shot.provenance =
-                    "replacement_phase14_assigned_obstruction_common_pipeline";
-            }
-        } else if (params_.weaponTargetPolicy ==
-             BattleWeaponTargetPolicy::SelectedScannerTargetProvisional) {
-            if (targetScan_.selectedTargetKind ==
-                    BattleTargetScanTargetKind::Combatant) {
-                target = findCombatant(targetScan_.selectedTargetEntityId);
-                if (target == nullptr ||
-                    target->roster.team != BattleTeam::Opposing ||
-                    target->missionStatus != CombatantMissionStatus::Active ||
-                    combatantMechDestroyed(*target)) {
-                    target = nullptr;
-                    targetPolicyRejected = true;
-                }
-            } else if (targetScan_.selectedTargetKind ==
-                           BattleTargetScanTargetKind::Objective) {
-                targetObjective = objectiveCanTakeDamage(objective_) &&
-                    objective_.damagePolicyProven &&
-                    !objective_.damageSuppressed;
-                targetPolicyRejected = !targetObjective;
-            }
-            shot.provenance =
-                "phase12_selected_scanner_target_provisional_stationary_lab";
-        } else if (params_.weaponTargetPolicy ==
-                   BattleWeaponTargetPolicy::
-                       CrosshairRayVisibleCombatantProvisional ||
-                   params_.weaponTargetPolicy ==
-                       BattleWeaponTargetPolicy::
-                           SelectedScannerTargetCrosshairRayProvisional) {
-            crosshairRayPolicy = true;
-            if (attacker.playerControlled) {
-                if (targetScan_.selectedTargetKind ==
-                               BattleTargetScanTargetKind::Objective) {
-                    targetObjective = objectiveCanTakeDamage(objective_) &&
-                        objective_.damagePolicyProven &&
-                        !objective_.damageSuppressed;
-                }
-            } else if (attacker.enemyAiTargetKind ==
-                           BattleEnemyAiTargetKind::Objective) {
-                targetObjective = objectiveCanTakeDamage(objective_) &&
-                    objective_.damagePolicyProven &&
-                    !objective_.damageSuppressed;
-            }
-            shot.provenance =
-                "phase12_crosshair_visible_combatant_component_ray_"
-                "provisional_projection";
-        } else if (params_.weaponTargetPolicy ==
-                   BattleWeaponTargetPolicy::LegacyNearestOpposingDiagnostic) {
-            double nearestDistance = std::numeric_limits<double>::max();
-            for (Combatant& candidate : combatants_) {
-                if (candidate.roster.team != BattleTeam::Opposing ||
-                    candidate.missionStatus != CombatantMissionStatus::Active ||
-                    combatantMechDestroyed(candidate)) {
-                    continue;
-                }
-                const double distance =
-                    distance2d(attacker.transform, candidate.transform);
-                if (distance < nearestDistance) {
-                    nearestDistance = distance;
-                    target = &candidate;
-                }
-            }
-            shot.provenance =
-                "phase12_typed_legacy_nearest_opposing_diagnostic";
-        } else {
-            targetPolicyRejected = true;
-            shot.provenance = "phase12_unresolved_target_policy_fail_closed";
-        }
-
-        if (replacementAiShot &&
-            !params_.stationaryTargetHitDiagnosticEnabled &&
-            !targetPolicyRejected) {
-            replacementAim = replacementAiAimSolution(
-                params_,
-                attacker,
-                weapon,
-                target,
-                targetObjective ? &objective_ : nullptr);
-            shot.replacementFireSolution = replacementAim.valid;
-            shot.replacementTerrainLineOfSightClear =
-                replacementAim.valid &&
-                replacementAim.terrainLineOfSightClear;
-            shot.replacementAimAligned =
-                replacementAim.valid && replacementAim.aimAligned;
-            shot.replacementGunnerySkill = attacker.roster.gunnerySkill;
-            if (replacementAim.valid) {
-                shot.aimOrigin = replacementAim.origin;
-                shot.aimDirection = replacementAim.direction;
-                shot.impactPoint = replacementAim.targetPoint;
-                shot.aimProjectionProven = false;
-            }
-            if (!replacementAim.valid ||
-                !replacementAim.terrainLineOfSightClear ||
-                !replacementAim.aimAligned) {
-                targetPolicyRejected = true;
-                shot.provenance +=
-                    ":replacement_fire_solution_changed_before_delivery";
-            }
-        }
-
-        if (crosshairRayPolicy && !targetObjective) {
-            const BattleMechHitProfile* shooterProfile =
-                hitProfileForPreset(params_, attacker.mechPresetId);
-            if (shooterProfile == nullptr) {
-                targetPolicyRejected = true;
-                shot.provenance += ":missing_shooter_catalog_hit_profile";
-            } else {
-                const BattleAimRay ray =
-                    crosshairAimRay(params_, attacker, *shooterProfile);
-                aimRay = ray;
-                aimRayAvailable = true;
-                shot.aimOrigin = ray.origin;
-                shot.aimDirection = ray.direction;
-                shot.aimProjectionProven = false;
-                double nearestRayDistance =
-                    std::numeric_limits<double>::max();
-                for (Combatant& candidate : combatants_) {
-                    if (candidate.id == attacker.id ||
-                        (!attacker.playerControlled &&
-                         candidate.roster.team == attacker.roster.team) ||
-                        candidate.missionStatus !=
-                            CombatantMissionStatus::Active ||
-                        combatantMechDestroyed(candidate)) {
-                        continue;
-                    }
-                    const BattleMechHitProfile* candidateProfile =
-                        hitProfileForPreset(params_, candidate.mechPresetId);
-                    if (candidateProfile == nullptr) {
-                        continue;
-                    }
-                    const BattleMechRayHit candidateHit =
-                        raycastMech(ray, candidate, *candidateProfile);
-                    if (!candidateHit.valid ||
-                        candidateHit.distance >= nearestRayDistance) {
-                        continue;
-                    }
-                    nearestRayDistance = candidateHit.distance;
-                    target = &candidate;
-                    geometryHit = candidateHit;
-                    shot.hitGeometryFingerprint =
-                        candidateProfile->geometryFingerprint;
-                    shot.impactPoint = candidateHit.worldPoint;
-                    shot.hitComponentId =
-                        candidateHit.triangle->componentId;
-                    if (candidateHit.triangle->torsoComposite) {
-                        shot.hitLocation = BattleShotHitLocation::
-                            TorsoPartitionProvisional;
-                        shot.hitLocationProven = false;
-                        shot.armorSection = provisionalTorsoSection(
-                            candidateHit, *candidateProfile);
-                    } else {
-                        shot.hitLocation = BattleShotHitLocation::
-                            VisibleComponentOriginalIdentity;
-                        shot.hitLocationProven = true;
-                        shot.armorSection = candidateHit.triangle->
-                            directArmorSection;
-                    }
-                    shot.affectedSystem =
-                        systemRoleForArmorSection(shot.armorSection);
-                }
-                if (attacker.playerControlled && target != nullptr &&
-                    target->roster.team == attacker.roster.team) {
-                    shot.provenance +=
-                        ":BTECH_47f7_player_visible_friendly_component";
-                }
-            }
-        }
-
-        const bool laserInterceptionWeapon =
-            weapon.weaponTypeId == "small_laser" ||
-            weapon.weaponTypeId == "medium_laser" ||
-            weapon.weaponTypeId == "large_laser";
-        if (crosshairRayPolicy && laserInterceptionWeapon) {
-            if (!aimRayAvailable) {
-                const BattleMechHitProfile* shooterProfile =
-                    hitProfileForPreset(params_, attacker.mechPresetId);
-                if (shooterProfile != nullptr) {
-                    aimRay = crosshairAimRay(
-                        params_, attacker, *shooterProfile);
-                    aimRayAvailable = true;
-                    shot.aimOrigin = aimRay.origin;
-                    shot.aimDirection = aimRay.direction;
-                    shot.aimProjectionProven = false;
-                }
-            }
-            if (aimRayAvailable) {
-                double nearestRayDistance = geometryHit.valid
-                    ? geometryHit.distance
-                    : std::numeric_limits<double>::max();
-                for (BattleProjectileState& projectile : projectiles_) {
-                    if (!projectile.valid || !projectile.laserInterceptible) {
-                        continue;
-                    }
-                    const BattleProjectileHitProfile* profile =
-                        projectileHitProfileForVisualClass(
-                            params_, projectile.originalVisualClass);
-                    if (profile == nullptr || profile->triangles.empty()) {
-                        continue;
-                    }
-                    bool projectileTargetPointValid = false;
-                    BattleHitPoint projectileTargetPoint;
-                    if (projectile.targetBound &&
-                        projectile.targetKind ==
-                            BattleShotTargetKind::Combatant) {
-                        const Combatant* projectileTarget = findCombatant(
-                            projectile.targetEntityId);
-                        if (projectileTarget != nullptr) {
-                            projectileTargetPoint = targetLocalPointToWorld(
-                                projectile.targetLocalPoint,
-                                projectileTarget->transform);
-                            projectileTargetPointValid = true;
-                        }
-                    } else if (projectile.targetBound &&
-                               projectile.targetKind ==
-                                   BattleShotTargetKind::Objective &&
-                               objective_.valid) {
-                        projectileTargetPoint = targetLocalPointToWorld(
-                            projectile.targetLocalPoint,
-                            objective_.transform);
-                        projectileTargetPointValid = true;
-                    }
-                    const BattleProjectileModelPose modelPose =
-                        battleProjectileModelPose(
-                            projectile,
-                            projectileTargetPointValid,
-                            projectileTargetPoint);
-                    const BattleProjectileRayHit candidateHit =
-                        raycastProjectileModel(
-                            aimRay,
-                            projectile,
-                            *profile,
-                            modelPose,
-                            tickIndex_);
-                    if (!candidateHit.valid ||
-                        candidateHit.distance >= nearestRayDistance) {
-                        continue;
-                    }
-                    nearestRayDistance = candidateHit.distance;
-                    interceptedProjectile = &projectile;
-                    projectileGeometryHit = candidateHit;
-                    target = nullptr;
-                    targetObjective = false;
-                    geometryHit = {};
-                    shot.hitGeometryFingerprint =
-                        profile->geometryFingerprint;
-                    shot.impactPoint = candidateHit.worldPoint;
-                    shot.hitComponentId = -1;
-                    shot.hitLocation = BattleShotHitLocation::
-                        UnresolvedOriginalDistribution;
-                    shot.hitLocationProven = false;
-                    shot.affectedSystem = BattleMechSystemRole::Unknown;
-                }
-            }
-        }
-
-        if (interceptedProjectile != nullptr) {
-            shot.targetKind = BattleShotTargetKind::Projectile;
-            shot.targetEntityId = {};
-            shot.targetProjectileId =
-                interceptedProjectile->projectileId;
-            shot.targetDistance = projectileGeometryHit.distance;
-            shot.provenance +=
-                ":laser_ray_exact_OTHPCK_missile_model_intersection_"
-                "spin_compatibility_timing";
-        } else if (target != nullptr) {
-            shot.targetKind = BattleShotTargetKind::Combatant;
-            shot.targetEntityId = target->id;
-            shot.targetDistance = originalAiShot
-                ? attacker.lastOriginalAiDecision.targetDistance
-                : distance2d(attacker.transform, target->transform);
-        } else if (targetObjective) {
-            shot.targetKind = BattleShotTargetKind::Objective;
-            shot.targetDistance = distance2d(
-                attacker.transform,
-                objective_.transform);
-        }
-
-        if (replacementAiShot &&
-            !params_.stationaryTargetHitDiagnosticEnabled &&
-            !targetPolicyRejected &&
-            shot.targetKind != BattleShotTargetKind::None) {
-            replacementHit = replacementAiHitResolution(
-                attacker,
-                target,
-                weapon,
-                shot.targetDistance,
-                attacker.replacementAi.decisionSequence);
-            shot.replacementTargetNumber = replacementHit->targetNumber;
-            shot.replacementHitRoll = replacementHit->hitRoll;
-        }
-
-        if (targetPolicyRejected) {
-            shot.result = BattleShotResult::RejectedTargetPolicy;
-        } else if (crosshairRayPolicy && !targetObjective &&
-                   target == nullptr && interceptedProjectile == nullptr) {
-            shot.result = BattleShotResult::MissCrosshairRay;
-            shot.provenance += ":ray_missed_visible_component_mesh";
-        } else if (shot.targetKind == BattleShotTargetKind::None) {
-            shot.result = BattleShotResult::RejectedNoTarget;
-        } else if (originalAiShot) {
-            shot.rangeGatePassed =
-                shot.originalAiDecision.strictRangeGatePassed &&
-                shot.originalAiDecision.minimumRange < shot.targetDistance &&
-                shot.targetDistance < shot.originalAiDecision.maximumRange;
-            if (!shot.rangeGatePassed) {
-                shot.result = BattleShotResult::MissOutOfRange;
-            } else {
-                shot.hit = shot.originalAiDecision.hit;
-                shot.result = shot.hit ? BattleShotResult::Hit
-                                       : BattleShotResult::MissUnresolved;
-            }
-        } else {
-            shot.rangeGatePassed = shot.targetDistance <= shot.maximumRange;
-            if (!shot.rangeGatePassed) {
-                shot.result = BattleShotResult::MissOutOfRange;
-            } else if (crosshairRayPolicy && target != nullptr &&
-                       !geometryHit.valid) {
-                shot.result = BattleShotResult::MissCrosshairRay;
-                shot.provenance += ":ray_missed_visible_component_mesh";
-            } else if (crosshairRayPolicy) {
-                // Objective ray geometry remains separate; preserve the
-                // existing proven objective ownership while mech aiming moves
-                // to component geometry.
-                shot.result = BattleShotResult::Hit;
-                shot.hit = true;
-            } else if (replacementHit.has_value()) {
-                shot.hit = replacementHit->hit;
-                shot.result = shot.hit ? BattleShotResult::Hit
-                                       : BattleShotResult::MissUnresolved;
-                if (!shot.hit) {
-                    const uint64_t targetIdentity = target != nullptr
-                        ? static_cast<uint64_t>(target->id.value) : 0xffffu;
-                    shot.aimDirection = replacementAiMissDirection(
-                        replacementAim.direction,
-                        attacker,
-                        targetIdentity,
-                        attacker.replacementAi.decisionSequence,
-                        replacementHit->targetNumber);
-                    shot.impactPoint = {};
-                }
-                shot.provenance +=
-                    ":replacement_gunnery_range_motion_2d6";
-            } else if (!params_.stationaryTargetHitDiagnosticEnabled) {
-                shot.result = BattleShotResult::MissUnresolved;
-            } else {
-                shot.result = BattleShotResult::Hit;
-                shot.hit = true;
-            }
-        }
-
-        if (shot.hit && target != nullptr) {
-            if (originalAiShot) {
-                shot.hitLocation =
-                    BattleShotHitLocation::OriginalAiAspect2d6Table;
-                shot.hitLocationProven = true;
-                shot.armorSection =
-                    shot.originalAiDecision.armorSection;
-                shot.affectedSystem =
-                    systemRoleForArmorSection(shot.armorSection);
-            } else if (replacementHit.has_value()) {
-                shot.hitLocation =
-                    BattleShotHitLocation::OriginalAiAspect2d6Table;
-                shot.hitLocationProven = true;
-                shot.armorSection = replacementHit->armorSection;
-                shot.affectedSystem =
-                    systemRoleForArmorSection(shot.armorSection);
-            } else if (!crosshairRayPolicy) {
-                shot.hitLocation =
-                    BattleShotHitLocation::
-                        CenterTorsoProvisionalStationaryLab;
-                shot.hitLocationProven = false;
-                shot.armorSection =
-                    mech3d::MechArmorSectionId::CenterTorso;
-                shot.affectedSystem = BattleMechSystemRole::Core;
-            }
-        }
-
-        const bool originalProjectileDelivery =
-            params_.originalProjectileRuntimeEnabled &&
-            weapon.deliveryMode ==
-                BattleWeaponDeliveryMode::OriginalProjectilePool &&
-            weapon.originalProjectileDefinitionProven &&
-            weapon.originalProjectileTypeIndex >= 0 &&
-            weapon.originalProjectileSpeedRaw > 0u &&
-            weapon.originalProjectileLifetimeUpdates > 0u;
-        const bool projectileLaunchRequested = originalProjectileDelivery &&
-            (shot.hit ||
-             shot.result == BattleShotResult::MissOutOfRange ||
-             shot.result == BattleShotResult::MissCrosshairRay ||
-             shot.result == BattleShotResult::MissUnresolved);
-        constexpr size_t kOriginalProjectilePoolCapacity = 32u;
-        if (projectileLaunchRequested &&
-            projectiles_.size() >= kOriginalProjectilePoolCapacity) {
-            shot.hit = false;
-            shot.result = BattleShotResult::RejectedProjectilePoolFull;
-            shot.deliveryState = BattleShotDeliveryState::None;
-            shot.provenance +=
-                ":BTECH_5654_32_record_pool_full_fail_closed";
-        } else if (projectileLaunchRequested) {
-            BattleProjectileState projectile;
-            projectile.valid = true;
-            projectile.projectileId = nextProjectileId_++;
-            projectile.launchTickIndex = tickIndex_;
-            projectile.shooterEntityId = attacker.id;
-            projectile.weaponInstanceId = weapon.weaponInstanceId;
-            projectile.weaponTypeId = weapon.weaponTypeId;
-            projectile.launchShooterTransform = attacker.transform;
-            projectile.launchTorsoYawRadians = torsoYawRadians(
-                params_, attacker.torsoYawStep);
-            projectile.targetKind = shot.targetKind;
-            projectile.targetEntityId = shot.targetEntityId;
-            projectile.targetBound = shot.hit &&
-                (target != nullptr || targetObjective);
-            projectile.originalProjectileTypeIndex =
-                weapon.originalProjectileTypeIndex;
-            projectile.originalSpeedRaw =
-                weapon.originalProjectileSpeedRaw;
-            projectile.originalLifetimeUpdates =
-                weapon.originalProjectileLifetimeUpdates;
-            projectile.originalLifetimeUpdatesRemaining =
-                weapon.originalProjectileLifetimeUpdates;
-            projectile.originalDamageClass =
-                weapon.originalProjectileDamageClass;
-            projectile.originalVisualClass =
-                weapon.originalProjectileVisualClass;
-            const BattleProjectileHitProfile* projectileHitProfile =
-                projectileHitProfileForVisualClass(
-                    params_, projectile.originalVisualClass);
-            if (projectileHitProfile != nullptr) {
-                projectile.collisionGeometryFingerprint =
-                    projectileHitProfile->geometryFingerprint;
-                projectile.collisionGeometryProven =
-                    projectileHitProfile->originalModelGeometryProven;
-            }
-            projectile.laserInterceptible =
-                projectile.originalVisualClass == 1u &&
-                projectileHitProfile != nullptr &&
-                !projectileHitProfile->triangles.empty();
-            projectile.originalTargetTrackingProven =
-                projectile.targetBound;
-            projectile.motionScaleProven = false;
-
-            const BattleMechHitProfile* shooterProfile =
-                hitProfileForPreset(params_, attacker.mechPresetId);
-            if (shooterProfile != nullptr) {
-                const std::optional<BattleHitPoint> modelMount =
-                    battleModelWeaponMount(
-                        *shooterProfile,
-                        weapon.locationId,
-                        attacker.transform,
-                        projectile.launchTorsoYawRadians);
-                if (modelMount.has_value()) {
-                    projectile.launchModelMount = *modelMount;
-                    projectile.launchModelMountValid = true;
-                    projectile.launchModelMountPolicyProven = false;
-                }
-            }
-            const double heading = attacker.transform.headingRadians +
-                torsoYawRadians(params_, attacker.torsoYawStep);
-            projectile.position = shot.aimOrigin;
-            if (dot(projectile.position, projectile.position) <= 0.0) {
-                projectile.position = {
-                    attacker.transform.x +
-                        std::sin(heading) *
-                            params_.cockpitCameraForwardOffset,
-                    attacker.transform.y +
-                        (shooterProfile != nullptr
-                             ? shooterProfile->aimOriginHeight
-                             : 0.0),
-                    attacker.transform.z +
-                        std::cos(heading) *
-                            params_.cockpitCameraForwardOffset,
-                };
-            }
-            BattleHitPoint targetPoint = shot.impactPoint;
-            if (target != nullptr) {
-                if (dot(targetPoint, targetPoint) <= 0.0) {
-                    const BattleMechHitProfile* targetProfile =
-                        hitProfileForPreset(params_, target->mechPresetId);
-                    targetPoint = {
-                        target->transform.x,
-                        target->transform.y +
-                            (targetProfile != nullptr
-                                 ? targetProfile->aimOriginHeight * 0.55
-                                 : 0.0),
-                        target->transform.z,
-                    };
-                }
-                projectile.targetLocalPoint = worldPointToTargetLocal(
-                    targetPoint, target->transform);
-            } else if (targetObjective) {
-                if (dot(targetPoint, targetPoint) <= 0.0) {
-                    targetPoint = {
-                        objective_.transform.x,
-                        objective_.transform.y,
-                        objective_.transform.z,
-                    };
-                }
-                projectile.targetLocalPoint = worldPointToTargetLocal(
-                    targetPoint, objective_.transform);
-            }
-
-            projectile.direction = normalized(
-                subtract(targetPoint, projectile.position));
-            if (!projectile.targetBound ||
-                dot(projectile.direction, projectile.direction) <= 0.0) {
-                projectile.direction = normalized(shot.aimDirection);
-            }
-            if (dot(projectile.direction, projectile.direction) <= 0.0) {
-                projectile.direction = {
-                    std::sin(heading), 0.0, std::cos(heading)};
-            }
-
-            // The captured OTHPCK models extend behind their local origin by
-            // 45 units (AC/5 record 000) and 405 units (rocket record 001).
-            // Start the model origin that far forward so its rear edge begins
-            // at the established aim origin instead of behind the cockpit.
-            // The resource bounds are exact; their coupling to the original
-            // launch hardpoint remains an explicit compatibility policy.
-            double modelRearExtent = 0.0;
-            if (projectile.originalVisualClass == 0u) {
-                modelRearExtent = 45.0;
-            } else if (projectile.originalVisualClass == 1u) {
-                modelRearExtent = 405.0;
-            }
-            projectile.launchForwardOffset = modelRearExtent;
-            if (projectile.targetBound) {
-                const BattleHitPoint remaining = subtract(
-                    targetPoint,
-                    projectile.position);
-                const double remainingDistance = std::sqrt(dot(
-                    remaining,
-                    remaining));
-                projectile.launchForwardOffset = std::min(
-                    projectile.launchForwardOffset,
-                    std::max(
-                        0.0,
-                        remainingDistance -
-                            static_cast<double>(
-                                projectile.originalSpeedRaw)));
-            }
-            projectile.launchForwardOffsetProven = false;
-            const BattleHitPoint launchOrigin = projectile.position;
-            projectile.position.x +=
-                projectile.direction.x * projectile.launchForwardOffset;
-            projectile.position.y +=
-                projectile.direction.y * projectile.launchForwardOffset;
-            projectile.position.z +=
-                projectile.direction.z * projectile.launchForwardOffset;
-            const BattleProjectileTerrainHit launchTerrainHit =
-                projectileTerrainContact(
-                    params_, launchOrigin, projectile.position);
-            if (launchTerrainHit.valid) {
-                projectile.launchForwardOffset *=
-                    launchTerrainHit.segmentFraction;
-                projectile.position = launchTerrainHit.point;
-            }
-            projectile.previousPosition = projectile.position;
-
-            shot.deliveryState =
-                BattleShotDeliveryState::ProjectileInFlight;
-            shot.projectileId = projectile.projectileId;
-            shot.impactTickIndex = 0;
-            shot.impactDamage = 0;
-            shot.projectileMotionTimingProven = false;
-            shot.runtimeEffect = BattleShotRuntimeEffect::None;
-            shot.damageBefore = 0;
-            shot.damageApplied = 0;
-            shot.damageAfter = 0;
-            shot.provenance +=
-                ":BTECH_original_projectile_pool_launch_"
-                "compatibility_tick_scale";
-            projectile.pendingShot = shot;
-            projectile.provenance =
-                "BTECH.EXE:FUN_1000_5654/FUN_1000_578b:"
-                "five_substeps_per_0.1s_compatibility_policy:"
-                "OTHPCK_rear_extent_launch_offset_beta";
-            if (launchTerrainHit.valid) {
-                projectile.provenance +=
-                    ":launch_offset_clipped_to_terrain_contact";
-            }
-            projectiles_.push_back(std::move(projectile));
-        } else if (shot.hit && interceptedProjectile != nullptr) {
-            shot.result = BattleShotResult::HitProjectile;
-            shot.deliveryState =
-                BattleShotDeliveryState::ProjectileIntercepted;
-            shot.impactTickIndex = tickIndex_;
-            shot.projectileId = 0u;
-            shot.impactDamage = 0u;
-            shot.runtimeEffect =
-                BattleShotRuntimeEffect::ProjectileInterceptedNoDamage;
-            shot.damageBefore = 0;
-            shot.damageApplied = 0;
-            shot.damageAfter = 0;
-            interceptedProjectile->valid = false;
-            interceptedProjectile->targetBound = false;
-            shot.provenance +=
-                ":missile_airburst_removed_without_damage";
-        } else if (shot.hit && target != nullptr) {
-            shot.deliveryState = BattleShotDeliveryState::Immediate;
-            shot.impactTickIndex = tickIndex_;
-            shot.impactDamage = weapon.originalDamage;
-            applyDetailedCombatantDamage(
-                params_,
-                attacker,
-                *target,
-                static_cast<int>(weapon.originalDamage),
-                shot);
-        } else if (shot.hit && targetObjective) {
-            shot.deliveryState = BattleShotDeliveryState::Immediate;
-            shot.impactTickIndex = tickIndex_;
-            shot.impactDamage = weapon.originalDamage;
-            shot.runtimeEffect = BattleShotRuntimeEffect::ObjectiveDamage;
-            shot.damageBefore = objective_.damage;
-            applyDeterministicObjectiveDamage(
-                attacker,
-                objective_,
-                static_cast<int>(weapon.originalDamage));
-            shot.damageAfter = objective_.damage;
-            shot.damageApplied = shot.damageAfter - shot.damageBefore;
-        }
-        shotEvents_.push_back(shot);
-        lastShot_ = std::move(shot);
-        refreshCombatantWeaponState(params_, attacker);
+        const bool salvo = attacker.playerControlled && attacker.automaticWeaponsEnabled &&
+            attacker.fireLinkedWeaponsRequested;
+        const bool primary = attacker.fireWeaponRequested;
         attacker.fireWeaponRequested = false;
+        attacker.fireLinkedWeaponsRequested = false;
+        // Catalog mounts are in ascending slot order. Both triggers requesting
+        // the same slot still produce exactly one shot on this tick.
+        for (auto& weapon : attacker.weapons) {
+            if ((primary && weapon.weaponInstanceId == attacker.selectedWeaponInstanceId) ||
+                (salvo && weapon.awsLinked)) {
+                fireIndividualWeapon(attacker, weapon);
+            }
+        }
+        refreshCombatantWeaponState(params_, attacker);
+        if (attacker.playerControlled && attacker.automaticWeaponsEnabled && !attacker.weapons.empty()) {
+            const auto selected = std::find_if(attacker.weapons.begin(), attacker.weapons.end(),
+                [&attacker](const auto& w) { return w.weaponInstanceId == attacker.selectedWeaponInstanceId; });
+            if (selected != attacker.weapons.end() && selected->readiness != BattleWeaponReadiness::Ready) {
+                const size_t from = static_cast<size_t>(selected - attacker.weapons.begin());
+                for (size_t step = 1; step < attacker.weapons.size(); ++step) {
+                    const auto& candidate = attacker.weapons[(from + step) % attacker.weapons.size()];
+                    if (candidate.awsLinked && candidate.readiness == BattleWeaponReadiness::Ready) {
+                        attacker.selectedWeaponInstanceId = candidate.weaponInstanceId;
+                        break;
+                    }
+                }
+            }
+            refreshCombatantWeaponState(params_, attacker);
+        }
     }
 
     projectiles_.erase(
@@ -13432,7 +14199,7 @@ void BattleWorld::updateOriginalHeatRuntime() {
             // applies heat-sink cooling. Our Up/Down control split is a
             // compatibility mapping because the current jump physics and fuel
             // scale remain provisional.
-            if (combatant.jumpJetThrusting) {
+            if (combatant.jumpJetThrusting && !combatant.aiJump.enabled) {
                 const int jumpHeat = combatant.jumpForwardThrusting
                     ? battleOriginalForwardJumpRawHeat()
                     : battleOriginalVerticalJumpRawHeat();
@@ -13484,6 +14251,12 @@ void BattleWorld::updateOriginalHeatRuntime() {
         if (heat.originalUpdateAccumulator < 0.0 &&
             heat.originalUpdateAccumulator > -1.0e-9) {
             heat.originalUpdateAccumulator = 0.0;
+        }
+        // Original loop cools first (0058), then AI adds branch-specific heat (007A).
+        if(combatant.aiJump.enabled && combatant.aiJump.pendingHeat>0) {
+            heat.lastJumpJetHeatAdded=combatant.aiJump.pendingHeat;
+            heat.lastJumpJetHeatTickIndex=tickIndex_;
+            heat.rawHeat=std::clamp(heat.rawHeat+combatant.aiJump.pendingHeat,0,battleMaximumRawHeat());
         }
     }
 }
@@ -13542,7 +14315,9 @@ void BattleWorld::updateReplacementMissionRuntime() {
             result.terminalTickIndex = completedTickIndex;
             result.terminalElapsedMs = elapsedMs_ + fixedTickMs(params_);
             result.sourceEntityId = player->id;
-            completeMission(std::move(result));
+            // Original8CBA directly sets the side's flag even after125F1 has
+            // latched a loss. Main019A then prefers win, retaining its start frame.
+            latchMissionConclusion(std::move(result), true);
             return;
         }
     }
@@ -13576,7 +14351,7 @@ void BattleWorld::updateReplacementMissionRuntime() {
         result.terminalTickIndex = completedTickIndex;
         result.terminalElapsedMs = elapsedMs_ + fixedTickMs(params_);
         result.sourceEntityId = combatant.id;
-        completeMission(std::move(result));
+        latchMissionConclusion(std::move(result));
         return;
     }
 }
@@ -13597,39 +14372,33 @@ void BattleWorld::evaluateMissionRuntimeAfterMovement() {
 
     const uint8_t exitMask = battlefieldBoundaryEdgeMask(*exitEdge);
     const bool allowedExit = (params_.battlefieldBoundary.playerAllowedExitMask & exitMask) != 0;
-    const bool replacementScenario = params_.combatAiPolicy ==
-        BattleCombatAiPolicy::ReplacementDeterministicCombatAi;
-
     BattleResult result;
     result.valid = true;
-    result.state = replacementScenario
-        ? BattleMissionRuntimeState::Defeat
-        : allowedExit ? BattleMissionRuntimeState::Victory
-                      : BattleMissionRuntimeState::Withdraw;
-    result.reason = replacementScenario
-        ? "player_fled_battlefield"
-        : allowedExit ? "player_allowed_boundary_exit"
-                      : "player_ordinary_boundary_exit";
-    result.rawResultCode = replacementScenario
-        ? 1
-        : allowedExit
-            ? params_.battlefieldBoundary.allowedPlayerExitResultCode
-            : params_.battlefieldBoundary.ordinaryPlayerExitResultCode;
+    // Original main011E returns2 for an ordinary exit, independent of AI policy.
+    // Keep the correct mode1 exit mask already established by setup/126A2.
+    // Main0107's 2-aggregate index reads unrelated bytes4..7: intentional bug fix.
+    result.state = allowedExit ? BattleMissionRuntimeState::Victory
+                               : BattleMissionRuntimeState::Withdraw;
+    result.reason = allowedExit ? "player_allowed_boundary_exit"
+                                : "player_ordinary_boundary_exit";
+    result.rawResultCode = allowedExit
+        ? params_.battlefieldBoundary.allowedPlayerExitResultCode
+        : params_.battlefieldBoundary.ordinaryPlayerExitResultCode;
     result.terminalTickIndex = tickIndex_ + 1u;
     result.terminalElapsedMs = elapsedMs_ + fixedTickMs(params_);
     result.sourceEntityId = player->id;
     result.actorExitStatus = battlefieldActorExitStatus(*exitEdge);
     result.exitEdge = *exitEdge;
     result.exitMask = exitMask;
-    result.exitAllowed = !replacementScenario && allowedExit;
+    result.exitAllowed = allowedExit;
     completeMission(std::move(result));
 }
 
-void BattleWorld::evaluateMissionRuntimeAfterObjective() {
+std::optional<BattleResult> BattleWorld::evaluateMissionRuntimeAfterObjective() {
     if (missionTerminal(missionRuntimeState_) ||
         !params_.deterministicObjectiveRuntimeEnabled ||
         !objective_.depleted) {
-        return;
+        return std::nullopt;
     }
     if (!objective_.missionIntentBoundToObjective || !objective_.missionSemanticsProven) {
         BattleResult result;
@@ -13640,8 +14409,7 @@ void BattleWorld::evaluateMissionRuntimeAfterObjective() {
         result.terminalTickIndex = tickIndex_ + 1u;
         result.terminalElapsedMs = elapsedMs_ + fixedTickMs(params_);
         result.sourceEntityId = objective_.lastDamageSourceEntityId;
-        completeMission(std::move(result));
-        return;
+        return result;
     }
 
     BattleMissionRuntimeState state = BattleMissionRuntimeState::Unsupported;
@@ -13677,11 +14445,26 @@ void BattleWorld::evaluateMissionRuntimeAfterObjective() {
     result.terminalTickIndex = tickIndex_ + 1u;
     result.terminalElapsedMs = elapsedMs_ + fixedTickMs(params_);
     result.sourceEntityId = objective_.lastDamageSourceEntityId;
-    completeMission(std::move(result));
+    return result;
 }
 
-void BattleWorld::evaluateMissionRuntimeAfterCombat() {
+bool BattleWorld::commanderPilotKilled() const {
+    const Combatant* player=findCombatant(playerEntityId_);
+    if (!player || !player->mechRuntime.detailedDamage.valid) return false;
+    const auto& d=player->mechRuntime.detailedDamage;
+    return originalBtechPilotKilled(true,
+        static_cast<uint16_t>(d.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::LifeSupport)].condition),
+        d.originalCockpitCriticalFlag ? 1u : 0u,
+        static_cast<uint16_t>(d.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::Engine)].condition));
+}
+
+void BattleWorld::evaluateMissionRuntimeAfterCombat(std::optional<BattleResult> objectiveResult) {
     if (missionTerminal(missionRuntimeState_) || !params_.deterministicCombatRuntimeEnabled) {
+        if (objectiveResult && !missionTerminal(missionRuntimeState_)) {
+            if (objectiveResult->state == BattleMissionRuntimeState::Unsupported)
+                completeMission(std::move(*objectiveResult));
+            else latchMissionConclusion(std::move(*objectiveResult));
+        }
         return;
     }
     const Combatant* player = findCombatant(playerEntityId_);
@@ -13690,6 +14473,11 @@ void BattleWorld::evaluateMissionRuntimeAfterCombat() {
     }
     const bool replacementScenario = params_.combatAiPolicy ==
         BattleCombatAiPolicy::ReplacementDeterministicCombatAi;
+    // Original126A2 starts true and leaves an unoccupied side complete.
+    // Extended allocation can exhaust opposition before the final stage.
+    // Keep unconfigured single-mech diagnostic worlds outside this rule.
+    const bool originalEmptySideOutcome = replacementScenario &&
+        params_.contract.valid && params_.setupMetadata.valid;
     bool anyActivePlayerCombatant = false;
     if (replacementScenario) {
         for (const Combatant& combatant : combatants_) {
@@ -13701,8 +14489,28 @@ void BattleWorld::evaluateMissionRuntimeAfterCombat() {
             }
         }
     }
+    bool sawOpposingCombatant = false;
+    bool anyActiveOpposingCombatant = false;
+    bool anyEscapedOpposingCombatant = false;
+    for (const Combatant& combatant : combatants_) {
+        if (combatant.roster.team != BattleTeam::Opposing) continue;
+        sawOpposingCombatant = true;
+        anyEscapedOpposingCombatant = anyEscapedOpposingCombatant ||
+            combatant.missionStatus == CombatantMissionStatus::Escaped;
+        anyActiveOpposingCombatant = anyActiveOpposingCombatant ||
+            (combatant.missionStatus == CombatantMissionStatus::Active && !combatantMechDestroyed(combatant));
+    }
     std::optional<BattleResult> candidateResult;
-    if ((replacementScenario && !anyActivePlayerCombatant) ||
+    if (commanderPilotKilled()) {
+        BattleResult result;
+        result.valid=true;
+        result.state=BattleMissionRuntimeState::Defeat;
+        result.reason="commander_killed";
+        result.rawResultCode=1;
+        result.sourceEntityId=player->lastDamageSourceEntityId;
+        candidateResult=std::move(result);
+    } else if ((replacementScenario && !anyActivePlayerCombatant &&
+                ((!sawOpposingCombatant && !originalEmptySideOutcome) || anyActiveOpposingCombatant)) ||
         (!replacementScenario &&
          (player->missionStatus == CombatantMissionStatus::Destroyed ||
           combatantMechDestroyed(*player)))) {
@@ -13717,25 +14525,9 @@ void BattleWorld::evaluateMissionRuntimeAfterCombat() {
     }
 
     if (!candidateResult.has_value()) {
-        bool sawOpposingCombatant = false;
-        bool anyActiveOpposingCombatant = false;
-        bool anyEscapedOpposingCombatant = false;
-        for (const Combatant& combatant : combatants_) {
-            if (combatant.roster.team != BattleTeam::Opposing) {
-                continue;
-            }
-            sawOpposingCombatant = true;
-            anyEscapedOpposingCombatant =
-                anyEscapedOpposingCombatant ||
-                combatant.missionStatus ==
-                    CombatantMissionStatus::Escaped;
-            if (combatant.missionStatus == CombatantMissionStatus::Active &&
-                !combatantMechDestroyed(combatant)) {
-                anyActiveOpposingCombatant = true;
-                break;
-            }
-        }
-        if (sawOpposingCombatant && !anyActiveOpposingCombatant) {
+        // FAR125F1 can set both outcome flags. Main019A uses1-win: a surviving
+        // commander wins that tie. Fatal pilot damage was handled above.
+        if ((sawOpposingCombatant || originalEmptySideOutcome) && !anyActiveOpposingCombatant) {
             BattleResult result;
             result.valid = true;
             result.state = BattleMissionRuntimeState::Victory;
@@ -13748,33 +14540,62 @@ void BattleWorld::evaluateMissionRuntimeAfterCombat() {
         }
     }
 
-    if (!candidateResult.has_value()) {
-        conclusionDelay_ = {};
-        return;
+    if (objectiveResult && !commanderPilotKilled()) {
+        if (objectiveResult->state == BattleMissionRuntimeState::Unsupported) {
+            completeMission(std::move(*objectiveResult));
+            return;
+        }
+        //125F1 evaluates both sides/objective tests in the same invocation.
+        // Merge those flags before latching:1-win wins even if loss is also set.
+        if (!candidateResult || candidateResult->state != BattleMissionRuntimeState::Victory ||
+            objectiveResult->state == BattleMissionRuntimeState::Victory)
+            candidateResult = std::move(objectiveResult);
     }
+    if (candidateResult) latchMissionConclusion(std::move(*candidateResult));
+}
 
-    BattleResult& result = *candidateResult;
+void BattleWorld::latchMissionConclusion(BattleResult result, bool contactWin) {
+    const bool fatal = result.reason == "commander_killed";
+    if (conclusionDelay_.active) {
+        if (conclusionDelay_.freezesSimulation) return;
+        if (!fatal) {
+            // Original125F1 exits as soon as either result flag is set. A later
+            // team/objective change cannot cancel it or restart its countdown.
+            // Contact8CBA is a separate, unconditional flag writer.
+            if (contactWin && result.state == BattleMissionRuntimeState::Victory &&
+                conclusionDelay_.pendingState != BattleMissionRuntimeState::Victory) {
+                conclusionDelay_.pendingState = result.state;
+                conclusionDelay_.reason = std::move(result.reason);
+                conclusionDelay_.sourceEntityId = result.sourceEntityId;
+            }
+            return;
+        }
+    }
+    conclusionDelay_.active = true;
+    conclusionDelay_.freezesSimulation = fatal;
+    conclusionDelay_.pendingState = result.state;
+    conclusionDelay_.reason = std::move(result.reason);
+    conclusionDelay_.startTickIndex = tickIndex_;
+    conclusionDelay_.sourceEntityId = result.sourceEntityId;
+    // The fatal PIT wait budget is recovered independently of the ordinary
+    //20-frame host adapter. Both durations are quantized to simulation ticks.
+    const double delaySeconds = fatal ? params_.fatalConclusionDelaySeconds
+                                     : params_.combatConclusionDelaySeconds;
     const uint64_t delayTicks = static_cast<uint64_t>(std::ceil(
-        params_.combatConclusionDelaySeconds / params_.fixedTickSeconds));
-    if (delayTicks > 0u) {
-        const bool samePendingResult = conclusionDelay_.active &&
-            conclusionDelay_.pendingState == result.state &&
-            conclusionDelay_.reason == result.reason &&
-            conclusionDelay_.sourceEntityId == result.sourceEntityId;
-        if (!samePendingResult) {
-            conclusionDelay_.active = true;
-            conclusionDelay_.pendingState = result.state;
-            conclusionDelay_.reason = result.reason;
-            conclusionDelay_.startTickIndex = tickIndex_;
-            conclusionDelay_.resolveTickIndex = tickIndex_ + delayTicks;
-            conclusionDelay_.sourceEntityId = result.sourceEntityId;
-            return;
-        }
-        if (tickIndex_ < conclusionDelay_.resolveTickIndex) {
-            return;
-        }
-    }
+        delaySeconds / params_.fixedTickSeconds));
+    conclusionDelay_.resolveTickIndex = tickIndex_ + delayTicks;
+}
 
+void BattleWorld::resolveMissionConclusion(bool acknowledged) {
+    if (missionTerminal(missionRuntimeState_) || !conclusionDelay_.active ||
+        (tickIndex_ < conclusionDelay_.resolveTickIndex &&
+         (!acknowledged || conclusionDelay_.freezesSimulation))) return;
+    BattleResult result;
+    result.valid = true;
+    result.state = conclusionDelay_.pendingState;
+    result.rawResultCode = result.state == BattleMissionRuntimeState::Victory ? 0 : 1;
+    result.reason = conclusionDelay_.reason;
+    result.sourceEntityId = conclusionDelay_.sourceEntityId;
     result.terminalTickIndex = tickIndex_ + 1u;
     result.terminalElapsedMs = elapsedMs_ + fixedTickMs(params_);
     completeMission(std::move(result));
@@ -13796,9 +14617,37 @@ void BattleWorld::applyQueuedInputs() {
         if (command.tickIndex != tickIndex_) {
             continue;
         }
+        if (command.lanceOrder) {
+            applyLanceOrder(command);
+            continue;
+        }
         Combatant* combatant = findCombatant(command.entityId);
         if (!combatant) {
             throw std::runtime_error("battle input references unknown entity id: " + std::to_string(command.entityId.value));
+        }
+        if (combatant->playerControlled && command.mouseLookEnabled.has_value() &&
+            *command.mouseLookEnabled != combatant->mouseLook.enabled) {
+            if (*command.mouseLookEnabled) {
+                combatant->mouseLook = {true, torsoYawRadians(params_,combatant->torsoYawStep),
+                    pitchFromAimSteps(params_,combatant->mechPresetId,combatant->aimPitchStep)};
+            } else {
+                combatant->mouseLook = {}; // Rounded legacy steps already track the continuous angles.
+            }
+        }
+        if (command.standUp && combatant->playerControlled && !combatantMechDestroyed(*combatant)) {
+            const auto& damage = combatant->mechRuntime.detailedDamage;
+            const bool eligible=originalPlayerStandUpFlag(static_cast<int>(combatant->posture.posture),
+                damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::LeftLeg)].structureRemaining,
+                damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::RightLeg)].structureRemaining,
+                damage.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::LeftLegActuator)].workingCount,
+                damage.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::RightLegActuator)].workingCount,0)!=0;
+            const auto roll=eligible ? static_cast<uint8_t>(originalRng_.exclusive(12)) : uint8_t{0};
+            attemptBattleStandUp(combatant->posture, tickIndex_,
+                damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::LeftLeg)].structureRemaining,
+                damage.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::RightLeg)].structureRemaining,
+                damage.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::LeftLegActuator)].workingCount,
+                damage.criticalComponents[static_cast<size_t>(mech3d::MechCriticalComponentId::RightLegActuator)].workingCount,
+                roll);
         }
         combatant->throttle = clampUnit(command.throttle);
         combatant->turn = clampUnit(command.turn);
@@ -13806,6 +14655,7 @@ void BattleWorld::applyQueuedInputs() {
             combatant->throttle = 0.0;
             combatant->turn = 0.0;
             combatant->fireWeaponRequested = false;
+            combatant->fireLinkedWeaponsRequested = false;
             combatant->jumpJetsEnabled = false;
             combatant->jumpJetThrusting = false;
             combatant->jumpForwardThrusting = false;
@@ -13830,7 +14680,9 @@ void BattleWorld::applyQueuedInputs() {
              combatant->majorSystems.targetingAvailable)) {
             cycleTargetScan();
         }
-        combatant->fireWeaponRequested = command.fireWeapon;
+        combatant->fireWeaponRequested = combatant->fireWeaponRequested || command.fireWeapon;
+        combatant->fireLinkedWeaponsRequested = combatant->fireLinkedWeaponsRequested ||
+            (combatant->playerControlled && command.fireLinkedWeapons);
         if (command.selectWeaponInstanceId != 0) {
             const auto requested = std::find_if(
                 combatant->weapons.begin(),
@@ -13866,17 +14718,48 @@ void BattleWorld::applyQueuedInputs() {
                 combatant->weapons[static_cast<size_t>(index)]
                     .weaponInstanceId;
         }
+        if (combatant->playerControlled && params_.individualWeaponRuntimeEnabled) {
+            if (command.toggleAutomaticWeapons) {
+                combatant->automaticWeaponsEnabled = !combatant->automaticWeaponsEnabled;
+                // Original W rebuilds the linked set on both transitions.
+                for (auto& weapon : combatant->weapons) weapon.awsLinked = weapon.functional;
+            }
+            if (command.toggleSelectedWeaponLink) {
+                for (auto& weapon : combatant->weapons) {
+                    if (weapon.weaponInstanceId == combatant->selectedWeaponInstanceId)
+                        weapon.awsLinked = !weapon.awsLinked;
+                }
+            }
+        }
         refreshCombatantWeaponState(params_, *combatant);
         combatant->jumpJetThrusting = false;
         combatant->jumpForwardThrusting = false;
-        if (command.torsoYawStepDelta != 0) {
+        if (combatant->mouseLook.enabled) {
+            if (command.mouseLookZoomLevel>0) combatant->mouseLook.zoomLevel=std::clamp(command.mouseLookZoomLevel,1,3);
+            if (combatant->missionStatus==CombatantMissionStatus::Active && !combatantMechDestroyed(*combatant) &&
+                combatant->posture.posture == BattlePosture::Upright &&
+                std::isfinite(command.mouseLookYawDeltaRadians) && std::isfinite(command.mouseLookPitchDeltaRadians)) {
+                const auto limits=battleMouseLookLimits(params_,combatant->mechPresetId);
+                auto& aim=combatant->mouseLook;
+                aim.yawRadians=std::clamp(command.centerTorso ? 0.0 :
+                    aim.yawRadians+command.mouseLookYawDeltaRadians+
+                    command.torsoYawStepDelta*params_.playerTorsoYawStepRadians,-limits.yawRadians,limits.yawRadians);
+                const double keyboardPitch=pitchFromAimSteps(params_,combatant->mechPresetId,
+                    aimStepsFromPitch(params_,combatant->mechPresetId,aim.pitchRadians)+command.aimPitchStepDelta);
+                aim.pitchRadians=std::clamp(keyboardPitch+command.mouseLookPitchDeltaRadians,
+                    -limits.pitchDownRadians,limits.pitchUpRadians);
+                combatant->torsoYawStep=params_.playerTorsoYawStepRadians>0 ?
+                    static_cast<int>(std::lround(aim.yawRadians/params_.playerTorsoYawStepRadians)) : 0;
+                combatant->aimPitchStep=static_cast<int>(std::lround(aimStepsFromPitch(params_,combatant->mechPresetId,aim.pitchRadians)));
+            }
+        } else if (command.torsoYawStepDelta != 0) {
             combatant->torsoYawStep =
                 clampInt(
                     combatant->torsoYawStep + command.torsoYawStepDelta,
                     -params_.maxPlayerTorsoYawSteps,
                     params_.maxPlayerTorsoYawSteps);
         }
-        if (command.aimPitchStepDelta != 0) {
+        if (!combatant->mouseLook.enabled && command.aimPitchStepDelta != 0) {
             validateAimPitchLimits(params_);
             combatant->aimPitchStep =
                 clampInt(
@@ -13886,7 +14769,8 @@ void BattleWorld::applyQueuedInputs() {
         }
         if (command.jumpJetToggle && (combatant->jumpJetsEnabled || combatant->airborne || canActivateJumpJets(params_, *combatant))) {
             combatant->jumpJetsEnabled = !combatant->jumpJetsEnabled;
-            if (combatant->jumpJetsEnabled && !combatant->airborne && combatant->transform.y <= 0.0) {
+            if (combatant->jumpJetsEnabled && !combatant->airborne &&
+                combatant->transform.y <= combatant->ridge.groundHeight + 1e-9) {
                 combatant->airborne = true;
                 combatant->jumpLaunchImpulseRemaining =
                     std::max(combatant->jumpLaunchImpulseRemaining, params_.jumpJetInitialImpulse);
@@ -13935,6 +14819,13 @@ BattleSnapshot runBattleReplay(
 
 uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
     uint64_t hash = kFnvOffset;
+    // Preserve historical fingerprints for no-random-action diagnostics. The
+    // fixed executable initial state is implicit; any changed state is hashed.
+    if (snapshot.originalRng!=OriginalBtechRng{}) {
+        hashUint64(hash,0x43423746u);
+        for (auto word : snapshot.originalRng.words) hashUint64(hash,word);
+        hashUint64(hash,snapshot.originalRng.first); hashUint64(hash,snapshot.originalRng.second);
+    }
     hashUint64(hash, snapshot.tickIndex);
     hashUint64(hash, snapshot.elapsedMs);
     if (snapshot.combatAiPolicy ==
@@ -13950,6 +14841,9 @@ uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
     hashUint64(hash, static_cast<uint64_t>(snapshot.terrain.scenarioIndex));
     hashUint64(hash, snapshot.terrain.terrainMode);
     hashOptionalInt(hash, snapshot.terrain.environmentId);
+    if (snapshot.terrain.skyMode == BattleSkyMode::Black) {
+        hashUint64(hash, 0x424c41434b534b59ull);
+    }
     hashInt64(hash, quantize(snapshot.terrain.boundsMinX));
     hashInt64(hash, quantize(snapshot.terrain.boundsMaxX));
     hashInt64(hash, quantize(snapshot.terrain.boundsMinZ));
@@ -13997,6 +14891,7 @@ uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
             static_cast<uint64_t>(
                 snapshot.conclusionDelay.pendingState));
         hashString(hash, snapshot.conclusionDelay.reason);
+        hashUint64(hash, snapshot.conclusionDelay.freezesSimulation ? 1u : 0u);
         hashUint64(hash, snapshot.conclusionDelay.startTickIndex);
         hashUint64(hash, snapshot.conclusionDelay.resolveTickIndex);
         hashUint64(hash, snapshot.conclusionDelay.sourceEntityId.value);
@@ -14028,6 +14923,15 @@ uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
         hashUint64(hash, snapshot.cockpitRadar.rangeMeters);
         hashUint64(hash, snapshot.cockpitRadar.commandSequence);
         hashUint64(hash, snapshot.cockpitRadar.lastCommandTickIndex);
+    }
+    if (!snapshot.pendingLanceOrders.empty()) {
+        hashUint64(hash, 0x50454e444f524452ull);
+        hashUint64(hash, snapshot.pendingLanceOrders.size());
+        for (const auto& command : snapshot.pendingLanceOrders) {
+            hashUint64(hash, command.tickIndex);
+            hashUint64(hash, command.entityId.value);
+            if (command.lanceOrder) hashLanceOrderCommand(hash, *command.lanceOrder);
+        }
     }
     if (snapshot.targetScan.commandSequence != 0u) {
         hashUint64(hash, 0x5343414eull);
@@ -14066,6 +14970,22 @@ uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
         hashInt64(hash, combatant.torsoYawStep);
         hashInt64(hash, quantize(combatant.torsoYawRadians));
         hashInt64(hash, combatant.aimPitchStep);
+        if (combatant.mouseLook.enabled) {
+            hashString(hash,"mouse_look");
+            hashInt64(hash,quantize(combatant.mouseLook.yawRadians));
+            hashInt64(hash,quantize(combatant.mouseLook.pitchRadians));
+            hashInt64(hash,combatant.mouseLook.zoomLevel);
+        }
+        if (combatant.ridge.groundHeight != 0.0 || combatant.ridge.pitch != 0 ||
+            combatant.ridge.nextPitchControl != 0 || combatant.ridge.cachedObject) {
+            hashString(hash,"original_ridge");
+            hashInt64(hash,quantize(combatant.ridge.groundHeight));
+            hashInt64(hash,combatant.ridge.pitch);
+            hashInt64(hash,combatant.ridge.nextPitchControl);
+            hashInt64(hash,quantize(combatant.ridge.updateAccumulator));
+            hashUint64(hash,combatant.ridge.cachedObject.value_or(std::numeric_limits<size_t>::max()));
+            hashUint64(hash,combatant.ridge.cachedSubrecord.value_or(0xffu));
+        }
         hashUint64(hash, combatant.boundaryContact ? 1ull : 0ull);
         if (combatant.collisionRadiusWorld > 0.0 || combatant.collisionContact ||
             combatant.collisionCount != 0u ||
@@ -14079,6 +14999,22 @@ uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
         }
         hashEnemyAiDiagnostics(hash, combatant);
         hashReplacementAiState(hash, combatant.replacementAi);
+        hashLanceOrderState(hash, combatant.lanceOrder);
+        if (combatant.aiJump.enabled) {
+            const auto& j = combatant.aiJump;
+            hashString(hash, "ai_jump_v1");
+            hashUint64(hash, static_cast<uint8_t>(j.phase));
+            hashUint64(hash, static_cast<uint8_t>(j.lastReason));
+            hashUint64(hash, j.animationSequence); hashUint64(hash, j.frame);
+            hashInt64(hash, quantize(j.accumulator));
+            hashInt64(hash, j.fuel); hashInt64(hash, j.vertical);
+            hashInt64(hash, j.forward); hashInt64(hash, j.turn);
+            hashInt64(hash, j.pendingHeat); hashUint64(hash, j.eligibleDraws);
+            hashUint64(hash, j.launches); hashUint64(hash, j.landings);
+            hashUint64(hash, j.lastRoll); hashUint64(hash, j.moveRequested);
+            hashUint64(hash, j.obstacleAhead); hashInt64(hash, j.actionMode);
+            hashInt64(hash, quantize(j.destinationX)); hashInt64(hash, quantize(j.destinationZ));
+        }
         if (combatant.originalAiUpdateAccumulator != 0.0 ||
             combatant.originalAiUpdateCount != 0u ||
             combatant.lastOriginalAiDecision.valid) {
@@ -14098,6 +15034,15 @@ uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
         hashUint64(hash, combatant.airborne ? 1ull : 0ull);
         hashUint64(hash, combatant.hardLanding ? 1ull : 0ull);
         hashUint64(hash, combatant.knockdownCandidate ? 1ull : 0ull);
+        if (combatant.posture.falls || combatant.posture.standAttempts || combatant.posture.sequence) {
+            const auto& p = combatant.posture;
+            hashString(hash, "posture_v1");
+            hashUint64(hash, static_cast<uint8_t>(p.posture));
+            hashUint64(hash, p.sequence); hashUint64(hash, p.frame);
+            hashUint64(hash, p.changedTick); hashUint64(hash, p.falls);
+            hashUint64(hash, p.standAttempts); hashUint64(hash, p.lastStandRoll);
+            hashUint64(hash, p.leftLandingDamage); hashUint64(hash, p.rightLandingDamage);
+        }
         hashInt64(hash, quantize(combatant.jumpFuel));
         hashInt64(hash, quantize(combatant.jumpMaxFuel));
         hashInt64(hash, quantize(combatant.jumpActivationFuel));
@@ -14126,6 +15071,10 @@ uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
         }
         hashMechSystemsSnapshot(hash, combatant.mechSystems);
         hashDetailedDamageState(hash, combatant.detailedDamage);
+        if (combatant.ammunitionStateValid) {
+            hashUint64(hash, 0x414d4d4f504f4f4cull);
+            for (int amount : combatant.ammunitionByPool) hashInt64(hash, amount);
+        }
         if (combatant.persistentMechState.valid) {
             hashUint64(
                 hash,
@@ -14141,6 +15090,18 @@ uint64_t battleSnapshotFingerprint(const BattleSnapshot& snapshot) {
     hashInt64(hash, quantize(snapshot.camera.transform.headingRadians));
     hashInt64(hash, quantize(snapshot.camera.localForwardOffset));
     hashInt64(hash, quantize(snapshot.camera.localHeight));
+    if (snapshot.camera.posturePitchRadians != 0.0) {
+        hashString(hash, "posture_camera");
+        hashInt64(hash, quantize(snapshot.camera.posturePitchRadians));
+    }
+    if (snapshot.camera.mouseLookPitchRadians != 0.0) {
+        hashString(hash,"mouse_look_camera");
+        hashInt64(hash,quantize(snapshot.camera.mouseLookPitchRadians));
+    }
+    if (snapshot.camera.ridgePitchRadians != 0.0) {
+        hashString(hash,"ridge_camera");
+        hashInt64(hash,quantize(snapshot.camera.ridgePitchRadians));
+    }
     return hash;
 }
 
@@ -14173,90 +15134,14 @@ BattleCombatantLaunchState prepareNextMissionLaunchState(
             carriedDetailed.installedWeapons.begin(),
             carriedDetailed.installedWeapons.end(),
             [](const auto& weapon) { return weapon.battleDamage != 0; });
-    if (carriedDetailed.valid && detailedDamageChanged) {
-        BattlePersistentMechState& persistent =
-            launchState.persistentMechState;
-        persistent.valid = true;
-        persistent.provenance =
+    if (carriedDetailed.valid && (detailedDamageChanged || launchState.persistentMechState.exactDamage ||
+            !previousMissionSnapshot.destroyedComponentIds.empty() || previousMissionSnapshot.mechDestroyed)) {
+        launchState.persistentMechState = campaignMechStateFromCombatant(previousMissionSnapshot);
+        launchState.persistentMechState.provenance =
             "wiki_campaign_intermission:carry_damage_without_full_repair";
-        uint64_t armorRemaining = 0u;
-        uint64_t armorMaximum = 0u;
-        for (size_t index = 0;
-             index < previousMissionSnapshot.detailedDamage.armorSections.size();
-             ++index) {
-            const auto& armor =
-                previousMissionSnapshot.detailedDamage.armorSections[index];
-            const auto& internal =
-                previousMissionSnapshot.detailedDamage.internalSections[
-                    internalSectionIndex(internalSectionForArmor(armor.section))];
-            const uint32_t combinedMaximum =
-                static_cast<uint32_t>(armor.armorMaximum) +
-                static_cast<uint32_t>(internal.structureMaximum);
-            const uint32_t combinedRemaining =
-                static_cast<uint32_t>(armor.armorRemaining) +
-                static_cast<uint32_t>(internal.structureRemaining);
-            const uint32_t combinedDamage = combinedMaximum > combinedRemaining
-                ? combinedMaximum - combinedRemaining : 0u;
-            persistent.armorDamage[index] = combinedMaximum == 0u
-                ? 0u
-                : static_cast<uint8_t>(std::clamp<uint32_t>(
-                      (combinedDamage * 3u + combinedMaximum - 1u) /
-                          combinedMaximum,
-                      0u, 3u));
-            armorRemaining += armor.armorRemaining;
-            armorMaximum += armor.armorMaximum;
-        }
-        persistent.armorPercent = armorMaximum == 0u
-            ? 0u
-            : static_cast<uint8_t>(std::clamp<uint64_t>(
-                  (armorRemaining * 100u) / armorMaximum, 0u, 100u));
-
-        const auto& criticals =
-            previousMissionSnapshot.detailedDamage.criticalComponents;
-        const auto criticalCondition = [&criticals](
-                                           mech3d::MechCriticalComponentId id) {
-            const auto& component =
-                criticals[static_cast<size_t>(id)];
-            const uint8_t lostCount = component.totalCount >
-                    component.workingCount
-                ? static_cast<uint8_t>(
-                      component.totalCount - component.workingCount)
-                : 0u;
-            return static_cast<uint8_t>(std::min<int>(
-                3, std::max<int>(component.condition, lostCount)));
-        };
-        persistent.engine = criticalCondition(
-            mech3d::MechCriticalComponentId::Engine);
-        persistent.gyros = criticalCondition(
-            mech3d::MechCriticalComponentId::Gyros);
-        persistent.sensors = criticalCondition(
-            mech3d::MechCriticalComponentId::Sensors);
-        persistent.lifeSupport = criticalCondition(
-            mech3d::MechCriticalComponentId::LifeSupport);
-        persistent.leftArmActuator = criticalCondition(
-            mech3d::MechCriticalComponentId::LeftArmActuator);
-        persistent.rightArmActuator = criticalCondition(
-            mech3d::MechCriticalComponentId::RightArmActuator);
-        persistent.leftLegActuator = criticalCondition(
-            mech3d::MechCriticalComponentId::LeftLegActuator);
-        persistent.rightLegActuator = criticalCondition(
-            mech3d::MechCriticalComponentId::RightLegActuator);
-        const auto& heatSinks = criticals[static_cast<size_t>(
-            mech3d::MechCriticalComponentId::HeatSinks)];
-        persistent.heatSinksWorking = heatSinks.workingCount;
-        persistent.heatSinksTotal = heatSinks.totalCount;
-        const auto& jumpJets = criticals[static_cast<size_t>(
-            mech3d::MechCriticalComponentId::JumpJets)];
-        persistent.jumpJetsWorking = jumpJets.workingCount;
-        persistent.jumpJetsTotal = jumpJets.totalCount;
-        for (size_t index = 0;
-             index < persistent.weaponConditions.size();
-             ++index) {
-            persistent.weaponConditions[index] =
-                previousMissionSnapshot.detailedDamage
-                    .installedWeapons[index].condition;
-        }
     }
+    launchState.ammunitionStateValid = previousMissionSnapshot.ammunitionStateValid;
+    launchState.ammunitionByPool = previousMissionSnapshot.ammunitionByPool;
 
     if (previousMissionSnapshot.missionStatus == CombatantMissionStatus::Disabled) {
         launchState.minimalRepairApplied = true;
@@ -14264,6 +15149,24 @@ BattleCombatantLaunchState prepareNextMissionLaunchState(
         launchState.priorMissionStatus = CombatantMissionStatus::Disabled;
         BattlePersistentMechState& persistent =
             launchState.persistentMechState;
+        // Existing extended-mission minimal repair is explicit, never a normal
+        // campaign return. Restore only disabled mobility systems to one usable
+        // point; all unrelated exact damage remains intact.
+        if (persistent.exactDamage) {
+            auto& d = persistent.exactDamage->detailed;
+            persistent.exactDamage->mechDisabled = false;
+            d.originalCockpitCriticalFlag = false;
+            for (size_t index : {size_t(0), size_t(1), size_t(7), size_t(8)}) {
+                auto& c = d.criticalComponents[index];
+                if (!c.functional || !c.workingCount) {
+                    c.functional = true;
+                    c.workingCount = 1;
+                    c.condition = index == 1 ? 1 : 2;
+                }
+            }
+            auto& torso = d.internalSections[static_cast<size_t>(mech3d::MechInternalSectionId::CenterTorso)];
+            if (!torso.structureRemaining) torso.structureRemaining = 1;
+        }
         persistent.engine = std::min<uint8_t>(persistent.engine, 2u);
         persistent.gyros = std::min<uint8_t>(persistent.gyros, 2u);
         persistent.leftLegActuator =

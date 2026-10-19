@@ -49,6 +49,8 @@ BatchBounds batchBounds(const legacy3d::GpuBatch& batch);
 struct LoadedVisual {
     battle::CampaignBattleRenderVisualInstance source;
     mech3d::MechRenderInstance renderInstance;
+    legacy3d::GpuBatch alternateColorBatch;
+    std::optional<std::array<uint8_t, 32>> colorPalette;
     mech3d::ResolvedMechRuntimeState runtimeState;
     std::string signature;
 };
@@ -239,9 +241,19 @@ void updateLoadedVisualPresentationPose(LoadedVisual& loaded) {
     mech3d::updateMechRenderInstancePose(loaded.renderInstance, pose);
 }
 
+std::array<uint8_t, 32> loadModelColorPalette(const std::filesystem::path& path) {
+    std::array<uint8_t, 32> result{};
+    for (size_t bank = 0; bank < 2; ++bank) {
+        const auto colors = loadCampaignEgaPaletteBank(path, bank);
+        if (!colors.valid) throw std::runtime_error(colors.reason);
+        std::copy(colors.colorPairs.begin(), colors.colorPairs.end(), result.begin()+bank*16);
+    }
+    return result;
+}
+
 LoadedVisual loadVisual(
     const battle::CampaignBattleRenderVisualInstance& visual,
-    RecordCache& cache) {
+    RecordCache& cache, const std::array<uint8_t, 32>* colorPalette = nullptr) {
     LoadedVisual loaded;
     loaded.source = visual;
     loaded.signature = visualSignature(visual);
@@ -281,8 +293,18 @@ LoadedVisual loadVisual(
     legacy3d::GpuBatchOptions batchOptions;
     batchOptions.shadeMode = "stored";
     batchOptions.swizzle = "xzy";
+    if (colorPalette) {
+        loaded.colorPalette = *colorPalette;
+        batchOptions.originalEga = legacy3d::OriginalEgaColorOptions{*colorPalette, false};
+    }
     loaded.renderInstance =
         mech3d::buildMechRenderInstance(frameDefinition, records, batchOptions);
+    if (colorPalette) {
+        batchOptions.originalEga->alternatePixels = true;
+        auto alternate = mech3d::buildMechRenderInstance(frameDefinition, records, batchOptions);
+        if (alternate.batch.vertices != loaded.renderInstance.batch.vertices)
+            loaded.alternateColorBatch = std::move(alternate.batch);
+    }
     if (!assemblyFrameAnimation) {
         updateLoadedVisualPresentationPose(loaded);
     }
@@ -679,7 +701,8 @@ LoadedTerrainGeometry loadTerrainGeometry(
 }
 
 legacy3d::GpuBatch loadObjectiveBatch(
-    const battle::CampaignBattleRenderObjectiveInstance& objective) {
+    const battle::CampaignBattleRenderObjectiveInstance& objective,
+    const std::array<uint8_t, 32>& colorPalette) {
     if (!objective.valid || !objective.staticModel.valid) {
         return {};
     }
@@ -690,7 +713,7 @@ legacy3d::GpuBatch loadObjectiveBatch(
         throw std::runtime_error("campaign OpenGL objective record is out of range");
     }
     legacy3d::GpuBatchOptions options;
-    options.shadeMode = "stored";
+    options.originalEga = legacy3d::OriginalEgaColorOptions{colorPalette, false};
     options.swizzle = objective.staticModel.swizzle;
     options.scale = static_cast<float>(objective.staticModel.scale);
     return legacy3d::buildGpuBatch(
@@ -706,7 +729,8 @@ std::string projectileBatchKey(
 
 legacy3d::GpuBatch loadProjectileBatch(
     const battle::CampaignBattleRenderProjectileInstance& projectile,
-    RecordCache& cache) {
+    RecordCache& cache,
+    const std::array<uint8_t, 32>& colorPalette) {
     if (projectile.recordIndex < 0 ||
         projectile.modelResourcePath.empty()) {
         return {};
@@ -719,7 +743,10 @@ legacy3d::GpuBatch loadProjectileBatch(
             "campaign OpenGL projectile record is out of range");
     }
     legacy3d::GpuBatchOptions options;
-    options.shadeMode = projectile.recordIndex == 1 ? "ega" : "stored";
+    // OTHPCK:001 stores separate driver pairs, not four EGA brightness samples.
+    // Its EGA colors (and factory 014's) are solid in every original PAL.
+    if (projectile.recordIndex == 1)
+        options.originalEga = legacy3d::OriginalEgaColorOptions{colorPalette, false};
     options.swizzle = "xzy";
     return legacy3d::buildGpuBatch(
         records[static_cast<size_t>(projectile.recordIndex)],
@@ -732,23 +759,23 @@ std::string impactStageKey(
         std::to_string(impact.recordIndex);
 }
 
-ImpactStageGeometry loadImpactStage(
-    const battle::CampaignBattleRenderImpactInstance& impact,
+ImpactStageGeometry loadTemporaryEffectStage(
+    const std::filesystem::path& resourcePath, int recordIndex,
     RecordCache& cache) {
-    if (impact.recordIndex < 2 || impact.recordIndex > 9 ||
-        impact.modelResourcePath.empty()) {
+    if (recordIndex < 2 || recordIndex > 13 ||
+        resourcePath.empty()) {
         throw std::runtime_error("campaign OpenGL impact record is invalid");
     }
     const std::vector<legacy3d::RuntimeRecord>& records = recordsForPath(
         cache,
-        impact.modelResourcePath);
-    if (static_cast<size_t>(impact.recordIndex) >= records.size()) {
+        resourcePath);
+    if (static_cast<size_t>(recordIndex) >= records.size()) {
         throw std::runtime_error("campaign OpenGL impact record is out of range");
     }
     const legacy3d::RuntimeRecord& record =
-        records[static_cast<size_t>(impact.recordIndex)];
+        records[static_cast<size_t>(recordIndex)];
     ImpactStageGeometry result;
-    result.recordIndex = impact.recordIndex;
+    result.recordIndex = recordIndex;
     const auto vertexAt = [&record](uint8_t index) {
         if (static_cast<size_t>(index) >= record.vertices.size()) {
             throw std::runtime_error(
@@ -777,7 +804,7 @@ ImpactStageGeometry loadImpactStage(
                     command.sphereShadeBytes,
                 });
             }
-            if (command.commandType != 0u || impact.recordIndex < 8) {
+            if (command.commandType != 0u || recordIndex < 8) {
                 continue;
             }
             for (const legacy3d::RuntimePrimitive& primitive :
@@ -832,6 +859,22 @@ BatchBounds batchBounds(const legacy3d::GpuBatch& batch) {
         }
     }
     return bounds;
+}
+
+uint16_t gpuBatchFillEgaColorMask(const legacy3d::GpuBatch& batch) {
+    constexpr std::array<uint32_t,16> ega{{
+        0x000000,0x0000aa,0x00aa00,0x00aaaa,0xaa0000,0xaa00aa,0xaa5500,0xaaaaaa,
+        0x555555,0x5555ff,0x55ff55,0x55ffff,0xff5555,0xff55ff,0xffff55,0xffffff}};
+    uint16_t result = 0;
+    for (uint32_t index : batch.triangleIndices) {
+        const size_t offset = static_cast<size_t>(index)*6u;
+        if (offset+5u >= batch.vertices.size()) continue;
+        const auto channel = [&](size_t i) { return static_cast<uint32_t>(std::lround(batch.vertices[offset+i]*255.f)); };
+        const uint32_t color = (channel(3)<<16u) | (channel(4)<<8u) | channel(5);
+        for (size_t i = 0; i < ega.size(); ++i)
+            if (color == ega[i]) result |= static_cast<uint16_t>(1u<<i);
+    }
+    return result;
 }
 
 bool validGpuBatch(const legacy3d::GpuBatch& batch) {
@@ -1019,6 +1062,90 @@ const mech3d::ModelAssemblyComponent* findComponent(
     return found == instance.assembly.components.end() ? nullptr : &*found;
 }
 
+std::vector<CampaignBattleDamageSmokePuff> damageSmokePuffsForScene(
+    const battle::CampaignBattleRenderScenePackage& scene,
+    const std::vector<LoadedVisual>& visuals) {
+    std::vector<CampaignBattleDamageSmokePuff> result;
+    for (const auto& emitter : scene.damageSmokeEmitters) {
+        const auto* visual = loadedVisualByEntityId(visuals, emitter.entityId);
+        if (!visual || (scene.mode == battle::CampaignBattlePresentationMode::Cockpit &&
+                       visual->source.playerControlled)) continue;
+        using Section = mech3d::MechInternalSectionId;
+        const char* label = nullptr;
+        switch (emitter.section) {
+        case Section::RightArm: label = "right_arm"; break;
+        case Section::LeftArm: label = "left_arm"; break;
+        case Section::RightLeg: label = "right_leg"; break;
+        case Section::LeftLeg: label = "left_leg"; break;
+        case Section::Head: label = "cockpit"; break;
+        case Section::CenterTorso: case Section::LeftTorso: case Section::RightTorso:
+            label = "torso"; break;
+        default: continue;
+        }
+        // Death assemblies replace debug labels, but retain catalog component
+        // identity. Resolve the label in the bind catalog, then use the *drawn*
+        // component's animated bounds (including torso slew and falling poses).
+        const auto definition = mech3d::makeCatalogMechModelDefinition(visual->source.mechPresetId);
+        const auto identity = std::find_if(definition.components.begin(), definition.components.end(),
+            [label](const auto& part) { return part.debugLabel.find(label) != std::string::npos; });
+        if (identity == definition.components.end()) continue;
+        const auto* part = findComponent(visual->renderInstance, identity->componentId);
+        const auto& bounds = visual->renderInstance.assembly.bounds;
+        if (!part || !part->worldBounds.valid || !bounds.valid) continue;
+        const auto& b = part->worldBounds;
+        mech3d::Vec3f local = b.center;
+        local.y = b.min.y + (b.max.y - b.min.y) * 0.8f;
+        if (emitter.section == Section::LeftTorso) local.x -= (b.max.x-b.min.x)*0.3f;
+        if (emitter.section == Section::RightTorso) local.x += (b.max.x-b.min.x)*0.3f;
+        if (!mech3d::isResolvedMechComponentVisible(visual->renderInstance.assembly,
+                visual->runtimeState, part->componentId)) {
+            // A detached limb emits at its remaining attachment, not at the
+            // center of invisible geometry below the shoulder/hip.
+            if (const auto* parent = findComponent(visual->renderInstance, part->parentComponentId)) {
+                local.x = std::clamp(parent->worldBounds.center.x, b.min.x, b.max.x);
+                local.y = std::clamp(parent->worldBounds.center.y, b.min.y, b.max.y);
+                local.z = std::clamp(parent->worldBounds.center.z, b.min.z, b.max.z);
+            }
+        }
+        local.x -= bounds.center.x; local.y -= bounds.min.y; local.z -= bounds.center.z;
+        const auto& transform = visual->source.transform;
+        const double s = std::sin(transform.headingRadians), c = std::cos(transform.headingRadians);
+        const battle::BattleHitPoint anchor{transform.x+c*local.x+s*local.z,
+            transform.y+local.y, transform.z-s*local.x+c*local.z};
+        const uint64_t salt = static_cast<uint64_t>(emitter.entityId.value)*977u +
+            static_cast<uint64_t>(emitter.section)*131u;
+        // Replacement continuous plume: four original stages, 400 ms each.
+        // Derive every puff from simulation time; repeated renders, dropped
+        // frames, replay/restore and menu visits cannot spawn extra particles.
+        for (uint64_t slot = 0; slot < 4u; ++slot) {
+            const uint64_t time = scene.presentationElapsedMs + salt%400u + slot*400u;
+            const uint64_t age = time%1600u;
+            const uint64_t drift = (time/1600u + salt + slot*47u)*2654435761u;
+            CampaignBattleDamageSmokePuff puff;
+            puff.entityId = emitter.entityId;
+            puff.section = emitter.section;
+            puff.anchor = anchor;
+            puff.position = anchor;
+            const double progress = static_cast<double>(age)/1600.0;
+            puff.position.x += (static_cast<int>(drift%97u)-48)*progress;
+            puff.position.z += (static_cast<int>((drift/97u)%97u)-48)*progress;
+            puff.position.y += static_cast<double>(age)*0.25;
+            puff.recordIndex = 10 + static_cast<int>(age/400u);
+            puff.stageFraction = static_cast<float>(age%400u)/400.0f;
+            const auto smooth = [](double value) {
+                const double t = std::clamp(value, 0.0, 1.0);
+                return t*t*(3.0-2.0*t);
+            };
+            // Replacement visual refinement: gently appear, then dissipate
+            // before the deterministic slot wraps. Never fade by render count.
+            puff.opacity = static_cast<float>(0.58 * smooth(progress/0.10) *
+                (1.0-smooth((progress-0.35)/0.65)));
+            result.push_back(puff);
+        }
+    }
+    return result;
+}
+
 void drawLoadedVisual(const LoadedVisual& visual) {
     const mech3d::Bounds& bounds = visual.renderInstance.assembly.bounds;
     glPushMatrix();
@@ -1071,6 +1198,22 @@ void drawLoadedVisual(const LoadedVisual& visual) {
         }
         glEnd();
 
+        if (!visual.alternateColorBatch.vertices.empty()) {
+            // Same component transform/topology; only the PAL pixel nibble differs.
+            // Keep the established checker scale. Outlines draw once, after the fill.
+            static const auto checker = legacy3d::terrainCheckerStipple4x4();
+            glEnable(GL_POLYGON_STIPPLE);
+            glPolygonStipple(checker.data());
+            glBegin(GL_TRIANGLES);
+            for (size_t i = range.triangleIndexOffset; i < triangleEnd; ++i) {
+                const size_t offset = static_cast<size_t>(visual.alternateColorBatch.triangleIndices[i])*6u;
+                glColor3fv(&visual.alternateColorBatch.vertices[offset+3]);
+                glVertex3fv(&visual.alternateColorBatch.vertices[offset]);
+            }
+            glEnd();
+            glDisable(GL_POLYGON_STIPPLE);
+        }
+
         glBegin(GL_LINES);
         const size_t lineEnd = std::min(
             visual.renderInstance.batch.lineIndices.size(),
@@ -1096,27 +1239,46 @@ void drawLoadedVisual(const LoadedVisual& visual) {
     glPopMatrix();
 }
 
-std::array<float, 3> terrainGroundColor(const std::optional<int>& environmentId) {
-    if (environmentId.has_value() && *environmentId == 0) {
-        return {0.69f, 0.36f, 0.02f};
-    }
-    if (environmentId.has_value() && *environmentId == 2) {
-        return {0.79f, 0.91f, 0.90f};
-    }
-    return {0.11f, 0.47f, 0.13f};
-}
-
-std::array<float, 3> terrainSkyColor(const std::optional<int>& environmentId) {
-    if (environmentId.has_value() && *environmentId == 0) {
-        return {0.08f, 0.035f, 0.005f};
-    }
-    if (environmentId.has_value() && *environmentId == 2) {
-        return {0.08f, 0.50f, 0.62f};
-    }
-    return {0.035f, 0.16f, 0.36f};
-}
-
 } // namespace
+
+std::array<uint8_t,128> campaignBattleDamageSmokeStipple(int coverage, int pixelSize) {
+    constexpr int bayer[4][4] = {{0,8,2,10},{12,4,14,6},{3,11,1,9},{15,7,13,5}};
+    coverage = std::clamp(coverage,0,16);
+    if (pixelSize!=1 && pixelSize!=2 && pixelSize!=4 && pixelSize!=8)
+        throw std::invalid_argument("smoke stipple pixel size must divide the 32-pixel tile");
+    std::array<uint8_t,128> mask{};
+    for (int y=0; y<32; ++y)
+        for (int x=0; x<32; ++x)
+            if (bayer[(y/pixelSize)%4][(x/pixelSize)%4]<coverage)
+                mask[y*4+x/8] |= static_cast<uint8_t>(0x80u>>(x%8));
+    return mask;
+}
+
+std::array<float, 3> campaignBattleTerrainGroundRgb(
+    const std::optional<int>& environmentId) {
+    if (environmentId.has_value() && *environmentId == 0) {
+        return {170.0f / 255.0f, 85.0f / 255.0f, 0.0f};
+    }
+    if (environmentId.has_value() && *environmentId == 2) {
+        return {1.0f, 1.0f, 1.0f};
+    }
+    return {0.0f, 170.0f / 255.0f, 0.0f};
+}
+
+std::array<float, 3> campaignBattleTerrainSkyRgb(
+    const std::optional<int>& environmentId,
+    battle::BattleSkyMode skyMode) {
+    if (skyMode == battle::BattleSkyMode::Black) {
+        return {0.0f, 0.0f, 0.0f};
+    }
+    if (environmentId.has_value() && *environmentId == 0) {
+        return {1.0f, 1.0f, 1.0f};
+    }
+    if (environmentId.has_value() && *environmentId == 2) {
+        return {85.0f / 255.0f, 1.0f, 1.0f};
+    }
+    return {85.0f / 255.0f, 85.0f / 255.0f, 1.0f};
+}
 
 CampaignBattleFarGroundApron campaignBattleFarGroundApron(
     const battle::CampaignBattleRenderTerrainResources& terrain,
@@ -1215,10 +1377,14 @@ struct CampaignBattleGlViewport::Impl {
     size_t terrainObjectCount = 0;
     size_t terrainObjectRecordCount = 0;
     std::string terrainSignature;
+    std::array<uint8_t, 32> modelColorPalette{};
     std::vector<LoadedVisual> visuals;
     std::vector<LoadedVisual> projectileMountReferences;
     std::map<std::string, legacy3d::GpuBatch> projectileBatches;
     std::map<std::string, ImpactStageGeometry> impactStages;
+    std::array<ImpactStageGeometry, 4> damageSmokeStages;
+    std::string damageSmokeResourceSignature;
+    std::vector<CampaignBattleDamageSmokePuff> damageSmokePuffs;
     legacy3d::GpuBatch objectiveBatch;
     BatchBounds objectiveBounds;
     std::string objectiveSignature;
@@ -1248,6 +1414,12 @@ struct CampaignBattleGlViewport::Impl {
         if (self == nullptr) {
             return DefWindowProcW(window, message, wparam, lparam);
         }
+        if (self->scene.mode == battle::CampaignBattlePresentationMode::CockpitCommandMap && self->parent &&
+            (message == WM_MOUSEMOVE || message == WM_LBUTTONDOWN || message == WM_RBUTTONDOWN)) {
+            POINT point{static_cast<short>(LOWORD(lparam)), static_cast<short>(HIWORD(lparam))};
+            MapWindowPoints(window, self->parent, &point, 1);
+            return SendMessageW(self->parent, message, wparam, MAKELPARAM(point.x, point.y));
+        }
         switch (message) {
         case WM_SIZE:
             self->width = std::max(1, static_cast<int>(LOWORD(lparam)));
@@ -1256,7 +1428,10 @@ struct CampaignBattleGlViewport::Impl {
         case WM_ERASEBKGND:
             return 1;
         case WM_MOUSEACTIVATE:
-            return MA_NOACTIVATE;
+            // Clicking Command Map must activate the game so arrows/Enter keep
+            // working after a mouse selection, including from another app.
+            return self->scene.mode == battle::CampaignBattlePresentationMode::CockpitCommandMap
+                ? MA_ACTIVATE : MA_NOACTIVATE;
         case WM_RBUTTONDOWN:
             if (self->scene.mode == battle::CampaignBattlePresentationMode::External) {
                 self->externalCameraDragging = true;
@@ -1398,6 +1573,7 @@ struct CampaignBattleGlViewport::Impl {
             << terrain.boundsMinX << ':' << terrain.boundsMaxX << ':'
             << terrain.boundsMinZ << ':' << terrain.boundsMaxZ << ':'
             << (terrain.environmentId.has_value() ? *terrain.environmentId : -1) << ':'
+            << static_cast<int>(terrain.skyMode) << ':'
             << terrain.palettePath.string();
         for (const std::filesystem::path& path : terrain.gridPaths) {
             out << ':' << path.string();
@@ -1443,6 +1619,12 @@ struct CampaignBattleGlViewport::Impl {
                 if (!mapPalette.valid) {
                     throw std::runtime_error(mapPalette.reason);
                 }
+                const auto nextPalette = loadModelColorPalette(nextScene.terrain.palettePath);
+                if (modelColorPalette != nextPalette) {
+                    projectileBatches.clear();
+                    objectiveSignature.clear();
+                }
+                modelColorPalette = nextPalette;
                 terrainSignature = nextTerrainSignature;
             }
 
@@ -1455,15 +1637,25 @@ struct CampaignBattleGlViewport::Impl {
             for (const battle::CampaignBattleRenderVisualInstance& visual : nextScene.combatantVisuals) {
                 const std::string signature = visualSignature(visual);
                 auto found = previous.find(visual.entityId.value);
-                if (found != previous.end() && found->second.signature == signature) {
+                if (found != previous.end() && found->second.signature == signature &&
+                    found->second.colorPalette == modelColorPalette) {
                     found->second.source = visual;
                     updateLoadedVisualPresentationPose(found->second);
                     nextVisuals.push_back(std::move(found->second));
                 } else {
-                    nextVisuals.push_back(loadVisual(visual, recordCache));
+                    nextVisuals.push_back(loadVisual(visual, recordCache, &modelColorPalette));
                 }
             }
             visuals = std::move(nextVisuals);
+            damageSmokePuffs = damageSmokePuffsForScene(nextScene, visuals);
+            if (!damageSmokePuffs.empty() &&
+                damageSmokeResourceSignature != nextScene.damageSmokeResourcePath.string()) {
+                for (int stage = 0; stage < 4; ++stage) {
+                    damageSmokeStages[stage] = loadTemporaryEffectStage(
+                        nextScene.damageSmokeResourcePath, 10+stage, recordCache);
+                }
+                damageSmokeResourceSignature = nextScene.damageSmokeResourcePath.string();
+            }
 
             std::map<uint32_t, LoadedVisual> previousMountReferences;
             for (LoadedVisual& visual : projectileMountReferences) {
@@ -1499,7 +1691,7 @@ struct CampaignBattleGlViewport::Impl {
                 if (projectileBatches.find(key) == projectileBatches.end()) {
                     legacy3d::GpuBatch batch = loadProjectileBatch(
                         projectile,
-                        recordCache);
+                        recordCache, modelColorPalette);
                     if (!validGpuBatch(batch) || batch.vertices.empty()) {
                         throw std::runtime_error(
                             "campaign OpenGL projectile produced no valid GPU vertices");
@@ -1513,13 +1705,13 @@ struct CampaignBattleGlViewport::Impl {
                 if (impactStages.find(key) == impactStages.end()) {
                     impactStages.emplace(
                         key,
-                        loadImpactStage(impact, recordCache));
+                        loadTemporaryEffectStage(impact.modelResourcePath, impact.recordIndex, recordCache));
                 }
             }
 
             const std::string nextObjectiveSignature = makeObjectiveSignature(nextScene.objective);
             if (objectiveSignature != nextObjectiveSignature) {
-                objectiveBatch = loadObjectiveBatch(nextScene.objective);
+                objectiveBatch = loadObjectiveBatch(nextScene.objective, modelColorPalette);
                 objectiveBounds = batchBounds(objectiveBatch);
                 objectiveSignature = nextObjectiveSignature;
             }
@@ -1584,9 +1776,9 @@ struct CampaignBattleGlViewport::Impl {
                 static_cast<float>(scene.camera.transform.z),
             };
             const Vec3 target{
-                eye.x + std::sin(heading) * 1000.0f,
-                eye.y,
-                eye.z + std::cos(heading) * 1000.0f,
+                eye.x + std::sin(heading) * std::cos(static_cast<float>(scene.camera.posturePitchRadians+scene.camera.ridgePitchRadians-scene.camera.mouseLookPitchRadians)) * 1000.0f,
+                eye.y - std::sin(static_cast<float>(scene.camera.posturePitchRadians+scene.camera.ridgePitchRadians-scene.camera.mouseLookPitchRadians)) * 1000.0f,
+                eye.z + std::cos(heading) * std::cos(static_cast<float>(scene.camera.posturePitchRadians+scene.camera.ridgePitchRadians-scene.camera.mouseLookPitchRadians)) * 1000.0f,
             };
             applyLookAt(eye, target);
             return;
@@ -1620,7 +1812,8 @@ struct CampaignBattleGlViewport::Impl {
     }
 
     void drawTerrain() const {
-        const std::array<float, 3> ground = terrainGroundColor(scene.terrain.environmentId);
+        const std::array<float, 3> ground =
+            campaignBattleTerrainGroundRgb(scene.terrain.environmentId);
         glPushMatrix();
         glTranslatef(
             static_cast<float>(scene.terrain.boundsMinX),
@@ -1658,7 +1851,8 @@ struct CampaignBattleGlViewport::Impl {
         const float apronMinZ = static_cast<float>(apron.minZ);
         const float apronMaxZ = static_cast<float>(apron.maxZ);
         const float y = static_cast<float>(apron.groundY);
-        const std::array<float, 3> ground = terrainGroundColor(scene.terrain.environmentId);
+        const std::array<float, 3> ground =
+            campaignBattleTerrainGroundRgb(scene.terrain.environmentId);
         glColor3fv(ground.data());
         glBegin(GL_QUADS);
         glVertex3f(apronMinX, y, apronMinZ);
@@ -1810,6 +2004,10 @@ struct CampaignBattleGlViewport::Impl {
             glEnd();
         };
         for (const battle::CampaignBattleRenderVisualInstance& visual : scene.combatantVisuals) {
+            if (scene.mode == battle::CampaignBattlePresentationMode::CockpitCommandMap &&
+                visual.team == battle::BattleTeam::Opposing &&
+                std::find(cockpitOptions.knownCommandMapEnemies.begin(), cockpitOptions.knownCommandMapEnemies.end(),
+                          visual.entityId) == cockpitOptions.knownCommandMapEnemies.end()) continue;
             const auto [x, y] = mapPoint(visual.transform.x, visual.transform.z);
             if (visual.team == battle::BattleTeam::Player ||
                 visual.playerControlled) {
@@ -1913,6 +2111,12 @@ struct CampaignBattleGlViewport::Impl {
                                 left, top, 1, bottom - top + 1,
                                 edgeColor(battle::BattlefieldBoundaryEdge::West));
             }
+        }
+        if (scene.mode == battle::CampaignBattlePresentationMode::CockpitCommandMap) {
+            const auto overlay = campaignCommandOverlayPixels(cockpitOptions.commandOverlay,
+                centerX, centerZ, mapWidth, mapHeight);
+            for (size_t i=0;i<overlay.size();++i) if (overlay[i])
+                drawRect(static_cast<int>(i%mapWidth),static_cast<int>(i/mapWidth),1,1,bgraRgb(overlay[i]));
         }
         glEnable(GL_DEPTH_TEST);
     }
@@ -2117,6 +2321,92 @@ struct CampaignBattleGlViewport::Impl {
         }
     }
 
+    void drawDamageSmoke() const {
+        if (damageSmokePuffs.empty()) return;
+        struct Cloud {
+            Vec3 eyeCenter;
+            float radius;
+            float opacity;
+            std::array<float,3> color;
+        };
+        GLfloat view[16]{};
+        glGetFloatv(GL_MODELVIEW_MATRIX, view);
+        std::vector<Cloud> clouds;
+        for (const auto& puff : damageSmokePuffs) {
+            if (puff.opacity <= 0.0f) continue;
+            const int stageIndex = puff.recordIndex-10;
+            const auto& stage = damageSmokeStages[stageIndex].spheres;
+            const auto& next = damageSmokeStages[std::min(stageIndex+1,3)].spheres;
+            for (size_t i=0; i<stage.size(); ++i) {
+                const auto& sphere = stage[i];
+                const auto& following = next.size()==stage.size() ? next[i] : sphere;
+                const auto blend = [&puff](float a, float b) { return a+(b-a)*puff.stageFraction; };
+                const float x = static_cast<float>(puff.position.x)+blend(sphere.center.x,following.center.x);
+                const float y = static_cast<float>(puff.position.y)+blend(sphere.center.y,following.center.y);
+                const float z = static_cast<float>(puff.position.z)+blend(sphere.center.z,following.center.z);
+                clouds.push_back({
+                    {view[0]*x+view[4]*y+view[8]*z+view[12],
+                     view[1]*x+view[5]*y+view[9]*z+view[13],
+                     view[2]*x+view[6]*y+view[10]*z+view[14]},
+                    blend(sphere.radius,following.radius)*1.65f,
+                    puff.opacity, impactEgaRgb(sphere.shadeBytes[1])});
+            }
+        }
+        // Draw covered pixels back-to-front, leaving real holes through to the
+        // world. Coverage uses ordered dithering, never blended intermediate RGB.
+        std::stable_sort(clouds.begin(),clouds.end(),[](const Cloud& a,const Cloud& b) {
+            return a.eyeCenter.z < b.eyeCenter.z;
+        });
+        glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT |
+            GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT | GL_POLYGON_STIPPLE_BIT);
+        glPushClientAttrib(GL_CLIENT_PIXEL_STORE_BIT);
+        glPixelStorei(GL_UNPACK_LSB_FIRST,GL_FALSE);
+        glDisable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_ALPHA_TEST);
+        glEnable(GL_POLYGON_STIPPLE);
+        glShadeModel(GL_FLAT);
+        glPushMatrix();
+        glLoadIdentity();
+        // Keep the previous radial density/growth/fade, quantized to Bayer
+        // coverage. The stable screen-anchored mask does not flicker randomly.
+        const auto virtualRect = campaignBattleGlVirtualViewportRect(scene.mode,scene.cockpit.family);
+        const int displayScale = std::max(1,std::min(width/virtualRect.width,height/virtualRect.height));
+        int pixelSize = 1;
+        while (pixelSize<8 && pixelSize*2<=displayScale) pixelSize*=2;
+        std::array<std::array<uint8_t,128>,17> patterns;
+        for (int coverage=0; coverage<=16; ++coverage)
+            patterns[coverage]=campaignBattleDamageSmokeStipple(coverage,pixelSize);
+        constexpr int rings = 8, slices = 24;
+        for (const auto& cloud : clouds) {
+            glColor3fv(cloud.color.data());
+            for (int ring=0; ring<rings; ++ring) {
+                const float radius = (static_cast<float>(ring)+0.5f)/rings;
+                const float falloff = (1.0f-radius*radius)*(1.0f-radius*radius);
+                const int coverage = std::clamp(static_cast<int>(std::lround(cloud.opacity*falloff*16.0f)),0,16);
+                if (coverage==0) continue;
+                glPolygonStipple(patterns[coverage].data());
+                glBegin(GL_TRIANGLE_STRIP);
+                for (int slice=0; slice<=slices; ++slice) {
+                    const float angle = static_cast<float>(2.0*kPi*slice/slices);
+                    for (int edge=0; edge<2; ++edge) {
+                        const float r = static_cast<float>(ring+edge)/rings;
+                        glVertex3f(cloud.eyeCenter.x+std::cos(angle)*r*cloud.radius,
+                            cloud.eyeCenter.y+std::sin(angle)*r*cloud.radius,cloud.eyeCenter.z);
+                    }
+                }
+                glEnd();
+            }
+        }
+        glPopMatrix();
+        glPopClientAttrib();
+        glPopAttrib();
+    }
+
     void drawImmediateBeams() const {
         for (const battle::CampaignBattleRenderBeamInstance& beam :
              scene.beamVisuals) {
@@ -2259,6 +2549,27 @@ struct CampaignBattleGlViewport::Impl {
         return delta;
     }
 
+    void drawRetreatPrompt() {
+        const auto& prompt = cockpitLayers.retreatPrompt;
+        if (scene.mode != battle::CampaignBattlePresentationMode::Cockpit ||
+            !cockpitOptions.retreatPromptVisible || !prompt.valid) return;
+        const auto rect = campaignCockpitLayout(scene.cockpit.family).viewport;
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        glDisable(GL_DEPTH_TEST); glDisable(GL_TEXTURE_2D); glDisable(GL_BLEND);
+        glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity();
+        glOrtho(rect.x, rect.x+rect.width, rect.y+rect.height, rect.y, -1, 1);
+        glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
+        glBegin(GL_QUADS);
+        for (int y=0; y<prompt.height; ++y) for (int x=0; x<prompt.width; ++x) {
+            const auto color=prompt.bgraPixels[y*prompt.width+x];
+            glColor3ub(static_cast<GLubyte>(color>>16), static_cast<GLubyte>(color>>8), static_cast<GLubyte>(color));
+            glVertex2i(107+x,87+y); glVertex2i(108+x,87+y);
+            glVertex2i(108+x,88+y); glVertex2i(107+x,88+y);
+        }
+        glEnd(); glPopMatrix(); glMatrixMode(GL_PROJECTION); glPopMatrix(); glMatrixMode(GL_MODELVIEW);
+        glPopAttrib();
+    }
+
     void drawCockpitDynamicLayers() {
         if (scene.mode != battle::CampaignBattlePresentationMode::Cockpit ||
             !cockpitLayers.valid) {
@@ -2327,7 +2638,10 @@ struct CampaignBattleGlViewport::Impl {
 
             glDisable(GL_TEXTURE_2D);
             glColor3fv(cockpitOptions.hudRgb.data());
-            glBegin(GL_LINES);
+            // Match the crosshair and original 320x200 HUD: a stroke occupies
+            // one virtual pixel, not one physical framebuffer pixel. Quads
+            // also preserve independent X/Y scaling in an enlarged cockpit.
+            glBegin(GL_QUADS);
             for (int tick = 0; tick < 72; ++tick) {
                 const int tickDegrees = tick * 5;
                 const double delta = signedCompassDelta(tickDegrees, bodyHeading);
@@ -2336,11 +2650,15 @@ struct CampaignBattleGlViewport::Impl {
                 }
                 const int x = centerX + static_cast<int>(std::lround(delta));
                 const int tickHeight = tickDegrees % 30 == 0 ? 6 : (tickDegrees % 10 == 0 ? 3 : 1);
-                glVertex2i(x, baselineY);
                 glVertex2i(x, baselineY - tickHeight);
+                glVertex2i(x + 1, baselineY - tickHeight);
+                glVertex2i(x + 1, baselineY);
+                glVertex2i(x, baselineY);
             }
             glVertex2i(centerX - halfWidth, baselineY);
-            glVertex2i(centerX + halfWidth, baselineY);
+            glVertex2i(centerX + halfWidth + 1, baselineY);
+            glVertex2i(centerX + halfWidth + 1, baselineY + 1);
+            glVertex2i(centerX - halfWidth, baselineY + 1);
             glEnd();
 
             glEnable(GL_TEXTURE_2D);
@@ -2380,7 +2698,7 @@ struct CampaignBattleGlViewport::Impl {
             const CampaignCockpitViewportHudLayout hudLayout =
                 campaignCockpitViewportHudLayout(
                     scene.cockpit.family,
-                    player->source.aimPitchStep);
+                    player->source.mouseLookEnabled ? 0 : player->source.aimPitchStep);
             const int leftX = hudLayout.leftLabelX - layout.viewport.x;
             const int rightX = hudLayout.rightLabelX - layout.viewport.x;
             const int labelY = hudLayout.labelY - layout.viewport.y;
@@ -2390,9 +2708,9 @@ struct CampaignBattleGlViewport::Impl {
             glColor3fv(cockpitOptions.hudRgb.data());
             if (hudLayout.zoomLabelOnLeft) {
                 drawCockpitFontText(zoomText, leftX, labelY);
-                drawCockpitFontText("AWS", rightX, labelY);
+                if (scene.cockpitAutomaticWeaponsEnabled) drawCockpitFontText("AWS", rightX, labelY);
             } else {
-                drawCockpitFontText("AWS", leftX, labelY);
+                if (scene.cockpitAutomaticWeaponsEnabled) drawCockpitFontText("AWS", leftX, labelY);
                 drawCockpitFontText(zoomText, rightX, labelY);
             }
         }
@@ -2633,7 +2951,7 @@ struct CampaignBattleGlViewport::Impl {
         const CampaignCockpitViewportHudLayout hudLayout =
             campaignCockpitViewportHudLayout(
                 scene.cockpit.family,
-                player->source.aimPitchStep);
+                player->source.mouseLookEnabled ? 0 : player->source.aimPitchStep);
         const float cx = static_cast<float>(
             hudLayout.crosshairCenterX - layout.viewport.x);
         const float cy = static_cast<float>(
@@ -2667,29 +2985,36 @@ struct CampaignBattleGlViewport::Impl {
         glEnable(GL_DEPTH_TEST);
     }
 
-    void renderFrame() {
-        if (!visible || !sceneReady || hdc == nullptr || hrc == nullptr) {
-            return;
+    bool renderFrame(bool present = true) {
+        if ((!visible && present) || !sceneReady || hdc == nullptr || hrc == nullptr) {
+            return false;
         }
         if (wglMakeCurrent(hdc, hrc) == FALSE) {
             error = "could not activate campaign WGL context";
-            return;
+            return false;
         }
         if (scene.mode == battle::CampaignBattlePresentationMode::MissionStatus ||
             scene.mode == battle::CampaignBattlePresentationMode::CockpitCommandMap) {
             renderCommandMapFrame();
-            SwapBuffers(hdc);
+            if (present) SwapBuffers(hdc);
             wglMakeCurrent(nullptr, nullptr);
-            return;
+            return true;
         }
         ensureCockpitTextures();
         glViewport(0, 0, width, height);
         const bool collisionFlash =
             scene.mode == battle::CampaignBattlePresentationMode::Cockpit &&
             collisionFlashFramesRemaining > 0;
-        const std::array<float, 3> sky = collisionFlash
+        const bool weaponHitFlash = scene.mode == battle::CampaignBattlePresentationMode::Cockpit &&
+            scene.playerWeaponHitFlash;
+        // BTECH 4ece -> DS:7d7e -> 02c5 selects EGA 12 for a player hit.
+        const std::array<float, 3> sky = weaponHitFlash
+            ? std::array<float, 3>{1.0f, 85.0f / 255.0f, 85.0f / 255.0f}
+            : collisionFlash
             ? std::array<float, 3>{170.0f / 255.0f, 0.0f, 0.0f}
-            : terrainSkyColor(scene.terrain.environmentId);
+            : campaignBattleTerrainSkyRgb(
+                  scene.terrain.environmentId,
+                  scene.terrain.skyMode);
         glClearColor(sky[0], sky[1], sky[2], 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -2697,8 +3022,12 @@ struct CampaignBattleGlViewport::Impl {
         glLoadIdentity();
         const double nearZ = kCampaignBattleNearClipDistance;
         const double farZ = campaignBattleFarClipDistance();
-        const double aspect = static_cast<double>(std::max(1, width)) /
-                              static_cast<double>(std::max(1, height));
+        const auto& cockpitLayout = campaignCockpitLayout(scene.cockpit.family);
+        // The cockpit and its reticle use virtual pixels. Window rounding or
+        // stretching must not change the world ray under those same pixels.
+        const double aspect = scene.mode == battle::CampaignBattlePresentationMode::Cockpit
+            ? static_cast<double>(cockpitLayout.viewport.width) / cockpitLayout.viewport.height
+            : static_cast<double>(std::max(1, width)) / std::max(1, height);
         const int zoom = scene.mode == battle::CampaignBattlePresentationMode::Cockpit
                              ? std::clamp(cockpitOptions.zoomLevel, 1, 3)
                              : 1;
@@ -2725,14 +3054,17 @@ struct CampaignBattleGlViewport::Impl {
         drawImmediateBeams();
         drawProjectiles();
         drawImpacts();
+        drawDamageSmoke();
         drawCockpitTargetRectangle();
         drawCockpitDynamicLayers();
         drawCockpitCrosshair();
-        SwapBuffers(hdc);
-        if (collisionFlash) {
+        drawRetreatPrompt();
+        if (present) SwapBuffers(hdc);
+        if (collisionFlash && present) {
             --collisionFlashFramesRemaining;
         }
         wglMakeCurrent(nullptr, nullptr);
+        return true;
     }
 
     void cleanup() {
@@ -2787,8 +3119,9 @@ CampaignBattleGlResourceProbe probeCampaignBattleGlResources(
         std::vector<LoadedVisual> loadedProjectileMountReferences;
         loadedVisuals.reserve(scene.combatantVisuals.size());
         loadedProjectileMountReferences.reserve(scene.combatantVisuals.size());
+        const auto mechPalette = loadModelColorPalette(scene.terrain.palettePath);
         for (const battle::CampaignBattleRenderVisualInstance& visual : scene.combatantVisuals) {
-            loadedVisuals.push_back(loadVisual(visual, cache));
+            loadedVisuals.push_back(loadVisual(visual, cache, &mechPalette));
             loadedProjectileMountReferences.push_back(loadVisual(
                 projectileMountReferenceSource(visual),
                 cache));
@@ -2796,18 +3129,27 @@ CampaignBattleGlResourceProbe probeCampaignBattleGlResources(
             ++probe.visualCount;
             probe.mechVertexCount += loaded.renderInstance.batch.vertices.size() / 6u;
             probe.mechTriangleCount += loaded.renderInstance.batch.triangleIndices.size() / 3u;
-            batchesValid = batchesValid && validGpuBatch(loaded.renderInstance.batch);
+            probe.mechDitherVertexCount += loaded.alternateColorBatch.vertices.size() / 6u;
+            for (const auto* batch : {&loaded.renderInstance.batch, &loaded.alternateColorBatch}) {
+                batchesValid = batchesValid && validGpuBatch(*batch);
+                for (size_t i = 0; i < batch->vertices.size(); i += 6u) {
+                    if (batch->vertices[i+3] != batch->vertices[i+4] ||
+                        batch->vertices[i+4] != batch->vertices[i+5]) ++probe.mechColoredVertexCount;
+                }
+            }
         }
 
         for (const battle::CampaignBattleRenderProjectileInstance& projectile :
              scene.projectileVisuals) {
             const legacy3d::GpuBatch loaded = loadProjectileBatch(
                 projectile,
-                cache);
+                cache, mechPalette);
             ++probe.projectileVisualCount;
             probe.projectileVertexCount += loaded.vertices.size() / 6u;
             probe.projectileTriangleCount +=
                 loaded.triangleIndices.size() / 3u;
+            if (projectile.recordIndex == 1)
+                probe.rocketFillEgaColorMask |= gpuBatchFillEgaColorMask(loaded);
             probe.projectileRecord0Loaded =
                 probe.projectileRecord0Loaded ||
                 (projectile.recordIndex == 0 && !loaded.vertices.empty());
@@ -2928,7 +3270,7 @@ CampaignBattleGlResourceProbe probeCampaignBattleGlResources(
 
         for (const battle::CampaignBattleRenderImpactInstance& impact :
              scene.impactVisuals) {
-            const ImpactStageGeometry stage = loadImpactStage(impact, cache);
+            const ImpactStageGeometry stage = loadTemporaryEffectStage(impact.modelResourcePath, impact.recordIndex, cache);
             ++probe.impactVisualCount;
             probe.impactSpherePrimitiveCount += stage.spheres.size();
             probe.machineGunImpactLinePrimitiveCount += stage.lines.size();
@@ -2958,9 +3300,19 @@ CampaignBattleGlResourceProbe probeCampaignBattleGlResources(
             }
         }
 
-        const legacy3d::GpuBatch objective = loadObjectiveBatch(scene.objective);
+        probe.damageSmokePuffs = damageSmokePuffsForScene(scene, loadedVisuals);
+        for (const auto& puff : probe.damageSmokePuffs) {
+            const auto stage = loadTemporaryEffectStage(scene.damageSmokeResourcePath, puff.recordIndex, cache);
+            probe.damageSmokeRecordMask |= static_cast<uint8_t>(1u << (puff.recordIndex-10));
+            probe.damageSmokeSphereCount += stage.spheres.size();
+            for (const auto& sphere : stage.spheres)
+                probe.damageSmokeColorMask |= static_cast<uint16_t>(1u << (sphere.shadeBytes[1]&15u));
+        }
+
+        const legacy3d::GpuBatch objective = loadObjectiveBatch(scene.objective, mechPalette);
         probe.objectiveLoaded = !objective.vertices.empty();
         probe.objectiveVertexCount = objective.vertices.size() / 6u;
+        probe.objectiveFillEgaColorMask = gpuBatchFillEgaColorMask(objective);
         batchesValid = batchesValid && validGpuBatch(objective);
         probe.gpuBatchContractPreserved = batchesValid;
         probe.valid =
@@ -3000,8 +3352,10 @@ void CampaignBattleGlViewport::setBounds(const RECT& bounds) {
     if (impl_->hwnd == nullptr) {
         return;
     }
-    const int width = std::max(1L, bounds.right - bounds.left);
-    const int height = std::max(1L, bounds.bottom - bounds.top);
+    // An empty integer-scaled canvas must also have an empty child. Keeping a
+    // one-pixel minimum would leave a stray 3D pixel in the parent's black area.
+    const int width = std::max(0L, bounds.right - bounds.left);
+    const int height = std::max(0L, bounds.bottom - bounds.top);
     MoveWindow(impl_->hwnd, bounds.left, bounds.top, width, height, TRUE);
 }
 
@@ -3030,6 +3384,31 @@ bool CampaignBattleGlViewport::updateScene(
 
 void CampaignBattleGlViewport::render() {
     impl_->renderFrame();
+}
+
+std::vector<uint32_t> CampaignBattleGlViewport::captureCommandMapPixels() {
+    if (impl_->scene.mode != battle::CampaignBattlePresentationMode::CockpitCommandMap) return {};
+    return captureScenePixels();
+}
+
+std::vector<uint32_t> CampaignBattleGlViewport::captureScenePixels() {
+    if (!ready() || !wglMakeCurrent(impl_->hdc, impl_->hrc)) return {};
+    while (glGetError() != GL_NO_ERROR) {}
+    if (!impl_->renderFrame(false) || !wglMakeCurrent(impl_->hdc, impl_->hrc)) return {};
+    std::vector<uint8_t> rgba(static_cast<size_t>(impl_->width)*impl_->height*4u);
+    glReadBuffer(GL_BACK);
+    glPixelStorei(GL_PACK_ALIGNMENT,1);
+    glReadPixels(0,0,impl_->width,impl_->height,GL_RGBA,GL_UNSIGNED_BYTE,rgba.data());
+    const bool valid = glGetError() == GL_NO_ERROR;
+    wglMakeCurrent(nullptr,nullptr);
+    if (!valid) return {};
+    std::vector<uint32_t> pixels(static_cast<size_t>(impl_->width)*impl_->height);
+    for (int y=0;y<impl_->height;++y) for(int x=0;x<impl_->width;++x) {
+        const size_t i=(static_cast<size_t>(impl_->height-1-y)*impl_->width+x)*4u;
+        pixels[static_cast<size_t>(y)*impl_->width+x]=0xff000000u |
+            static_cast<uint32_t>(rgba[i])<<16u | static_cast<uint32_t>(rgba[i+1])<<8u | rgba[i+2];
+    }
+    return pixels;
 }
 
 bool CampaignBattleGlViewport::initialized() const {
