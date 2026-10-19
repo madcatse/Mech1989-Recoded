@@ -30,7 +30,7 @@ Mech1989: Recoded is an unofficial native Windows recreation of **MechWarrior (1
 - Emulated PC Speaker effects and MT-32 music through the bundled Munt library.
 
 ![Cockpit, instruments and 3D terrain rendered by Mech1989: Recoded](assets/pic2.jpg)
-![Main menu](assets/pic2.jpg)
+![Main menu](assets/pic1.jpg)
 ![3D and external camera option (F3) ](assets/pic3.jpg)
 
 ### Quick start
